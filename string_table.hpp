@@ -1,8 +1,19 @@
 #ifndef STRING_TABLE_H
 #define STRING_TABLE_H
 
+#include <iostream>
 #include <string>
 #include <vector>
+
+class Symbol
+{
+public:
+	Symbol(const std::string& value);
+	void show(std::ostream& out, int indent = 0) const;
+	
+private:
+	std::string value_;
+};
 
 /*
  * Singleton class that stores all of the strings encountered during
@@ -12,14 +23,12 @@
 class StringTable
 {
 public:
-	static const char* add(const char* str);
+	static Symbol* add(const char* str);
+	static void freeStrings();
 
 private:
-	// Singleton interface
-	StringTable() {}
-	static StringTable* instance();
-	
-	std::vector<std::string> strings_;
+	StringTable();
+	static std::vector<Symbol*> symbols_;
 };
 
 #endif

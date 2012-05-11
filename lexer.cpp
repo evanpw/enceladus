@@ -1,5 +1,6 @@
 #include <iostream>
-#define YYSTYPE const char*
+#include "ast.hpp"
+#include "string_table.hpp"
 #include "simple.tab.h"
 
 extern int line_number;
@@ -55,7 +56,7 @@ int main()
 			case ERROR:
 			case IDENT:
 			case INT_LIT:
-				cout << token_to_string(token) << ": " << yylval << endl;
+				cout << token_to_string(token) << ": " << yylval.symbol << endl;
 				break;
 			default:
 				cout << token_to_string(token) << endl;

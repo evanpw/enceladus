@@ -1,6 +1,6 @@
 %{
+#include "ast.hpp"
 #include "string_table.hpp"
-#define YYSTYPE const char*
 #include "simple.tab.h"
 
 int line_number = 1;
@@ -12,7 +12,7 @@ extern YYSTYPE yylval;
 
 %%
 
-[1-9][0-9]*	{ yylval = StringTable::add(yytext); return INT_LIT; }
+[1-9][0-9]*	{ yylval.symbol = StringTable::add(yytext); return INT_LIT; }
 "#".*		/* Ignore comments */
 
  /* Operators */
@@ -35,13 +35,13 @@ extern YYSTYPE yylval;
 "print"		{ return PRINT; }
 "read"		{ return READ; }
 
-[a-zA-Z][a-zA-Z0-9_]*	 { yylval = StringTable::add(yytext); return IDENT; }
+[a-zA-Z][a-zA-Z0-9_]*	 { yylval.symbol = StringTable::add(yytext); return IDENT; }
 \n		{ ++line_number; return EOL; }
 [ \t\r]		/* Ignore whitespace */
 .		{
 			char msg[32];
 			sprintf(msg, "Unknown character: %c", yytext[0]);
-			yylval = StringTable::add(msg);
+			yylval.symbol = StringTable::add(msg);
 			return ERROR;
 		}
 

@@ -29,7 +29,7 @@ Statements
 
 Operators
 --
-* Operator precedence:
+* Operator precedence (highest to lowest)
 1) * /
 2) + -
 3) > =
@@ -38,9 +38,5 @@ Operators
 * Operator associativity:
 1) * / (left)
 2) + - (left)
-3) > = (left)
+3) > = (not associative)
 4) not (not associative)
-
-* Note: not not (a > b) is not a valid expression - not cannot be repeated
-
-* Note: a > b > c is a valid expression, and is the same as (a > b) > c, where a > b returns a 0 or 1 (boolean), which is then compared as an integer to the value of c
