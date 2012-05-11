@@ -1,0 +1,13 @@
+# Computes the factorial of the input value
+read n
+i <- 1
+
+loop:
+	if not (n > 1) then goto exit_loop
+	i <- i * n
+	n <- n - 1
+	goto loop
+
+exit_loop:
+
+print i

@@ -1,0 +1,46 @@
+Objectives
+--
+* Not object-oriented
+* Compiled to (bad) x86 (Intel-style) assembly language
+* Turing-complete
+* No syntactic sugar - syntax as simple as possible
+* Only type is integer (equivalent of C's int) - booleans are zero/non-zero
+
+Syntax
+--
+* No multi-line comments - #-style line comments only
+* Only logical operator is "not" - and is simulated by nesting if statements
+* Commands are newline-terminated
+* Commands: if (no else, use goto instead), then, goto, print, read
+* Only comparison operators: >, =
+* Operators: +, -, *, / (no unary minus)
+* Assignment operator: <-
+* Identifiers consist of letters, numbers, and underscores; must begin with a letter
+* First use of a variable declares it; all variables are at global scope
+* Variables are always initialized to zero
+* Parentheses for grouping
+* Integers literals cannot have leading zeros
+
+Statements
+--
+* A program consists of a sequence of lines, separated by newlines
+* A line is either empty, a statement, or a label
+* Statements are either: if, goto, print, read, or assignment
+
+Operators
+--
+* Operator precedence:
+1) * /
+2) + -
+3) > =
+4) not
+
+* Operator associativity:
+1) * / (left)
+2) + - (left)
+3) > = (left)
+4) not (not associative)
+
+* Note: not not (a > b) is not a valid expression - not cannot be repeated
+
+* Note: a > b > c is a valid expression, and is the same as (a > b) > c, where a > b returns a 0 or 1 (boolean), which is then compared as an integer to the value of c
