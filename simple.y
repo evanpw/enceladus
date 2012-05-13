@@ -9,15 +9,15 @@ using namespace std;
 //#define YYDEBUG 1
 
 extern int yylex();
-
-void yyerror(const char* msg)
-{
-	std::cerr << "Parse error: " << msg << std::endl; 
-}
-
+extern int line_number;
 extern ProgramNode* root;
+void yyerror(const char* msg);
 
 %}
+
+%define "parse.lac" "full"
+%error-verbose
+%locations
 
 %union
 {
@@ -25,7 +25,7 @@ extern ProgramNode* root;
 	AstNode* line;
 	LabelNode* label;
 	StatementNode* statement;
-	IdentNode* ident;
+	VariableNode* variable;
 	ExpressionNode* expression;
 	const char* str;
 }
@@ -35,7 +35,7 @@ extern ProgramNode* root;
 %type<label> label
 %type<statement> statement
 %type<expression> expression
-%type<ident> ident
+%type<variable> variable
 
 %token ERROR IF THEN GOTO PRINT READ ASSIGN NOT EOL
 %token<str> INT_LIT IDENT
@@ -58,6 +58,10 @@ program: /* empty */
 				$1->prepend($2);
 			$$ = $1;
 		}
+	| program error EOL // An error on one line shouldn't break all other lines
+		{
+			$$ = $1;
+		}
 	;
 
 line: /* empty */
@@ -74,7 +78,7 @@ line: /* empty */
 		}
 	;
      
-label: ident ':'
+label: IDENT ':'
 		{
 			$$ = LabelNode::create($1);
 		}
@@ -84,7 +88,7 @@ statement: IF expression THEN statement
 		{
 			$$ = IfNode::create($2, $4);
 		}
-	| GOTO ident
+	| GOTO IDENT
 		{
 			$$ = GotoNode::create($2);
 		}
@@ -92,11 +96,11 @@ statement: IF expression THEN statement
 		{
 			$$ = PrintNode::create($2);
 		}
-	| READ ident
+	| READ variable
 		{
 			$$ = ReadNode::create($2);
 		}
-	| ident ASSIGN expression
+	| variable ASSIGN expression
 		{
 			$$ = AssignNode::create($1, $3);
 		}
@@ -134,7 +138,7 @@ expression: NOT expression
 		{
 			$$ = $2;
 		}
-	| ident
+	| variable
 		{
 			$$ = static_cast<ExpressionNode*>($1);
 		}
@@ -144,23 +148,16 @@ expression: NOT expression
 		}
 	;
 	
-ident: IDENT
+variable: IDENT
 	{
-		$$ = IdentNode::create($1);
+		$$ = VariableNode::create($1);
 	}
 
 %%
 
-ProgramNode* root;
-
-int main()
+void yyerror(const char* msg)
 {
-	//yydebug = 1;
-	yyparse();
-	
-	root->show(cout, 0);
-	
-	MemoryManager::freeNodes();
-	StringTable::freeStrings();
-	return 0;
+	std::cerr << "Near line " << yylloc.first_line << ", "
+			  << "column " << yylloc.first_column << ": "
+			  << msg << std::endl;
 }

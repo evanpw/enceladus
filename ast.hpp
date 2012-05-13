@@ -5,18 +5,27 @@
 #include <list>
 #include "string_table.hpp"
 
+class AstVisitor;
+struct YYLTYPE;
+
 /* Abstract base nodes */
 class AstNode
 {
 public:
-	virtual ~AstNode() {};
-	virtual const char* str() const { return "AstNode"; }
+	AstNode();
+	virtual ~AstNode();
+	virtual const char* str() const  = 0;
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor) = 0;
+	
+	YYLTYPE* location() { return location_; }
+	
+protected:
+	YYLTYPE* location_;
 };
 
 class StatementNode : public AstNode {};
 class ExpressionNode : public AstNode {};
-class IdentNode;
 
 /* Top-level nodes */
 
@@ -27,6 +36,7 @@ public:
 	void prepend(AstNode* child);
 	virtual const char* str() const { return "Program"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	ProgramNode() {}
@@ -36,13 +46,16 @@ private:
 class LabelNode : public AstNode
 {
 public:
-	static LabelNode* create(IdentNode* name);
+	static LabelNode* create(const char* name);
 	virtual const char* str() const { return "Label"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
+	
+	const char* name() { return name_; }
 	
 private:
 	LabelNode() {}
-	IdentNode* name_;
+	const char* name_;
 };
 
 /* Expression nodes */
@@ -52,6 +65,7 @@ public:
 	static NotNode* create(ExpressionNode* expression);
 	virtual const char* str() const { return "Not"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	NotNode() {}
@@ -74,6 +88,7 @@ class GreaterNode : public BinaryOperatorNode
 public:
 	static GreaterNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Greater"; }
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	GreaterNode() {}
@@ -84,6 +99,7 @@ class EqualNode : public BinaryOperatorNode
 public:
 	static EqualNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Equal"; }
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	EqualNode() {}
@@ -94,6 +110,7 @@ class PlusNode : public BinaryOperatorNode
 public:
 	static PlusNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Plus"; }
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	PlusNode() {}
@@ -104,6 +121,7 @@ class MinusNode : public BinaryOperatorNode
 public:
 	static MinusNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Minus"; }
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	MinusNode() {}
@@ -114,6 +132,7 @@ class TimesNode : public BinaryOperatorNode
 public:
 	static TimesNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Times"; }
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	TimesNode() {}
@@ -124,21 +143,25 @@ class DivideNode : public BinaryOperatorNode
 public:
 	static DivideNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Divide"; }
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	DivideNode() {}
 };
 
-class IdentNode : public ExpressionNode
+class VariableNode : public ExpressionNode
 {
 public:
-	static IdentNode* create(const char* symbol);
-	virtual const char* str() const { return "Ident"; }
+	static VariableNode* create(const char* name);
+	virtual const char* str() const { return "Variable"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
+	
+	const char* name() { return name_; }
 	
 private:
-	IdentNode() {}
-	const char* symbol_;
+	VariableNode() {}
+	const char* name_;
 };
 
 class IntNode : public ExpressionNode
@@ -147,6 +170,7 @@ public:
 	static IntNode* create(const char* symbol);
 	virtual const char* str() const { return "Int"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	IntNode() {}
@@ -160,6 +184,7 @@ public:
 	static IfNode* create(ExpressionNode* condition, StatementNode* body);
 	virtual const char* str() const { return "If"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	IfNode() {}
@@ -170,13 +195,16 @@ private:
 class GotoNode : public StatementNode
 {
 public:
-	static GotoNode* create(IdentNode* target);
+	static GotoNode* create(const char* target);
 	virtual const char* str() const { return "Goto"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
+	
+	const char* target() const { return target_; }
 	
 private:
 	GotoNode() {}
-	IdentNode* target_;
+	const char* target_;
 };
 
 class PrintNode : public StatementNode
@@ -185,6 +213,7 @@ public:
 	static PrintNode* create(ExpressionNode* expression);
 	virtual const char* str() const { return "Print"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	PrintNode() {}
@@ -194,26 +223,51 @@ private:
 class ReadNode : public StatementNode
 {
 public:
-	static ReadNode* create(IdentNode* target);
+	static ReadNode* create(VariableNode* target);
 	virtual const char* str() const { return "Read"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	ReadNode() {}
-	IdentNode* target_;
+	VariableNode* target_;
 };
 
 class AssignNode : public StatementNode
 {
 public:
-	static AssignNode* create(IdentNode* target, ExpressionNode* value);
+	static AssignNode* create(VariableNode* target, ExpressionNode* value);
 	virtual const char* str() const { return "Assign"; }
 	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor);
 	
 private:
 	AssignNode() {}
-	IdentNode* target_;
+	VariableNode* target_;
 	ExpressionNode* value_;
+};
+
+/* Visitor class */
+
+class AstVisitor
+{
+public:
+	virtual void visit(ProgramNode* node) {}
+	virtual void visit(LabelNode* node) {}
+	virtual void visit(NotNode* node) {}
+	virtual void visit(GreaterNode* node) {}
+	virtual void visit(EqualNode* node) {}
+	virtual void visit(PlusNode* node) {}
+	virtual void visit(MinusNode* node) {}
+	virtual void visit(TimesNode* node) {}
+	virtual void visit(DivideNode* node) {}
+	virtual void visit(VariableNode* node) {}
+	virtual void visit(IntNode* node) {}
+	virtual void visit(IfNode* node) {}
+	virtual void visit(GotoNode* node) {}
+	virtual void visit(PrintNode* node) {}
+	virtual void visit(ReadNode* node) {}
+	virtual void visit(AssignNode* node) {}
 };
 
 #endif

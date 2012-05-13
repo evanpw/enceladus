@@ -5,11 +5,12 @@ Objectives
 * Turing-complete
 * No syntactic sugar - syntax as simple as possible
 * Only type is integer (equivalent of C's int) - booleans are zero/non-zero
+* Only a single file of source code is supported
 
 Syntax
 --
 * No multi-line comments - #-style line comments only
-* Only logical operator is "not" - and is simulated by nesting if statements
+* Only logical operator is "not" - "and" is simulated by nesting if statements
 * Commands are newline-terminated
 * Commands: if (no else, use goto instead), then, goto, print, read
 * Only comparison operators: >, =
@@ -40,3 +41,11 @@ Operators
 2) + - (left)
 3) > = (not associative)
 4) not (not associative)
+
+
+
+Semantic Analysis
+--
+* Labels cannot be repeated (Phase 1)
+* Labels cannot be used as variables, and vice versa (Phase 1)
+* All "goto" targets must be declared somewhere, and must be a label (Phase 2)

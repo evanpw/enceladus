@@ -1,0 +1,24 @@
+# Prints out the prime numbers from 2 to 100
+
+n <- 2
+
+main_loop:
+	i <- 2
+	
+	inner_loop:
+		if i > (n - 1) then goto is_prime
+		
+		d <- n / i
+		if d * i = n then goto end_inner_loop
+		
+		i <- i + 1
+		goto inner_loop
+		
+	is_prime:
+		print n
+	
+	end_inner_loop:
+	
+	n <- n + 1
+	
+	if not (n > 100) then goto main_loop

@@ -3,12 +3,16 @@
 #include "string_table.hpp"
 #include "simple.tab.h"
 
-int line_number = 1;
 extern YYSTYPE yylval;
+
+int yycolumn = 1;
+#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
+	yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
+	yycolumn += yyleng;
 %}
 
-/* Only scan one file per execution */
 %option noyywrap
+%option yylineno
 
 %%
 
@@ -36,13 +40,12 @@ extern YYSTYPE yylval;
 "read"		{ return READ; }
 
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
-\n		{ ++line_number; return EOL; }
+\n		{ yycolumn = 1; return EOL; }
 [ \t\r]		/* Ignore whitespace */
-.		{
-			char msg[32];
-			sprintf(msg, "Unknown character: %c", yytext[0]);
-			yylval.str = StringTable::add(msg);
-			return ERROR;
+.		{ 
+				std::cerr << "Near line " << yylloc.first_line << ", "
+						  << "column " << yylloc.first_column << ": "
+						  << "error: stray '" << yytext[0] << "'" << std::endl;
 		}
 
 %%
