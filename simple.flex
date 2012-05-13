@@ -16,8 +16,11 @@ int yycolumn = 1;
 
 %%
 
-[1-9][0-9]*	{ yylval.str = StringTable::add(yytext); return INT_LIT; }
-"#".*		/* Ignore comments */
+[0-9][0-9]*		{
+					yylval.str = StringTable::add(yytext);
+					return INT_LIT;
+				}
+"#".*			/* Ignore comments */
 
  /* Operators */
 "+"		{ return '+'; }

@@ -1,0 +1,15 @@
+# Converts a number read in decimal into binary.
+read n
+
+place <- 1
+result <- 0
+
+loop:
+	bit <- ((n / 2) * 2) - n
+	result <- result + (place * bit)
+	
+	n <- n / 2
+	place <- place * 10
+	if (n > 0) then goto loop
+	
+print result

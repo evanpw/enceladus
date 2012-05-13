@@ -1,5 +1,13 @@
 print 4  	# Nothing wrong with this
 
+print 013	# This is now okay
+
+print -12	# No unary minus
+
+if a > b > 2 then goto loop2 		# '>' operator is not associative
+
+if not not (a > 2) then goto loop2 	# This is okay even though 'not' is not associative
+
 loop_start	# Forgot a colon after a label
 
 print 5 	# Also okay
@@ -27,3 +35,5 @@ read loop2	# Used a label as a variable name
 goto i4		# Used a variable as the target of a goto
 
 goto loop3	# Undefined target of goto
+
+print 2		# No final newline character
