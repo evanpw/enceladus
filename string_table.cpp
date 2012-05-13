@@ -4,33 +4,23 @@
 
 using namespace std;
 
-Symbol::Symbol(const string& value)
-: value_(value)
-{
-}
+vector<const char*> StringTable::strings_;
 
-void Symbol::show(std::ostream& out, int indent) const
+const char* StringTable::add(const char* str)
 {
-	for (int k = 0; k < indent; ++k) out << "\t";
-	out << "Symbol: " << value_ << endl;
-}
-
-std::vector<Symbol*> StringTable::symbols_;
-
-Symbol* StringTable::add(const char* str)
-{
-	Symbol* symbol = new Symbol(str);
-	symbols_.push_back(symbol);
+	char* copy = new char[strlen(str) + 1];
+	strcpy(copy, str);
+	strings_.push_back(copy);
 	
-	return symbol;	
+	return copy;	
 }
 
 void StringTable::freeStrings()
 {
-	for (vector<Symbol*>::iterator i = symbols_.begin(); i != symbols_.end(); ++i)
+	for (vector<const char*>::iterator i = strings_.begin(); i != strings_.end(); ++i)
 	{
-		delete *i;
+		delete[] *i;
 	}
 	
-	symbols_.clear();
+	strings_.clear();
 }

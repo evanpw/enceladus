@@ -1,0 +1,5 @@
+* Python-style indentation for blocks, rather than curly braces
+* Design goal: minimal boilerplate
+* Design goal: readability
+* Design goal: high-level constructs
+* Non-design goal: performance

@@ -11,11 +11,12 @@ class AstNode
 public:
 	virtual ~AstNode() {};
 	virtual const char* str() const { return "AstNode"; }
-	virtual void show(std::ostream& out, int indent) const;
+	virtual void show(std::ostream& out, int depth) const;
 };
 
 class StatementNode : public AstNode {};
 class ExpressionNode : public AstNode {};
+class IdentNode;
 
 /* Top-level nodes */
 
@@ -25,7 +26,7 @@ public:
 	static ProgramNode* create();
 	void prepend(AstNode* child);
 	virtual const char* str() const { return "Program"; }
-	virtual void show(std::ostream& out, int indent) const;
+	virtual void show(std::ostream& out, int depth) const;
 	
 private:
 	ProgramNode() {}
@@ -35,76 +36,13 @@ private:
 class LabelNode : public AstNode
 {
 public:
-	static LabelNode* create(Symbol* symbol);
+	static LabelNode* create(IdentNode* name);
 	virtual const char* str() const { return "Label"; }
-	virtual void show(std::ostream& out, int indent) const;
+	virtual void show(std::ostream& out, int depth) const;
 	
 private:
 	LabelNode() {}
-	Symbol* symbol_;
-};
-
-/* Statement nodes */
-class IfNode : public StatementNode
-{
-public:
-	static IfNode* create(ExpressionNode* condition, StatementNode* body);
-	virtual const char* str() const { return "If"; }
-	virtual void show(std::ostream& out, int indent) const;
-	
-private:
-	IfNode() {}
-	ExpressionNode* condition_;
-	StatementNode* body_;
-};
-
-class GotoNode : public StatementNode
-{
-public:
-	static GotoNode* create(Symbol* target);
-	virtual const char* str() const { return "Goto"; }
-	virtual void show(std::ostream& out, int indent) const;
-	
-private:
-	GotoNode() {}
-	Symbol* target_;
-};
-
-class PrintNode : public StatementNode
-{
-public:
-	static PrintNode* create(ExpressionNode* expression);
-	virtual const char* str() const { return "Print"; }
-	virtual void show(std::ostream& out, int indent) const;
-	
-private:
-	PrintNode() {}
-	ExpressionNode* expression_;
-};
-
-class ReadNode : public StatementNode
-{
-public:
-	static ReadNode* create(Symbol* target);
-	virtual const char* str() const { return "Read"; }
-	virtual void show(std::ostream& out, int indent) const;
-	
-private:
-	ReadNode() {}
-	Symbol* target_;
-};
-
-class AssignNode : public StatementNode
-{
-public:
-	static AssignNode* create(Symbol* target, ExpressionNode* value);
-	virtual const char* str() const { return "Assign"; }
-	virtual void show(std::ostream& out, int indent) const;
-	
-private:
-	AssignNode() {}
-	Symbol* target_;
-	ExpressionNode* value_;
+	IdentNode* name_;
 };
 
 /* Expression nodes */
@@ -113,7 +51,7 @@ class NotNode : public ExpressionNode
 public:
 	static NotNode* create(ExpressionNode* expression);
 	virtual const char* str() const { return "Not"; }
-	virtual void show(std::ostream& out, int indent) const;
+	virtual void show(std::ostream& out, int depth) const;
 	
 private:
 	NotNode() {}
@@ -123,7 +61,7 @@ private:
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
-	virtual void show(std::ostream& out, int indent) const;
+	virtual void show(std::ostream& out, int depth) const;
 	
 protected:
 	BinaryOperatorNode() {}
@@ -194,25 +132,88 @@ private:
 class IdentNode : public ExpressionNode
 {
 public:
-	static IdentNode* create(Symbol* symbol);
+	static IdentNode* create(const char* symbol);
 	virtual const char* str() const { return "Ident"; }
-	virtual void show(std::ostream& out, int indent) const;
+	virtual void show(std::ostream& out, int depth) const;
 	
 private:
 	IdentNode() {}
-	Symbol* symbol_;
+	const char* symbol_;
 };
 
 class IntNode : public ExpressionNode
 {
 public:
-	static IntNode* create(Symbol* symbol);
+	static IntNode* create(const char* symbol);
 	virtual const char* str() const { return "Int"; }
-	virtual void show(std::ostream& out, int indent) const;
+	virtual void show(std::ostream& out, int depth) const;
 	
 private:
 	IntNode() {}
-	Symbol* symbol_;
+	const char* symbol_;
+};
+
+/* Statement nodes */
+class IfNode : public StatementNode
+{
+public:
+	static IfNode* create(ExpressionNode* condition, StatementNode* body);
+	virtual const char* str() const { return "If"; }
+	virtual void show(std::ostream& out, int depth) const;
+	
+private:
+	IfNode() {}
+	ExpressionNode* condition_;
+	StatementNode* body_;
+};
+
+class GotoNode : public StatementNode
+{
+public:
+	static GotoNode* create(IdentNode* target);
+	virtual const char* str() const { return "Goto"; }
+	virtual void show(std::ostream& out, int depth) const;
+	
+private:
+	GotoNode() {}
+	IdentNode* target_;
+};
+
+class PrintNode : public StatementNode
+{
+public:
+	static PrintNode* create(ExpressionNode* expression);
+	virtual const char* str() const { return "Print"; }
+	virtual void show(std::ostream& out, int depth) const;
+	
+private:
+	PrintNode() {}
+	ExpressionNode* expression_;
+};
+
+class ReadNode : public StatementNode
+{
+public:
+	static ReadNode* create(IdentNode* target);
+	virtual const char* str() const { return "Read"; }
+	virtual void show(std::ostream& out, int depth) const;
+	
+private:
+	ReadNode() {}
+	IdentNode* target_;
+};
+
+class AssignNode : public StatementNode
+{
+public:
+	static AssignNode* create(IdentNode* target, ExpressionNode* value);
+	virtual const char* str() const { return "Assign"; }
+	virtual void show(std::ostream& out, int depth) const;
+	
+private:
+	AssignNode() {}
+	IdentNode* target_;
+	ExpressionNode* value_;
 };
 
 #endif

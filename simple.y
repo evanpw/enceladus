@@ -25,8 +25,9 @@ extern ProgramNode* root;
 	AstNode* line;
 	LabelNode* label;
 	StatementNode* statement;
+	IdentNode* ident;
 	ExpressionNode* expression;
-	Symbol* symbol;
+	const char* str;
 }
 
 %type<program> program
@@ -34,9 +35,10 @@ extern ProgramNode* root;
 %type<label> label
 %type<statement> statement
 %type<expression> expression
+%type<ident> ident
 
 %token ERROR IF THEN GOTO PRINT READ ASSIGN NOT EOL
-%token<symbol> INT_LIT IDENT
+%token<str> INT_LIT IDENT
 
 %nonassoc NOT
 %nonassoc '>' '='
@@ -72,7 +74,7 @@ line: /* empty */
 		}
 	;
      
-label: IDENT ':'
+label: ident ':'
 		{
 			$$ = LabelNode::create($1);
 		}
@@ -82,7 +84,7 @@ statement: IF expression THEN statement
 		{
 			$$ = IfNode::create($2, $4);
 		}
-	| GOTO IDENT
+	| GOTO ident
 		{
 			$$ = GotoNode::create($2);
 		}
@@ -90,11 +92,11 @@ statement: IF expression THEN statement
 		{
 			$$ = PrintNode::create($2);
 		}
-	| READ IDENT
+	| READ ident
 		{
 			$$ = ReadNode::create($2);
 		}
-	| IDENT ASSIGN expression
+	| ident ASSIGN expression
 		{
 			$$ = AssignNode::create($1, $3);
 		}
@@ -132,15 +134,17 @@ expression: NOT expression
 		{
 			$$ = $2;
 		}
-	| IDENT
-		{
-			$$ = IdentNode::create($1);
-		}
+	| ident
 	| INT_LIT
 		{
 			$$ = IntNode::create($1);
 		}
 	;
+	
+ident: IDENT
+	{
+		$$ = IdentNode::create($1);
+	}
 
 %%
 

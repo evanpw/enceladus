@@ -1,12 +1,13 @@
 #include <iostream>
 #include "ast.hpp"
 #include "memory_manager.hpp"
+#include "utilities.hpp"
 
 using namespace std;
 
-void AstNode::show(ostream& out, int indent) const
+void AstNode::show(ostream& out, int depth) const
 {
-	for (int k = 0; k < indent; ++k) out << "\t";
+	indent(out, depth);
 	out << str() << endl;
 }
 
@@ -23,28 +24,28 @@ void ProgramNode::prepend(AstNode* child)
 	children_.push_back(child);
 }
 
-void ProgramNode::show(ostream& out, int indent) const
+void ProgramNode::show(ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
+	AstNode::show(out, depth);
 	for (list<AstNode*>::const_iterator i = children_.begin(); i != children_.end(); ++i)
 	{
-		(*i)->show(out, indent + 1);	
+		(*i)->show(out, depth + 1);	
 	}
 }
 
-LabelNode* LabelNode::create(Symbol* symbol)
+LabelNode* LabelNode::create(IdentNode* name)
 {
 	LabelNode* node = new LabelNode;
 	MemoryManager::addNode(node);
 	
-	node->symbol_ = symbol;
+	node->name_ = name;
 	return node;
 }
 
-void LabelNode::show(std::ostream& out, int indent) const
+void LabelNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	symbol_->show(out, indent + 1);
+	AstNode::show(out, depth);
+	name_->show(out, depth + 1);
 }
 
 IfNode* IfNode::create(ExpressionNode* condition, StatementNode* body)
@@ -57,14 +58,14 @@ IfNode* IfNode::create(ExpressionNode* condition, StatementNode* body)
 	return node;
 }
 
-void IfNode::show(std::ostream& out, int indent) const
+void IfNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	condition_->show(out, indent + 1);
-	body_->show(out, indent + 1);
+	AstNode::show(out, depth);
+	condition_->show(out, depth + 1);
+	body_->show(out, depth + 1);
 }
 
-GotoNode* GotoNode::create(Symbol* target)
+GotoNode* GotoNode::create(IdentNode* target)
 {
 	GotoNode* node = new GotoNode;
 	MemoryManager::addNode(node);
@@ -73,10 +74,10 @@ GotoNode* GotoNode::create(Symbol* target)
 	return node;
 }
 
-void GotoNode::show(std::ostream& out, int indent) const
+void GotoNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	target_->show(out, indent + 1);
+	AstNode::show(out, depth);
+	target_->show(out, depth + 1);
 }
 
 PrintNode* PrintNode::create(ExpressionNode* expression)
@@ -88,13 +89,13 @@ PrintNode* PrintNode::create(ExpressionNode* expression)
 	return node;
 }
 
-void PrintNode::show(std::ostream& out, int indent) const
+void PrintNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	expression_->show(out, indent + 1);	
+	AstNode::show(out, depth);
+	expression_->show(out, depth + 1);	
 }
 
-ReadNode* ReadNode::create(Symbol* target)
+ReadNode* ReadNode::create(IdentNode* target)
 {
 	ReadNode* node = new ReadNode;
 	MemoryManager::addNode(node);
@@ -103,13 +104,13 @@ ReadNode* ReadNode::create(Symbol* target)
 	return node;
 }
 
-void ReadNode::show(std::ostream& out, int indent) const
+void ReadNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	target_->show(out, indent + 1);
+	AstNode::show(out, depth);
+	target_->show(out, depth + 1);
 }
 
-AssignNode* AssignNode::create(Symbol* target, ExpressionNode* value)
+AssignNode* AssignNode::create(IdentNode* target, ExpressionNode* value)
 {
 	AssignNode* node = new AssignNode;
 	MemoryManager::addNode(node);
@@ -119,11 +120,12 @@ AssignNode* AssignNode::create(Symbol* target, ExpressionNode* value)
 	return node;
 }
 
-void AssignNode::show(std::ostream& out, int indent) const
+void AssignNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	target_->show(out, indent + 1);
-	value_->show(out, indent + 1);	
+	AstNode::show(out, depth);
+	
+	target_->show(out, depth + 1); 
+	value_->show(out, depth + 1);	
 }
 
 NotNode* NotNode::create(ExpressionNode* expression)
@@ -135,17 +137,17 @@ NotNode* NotNode::create(ExpressionNode* expression)
 	return node;
 }
 
-void NotNode::show(std::ostream& out, int indent) const
+void NotNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	expression_->show(out, indent + 1);
+	AstNode::show(out, depth);
+	expression_->show(out, depth + 1);
 }
 
-void BinaryOperatorNode::show(std::ostream& out, int indent) const
+void BinaryOperatorNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	lhs_->show(out, indent + 1);
-	rhs_->show(out, indent + 1);	
+	AstNode::show(out, depth);
+	lhs_->show(out, depth + 1);
+	rhs_->show(out, depth + 1);	
 }
 
 GreaterNode* GreaterNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
@@ -208,7 +210,7 @@ DivideNode* DivideNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
 	return node;
 }
 
-IdentNode* IdentNode::create(Symbol* symbol)
+IdentNode* IdentNode::create(const char* symbol)
 {
 	IdentNode* node = new IdentNode;
 	MemoryManager::addNode(node);
@@ -217,13 +219,13 @@ IdentNode* IdentNode::create(Symbol* symbol)
 	return node;
 }
 
-void IdentNode::show(std::ostream& out, int indent) const
+void IdentNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	symbol_->show(out, indent + 1);
+	indent(out, depth);
+	out << "Ident: " << symbol_ << endl;
 }
 
-IntNode* IntNode::create(Symbol* symbol)
+IntNode* IntNode::create(const char* symbol)
 {
 	IntNode* node = new IntNode;
 	MemoryManager::addNode(node);
@@ -232,8 +234,8 @@ IntNode* IntNode::create(Symbol* symbol)
 	return node;
 }
 
-void IntNode::show(std::ostream& out, int indent) const
+void IntNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, indent);
-	symbol_->show(out, indent + 1);
+	indent(out, depth);
+	out << "Int: " << symbol_ << endl;
 }
