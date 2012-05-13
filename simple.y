@@ -135,6 +135,9 @@ expression: NOT expression
 			$$ = $2;
 		}
 	| ident
+		{
+			$$ = static_cast<ExpressionNode*>($1);
+		}
 	| INT_LIT
 		{
 			$$ = IntNode::create($1);
@@ -158,5 +161,6 @@ int main()
 	root->show(cout, 0);
 	
 	MemoryManager::freeNodes();
+	StringTable::freeStrings();
 	return 0;
 }
