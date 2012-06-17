@@ -37,3 +37,6 @@ goto i4		# Used a variable as the target of a goto
 goto loop3	# Undefined target of goto
 
 print 2		# No final newline character
+
+q <- 2147483648		# Out of range
+q <- 2147483647		# Should be okay

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <list>
+#include <sstream>
 #include "string_table.hpp"
 
 class AstVisitor;
@@ -18,9 +19,11 @@ public:
 	virtual void show(std::ostream& out, int depth) const;
 	virtual void accept(AstVisitor* visitor) = 0;
 	
+	std::stringstream& code() { return code_; }
 	YYLTYPE* location() { return location_; }
 	
 protected:
+	std::stringstream code_;
 	YYLTYPE* location_;
 };
 
@@ -167,14 +170,14 @@ private:
 class IntNode : public ExpressionNode
 {
 public:
-	static IntNode* create(const char* symbol);
+	static IntNode* create(int value);
 	virtual const char* str() const { return "Int"; }
 	virtual void show(std::ostream& out, int depth) const;
 	virtual void accept(AstVisitor* visitor);
 	
 private:
 	IntNode() {}
-	const char* symbol_;
+	int value_;
 };
 
 /* Statement nodes */

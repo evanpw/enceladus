@@ -224,19 +224,19 @@ void VariableNode::accept(AstVisitor* visitor)
 	visitor->visit(this);
 }
 
-IntNode* IntNode::create(const char* symbol)
+IntNode* IntNode::create(int value)
 {
 	IntNode* node = new IntNode;
 	MemoryManager::addNode(node);
 	
-	node->symbol_ = symbol;
+	node->value_ = value;
 	return node;
 }
 
 void IntNode::show(std::ostream& out, int depth) const
 {
 	indent(out, depth);
-	out << "Int: " << symbol_ << endl;
+	out << "Int: " << value_ << endl;
 }
 
 void IntNode::accept(AstVisitor* visitor)

@@ -28,6 +28,7 @@ void yyerror(const char* msg);
 	VariableNode* variable;
 	ExpressionNode* expression;
 	const char* str;
+	int number;
 }
 
 %type<program> program
@@ -38,7 +39,8 @@ void yyerror(const char* msg);
 %type<variable> variable
 
 %token ERROR IF THEN GOTO PRINT READ ASSIGN NOT EOL
-%token<str> INT_LIT IDENT
+%token<str> IDENT
+%token<number> INT_LIT
 
 %nonassoc NOT
 %nonassoc '>' '='
