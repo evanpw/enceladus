@@ -4,9 +4,9 @@
 #include <iostream>
 #include <list>
 #include <sstream>
+#include "ast_visitor.hpp"
 #include "string_table.hpp"
 
-class AstVisitor;
 struct YYLTYPE;
 
 /* Abstract base nodes */
@@ -39,7 +39,10 @@ public:
 	void prepend(AstNode* child);
 	virtual const char* str() const { return "Program"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	const std::list<AstNode*>& children() const { return children_; }
 	
 private:
 	ProgramNode() {}
@@ -52,7 +55,7 @@ public:
 	static LabelNode* create(const char* name);
 	virtual const char* str() const { return "Label"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 	const char* name() { return name_; }
 	
@@ -68,7 +71,9 @@ public:
 	static NotNode* create(ExpressionNode* expression);
 	virtual const char* str() const { return "Not"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	ExpressionNode* child() { return expression_; }
 	
 private:
 	NotNode() {}
@@ -79,6 +84,9 @@ class BinaryOperatorNode : public ExpressionNode
 {
 public:
 	virtual void show(std::ostream& out, int depth) const;
+	
+	ExpressionNode* lhs() { return lhs_; }
+	ExpressionNode* rhs() { return rhs_; }
 	
 protected:
 	BinaryOperatorNode() {}
@@ -91,7 +99,7 @@ class GreaterNode : public BinaryOperatorNode
 public:
 	static GreaterNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Greater"; }
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 private:
 	GreaterNode() {}
@@ -102,7 +110,7 @@ class EqualNode : public BinaryOperatorNode
 public:
 	static EqualNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Equal"; }
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 private:
 	EqualNode() {}
@@ -113,7 +121,7 @@ class PlusNode : public BinaryOperatorNode
 public:
 	static PlusNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Plus"; }
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 private:
 	PlusNode() {}
@@ -124,7 +132,7 @@ class MinusNode : public BinaryOperatorNode
 public:
 	static MinusNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Minus"; }
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 private:
 	MinusNode() {}
@@ -135,7 +143,7 @@ class TimesNode : public BinaryOperatorNode
 public:
 	static TimesNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Times"; }
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 private:
 	TimesNode() {}
@@ -146,7 +154,7 @@ class DivideNode : public BinaryOperatorNode
 public:
 	static DivideNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
 	virtual const char* str() const { return "Divide"; }
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 private:
 	DivideNode() {}
@@ -158,7 +166,7 @@ public:
 	static VariableNode* create(const char* name);
 	virtual const char* str() const { return "Variable"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 	const char* name() { return name_; }
 	
@@ -173,7 +181,9 @@ public:
 	static IntNode* create(int value);
 	virtual const char* str() const { return "Int"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	int value() { return value_; }
 	
 private:
 	IntNode() {}
@@ -187,7 +197,10 @@ public:
 	static IfNode* create(ExpressionNode* condition, StatementNode* body);
 	virtual const char* str() const { return "If"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	ExpressionNode* condition() { return condition_; }
+	StatementNode* body() { return body_; }
 	
 private:
 	IfNode() {}
@@ -201,7 +214,7 @@ public:
 	static GotoNode* create(const char* target);
 	virtual const char* str() const { return "Goto"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 	const char* target() const { return target_; }
 	
@@ -216,7 +229,9 @@ public:
 	static PrintNode* create(ExpressionNode* expression);
 	virtual const char* str() const { return "Print"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	ExpressionNode* expression() { return expression_; }
 	
 private:
 	PrintNode() {}
@@ -229,7 +244,9 @@ public:
 	static ReadNode* create(VariableNode* target);
 	virtual const char* str() const { return "Read"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	VariableNode* target() { return target_; }
 	
 private:
 	ReadNode() {}
@@ -242,35 +259,15 @@ public:
 	static AssignNode* create(VariableNode* target, ExpressionNode* value);
 	virtual const char* str() const { return "Assign"; }
 	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor);
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	VariableNode* target() { return target_; }
+	ExpressionNode* value() { return value_; }
 	
 private:
 	AssignNode() {}
 	VariableNode* target_;
 	ExpressionNode* value_;
-};
-
-/* Visitor class */
-
-class AstVisitor
-{
-public:
-	virtual void visit(ProgramNode* node) {}
-	virtual void visit(LabelNode* node) {}
-	virtual void visit(NotNode* node) {}
-	virtual void visit(GreaterNode* node) {}
-	virtual void visit(EqualNode* node) {}
-	virtual void visit(PlusNode* node) {}
-	virtual void visit(MinusNode* node) {}
-	virtual void visit(TimesNode* node) {}
-	virtual void visit(DivideNode* node) {}
-	virtual void visit(VariableNode* node) {}
-	virtual void visit(IntNode* node) {}
-	virtual void visit(IfNode* node) {}
-	virtual void visit(GotoNode* node) {}
-	virtual void visit(PrintNode* node) {}
-	virtual void visit(ReadNode* node) {}
-	virtual void visit(AssignNode* node) {}
 };
 
 #endif

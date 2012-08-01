@@ -29,6 +29,7 @@ public:
 	
 	static Symbol* insert(const char* name, SymbolType type, AstNode* node = 0);
 	static void freeSymbols();
+	static const std::map<const char*, Symbol*>& symbols() { return symbols_; }
 	
 private:
 	SymbolTable();

@@ -49,3 +49,31 @@ Semantic Analysis
 * Labels cannot be repeated (Phase 1)
 * Labels cannot be used as variables, and vice versa (Phase 1)
 * All "goto" targets must be declared somewhere, and must be a label (Phase 2)
+
+Code Generation
+--
+* All identifiers and labels in the program are mangled by adding a single leading underscore
+* All compiler-generated identifiers and labels start with two leading underscores
+
+Next Steps
+--
+* Remove VariableNode from beneath ReadNode
+* Replace parser.cpp with an actual compiler program
+* Clean up the code generator
+* Use this as the starting point for the next compiler
+- boolean type and type checking
+- functions and scopes
+- syntactic sugar
+- code blocks
+- more comparisons
+- more operators
+- add else clause to if statements
+- boolean operators: and, or
+- for loop
+
+Lesson learned
+---------------
+* Better to do the recursion in the visitor pattern in the actual visitor class.
+  It's more flexible, in that you can do things in between child nodes.
+* Code the AST classes in a unified way so that you can handle nodes with children
+  in a consistent way.

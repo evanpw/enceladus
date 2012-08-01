@@ -1,5 +1,0 @@
-for f in *.spl; do
-	echo "Testing $f"
-	./lexer < $f > $f.out
-	diff $f.out $f.out.correct
-done

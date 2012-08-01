@@ -1,0 +1,20 @@
+# Solves Project Euler #1
+
+n <- 1
+sum <- 0
+main_loop:
+	if (n / 3) * 3 = n then goto is_multiple
+	if (n / 5) * 5 = n then goto is_multiple
+	
+	goto not_multiple
+	
+  is_multiple:
+  	
+  	sum <- sum + n
+	
+  not_multiple:
+	
+	n <- n + 1
+	if not (n > 999) then goto main_loop
+	
+print sum

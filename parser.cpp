@@ -1,5 +1,7 @@
+#include <cstdio>
 #include <iostream>
 #include "ast.hpp"
+#include "codegen.hpp"
 #include "memory_manager.hpp"
 #include "semantic.hpp"
 #include "string_table.hpp"
@@ -8,20 +10,31 @@
 using namespace std;
 
 extern int yyparse();
+extern FILE* yyin;
 
 ProgramNode* root;
 
-int main()
+int main(int argc, char* argv[])
 {
-	yyparse();
+	if (argc >= 1)
+	{
+		yyin = fopen(argv[1], "r");
+	}
+	else
+	{
+		yyin = stdin;
+	}
 	
-	root->show(cout, 0);
+	yyparse();
 	
 	SemanticPass1 visitor;
 	root->accept(&visitor);
 	
 	SemanticPass2 visitor2;
 	root->accept(&visitor2);
+	
+	CodeGen codegen;
+	root->accept(&codegen);
 	
 	MemoryManager::freeNodes();
 	StringTable::freeStrings();
