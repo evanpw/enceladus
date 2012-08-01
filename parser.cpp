@@ -25,16 +25,16 @@ int main(int argc, char* argv[])
 		yyin = stdin;
 	}
 	
-	yyparse();
+	int parse_result = yyparse();
 	
-	SemanticPass1 visitor;
-	root->accept(&visitor);
+	SemanticAnalyzer semant(root);
+	bool semantic_result = semant.analyze();
 	
-	SemanticPass2 visitor2;
-	root->accept(&visitor2);
-	
-	CodeGen codegen;
-	root->accept(&codegen);
+	if (parse_result == 0 && semantic_result)
+	{
+		CodeGen codegen;
+		root->accept(&codegen);
+	}
 	
 	MemoryManager::freeNodes();
 	StringTable::freeStrings();
