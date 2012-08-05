@@ -5,7 +5,7 @@
 
 class AstNode;
 
-enum SymbolType {kLabel, kVariable};
+enum Kind {kLabel, kVariable};
 
 struct Symbol
 {
@@ -15,7 +15,7 @@ struct Symbol
 	const char* name;
 	
 	// Label or variable?
-	SymbolType type;
+	Kind type;
 	
 	// For a label, the node at which the label is declared. For a variable, null
 	AstNode* node;
@@ -27,7 +27,7 @@ public:
 	// Returns 0 if the symbol is not found in the symbol table
 	static Symbol* find(const char* name);
 	
-	static Symbol* insert(const char* name, SymbolType type, AstNode* node = 0);
+	static Symbol* insert(const char* name, Kind type, AstNode* node = 0);
 	static void freeSymbols();
 	static const std::map<const char*, Symbol*>& symbols() { return symbols_; }
 	

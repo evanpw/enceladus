@@ -50,6 +50,7 @@ LabelNode* LabelNode::create(const char* name)
 	MemoryManager::addNode(node);
 	
 	node->name_ = name;
+	node->symbol_ = 0;
 	return node;
 }
 
@@ -147,6 +148,7 @@ VariableNode* VariableNode::create(const char* name)
 	MemoryManager::addNode(node);
 	
 	node->name_ = name;
+	node->symbol_ = 0;
 	return node;
 }
 

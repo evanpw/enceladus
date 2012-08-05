@@ -16,9 +16,12 @@ bool SemanticAnalyzer::analyze()
 	root_->accept(&pass1);
 	
 	SemanticPass2 pass2;
-	root_->accept(&pass1);
+	root_->accept(&pass2);
 	
-	return pass1.success() && pass2.success();
+	TypeChecker typeChecker;
+	root_->accept(&typeChecker);
+	
+	return pass1.success() && pass2.success() && typeChecker.success();
 }
 
 SemanticPass1::SemanticPass1()
@@ -52,7 +55,7 @@ void SemanticPass1::visit(LabelNode* node)
 	}
 	else
 	{	
-		SymbolTable::insert(name, kLabel, node);
+		node->attachSymbol(SymbolTable::insert(name, kLabel, node));
 	}
 }
 
@@ -74,7 +77,7 @@ void SemanticPass1::visit(VariableNode* node)
 	}
 	else
 	{
-		SymbolTable::insert(name, kVariable, node);
+		node->attachSymbol(SymbolTable::insert(name, kVariable, node));
 	}
 }
 
@@ -109,3 +112,164 @@ void SemanticPass2::visit(GotoNode* node)
 	}
 }
 
+TypeChecker::TypeChecker()
+: success_(true)
+{
+}
+
+bool TypeChecker::typeCheck(AstNode* node, Type type)
+{
+	if (node->type() != type)
+	{
+		cerr << "Near line " << node->location()->first_line << ", "
+			 << "column " << node->location()->first_column << ": "
+			 << "type error: expected " << typeNames[type] << ", but got " << typeNames[node->type()] << endl;
+			 
+		success_ = false;
+		return false;
+	}
+	
+	return true;
+}
+
+// Internal nodes
+void TypeChecker::visit(ProgramNode* node)
+{
+	for (std::list<AstNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	{
+		(*i)->accept(this);	
+	}
+	
+	node->setType(kNone);
+}
+
+void TypeChecker::visit(NotNode* node)
+{
+	node->child()->accept(this);
+	
+	typeCheck(node->child(), kBool);
+	
+	node->setType(kBool);
+}
+
+void TypeChecker::visit(GreaterNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), kInt);
+	
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), kInt);
+	
+	node->setType(kBool);
+}
+
+void TypeChecker::visit(EqualNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), kInt);
+	
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), kInt);
+	
+	node->setType(kBool);
+}
+
+void TypeChecker::visit(PlusNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), kInt);
+	
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), kInt);
+	
+	node->setType(kInt);
+}
+
+void TypeChecker::visit(MinusNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), kInt);
+	
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), kInt);
+	
+	node->setType(kInt);
+}
+
+void TypeChecker::visit(TimesNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), kInt);
+	
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), kInt);
+	
+	node->setType(kInt);
+}
+
+void TypeChecker::visit(DivideNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), kInt);
+	
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), kInt);
+	
+	node->setType(kInt);
+}
+
+void TypeChecker::visit(IfNode* node)
+{
+	node->condition()->accept(this);
+	typeCheck(node->condition(), kBool);
+	
+	node->body()->accept(this);
+	
+	node->setType(kNone);
+}
+
+void TypeChecker::visit(PrintNode* node)
+{
+	node->expression()->accept(this);
+	typeCheck(node->expression(), kInt);
+	
+	node->setType(kNone);
+}
+
+void TypeChecker::visit(ReadNode* node)
+{
+	node->target()->accept(this);
+	typeCheck(node->target(), kInt);
+	
+	node->setType(kNone);
+}
+
+void TypeChecker::visit(AssignNode* node)
+{
+	node->target()->accept(this);
+	typeCheck(node->target(), kInt);
+	
+	node->value()->accept(this);
+	typeCheck(node->value(), kInt);
+}
+
+// Leaf nodes
+void TypeChecker::visit(LabelNode* node)
+{
+	node->setType(kNone);	
+}
+
+void TypeChecker::visit(VariableNode* node)
+{
+	node->setType(kInt);
+}
+
+void TypeChecker::visit(IntNode* node)
+{
+	node->setType(kInt);
+}
+
+void TypeChecker::visit(GotoNode* node)
+{
+	node->setType(kNone);
+}

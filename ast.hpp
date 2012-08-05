@@ -6,6 +6,8 @@
 #include <sstream>
 #include "ast_visitor.hpp"
 #include "string_table.hpp"
+#include "symbol_table.hpp"
+#include "types.hpp"
 
 struct YYLTYPE;
 
@@ -21,10 +23,14 @@ public:
 	
 	std::stringstream& code() { return code_; }
 	YYLTYPE* location() { return location_; }
+	Type type() { return type_; }
+	
+	void setType(Type type) { type_ = type; }
 	
 protected:
 	std::stringstream code_;
 	YYLTYPE* location_;
+	Type type_;
 };
 
 class StatementNode : public AstNode {};
@@ -58,10 +64,14 @@ public:
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 	const char* name() { return name_; }
+	const Symbol* symbol() { return symbol_; }
+	
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 	
 private:
 	LabelNode() {}
 	const char* name_;
+	Symbol* symbol_;
 };
 
 /* Expression nodes */
@@ -169,10 +179,14 @@ public:
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
 	const char* name() { return name_; }
+	const Symbol* symbol() { return symbol_; }
+	
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 	
 private:
 	VariableNode() {}
 	const char* name_;
+	Symbol* symbol_;
 };
 
 class IntNode : public ExpressionNode
