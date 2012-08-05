@@ -190,6 +190,25 @@ void IfNode::show(std::ostream& out, int depth) const
 	body_->show(out, depth + 1);
 }
 
+IfElseNode* IfElseNode::create(ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
+{
+	IfElseNode* node = new IfElseNode;
+	MemoryManager::addNode(node);
+	
+	node->condition_ = condition;
+	node->body_ = body;
+	node->else_body_ = else_body;
+	return node;
+}
+
+void IfElseNode::show(std::ostream& out, int depth) const
+{
+	AstNode::show(out, depth);
+	condition_->show(out, depth + 1);
+	body_->show(out, depth + 1);
+	else_body_->show(out, depth + 1);
+}
+
 GotoNode* GotoNode::create(const char* target)
 {	
 	GotoNode* node = new GotoNode;

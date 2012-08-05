@@ -150,6 +150,22 @@ void CodeGen::visit(IfNode* node)
 	out_ << endLabel << ":" << std::endl;
 }
 
+void CodeGen::visit(IfElseNode* node)
+{
+	node->condition()->accept(this);
+	
+	std::string elseLabel = uniqueLabel();
+	std::string endLabel = uniqueLabel();
+	
+	out_ << "cmp eax, 0" << std::endl;
+	out_ << "je " << elseLabel << std::endl;
+	node->body()->accept(this);
+	out_ << "jmp " << endLabel << std::endl;
+	out_ << elseLabel << ":" << std::endl;
+	node->else_body()->accept(this);
+	out_ << endLabel << ":" << std::endl;
+}
+
 void CodeGen::visit(GotoNode* node)
 {
 	out_ << "jmp _" << node->target() << std::endl;

@@ -222,6 +222,25 @@ private:
 	StatementNode* body_;
 };
 
+class IfElseNode : public StatementNode
+{
+public:
+	static IfElseNode* create(ExpressionNode* condition, StatementNode* body, StatementNode* else_body);
+	virtual const char* str() const { return "IfElse"; }
+	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	ExpressionNode* condition() { return condition_; }
+	StatementNode* body() { return body_; }
+	StatementNode* else_body() { return else_body_; }
+	
+private:
+	IfElseNode() {}
+	ExpressionNode* condition_;
+	StatementNode* body_;
+	StatementNode* else_body_;
+};
+
 class GotoNode : public StatementNode
 {
 public:

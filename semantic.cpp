@@ -228,6 +228,17 @@ void TypeChecker::visit(IfNode* node)
 	node->setType(kNone);
 }
 
+void TypeChecker::visit(IfElseNode* node)
+{
+	node->condition()->accept(this);
+	typeCheck(node->condition(), kBool);
+	
+	node->body()->accept(this);
+	node->else_body()->accept(this);
+	
+	node->setType(kNone);
+}
+
 void TypeChecker::visit(PrintNode* node)
 {
 	node->expression()->accept(this);

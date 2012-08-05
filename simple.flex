@@ -51,6 +51,7 @@ int yycolumn = 1;
  /* Keywords */
 "if"		{ return IF; }
 "then"		{ return THEN; }
+"else"		{ return ELSE; }
 "goto"		{ return GOTO; }
 "print"		{ return PRINT; }
 "read"		{ return READ; }

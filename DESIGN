@@ -61,13 +61,11 @@ Next Steps
 * Replace parser.cpp with an actual compiler program
 * Clean up the code generator
 * Use this as the starting point for the next compiler
-- boolean type and type checking
 - functions and scopes
 - syntactic sugar
 - code blocks
 - more comparisons
 - more operators
-- add else clause to if statements
 - boolean operators: and, or
 - for loop
 

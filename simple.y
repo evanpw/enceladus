@@ -18,6 +18,7 @@ void yyerror(const char* msg);
 %define "parse.lac" "full"
 %error-verbose
 %locations
+%expect 1 // if-then-else statements
 
 %union
 {
@@ -38,7 +39,7 @@ void yyerror(const char* msg);
 %type<expression> expression
 %type<variable> variable
 
-%token ERROR IF THEN GOTO PRINT READ ASSIGN NOT EOL
+%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT EOL
 %token<str> IDENT
 %token<number> INT_LIT
 
@@ -58,6 +59,7 @@ program: /* empty */
 			// Ignore blank lines
 			if ($2 != NULL)
 				$1->prepend($2);
+				
 			$$ = $1;
 		}
 	| program error EOL // An error on one line shouldn't break all other lines
@@ -89,6 +91,10 @@ label: IDENT ':'
 statement: IF expression THEN statement
 		{
 			$$ = IfNode::create($2, $4);
+		}
+	| IF expression THEN statement ELSE statement
+		{
+			$$ = IfElseNode::create($2, $4, $6);
 		}
 	| GOTO IDENT
 		{

@@ -10,6 +10,7 @@ class MinusNode;
 class TimesNode;
 class DivideNode;
 class IfNode;
+class IfElseNode;
 class PrintNode;
 class ReadNode;
 class AssignNode;
@@ -31,6 +32,7 @@ public:
 	virtual void visit(TimesNode* node);
 	virtual void visit(DivideNode* node);
 	virtual void visit(IfNode* node);
+	virtual void visit(IfElseNode* node);
 	virtual void visit(PrintNode* node);
 	virtual void visit(ReadNode* node);
 	virtual void visit(AssignNode* node);
