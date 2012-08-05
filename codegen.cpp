@@ -38,17 +38,7 @@ void CodeGen::visit(NotNode* node)
 {
 	// Load the value of the child expression in eax
 	node->child()->accept(this);
-	
-	std::string trueBranch = uniqueLabel();
-	std::string endLabel = uniqueLabel();
-	
-	out_ << "cmp eax, 0" << std::endl;
-	out_ << "je " << trueBranch << std::endl;
-	out_ << "mov eax, 0" << std::endl;
-	out_ << "jmp " << endLabel << std::endl;
-	out_ << trueBranch << ":" << std::endl;
-	out_ << "mov eax, 1" << std::endl;
-	out_ << endLabel << ":" << std::endl;
+	out_ << "xor eax, 1" << std::endl;
 }
 
 void CodeGen::visit(ComparisonNode* node)
@@ -99,6 +89,26 @@ void CodeGen::visit(BinaryOperatorNode* node)
 		out_ << "xchg eax, dword [esp]" << std::endl;
 		out_ << "cdq" << std::endl;
 		out_ << "idiv dword [esp]" << std::endl;
+		break;
+	}
+	
+	out_ << "pop ebx" << std::endl;
+}
+
+void CodeGen::visit(LogicalNode* node)
+{
+	node->lhs()->accept(this);
+	out_ << "push eax" << std::endl;
+	node->rhs()->accept(this);
+	
+	switch (node->op())
+	{
+	case LogicalNode::kAnd:
+		out_ << "and eax, dword [esp]" << std::endl;
+		break;
+		
+	case LogicalNode::kOr:
+		out_ << "or eax, dword [esp]" << std::endl;
 		break;
 	}
 	

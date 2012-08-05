@@ -41,11 +41,12 @@ void yyerror(const char* msg);
 %type<variable> variable
 %type<block> block statement_list
 
-%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT EOL
+%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL
 %token<str> IDENT
 %token<number> INT_LIT
 
 %nonassoc NOT
+%left AND OR
 %nonassoc '>' '='
 %left '+' '-'
 %left '*' '/'
@@ -149,6 +150,14 @@ statement_list:
 expression: NOT expression
 		{
 			$$ = NotNode::create($2);
+		}
+	| expression AND expression
+		{
+			$$ = LogicalNode::create($1, LogicalNode::kAnd, $3);
+		}
+	| expression OR expression
+		{
+			$$ = LogicalNode::create($1, LogicalNode::kOr, $3);
 		}
 	| expression '>' expression
 		{

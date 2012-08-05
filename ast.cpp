@@ -107,6 +107,35 @@ const char* BinaryOperatorNode::str() const
 	assert(false);
 }
 
+LogicalNode* LogicalNode::create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+{
+	LogicalNode* node = new LogicalNode;
+	MemoryManager::addNode(node);
+	
+	node->lhs_ = lhs;
+	node->op_ = op;
+	node->rhs_ = rhs;
+	return node;
+}
+
+void LogicalNode::show(std::ostream& out, int depth) const
+{
+	AstNode::show(out, depth);
+	lhs_->show(out, depth + 1);
+	rhs_->show(out, depth + 1);	
+}
+
+const char* LogicalNode::str() const
+{
+	switch (op_)
+	{
+	case kAnd: return "Logical(and)";
+	case kOr: return "Logical(or)";
+	}
+	
+	assert(false);
+}
+
 ComparisonNode* ComparisonNode::create(ExpressionNode* lhs, ComparisonNode::Operator op, ExpressionNode* rhs)
 {
 	ComparisonNode* node = new ComparisonNode;

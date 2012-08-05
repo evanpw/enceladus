@@ -27,6 +27,12 @@ void AstVisitor::visit(BinaryOperatorNode* node)
 	node->rhs()->accept(this);
 }
 
+void AstVisitor::visit(LogicalNode* node)
+{
+	node->lhs()->accept(this);
+	node->rhs()->accept(this);
+}
+
 void AstVisitor::visit(BlockNode* node)
 {
 	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)

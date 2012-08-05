@@ -110,6 +110,26 @@ protected:
 	ExpressionNode* rhs_;
 };
 
+class LogicalNode : public ExpressionNode
+{
+public:
+	enum Operator {kAnd, kOr};
+	static LogicalNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
+	virtual const char* str() const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	virtual void show(std::ostream& out, int depth) const;
+	
+	ExpressionNode* lhs() { return lhs_; }
+	Operator op() { return op_; }
+	ExpressionNode* rhs() { return rhs_; }
+	
+protected:
+	LogicalNode() {}
+	ExpressionNode* lhs_;
+	Operator op_;
+	ExpressionNode* rhs_;
+};
+
 class ComparisonNode : public ExpressionNode
 {
 public:

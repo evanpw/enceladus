@@ -63,11 +63,10 @@ Next Steps
 * Use this as the starting point for the next compiler
 - functions and scopes
 - syntactic sugar
-- code blocks
 - more comparisons
 - more operators
 - boolean operators: and, or
-- for loop
+- while loop
 
 Lesson learned
 ---------------

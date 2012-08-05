@@ -49,6 +49,8 @@ int yycolumn = 1;
 "}"		{ return '}'; }
 "<-"	{ return ASSIGN; }
 "not"	{ return NOT; }
+"and"	{ return AND; }
+"or"	{ return OR; }
 
  /* Keywords */
 "if"		{ return IF; }

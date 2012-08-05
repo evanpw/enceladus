@@ -174,6 +174,17 @@ void TypeChecker::visit(BinaryOperatorNode* node)
 	node->setType(kInt);
 }
 
+void TypeChecker::visit(LogicalNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), kBool);
+	
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), kBool);
+	
+	node->setType(kBool);
+}
+
 void TypeChecker::visit(BlockNode* node)
 {
 	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)

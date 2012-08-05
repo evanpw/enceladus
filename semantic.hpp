@@ -49,6 +49,7 @@ public:
 	virtual void visit(NotNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(BinaryOperatorNode* node);
+	virtual void visit(LogicalNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(IfElseNode* node);
