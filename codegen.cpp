@@ -6,16 +6,16 @@
 void CodeGen::visit(ProgramNode* node)
 {
 	out_ << "section .text" << std::endl;
-	out_ << "global start" << std::endl;
+	out_ << "global __main" << std::endl;
 	out_ << "extern __read, __print, __exit" << std::endl; 
-	out_ << "start:" << std::endl;
+	out_ << "__main:" << std::endl;
 	
 	for (std::list<AstNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
 	{
 		(*i)->accept(this);	
 	}
 	
-	out_ << "call __exit" << std::endl;
+	out_ << "ret" << std::endl;
 	
 	out_ << "section .data" << std::endl;
 	const std::map<const char*, Symbol*>& symbols = SymbolTable::symbols();

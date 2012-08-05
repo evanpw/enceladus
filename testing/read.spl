@@ -1,0 +1,2 @@
+read i
+print i + 2
