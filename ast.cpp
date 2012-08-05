@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include "ast.hpp"
 #include "memory_manager.hpp"
@@ -75,6 +76,17 @@ void NotNode::show(std::ostream& out, int depth) const
 	expression_->show(out, depth + 1);
 }
 
+BinaryOperatorNode* BinaryOperatorNode::create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+{
+	BinaryOperatorNode* node = new BinaryOperatorNode;
+	MemoryManager::addNode(node);
+	
+	node->lhs_ = lhs;
+	node->op_ = op;
+	node->rhs_ = rhs;
+	return node;
+}
+
 void BinaryOperatorNode::show(std::ostream& out, int depth) const
 {
 	AstNode::show(out, depth);
@@ -82,64 +94,46 @@ void BinaryOperatorNode::show(std::ostream& out, int depth) const
 	rhs_->show(out, depth + 1);	
 }
 
-GreaterNode* GreaterNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
+const char* BinaryOperatorNode::str() const
 {
-	GreaterNode* node = new GreaterNode;
+	switch (op_)
+	{
+	case kPlus: return "BinaryOp(+)";
+	case kMinus: return "BinaryOp(-)";
+	case kTimes: return "BinaryOp(*)";
+	case kDivide: return "BinaryOp(/)";
+	}
+	
+	assert(false);
+}
+
+ComparisonNode* ComparisonNode::create(ExpressionNode* lhs, ComparisonNode::Operator op, ExpressionNode* rhs)
+{
+	ComparisonNode* node = new ComparisonNode;
 	MemoryManager::addNode(node);
 	
 	node->lhs_ = lhs;
+	node->op_ = op;
 	node->rhs_ = rhs;
 	return node;
 }
 
-EqualNode* EqualNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
+const char* ComparisonNode::str() const
 {
-	EqualNode* node = new EqualNode;
-	MemoryManager::addNode(node);
+	switch (op_)
+	{
+	case kGreater: return "Comparison(>)";
+	case kEqual: return "Comparison(=)";
+	}
 	
-	node->lhs_ = lhs;
-	node->rhs_ = rhs;
-	return node;
+	assert(false);
 }
 
-PlusNode* PlusNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
+void ComparisonNode::show(std::ostream& out, int depth) const
 {
-	PlusNode* node = new PlusNode;
-	MemoryManager::addNode(node);
-	
-	node->lhs_ = lhs;
-	node->rhs_ = rhs;
-	return node;
-}
-
-MinusNode* MinusNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
-{
-	MinusNode* node = new MinusNode;
-	MemoryManager::addNode(node);
-	
-	node->lhs_ = lhs;
-	node->rhs_ = rhs;
-	return node;
-}
-
-TimesNode* TimesNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
-{
-	TimesNode* node = new TimesNode;
-	MemoryManager::addNode(node);
-	
-	node->lhs_ = lhs;
-	node->rhs_ = rhs;
-	return node;
-}
-
-DivideNode* DivideNode::create(ExpressionNode* lhs, ExpressionNode* rhs)
-{
-	DivideNode* node = new DivideNode;
-	MemoryManager::addNode(node);
-	
-	node->lhs_ = lhs;
-	node->rhs_ = rhs;
-	return node;
+	AstNode::show(out, depth);
+	lhs_->show(out, depth + 1);
+	rhs_->show(out, depth + 1);	
 }
 
 VariableNode* VariableNode::create(const char* name)

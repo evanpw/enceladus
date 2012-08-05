@@ -152,7 +152,7 @@ void TypeChecker::visit(NotNode* node)
 	node->setType(kBool);
 }
 
-void TypeChecker::visit(GreaterNode* node)
+void TypeChecker::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
 	typeCheck(node->lhs(), kInt);
@@ -163,51 +163,7 @@ void TypeChecker::visit(GreaterNode* node)
 	node->setType(kBool);
 }
 
-void TypeChecker::visit(EqualNode* node)
-{
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), kInt);
-	
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), kInt);
-	
-	node->setType(kBool);
-}
-
-void TypeChecker::visit(PlusNode* node)
-{
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), kInt);
-	
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), kInt);
-	
-	node->setType(kInt);
-}
-
-void TypeChecker::visit(MinusNode* node)
-{
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), kInt);
-	
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), kInt);
-	
-	node->setType(kInt);
-}
-
-void TypeChecker::visit(TimesNode* node)
-{
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), kInt);
-	
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), kInt);
-	
-	node->setType(kInt);
-}
-
-void TypeChecker::visit(DivideNode* node)
+void TypeChecker::visit(BinaryOperatorNode* node)
 {
 	node->lhs()->accept(this);
 	typeCheck(node->lhs(), kInt);

@@ -93,81 +93,42 @@ private:
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
+	enum Operator {kPlus, kMinus, kTimes, kDivide};
+	static BinaryOperatorNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
+	virtual const char* str() const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	virtual void show(std::ostream& out, int depth) const;
 	
 	ExpressionNode* lhs() { return lhs_; }
+	Operator op() { return op_; }
 	ExpressionNode* rhs() { return rhs_; }
 	
 protected:
 	BinaryOperatorNode() {}
 	ExpressionNode* lhs_;
+	Operator op_;
 	ExpressionNode* rhs_;
 };
 
-class GreaterNode : public BinaryOperatorNode
+class ComparisonNode : public ExpressionNode
 {
 public:
-	static GreaterNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
-	virtual const char* str() const { return "Greater"; }
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	enum Operator { kGreater, kEqual };
 	
-private:
-	GreaterNode() {}
-};
-
-class EqualNode : public BinaryOperatorNode
-{
-public:
-	static EqualNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
-	virtual const char* str() const { return "Equal"; }
+	static ComparisonNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
+	virtual const char* str() const;
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	virtual void show(std::ostream& out, int depth) const;
 	
-private:
-	EqualNode() {}
-};
-
-class PlusNode : public BinaryOperatorNode
-{
-public:
-	static PlusNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
-	virtual const char* str() const { return "Plus"; }
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	ExpressionNode* lhs() { return lhs_; }
+	Operator op() { return op_; }
+	ExpressionNode* rhs() { return rhs_; }
 	
-private:
-	PlusNode() {}
-};
-
-class MinusNode : public BinaryOperatorNode
-{
-public:
-	static MinusNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
-	virtual const char* str() const { return "Minus"; }
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-	
-private:
-	MinusNode() {}
-};
-
-class TimesNode : public BinaryOperatorNode
-{
-public:
-	static TimesNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
-	virtual const char* str() const { return "Times"; }
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-	
-private:
-	TimesNode() {}
-};
-
-class DivideNode : public BinaryOperatorNode
-{
-public:
-	static DivideNode* create(ExpressionNode* lhs, ExpressionNode* rhs);
-	virtual const char* str() const { return "Divide"; }
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-	
-private:
-	DivideNode() {}
+protected:
+	ComparisonNode() {}
+	ExpressionNode* lhs_;
+	Operator op_;
+	ExpressionNode* rhs_;
 };
 
 class VariableNode : public ExpressionNode

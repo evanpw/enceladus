@@ -36,7 +36,7 @@ void yyerror(const char* msg);
 %type<program> program
 %type<line> line
 %type<label> label
-%type<statement> statement
+%type<statement> statement suite
 %type<expression> expression
 %type<variable> variable
 %type<block> block statement_list
@@ -94,11 +94,11 @@ statement: block
 		{
 			$$ = $1;
 		}
-	| IF expression THEN statement
+	| IF expression THEN suite
 		{
 			$$ = IfNode::create($2, $4);
 		}
-	| IF expression THEN statement ELSE statement
+	| IF expression THEN suite ELSE suite
 		{
 			$$ = IfElseNode::create($2, $4, $6);
 		}
@@ -119,6 +119,15 @@ statement: block
 			$$ = AssignNode::create($1, $3);
 		}
 	;
+	
+suite: EOL statement
+		{
+			$$ = $2;
+		}
+	| statement
+		{
+			$$ = $1;
+		}
 	
 block: '{' EOL statement_list '}'
 		{
@@ -143,27 +152,27 @@ expression: NOT expression
 		}
 	| expression '>' expression
 		{
-			$$ = GreaterNode::create($1, $3);
+			$$ = ComparisonNode::create($1, ComparisonNode::kGreater, $3);
 		}
 	| expression '=' expression
 		{
-			$$ = EqualNode::create($1, $3);
+			$$ = ComparisonNode::create($1, ComparisonNode::kEqual, $3);
 		}
 	| expression '+' expression
 		{
-			$$ = PlusNode::create($1, $3);
+			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kPlus, $3);
 		}
 	| expression '-' expression
 		{
-			$$ = MinusNode::create($1, $3);
+			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kMinus, $3);
 		}
 	| expression '*' expression
 		{
-			$$ = TimesNode::create($1, $3);
+			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kTimes, $3);
 		}
 	| expression '/' expression
 		{
-			$$ = DivideNode::create($1, $3);
+			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kDivide, $3);
 		}
 	| '(' expression ')'
 		{

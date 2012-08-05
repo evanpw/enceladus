@@ -15,37 +15,13 @@ void AstVisitor::visit(NotNode* node)
 	node->child()->accept(this);
 }
 
-void AstVisitor::visit(GreaterNode* node)
+void AstVisitor::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
 	node->rhs()->accept(this);
 }
 
-void AstVisitor::visit(EqualNode* node)
-{
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
-}
-
-void AstVisitor::visit(PlusNode* node)
-{
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
-}
-
-void AstVisitor::visit(MinusNode* node)
-{
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
-}
-
-void AstVisitor::visit(TimesNode* node)
-{
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
-}
-
-void AstVisitor::visit(DivideNode* node)
+void AstVisitor::visit(BinaryOperatorNode* node)
 {
 	node->lhs()->accept(this);
 	node->rhs()->accept(this);

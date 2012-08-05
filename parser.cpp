@@ -27,8 +27,6 @@ int main(int argc, char* argv[])
 	
 	int parse_result = yyparse();
 	
-	root->show(cout, 0);
-	
 	SemanticAnalyzer semant(root);
 	bool semantic_result = semant.analyze();
 	

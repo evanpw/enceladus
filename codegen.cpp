@@ -51,7 +51,7 @@ void CodeGen::visit(NotNode* node)
 	out_ << endLabel << ":" << std::endl;
 }
 
-void CodeGen::visit(GreaterNode* node)
+void CodeGen::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
 	out_ << "push eax" << std::endl;
@@ -61,7 +61,11 @@ void CodeGen::visit(GreaterNode* node)
 	std::string trueBranch = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 	
-	out_ << "jg " << trueBranch << std::endl;
+	if (node->op() == ComparisonNode::kGreater) 
+		out_ << "jg " << trueBranch << std::endl;
+	else
+		out_ << "je " << trueBranch << std::endl;
+		
 	out_ << "mov eax, 0" << std::endl;
 	out_ << "jmp " << endLabel << std::endl;
 	out_ << trueBranch << ":" << std::endl;
@@ -70,61 +74,34 @@ void CodeGen::visit(GreaterNode* node)
 	out_ << "pop ebx" << std::endl;
 }
 
-void CodeGen::visit(EqualNode* node)
+void CodeGen::visit(BinaryOperatorNode* node)
 {
 	node->lhs()->accept(this);
 	out_ << "push eax" << std::endl;
 	node->rhs()->accept(this);
-	out_ << "cmp dword [esp], eax" << std::endl;
 	
-	std::string trueBranch = uniqueLabel();
-	std::string endLabel = uniqueLabel();
+	switch (node->op())
+	{
+	case BinaryOperatorNode::kPlus:
+		out_ << "add eax, dword [esp]" << std::endl;
+		break;
+		
+	case BinaryOperatorNode::kMinus:
+		out_ << "xchg eax, dword [esp]" << std::endl;
+		out_ << "sub eax, dword [esp]" << std::endl;
+		break;
+		
+	case BinaryOperatorNode::kTimes:
+		out_ << "imul eax, dword [esp]" << std::endl;
+		break;
+		
+	case BinaryOperatorNode::kDivide:
+		out_ << "xchg eax, dword [esp]" << std::endl;
+		out_ << "cdq" << std::endl;
+		out_ << "idiv dword [esp]" << std::endl;
+		break;
+	}
 	
-	out_ << "je " << trueBranch << std::endl;
-	out_ << "mov eax, 0" << std::endl;
-	out_ << "jmp " << endLabel << std::endl;
-	out_ << trueBranch << ":" << std::endl;
-	out_ << "mov eax, 1" << std::endl;
-	out_ << endLabel << ":" << std::endl;
-	out_ << "pop ebx" << std::endl;
-}
-
-void CodeGen::visit(PlusNode* node)
-{
-	node->lhs()->accept(this);
-	out_ << "push eax" << std::endl;
-	node->rhs()->accept(this);
-	out_ << "add eax, dword [esp]" << std::endl;
-	out_ << "pop ebx" << std::endl;
-}
-
-void CodeGen::visit(MinusNode* node)
-{
-	node->lhs()->accept(this);
-	out_ << "push eax" << std::endl;
-	node->rhs()->accept(this);
-	out_ << "xchg eax, dword [esp]" << std::endl;
-	out_ << "sub eax, dword [esp]" << std::endl;
-	out_ << "pop ebx" << std::endl;
-}
-
-void CodeGen::visit(TimesNode* node)
-{
-	node->lhs()->accept(this);
-	out_ << "push eax" << std::endl;
-	node->rhs()->accept(this);
-	out_ << "imul eax, dword [esp]" << std::endl;
-	out_ << "pop ebx" << std::endl;
-}
-
-void CodeGen::visit(DivideNode* node)
-{
-	node->lhs()->accept(this);
-	out_ << "push eax" << std::endl;
-	node->rhs()->accept(this);
-	out_ << "xchg eax, dword [esp]" << std::endl;
-	out_ << "cdq" << std::endl;
-	out_ << "idiv dword [esp]" << std::endl;
 	out_ << "pop ebx" << std::endl;
 }
 
