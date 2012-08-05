@@ -23,6 +23,7 @@ void yyerror(const char* msg);
 %union
 {
 	ProgramNode* program;
+	BlockNode* block;
 	AstNode* line;
 	LabelNode* label;
 	StatementNode* statement;
@@ -38,6 +39,7 @@ void yyerror(const char* msg);
 %type<statement> statement
 %type<expression> expression
 %type<variable> variable
+%type<block> block statement_list
 
 %token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT EOL
 %token<str> IDENT
@@ -88,7 +90,11 @@ label: IDENT ':'
 		}
 	;
 
-statement: IF expression THEN statement
+statement: block
+		{
+			$$ = $1;
+		}
+	| IF expression THEN statement
 		{
 			$$ = IfNode::create($2, $4);
 		}
@@ -111,6 +117,23 @@ statement: IF expression THEN statement
 	| variable ASSIGN expression
 		{
 			$$ = AssignNode::create($1, $3);
+		}
+	;
+	
+block: '{' EOL statement_list '}'
+		{
+			$$ = $3;
+		}
+	;
+	
+statement_list: 
+		{
+			$$ = BlockNode::create();
+		}
+	| statement_list statement EOL
+		{
+			$1->prepend($2);	
+			$$ = $1;
 		}
 	;
 	   

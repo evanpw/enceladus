@@ -173,6 +173,28 @@ void IntNode::show(std::ostream& out, int depth) const
 	out << "Int: " << value_ << endl;
 }
 
+BlockNode* BlockNode::create()
+{
+	BlockNode* node = new BlockNode;
+	MemoryManager::addNode(node);
+	
+	return node;
+}
+
+void BlockNode::prepend(StatementNode* child)
+{
+	children_.push_back(child);
+}
+
+void BlockNode::show(ostream& out, int depth) const
+{
+	AstNode::show(out, depth);
+	for (list<StatementNode*>::const_iterator i = children_.begin(); i != children_.end(); ++i)
+	{
+		(*i)->show(out, depth + 1);	
+	}
+}
+
 IfNode* IfNode::create(ExpressionNode* condition, StatementNode* body)
 {
 	IfNode* node = new IfNode;

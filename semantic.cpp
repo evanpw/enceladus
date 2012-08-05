@@ -218,6 +218,16 @@ void TypeChecker::visit(DivideNode* node)
 	node->setType(kInt);
 }
 
+void TypeChecker::visit(BlockNode* node)
+{
+	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	{
+		(*i)->accept(this);	
+	}
+	
+	node->setType(kNone);
+}
+
 void TypeChecker::visit(IfNode* node)
 {
 	node->condition()->accept(this);

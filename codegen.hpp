@@ -19,6 +19,7 @@ public:
 	virtual void visit(MinusNode* node);
 	virtual void visit(TimesNode* node);
 	virtual void visit(DivideNode* node);
+	virtual void visit(BlockNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(IfElseNode* node);
 	virtual void visit(PrintNode* node);

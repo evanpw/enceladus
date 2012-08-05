@@ -205,6 +205,23 @@ private:
 };
 
 /* Statement nodes */
+class BlockNode : public StatementNode
+{
+public:
+	static BlockNode* create();
+	void prepend(StatementNode* child);
+	virtual const char* str() const { return "Block"; }
+	virtual void show(std::ostream& out, int depth) const;
+	
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	const std::list<StatementNode*>& children() const { return children_; }
+	
+private:
+	BlockNode() {}
+	std::list<StatementNode*> children_;
+};
+
 class IfNode : public StatementNode
 {
 public:

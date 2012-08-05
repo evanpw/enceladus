@@ -138,6 +138,14 @@ void CodeGen::visit(IntNode* node)
 	out_ << "mov eax, " << node->value() << std::endl;
 }
 
+void CodeGen::visit(BlockNode* node)
+{
+	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	{
+		(*i)->accept(this);	
+	}
+}
+
 void CodeGen::visit(IfNode* node)
 {
 	node->condition()->accept(this);

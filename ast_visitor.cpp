@@ -51,6 +51,14 @@ void AstVisitor::visit(DivideNode* node)
 	node->rhs()->accept(this);
 }
 
+void AstVisitor::visit(BlockNode* node)
+{
+	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	{
+		(*i)->accept(this);	
+	}
+}
+
 void AstVisitor::visit(IfNode* node)
 {
 	node->condition()->accept(this);
