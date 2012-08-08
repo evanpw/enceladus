@@ -3,7 +3,7 @@
 n <- 1
 sum <- 0
 main_loop:
-	if (n / 3) * 3 = n or (n / 5) * 5 = n then
+	if n mod 3 = 0 or n mod 5 = 0 then
 		sum <- sum + n
 	
 	n <- n + 1

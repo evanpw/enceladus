@@ -90,6 +90,13 @@ void CodeGen::visit(BinaryOperatorNode* node)
 		out_ << "cdq" << std::endl;
 		out_ << "idiv dword [esp]" << std::endl;
 		break;
+		
+	case BinaryOperatorNode::kMod:
+		out_ << "xchg eax, dword [esp]" << std::endl;
+		out_ << "cdq" << std::endl;
+		out_ << "idiv dword [esp]" << std::endl;
+		out_ << "mov eax, edx" << std::endl;
+		break;
 	}
 	
 	out_ << "pop ebx" << std::endl;

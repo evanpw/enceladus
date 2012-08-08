@@ -102,6 +102,7 @@ const char* BinaryOperatorNode::str() const
 	case kMinus: return "BinaryOp(-)";
 	case kTimes: return "BinaryOp(*)";
 	case kDivide: return "BinaryOp(/)";
+	case kMod: return "BinaryOp(mod)";
 	}
 	
 	assert(false);

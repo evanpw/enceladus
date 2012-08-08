@@ -40,6 +40,7 @@ int yycolumn = 1;
 "-"		{ return '-'; }
 "*"		{ return '*'; }
 "/"		{ return '/'; }
+"mod"	{ return MOD; }
 ">"		{ return '>'; }
 "="		{ return '='; }
 ":"		{ return ':'; }

@@ -93,7 +93,7 @@ private:
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
-	enum Operator {kPlus, kMinus, kTimes, kDivide};
+	enum Operator {kPlus, kMinus, kTimes, kDivide, kMod};
 	static BinaryOperatorNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
 	virtual const char* str() const;
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }

@@ -41,7 +41,7 @@ void yyerror(const char* msg);
 %type<variable> variable
 %type<block> block statement_list
 
-%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL
+%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD
 %token<str> IDENT
 %token<number> INT_LIT
 
@@ -49,7 +49,7 @@ void yyerror(const char* msg);
 %left AND OR
 %nonassoc '>' '='
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' MOD
 
 %%
 
@@ -182,6 +182,10 @@ expression: NOT expression
 	| expression '/' expression
 		{
 			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kDivide, $3);
+		}
+	| expression MOD expression
+		{
+			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kMod, $3);
 		}
 	| '(' expression ')'
 		{

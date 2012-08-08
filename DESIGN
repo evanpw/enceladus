@@ -10,9 +10,8 @@ Objectives
 Syntax
 --
 * No multi-line comments - #-style line comments only
-* Only logical operator is "not" - "and" is simulated by nesting if statements
 * Commands are newline-terminated
-* Commands: if (no else, use goto instead), then, goto, print, read
+* Commands: if, then, goto, print, read
 * Only comparison operators: >, =
 * Operators: +, -, *, / (no unary minus)
 * Assignment operator: <-
@@ -63,10 +62,9 @@ Next Steps
 * Use this as the starting point for the next compiler
 - functions and scopes
 - syntactic sugar
-- more comparisons
-- more operators
-- boolean operators: and, or
-- while loop
+- more comparisons: >=, <, <=
+- more operators: modulo, ...
+- loops
 
 Lesson learned
 ---------------
