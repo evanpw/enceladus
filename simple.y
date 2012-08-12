@@ -41,7 +41,7 @@ void yyerror(const char* msg);
 %type<variable> variable
 %type<block> block statement_list
 
-%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD
+%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD WHILE DO
 %token<str> IDENT
 %token<number> INT_LIT
 
@@ -115,6 +115,10 @@ statement: block
 		{
 			$$ = ReadNode::create($2);
 		}
+	| WHILE expression DO suite
+		{
+			$$ = WhileNode::create($2, $4);
+		}
 	| variable ASSIGN expression
 		{
 			$$ = AssignNode::create($1, $3);
@@ -143,6 +147,11 @@ statement_list:
 	| statement_list statement EOL
 		{
 			$1->prepend($2);	
+			$$ = $1;
+		}
+		
+	| statement_list EOL
+		{
 			$$ = $1;
 		}
 	;

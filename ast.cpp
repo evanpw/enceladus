@@ -300,6 +300,23 @@ void ReadNode::show(std::ostream& out, int depth) const
 	target_->show(out, depth + 1);
 }
 
+WhileNode* WhileNode::create(ExpressionNode* condition, StatementNode* body)
+{
+	WhileNode* node = new WhileNode;
+	MemoryManager::addNode(node);
+	
+	node->condition_ = condition;
+	node->body_ = body;
+	return node;
+}
+
+void WhileNode::show(std::ostream& out, int depth) const
+{
+	AstNode::show(out, depth);
+	condition_->show(out, depth + 1);
+	body_->show(out, depth + 1);
+}
+
 AssignNode* AssignNode::create(VariableNode* target, ExpressionNode* value)
 {
 	AssignNode* node = new AssignNode;

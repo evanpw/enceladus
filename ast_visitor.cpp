@@ -64,6 +64,12 @@ void AstVisitor::visit(ReadNode* node)
 	node->target()->accept(this);
 }
 
+void AstVisitor::visit(WhileNode* node)
+{
+	node->condition()->accept(this);
+	node->body()->accept(this);
+}
+
 void AstVisitor::visit(AssignNode* node)
 {
 	node->target()->accept(this);

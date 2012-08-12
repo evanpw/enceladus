@@ -21,6 +21,7 @@ public:
 	virtual void visit(IfElseNode* node);
 	virtual void visit(PrintNode* node);
 	virtual void visit(ReadNode* node);
+	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
 	virtual void visit(LabelNode* node);
 	virtual void visit(VariableNode* node);

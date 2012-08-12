@@ -60,6 +60,8 @@ int yycolumn = 1;
 "goto"		{ return GOTO; }
 "print"		{ return PRINT; }
 "read"		{ return READ; }
+"while"		{ return WHILE; }
+"do"		{ return DO; }
 
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
 \n						 { yycolumn = 1; return EOL; }

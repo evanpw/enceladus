@@ -1,13 +1,12 @@
 # Solves Project Euler #1
 
 n <- 1
-sum <- 0
-main_loop:
+while not (n > 999) do
+{
 	if n mod 3 = 0 or n mod 5 = 0 then
 		sum <- sum + n
 	
 	n <- n + 1
-	if not (n > 999) then
-		goto main_loop
+}
 	
 print sum

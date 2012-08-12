@@ -232,6 +232,16 @@ void TypeChecker::visit(ReadNode* node)
 	node->setType(kNone);
 }
 
+void TypeChecker::visit(WhileNode* node)
+{
+	node->condition()->accept(this);
+	typeCheck(node->condition(), kBool);
+	
+	node->body()->accept(this);
+	
+	node->setType(kNone);
+}
+
 void TypeChecker::visit(AssignNode* node)
 {
 	node->target()->accept(this);

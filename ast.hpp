@@ -284,6 +284,23 @@ private:
 	VariableNode* target_;
 };
 
+class WhileNode : public StatementNode
+{
+public:
+	static WhileNode* create(ExpressionNode* condition, StatementNode* body);
+	virtual const char* str() const { return "While"; }
+	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	
+	ExpressionNode* condition() { return condition_; }
+	StatementNode* body() { return body_; }
+	
+private:
+	WhileNode() {}
+	ExpressionNode* condition_;
+	StatementNode* body_;
+};
+
 class AssignNode : public StatementNode
 {
 public:

@@ -52,9 +52,9 @@ void CodeGen::visit(ComparisonNode* node)
 	std::string endLabel = uniqueLabel();
 	
 	if (node->op() == ComparisonNode::kGreater) 
-		out_ << "jg " << trueBranch << std::endl;
+		out_ << "jg near " << trueBranch << std::endl;
 	else
-		out_ << "je " << trueBranch << std::endl;
+		out_ << "je near " << trueBranch << std::endl;
 		
 	out_ << "mov eax, 0" << std::endl;
 	out_ << "jmp " << endLabel << std::endl;
@@ -147,7 +147,7 @@ void CodeGen::visit(IfNode* node)
 	std::string endLabel = uniqueLabel();
 	
 	out_ << "cmp eax, 0" << std::endl;
-	out_ << "je " << endLabel << std::endl;
+	out_ << "je near " << endLabel << std::endl;
 	node->body()->accept(this);
 	out_ << endLabel << ":" << std::endl;
 }
@@ -160,7 +160,7 @@ void CodeGen::visit(IfElseNode* node)
 	std::string endLabel = uniqueLabel();
 	
 	out_ << "cmp eax, 0" << std::endl;
-	out_ << "je " << elseLabel << std::endl;
+	out_ << "je near " << elseLabel << std::endl;
 	node->body()->accept(this);
 	out_ << "jmp " << endLabel << std::endl;
 	out_ << elseLabel << ":" << std::endl;
@@ -183,6 +183,22 @@ void CodeGen::visit(ReadNode* node)
 {
 	out_ << "call __read" << std::endl;
 	out_ << "mov dword [_" << node->target()->name() << "], eax" << std::endl;
+}
+
+void CodeGen::visit(WhileNode* node)
+{	
+	std::string beginLabel = uniqueLabel();
+	std::string endLabel = uniqueLabel();
+	
+	out_ << beginLabel << ":" << std::endl;
+	node->condition()->accept(this);
+	
+	out_ << "cmp eax, 0" << std::endl;
+	out_ << "je near " << endLabel << std::endl;
+	node->body()->accept(this);
+	
+	out_ << "jmp " << beginLabel << std::endl;
+	out_ << endLabel << ":" << std::endl;
 }
 
 void CodeGen::visit(AssignNode* node)

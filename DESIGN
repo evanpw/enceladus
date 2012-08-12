@@ -56,14 +56,11 @@ Code Generation
 
 Next Steps
 --
-* Remove VariableNode from beneath ReadNode
-* Replace parser.cpp with an actual compiler program
-* Clean up the code generator
 * Use this as the starting point for the next compiler
 - functions and scopes
 - syntactic sugar
-- more comparisons: >=, <, <=
-- more operators: modulo, ...
+- more comparisons: >=, <, <=, !=
+- more operators: unary minus, 
 - loops
 
 Lesson learned
@@ -72,3 +69,9 @@ Lesson learned
   It's more flexible, in that you can do things in between child nodes.
 * Code the AST classes in a unified way so that you can handle nodes with children
   in a consistent way.
+  
+Ideas
+--
+* Assignment is a statement, not an expression
+* Thus we can use = and == without danger of the if (x = 4) bug from C++
+* This allows us to define +=, -=, etc operators
