@@ -31,11 +31,11 @@ public:
 	virtual void visit(IfNode* node);
 	virtual void visit(IfElseNode* node);
 	virtual void visit(PrintNode* node);
-	virtual void visit(ReadNode* node);
 	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
 	
 	// Leaf nodes
+	virtual void visit(ReadNode* node) {}
 	virtual void visit(LabelNode* node) {}
 	virtual void visit(VariableNode* node) {}
 	virtual void visit(IntNode* node) {}

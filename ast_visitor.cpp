@@ -59,11 +59,6 @@ void AstVisitor::visit(PrintNode* node)
 	node->expression()->accept(this);
 }
 
-void AstVisitor::visit(ReadNode* node)
-{
-	node->target()->accept(this);
-}
-
 void AstVisitor::visit(WhileNode* node)
 {
 	node->condition()->accept(this);

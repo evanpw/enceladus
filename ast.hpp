@@ -272,16 +272,16 @@ private:
 class ReadNode : public StatementNode
 {
 public:
-	static ReadNode* create(VariableNode* target);
+	static ReadNode* create(const char* target);
 	virtual const char* str() const { return "Read"; }
 	virtual void show(std::ostream& out, int depth) const;
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
-	VariableNode* target() { return target_; }
+	const char* target() { return target_; }
 	
 private:
 	ReadNode() {}
-	VariableNode* target_;
+	const char* target_;
 };
 
 class WhileNode : public StatementNode
@@ -304,17 +304,17 @@ private:
 class AssignNode : public StatementNode
 {
 public:
-	static AssignNode* create(VariableNode* target, ExpressionNode* value);
+	static AssignNode* create(const char* target, ExpressionNode* value);
 	virtual const char* str() const { return "Assign"; }
 	virtual void show(std::ostream& out, int depth) const;
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 	
-	VariableNode* target() { return target_; }
+	const char* target() { return target_; }
 	ExpressionNode* value() { return value_; }
 	
 private:
 	AssignNode() {}
-	VariableNode* target_;
+	const char* target_;
 	ExpressionNode* value_;
 };
 

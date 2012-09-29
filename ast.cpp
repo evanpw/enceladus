@@ -285,7 +285,7 @@ void PrintNode::show(std::ostream& out, int depth) const
 	expression_->show(out, depth + 1);	
 }
 
-ReadNode* ReadNode::create(VariableNode* target)
+ReadNode* ReadNode::create(const char* target)
 {
 	ReadNode* node = new ReadNode;
 	MemoryManager::addNode(node);
@@ -296,8 +296,8 @@ ReadNode* ReadNode::create(VariableNode* target)
 
 void ReadNode::show(std::ostream& out, int depth) const
 {
-	AstNode::show(out, depth);
-	target_->show(out, depth + 1);
+	indent(out, depth);
+	out << "Read: " << target_ << endl;
 }
 
 WhileNode* WhileNode::create(ExpressionNode* condition, StatementNode* body)
@@ -317,7 +317,7 @@ void WhileNode::show(std::ostream& out, int depth) const
 	body_->show(out, depth + 1);
 }
 
-AssignNode* AssignNode::create(VariableNode* target, ExpressionNode* value)
+AssignNode* AssignNode::create(const char* target, ExpressionNode* value)
 {
 	AssignNode* node = new AssignNode;
 	MemoryManager::addNode(node);
@@ -331,6 +331,8 @@ void AssignNode::show(std::ostream& out, int depth) const
 {
 	AstNode::show(out, depth);
 	
-	target_->show(out, depth + 1); 
+	indent(out, depth + 1);
+	out << target_ << endl;
+	
 	value_->show(out, depth + 1);	
 }

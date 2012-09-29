@@ -27,7 +27,6 @@ void yyerror(const char* msg);
 	AstNode* line;
 	LabelNode* label;
 	StatementNode* statement;
-	VariableNode* variable;
 	ExpressionNode* expression;
 	const char* str;
 	int number;
@@ -38,7 +37,6 @@ void yyerror(const char* msg);
 %type<label> label
 %type<statement> statement suite
 %type<expression> expression
-%type<variable> variable
 %type<block> block statement_list
 
 %token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD WHILE DO
@@ -111,7 +109,7 @@ statement: block
 		{
 			$$ = PrintNode::create($2);
 		}
-	| READ variable
+	| READ IDENT
 		{
 			$$ = ReadNode::create($2);
 		}
@@ -119,7 +117,7 @@ statement: block
 		{
 			$$ = WhileNode::create($2, $4);
 		}
-	| variable ASSIGN expression
+	| IDENT ASSIGN expression
 		{
 			$$ = AssignNode::create($1, $3);
 		}
@@ -200,20 +198,15 @@ expression: NOT expression
 		{
 			$$ = $2;
 		}
-	| variable
+	| IDENT
 		{
-			$$ = static_cast<ExpressionNode*>($1);
+			$$ = VariableNode::create($1);
 		}
 	| INT_LIT
 		{
 			$$ = IntNode::create($1);
 		}
 	;
-	
-variable: IDENT
-	{
-		$$ = VariableNode::create($1);
-	}
 
 %%
 

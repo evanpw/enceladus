@@ -48,6 +48,7 @@ Semantic Analysis
 * Labels cannot be repeated (Phase 1)
 * Labels cannot be used as variables, and vice versa (Phase 1)
 * All "goto" targets must be declared somewhere, and must be a label (Phase 2)
+* Variables must be created with a read statement or an assignment before use (TODO)
 
 Code Generation
 --
