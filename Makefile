@@ -12,4 +12,4 @@ simple.tab.c simple.tab.h: simple.y
 	bison -d simple.y
 	
 parser: lex.yy.c simple.tab.h simple.tab.c string_table.hpp string_table.cpp memory_manager.hpp memory_manager.cpp ast.hpp ast.cpp utilities.hpp symbol_table.hpp symbol_table.cpp parser.cpp semantic.hpp semantic.cpp ast_visitor.hpp ast_visitor.cpp codegen.hpp codegen.cpp types.hpp types.cpp
-	g++ -g -Wall lex.yy.c simple.tab.c string_table.cpp memory_manager.cpp ast.cpp symbol_table.cpp parser.cpp semantic.cpp ast_visitor.cpp codegen.cpp types.cpp -o parser
+	g++ -I/opt/local/include -g -Wall lex.yy.c simple.tab.c string_table.cpp memory_manager.cpp ast.cpp symbol_table.cpp parser.cpp semantic.cpp ast_visitor.cpp codegen.cpp types.cpp -o parser
