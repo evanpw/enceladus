@@ -182,7 +182,7 @@ void CodeGen::visit(PrintNode* node)
 void CodeGen::visit(ReadNode* node)
 {
 	out_ << "call __read" << std::endl;
-	out_ << "mov dword [_" << node->target()->name() << "], eax" << std::endl;
+	out_ << "mov dword [_" << node->target() << "], eax" << std::endl;
 }
 
 void CodeGen::visit(WhileNode* node)
@@ -204,5 +204,5 @@ void CodeGen::visit(WhileNode* node)
 void CodeGen::visit(AssignNode* node)
 {
 	node->value()->accept(this);
-	out_ << "mov dword [_" << node->target()->name() << "], eax" << std::endl;
+	out_ << "mov dword [_" << node->target() << "], eax" << std::endl;
 }

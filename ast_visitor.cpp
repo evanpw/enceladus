@@ -67,6 +67,5 @@ void AstVisitor::visit(WhileNode* node)
 
 void AstVisitor::visit(AssignNode* node)
 {
-	node->target()->accept(this);
 	node->value()->accept(this);
 }

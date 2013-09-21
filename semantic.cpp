@@ -226,9 +226,7 @@ void TypeChecker::visit(PrintNode* node)
 
 void TypeChecker::visit(ReadNode* node)
 {
-	node->target()->accept(this);
-	typeCheck(node->target(), kInt);
-	
+	// Target has already been verified as a variable, and variables are always ints	
 	node->setType(kNone);
 }
 
@@ -244,8 +242,7 @@ void TypeChecker::visit(WhileNode* node)
 
 void TypeChecker::visit(AssignNode* node)
 {
-	node->target()->accept(this);
-	typeCheck(node->target(), kInt);
+	// node->target() is a variable, and variables are always integers
 	
 	node->value()->accept(this);
 	typeCheck(node->value(), kInt);
