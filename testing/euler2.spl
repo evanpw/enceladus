@@ -1,0 +1,15 @@
+# Solves Project Euler 2
+
+sum = 0
+last = 1
+current = 2
+
+while not (current > 3999999) do
+    if current mod 2 == 0 then
+        sum = sum + current
+
+    next = last + current
+    last = current
+    current = next
+
+print sum

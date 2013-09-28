@@ -87,6 +87,8 @@ int yylex()
             }
             else if (new_level < indentation.top())
             {
+                if (DEBUG_LEXER) std::cerr << "Dedenting from " << indentation.top() << " to " << new_level << std::endl;
+
                 // Decrease of indentation -> DEDENT(s)
                 while (new_level < indentation.top())
                 {
@@ -107,6 +109,10 @@ int yylex()
             if (token != WHITESPACE)
             {
                 token_queue.push_back(token);
+            }
+            else
+            {
+                last_token = WHITESPACE;
             }
         }
         else
