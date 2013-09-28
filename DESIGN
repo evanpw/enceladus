@@ -60,7 +60,7 @@ Next Steps
 - syntactic sugar
 - more comparisons: >=, <, <=, !=
 - more operators: unary minus, 
-- loops
+- more loops
 
 Lesson learned
 ---------------
@@ -73,7 +73,6 @@ Ideas
 --
 * Assignment is a statement, not an expression
 * Thus we can use = and == without danger of the if (x = 4) bug from C++
-* This allows us to define +=, -=, etc operators
 
 Differences from Python indentation
 -----------------------------------

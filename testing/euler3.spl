@@ -15,7 +15,7 @@ while i * i <= n do
 			if i mod j == 0 then
 				is_prime = 0
 
-				# We don't have a "break" command
+				# We don't have a "break" statement
 				j = i
 
 			j = j + 1
