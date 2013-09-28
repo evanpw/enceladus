@@ -7,6 +7,10 @@
 
 extern YYSTYPE yylval;
 
+#define YY_DECL int yylex_raw()
+
+int count_whitespace(const char* s, int length);
+
 int yycolumn = 1;
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
 	yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
@@ -17,6 +21,10 @@ int yycolumn = 1;
 %option yylineno
 
 %%
+
+				/* It's easier to get rid of blank lines here than in the grammar. */
+^" "*\n         { yycolumn = 1; }
+^" "*"#".+\n 	{ yycolumn = 1; }
 
 [0-9][0-9]*		{
 					try
@@ -65,7 +73,7 @@ int yycolumn = 1;
 
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
 \n						 { yycolumn = 1; return EOL; }
-[ \t\r]					 /* Ignore whitespace */
+[ \t\r]+			     { yylval.number = count_whitespace(yytext, yyleng); return WHITESPACE; }
 .						 { 
 						 	std::cerr << "Near line " << yylloc.first_line << ", "
 						 			  << "column " << yylloc.first_column << ": "
@@ -73,3 +81,15 @@ int yycolumn = 1;
 						 }
 
 %%
+
+int count_whitespace(const char* s, int length)
+{
+	int count = 0;
+	for (int i = 0; i < length; ++i)
+	{
+		if (s[i] == ' ') count += 1;
+		if (s[i] == '\t') count += 4;
+	}
+
+	return count;
+}

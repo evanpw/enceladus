@@ -23,25 +23,25 @@ void yyerror(const char* msg);
 %union
 {
 	ProgramNode* program;
-	BlockNode* block;
 	AstNode* line;
 	LabelNode* label;
 	StatementNode* statement;
+	BlockNode* block;
 	ExpressionNode* expression;
 	const char* str;
 	int number;
 }
 
 %type<program> program
-%type<line> line
+%type<line> logical_line
 %type<label> label
 %type<statement> statement suite
 %type<expression> expression
-%type<block> block statement_list
+%type<block> statement_list
 
-%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD WHILE DO
+%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD WHILE DO INDENT DEDENT
 %token<str> IDENT
-%token<number> INT_LIT
+%token<number> INT_LIT WHITESPACE
 
 %nonassoc NOT
 %left AND OR
@@ -55,7 +55,7 @@ program: /* empty */
 		{
 			root = $$ = ProgramNode::create();
 		}
-	| program line EOL
+	| program logical_line
 		{
 			// Ignore blank lines
 			if ($2 != NULL)
@@ -63,17 +63,9 @@ program: /* empty */
 				
 			$$ = $1;
 		}
-	| program error EOL // An error on one line shouldn't break all other lines
-		{
-			$$ = $1;
-		}
 	;
 
-line: /* empty */
-		{
-			$$ = NULL;
-		}
-	| label
+logical_line: label
 		{
 			$$ = $1;
 		}
@@ -83,17 +75,13 @@ line: /* empty */
 		}
 	;
      
-label: IDENT ':'
+label: IDENT ':' EOL
 		{
 			$$ = LabelNode::create($1);
 		}
 	;
 
-statement: block
-		{
-			$$ = $1;
-		}
-	| IF expression THEN suite
+statement: IF expression THEN suite
 		{
 			$$ = IfNode::create($2, $4);
 		}
@@ -101,15 +89,15 @@ statement: block
 		{
 			$$ = IfElseNode::create($2, $4, $6);
 		}
-	| GOTO IDENT
+	| GOTO IDENT EOL
 		{
 			$$ = GotoNode::create($2);
 		}
-	| PRINT expression
+	| PRINT expression EOL
 		{
 			$$ = PrintNode::create($2);
 		}
-	| READ IDENT
+	| READ IDENT EOL
 		{
 			$$ = ReadNode::create($2);
 		}
@@ -117,39 +105,29 @@ statement: block
 		{
 			$$ = WhileNode::create($2, $4);
 		}
-	| IDENT ASSIGN expression
+	| IDENT ASSIGN expression EOL
 		{
 			$$ = AssignNode::create($1, $3);
 		}
 	;
 	
-suite: EOL statement
-		{
-			$$ = $2;
-		}
-	| statement
+suite: statement
 		{
 			$$ = $1;
 		}
-	
-block: '{' EOL statement_list '}'
+	| EOL INDENT statement_list DEDENT
 		{
 			$$ = $3;
 		}
-	;
 	
-statement_list: 
+statement_list: statement
 		{
 			$$ = BlockNode::create();
+			$$->prepend($1);
 		}
-	| statement_list statement EOL
+	| statement_list statement
 		{
 			$1->prepend($2);	
-			$$ = $1;
-		}
-		
-	| statement_list EOL
-		{
 			$$ = $1;
 		}
 	;

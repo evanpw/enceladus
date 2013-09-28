@@ -76,3 +76,9 @@ Ideas
 * Assignment is a statement, not an expression
 * Thus we can use = and == without danger of the if (x = 4) bug from C++
 * This allows us to define +=, -=, etc operators
+
+Differences from Python indentation
+-----------------------------------
+* Indentation on otherwise blank lines is significant
+* There is no joining of logical lines within parentheses
+* Only tabs can be used for indentation

@@ -2,11 +2,9 @@
 
 n <- 1
 while not (n > 999) do
-{
-	if n mod 3 = 0 or n mod 5 = 0 then
-		sum <- sum + n
-	
-	n <- n + 1
-}
-	
+    if n mod 3 = 0 or n mod 5 = 0 then
+        sum <- sum + n
+    
+    n <- n + 1
+    
 print sum
