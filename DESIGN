@@ -79,6 +79,4 @@ Ideas
 
 Differences from Python indentation
 -----------------------------------
-* Indentation on otherwise blank lines is significant
 * There is no joining of logical lines within parentheses
-* Only tabs can be used for indentation
