@@ -58,7 +58,7 @@ Next Steps
 * Use this as the starting point for the next compiler
 - functions and scopes
 - syntactic sugar
-- more comparisons: >=, <, <=, !=
+- more comparisons: !=
 - more operators: unary minus, 
 - more loops
 
