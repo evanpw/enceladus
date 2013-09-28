@@ -51,6 +51,8 @@ int yycolumn = 1;
 "mod"	{ return MOD; }
 ">"		{ return '>'; }
 "<"		{ return '<'; }
+"<="	{ return LE; }
+">="	{ return GE; }
 "=="	{ return EQUALS; }
 ":"		{ return ':'; }
 "("		{ return '('; }

@@ -51,14 +51,31 @@ void CodeGen::visit(ComparisonNode* node)
 	std::string trueBranch = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 	
-	if (node->op() == ComparisonNode::kGreater) 
-		out_ << "jg near " << trueBranch << std::endl;
-	else if (node->op() == ComparisonNode::kLess)
-		out_ << "jl near " << trueBranch << std::endl;
-	else if (node->op() == ComparisonNode::kEqual)
-		out_ << "je near " << trueBranch << std::endl;
-	else
-		assert(false);
+	switch(node->op())
+	{
+		case ComparisonNode::kGreater:
+			out_ << "jg near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kLess:
+			out_ << "jl near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kEqual:
+			out_ << "je near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kGreaterOrEqual:
+			out_ << "jge near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kLessOrEqual:
+			out_ << "jle near " << trueBranch << std::endl;
+			break;
+
+		default: assert(false);
+
+	}
 		
 	out_ << "mov eax, 0" << std::endl;
 	out_ << "jmp " << endLabel << std::endl;
