@@ -14,7 +14,7 @@ Syntax
 * Commands: if, then, goto, print, read
 * Only comparison operators: >, =
 * Operators: +, -, *, / (no unary minus)
-* Assignment operator: <-
+* Assignment operator: =
 * Identifiers consist of letters, numbers, and underscores; must begin with a letter
 * First use of a variable declares it; all variables are at global scope
 * Variables are always initialized to zero
@@ -38,7 +38,7 @@ Operators
 * Operator associativity:
 1) * / (left)
 2) + - (left)
-3) > = (not associative)
+3) > == (not associative)
 4) not (not associative)
 
 

@@ -39,13 +39,13 @@ void yyerror(const char* msg);
 %type<expression> expression
 %type<block> statement_list
 
-%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD WHILE DO INDENT DEDENT
+%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS
 %token<str> IDENT
 %token<number> INT_LIT WHITESPACE
 
 %nonassoc NOT
 %left AND OR
-%nonassoc '>' '='
+%nonassoc '>' EQUALS
 %left '+' '-'
 %left '*' '/' MOD
 
@@ -148,7 +148,7 @@ expression: NOT expression
 		{
 			$$ = ComparisonNode::create($1, ComparisonNode::kGreater, $3);
 		}
-	| expression '=' expression
+	| expression EQUALS expression
 		{
 			$$ = ComparisonNode::create($1, ComparisonNode::kEqual, $3);
 		}

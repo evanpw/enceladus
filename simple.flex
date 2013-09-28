@@ -50,11 +50,11 @@ int yycolumn = 1;
 "/"		{ return '/'; }
 "mod"	{ return MOD; }
 ">"		{ return '>'; }
-"="		{ return '='; }
+"=="	{ return EQUALS; }
 ":"		{ return ':'; }
 "("		{ return '('; }
 ")"		{ return ')'; }
-"<-"	{ return ASSIGN; }
+"="		{ return ASSIGN; }
 "not"	{ return NOT; }
 "and"	{ return AND; }
 "or"	{ return OR; }
