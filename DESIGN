@@ -3,7 +3,6 @@ Objectives
 * Not object-oriented
 * Compiled to (bad) x86 (Intel-style) assembly language
 * Turing-complete
-* No syntactic sugar - syntax as simple as possible
 * Only type is integer (equivalent of C's int) - booleans are zero/non-zero
 * Only a single file of source code is supported
 
@@ -12,7 +11,6 @@ Syntax
 * No multi-line comments - #-style line comments only
 * Commands are newline-terminated
 * Commands: if, then, goto, print, read
-* Only comparison operators: >, =
 * Operators: +, -, *, / (no unary minus)
 * Assignment operator: =
 * Identifiers consist of letters, numbers, and underscores; must begin with a letter
