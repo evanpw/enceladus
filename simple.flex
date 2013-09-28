@@ -22,11 +22,11 @@ int yycolumn = 1;
 
 %%
 
-				/* It's easier to get rid of blank lines here than in the grammar. */
-^[ \t]*\n         { yycolumn = 1; }
-^[ \t]*"#".+\n 	  { yycolumn = 1; }
+					/* It's easier to get rid of blank lines here than in the grammar. */
+^[ \t]*\n         	{ yycolumn = 1; }
+^[ \t]*"#".+\n 	  	{ yycolumn = 1; }
 
--?[0-9][0-9]*		{
+-?[0-9][0-9]*	{
 					try
 					{
 						yylval.number = boost::lexical_cast<int>(yytext);

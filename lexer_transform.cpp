@@ -48,7 +48,7 @@ const bool DEBUG_LEXER = false;
 // and python-style indentation
 int yylex()
 {
-    static int last_token = EOL;
+    static int last_token = EOL, last_returned_token = EOL;
 
     // TODO: Move this initialization elsewhere, and don't do the check repeatedly.
     if (indentation.empty()) indentation.push(0);
@@ -62,13 +62,28 @@ int yylex()
             token_queue.pop_front();
 
             if (DEBUG_LEXER) std::cerr << token_to_string(token) << std::endl;
-            last_token = token;
+            last_returned_token = last_token = token;
             return token;
         }
 
         int token = yylex_raw();
 
         if (DEBUG_LEXER) std::cerr << "Reading token " << token_to_string(token) << ", last = " << token_to_string(last_token) << std::endl;
+
+        // Handle unfinished indentation blocks when EOF is reached
+        if (token == 0)
+        {
+            if (last_returned_token != EOL) token_queue.push_back(EOL);
+
+            while (indentation.top() > 0)
+            {
+                indentation.pop();
+                token_queue.push_back(DEDENT);
+            }
+
+            token_queue.push_back(0);
+            continue;
+        }
 
         if (last_token == EOL)
         {
@@ -84,8 +99,8 @@ int yylex()
                 // Increase of indentation -> INDENT
                 indentation.push(new_level);
                 if (DEBUG_LEXER) std::cerr << "INDENT" << std::endl;
-                last_token = INDENT;
-                return INDENT;
+                token_queue.push_back(INDENT);
+                continue;
             }
             else if (new_level < indentation.top())
             {
@@ -103,8 +118,8 @@ int yylex()
                 {
                     //TODO: throw SyntaxError("Unexpected indentation level on line X");
                     if (DEBUG_LEXER) std::cerr << "Unexpected indentation" << std::endl;
-                    last_token = 0;
-                    return 0;
+                    token_queue.push_back(0);
+                    continue;
                 }
             }
 
@@ -122,13 +137,7 @@ int yylex()
             if (token != WHITESPACE)
             {
                 if (DEBUG_LEXER) std::cerr << token_to_string(token) << std::endl;
-                last_token = token;
-                return token;
-            }
-            else
-            {
-                // Whitespace in the middle of a line is not significant
-                continue;
+                token_queue.push_back(token);
             }
         }
     }
