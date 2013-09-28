@@ -36,6 +36,8 @@ const char* token_to_string(int token)
         case IDENT: return "IDENT";
         case INT_LIT: return "INT_LIT";
         case WHITESPACE: return "WHITESPACE";
+        case GE: return "GE";
+        case LE: return "LE";
         default: short_one[0] = token; return short_one;
     }
 }

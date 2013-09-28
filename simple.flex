@@ -23,8 +23,8 @@ int yycolumn = 1;
 %%
 
 				/* It's easier to get rid of blank lines here than in the grammar. */
-^" "*\n         { yycolumn = 1; }
-^" "*"#".+\n 	{ yycolumn = 1; }
+^[ \t]*\n         { yycolumn = 1; }
+^[ \t]*"#".+\n 	  { yycolumn = 1; }
 
 [0-9][0-9]*		{
 					try
@@ -74,7 +74,7 @@ int yycolumn = 1;
 
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
 \n						 { yycolumn = 1; return EOL; }
-[ \t\r]+			     { yylval.number = count_whitespace(yytext, yyleng); return WHITESPACE; }
+[ \t]+				     { yylval.number = count_whitespace(yytext, yyleng); return WHITESPACE; }
 .						 { 
 						 	std::cerr << "Near line " << yylloc.first_line << ", "
 						 			  << "column " << yylloc.first_column << ": "
