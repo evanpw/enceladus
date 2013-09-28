@@ -4,7 +4,7 @@ sum = 0
 last = 1
 current = 2
 
-while not (current > 3999999) do
+while current < 4000000 do
 	if current mod 2 == 0 then
 		sum = sum + current
 

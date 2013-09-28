@@ -153,6 +153,7 @@ const char* ComparisonNode::str() const
 	switch (op_)
 	{
 	case kGreater: return "Comparison(>)";
+	case kLess: return "Comparison(<)";
 	case kEqual: return "Comparison(=)";
 	}
 	

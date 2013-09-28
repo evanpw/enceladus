@@ -50,6 +50,7 @@ int yycolumn = 1;
 "/"		{ return '/'; }
 "mod"	{ return MOD; }
 ">"		{ return '>'; }
+"<"		{ return '<'; }
 "=="	{ return EQUALS; }
 ":"		{ return ':'; }
 "("		{ return '('; }

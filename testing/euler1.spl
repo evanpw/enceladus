@@ -1,7 +1,7 @@
 # Solves Project Euler #1
 
 n = 1
-while not (n > 999) do
+while n < 1000 do
     if n mod 3 == 0 or n mod 5 == 0 then
         sum = sum + n
     

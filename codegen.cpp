@@ -53,8 +53,12 @@ void CodeGen::visit(ComparisonNode* node)
 	
 	if (node->op() == ComparisonNode::kGreater) 
 		out_ << "jg near " << trueBranch << std::endl;
-	else
+	else if (node->op() == ComparisonNode::kLess)
+		out_ << "jl near " << trueBranch << std::endl;
+	else if (node->op() == ComparisonNode::kEqual)
 		out_ << "je near " << trueBranch << std::endl;
+	else
+		assert(false);
 		
 	out_ << "mov eax, 0" << std::endl;
 	out_ << "jmp " << endLabel << std::endl;
