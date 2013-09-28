@@ -26,7 +26,7 @@ int yycolumn = 1;
 ^[ \t]*\n         { yycolumn = 1; }
 ^[ \t]*"#".+\n 	  { yycolumn = 1; }
 
-[0-9][0-9]*		{
+-?[0-9][0-9]*		{
 					try
 					{
 						yylval.number = boost::lexical_cast<int>(yytext);
