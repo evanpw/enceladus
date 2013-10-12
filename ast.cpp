@@ -373,3 +373,17 @@ void FunctionCallNode::show(std::ostream& out, int depth) const
 	out << "FunctionCall: " << target_ << endl;
 }
 
+ReturnNode* ReturnNode::create(ExpressionNode* expression)
+{
+	ReturnNode* node = new ReturnNode;
+	MemoryManager::addNode(node);
+
+	node->expression_ = expression;
+	return node;
+}
+
+void ReturnNode::show(std::ostream& out, int depth) const
+{
+	AstNode::show(out, depth);
+	expression_->show(out, depth + 1);
+}

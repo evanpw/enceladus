@@ -1,7 +1,8 @@
 def something as
-    print 4
-    print 5
-    print 6
+    print 1
+    print 2
+    print 3
+    return 4
 
 n = -10
 while n <= 10 do
@@ -9,4 +10,4 @@ while n <= 10 do
 
 	n = n + 1
 
-call something
+print call something

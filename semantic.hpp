@@ -71,6 +71,7 @@ public:
 	virtual void visit(IntNode* node);
 	virtual void visit(GotoNode* node);
 	virtual void visit(FunctionCallNode* node);
+	virtual void visit(ReturnNode* node);
 
 	bool success() const { return success_; }
 

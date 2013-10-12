@@ -185,6 +185,21 @@ private:
 	long value_;
 };
 
+class FunctionCallNode : public ExpressionNode
+{
+public:
+	static FunctionCallNode* create(const char* target);
+	virtual const char* str() const { return "FunctionCall"; }
+	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const char* target() { return target_; }
+
+private:
+	FunctionCallNode() {}
+	const char* target_;
+};
+
 /* Statement nodes */
 class BlockNode : public StatementNode
 {
@@ -347,19 +362,19 @@ private:
 	Symbol* symbol_;
 };
 
-class FunctionCallNode : public StatementNode
+class ReturnNode : public StatementNode
 {
 public:
-	static FunctionCallNode* create(const char* target);
-	virtual const char* str() const { return "FunctionCall"; }
+	static ReturnNode* create(ExpressionNode* expression);
+	virtual const char* str() const { return "Return"; }
 	virtual void show(std::ostream& out, int depth) const;
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const char* target() { return target_; }
+	ExpressionNode* expression() { return expression_; }
 
 private:
-	FunctionCallNode() {}
-	const char* target_;
+	ReturnNode() {}
+	ExpressionNode* expression_;
 };
 
 #endif

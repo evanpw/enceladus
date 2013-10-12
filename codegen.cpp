@@ -10,6 +10,7 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "global __main" << std::endl;
 	out_ << "extern __read, __print, __exit" << std::endl;
 	out_ << "__main:" << std::endl;
+	currentFunction_ = "_main";
 
 	// Main function
 	for (std::list<AstNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
@@ -17,13 +18,18 @@ void CodeGen::visit(ProgramNode* node)
 		(*i)->accept(this);
 	}
 
+	out_ << "__end__main:" << std::endl;
 	out_ << "ret" << std::endl;
 
 	// All other functions
 	for (FunctionDefNode* node : functionDefs_)
 	{
+		currentFunction_ = node->name();
 		out_ << "_" << node->name() << ":" << std::endl;
+
 		node->body()->accept(this);
+
+		out_ << "__end_" << node->name() << ":" << std::endl;
 		out_ << "ret" << std::endl;
 	}
 
@@ -250,4 +256,10 @@ void CodeGen::visit(FunctionDefNode* node)
 void CodeGen::visit(FunctionCallNode* node)
 {
 	out_ << "call _" << node->target() << std::endl;
+}
+
+void CodeGen::visit(ReturnNode* node)
+{
+	node->expression()->accept(this);
+	out_ << "jmp __end_" << currentFunction_ << std::endl;
 }

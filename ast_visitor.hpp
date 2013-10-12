@@ -19,6 +19,7 @@ class IntNode;
 class GotoNode;
 class FunctionDefNode;
 class FunctionCallNode;
+class ReturnNode;
 
 class AstVisitor
 {
@@ -44,6 +45,7 @@ public:
 	virtual void visit(IntNode* node) {}
 	virtual void visit(GotoNode* node) {}
 	virtual void visit(FunctionCallNode* node) {}
+	virtual void visit(ReturnNode* node) {}
 };
 
 #endif

@@ -30,11 +30,15 @@ public:
 	virtual void visit(GotoNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
+	virtual void visit(ReturnNode* node);
 
 private:
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
 	int labels_;
 	std::ostream& out_;
+
+	// The name of the function currently being generated
+	const char* currentFunction_;
 
 	// Keep track of the function definitions so that we can walk through them after the main function
 	std::vector<FunctionDefNode*> functionDefs_;

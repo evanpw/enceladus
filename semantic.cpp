@@ -429,5 +429,12 @@ void TypeChecker::visit(FunctionDefNode* node)
 
 void TypeChecker::visit(FunctionCallNode* node)
 {
+	// All return values are integers for now
+	node->setType(kInt);
+}
+
+void TypeChecker::visit(ReturnNode* node)
+{
+	typeCheck(node->expression(), kInt);
 	node->setType(kNone);
 }

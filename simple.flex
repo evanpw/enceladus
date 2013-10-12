@@ -75,6 +75,7 @@ int yycolumn = 1;
 "def"		{ return DEF; }
 "as"		{ return AS; }
 "call"		{ return CALL; }
+"return"	{ return RETURN; }
 
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
 \n						 { yycolumn = 1; return EOL; }
