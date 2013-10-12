@@ -279,9 +279,13 @@ public:
 
 	const char* target() { return target_; }
 
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
 private:
 	ReadNode() {}
 	const char* target_;
+
+	Symbol* symbol_;
 };
 
 class WhileNode : public StatementNode
@@ -312,10 +316,14 @@ public:
 	const char* target() { return target_; }
 	ExpressionNode* value() { return value_; }
 
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
 private:
 	AssignNode() {}
 	const char* target_;
 	ExpressionNode* value_;
+
+	Symbol* symbol_;
 };
 
 class FunctionDefNode : public StatementNode
