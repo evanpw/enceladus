@@ -133,7 +133,7 @@ protected:
 class ComparisonNode : public ExpressionNode
 {
 public:
-	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual };
+	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual, kNotEqual };
 
 	static ComparisonNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
 	virtual const char* str() const;

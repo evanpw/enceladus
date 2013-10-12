@@ -54,6 +54,7 @@ int yycolumn = 1;
 "<="	{ return LE; }
 ">="	{ return GE; }
 "=="	{ return EQUALS; }
+"!="	{ return NE; }
 ":"		{ return ':'; }
 "("		{ return '('; }
 ")"		{ return ')'; }

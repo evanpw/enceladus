@@ -74,6 +74,10 @@ void CodeGen::visit(ComparisonNode* node)
 			out_ << "jle near " << trueBranch << std::endl;
 			break;
 
+		case ComparisonNode::kNotEqual:
+			out_ << "jne near " << trueBranch << std::endl;
+			break;
+
 		default: assert(false);
 
 	}

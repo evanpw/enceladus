@@ -157,6 +157,7 @@ const char* ComparisonNode::str() const
 	case kEqual: return "Comparison(=)";
 	case kGreaterOrEqual: return "Comparison(>=)";
 	case kLessOrEqual: return "Comparison(<=)";
+	case kNotEqual: return "Comparison(!=)";
 	}
 
 	assert(false);

@@ -45,7 +45,7 @@ void yyerror(const char* msg);
 
 %nonassoc NOT
 %left AND OR
-%nonassoc '>' '<' LE GE EQUALS
+%nonassoc '>' '<' LE GE EQUALS NE
 %left '+' '-'
 %left '*' '/' MOD
 
@@ -163,6 +163,10 @@ expression: NOT expression
 	| expression EQUALS expression
 		{
 			$$ = ComparisonNode::create($1, ComparisonNode::kEqual, $3);
+		}
+	| expression NE expression
+		{
+			$$ = ComparisonNode::create($1, ComparisonNode::kNotEqual, $3);
 		}
 	| expression '+' expression
 		{
