@@ -17,12 +17,6 @@ AstNode::~AstNode()
 	delete location_;
 }
 
-void AstNode::show(ostream& out, int depth) const
-{
-	indent(out, depth);
-	out << str() << endl;
-}
-
 ProgramNode* ProgramNode::create()
 {
 	ProgramNode* node = new ProgramNode;
@@ -36,15 +30,6 @@ void ProgramNode::prepend(AstNode* child)
 	children_.push_back(child);
 }
 
-void ProgramNode::show(ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	for (list<AstNode*>::const_iterator i = children_.begin(); i != children_.end(); ++i)
-	{
-		(*i)->show(out, depth + 1);
-	}
-}
-
 LabelNode* LabelNode::create(const char* name)
 {
 	LabelNode* node = new LabelNode;
@@ -55,12 +40,6 @@ LabelNode* LabelNode::create(const char* name)
 	return node;
 }
 
-void LabelNode::show(std::ostream& out, int depth) const
-{
-	indent(out, depth);
-	out << "Label: " << name_ << endl;
-}
-
 NotNode* NotNode::create(ExpressionNode* expression)
 {
 	NotNode* node = new NotNode;
@@ -68,12 +47,6 @@ NotNode* NotNode::create(ExpressionNode* expression)
 
 	node->expression_ = expression;
 	return node;
-}
-
-void NotNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	expression_->show(out, depth + 1);
 }
 
 BinaryOperatorNode* BinaryOperatorNode::create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
@@ -87,27 +60,6 @@ BinaryOperatorNode* BinaryOperatorNode::create(ExpressionNode* lhs, Operator op,
 	return node;
 }
 
-void BinaryOperatorNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	lhs_->show(out, depth + 1);
-	rhs_->show(out, depth + 1);
-}
-
-const char* BinaryOperatorNode::str() const
-{
-	switch (op_)
-	{
-	case kPlus: return "BinaryOp(+)";
-	case kMinus: return "BinaryOp(-)";
-	case kTimes: return "BinaryOp(*)";
-	case kDivide: return "BinaryOp(/)";
-	case kMod: return "BinaryOp(mod)";
-	}
-
-	assert(false);
-}
-
 LogicalNode* LogicalNode::create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
 {
 	LogicalNode* node = new LogicalNode;
@@ -117,24 +69,6 @@ LogicalNode* LogicalNode::create(ExpressionNode* lhs, Operator op, ExpressionNod
 	node->op_ = op;
 	node->rhs_ = rhs;
 	return node;
-}
-
-void LogicalNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	lhs_->show(out, depth + 1);
-	rhs_->show(out, depth + 1);
-}
-
-const char* LogicalNode::str() const
-{
-	switch (op_)
-	{
-	case kAnd: return "Logical(and)";
-	case kOr: return "Logical(or)";
-	}
-
-	assert(false);
 }
 
 ComparisonNode* ComparisonNode::create(ExpressionNode* lhs, ComparisonNode::Operator op, ExpressionNode* rhs)
@@ -148,28 +82,6 @@ ComparisonNode* ComparisonNode::create(ExpressionNode* lhs, ComparisonNode::Oper
 	return node;
 }
 
-const char* ComparisonNode::str() const
-{
-	switch (op_)
-	{
-	case kGreater: return "Comparison(>)";
-	case kLess: return "Comparison(<)";
-	case kEqual: return "Comparison(=)";
-	case kGreaterOrEqual: return "Comparison(>=)";
-	case kLessOrEqual: return "Comparison(<=)";
-	case kNotEqual: return "Comparison(!=)";
-	}
-
-	assert(false);
-}
-
-void ComparisonNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	lhs_->show(out, depth + 1);
-	rhs_->show(out, depth + 1);
-}
-
 VariableNode* VariableNode::create(const char* name)
 {
 	VariableNode* node = new VariableNode;
@@ -180,12 +92,6 @@ VariableNode* VariableNode::create(const char* name)
 	return node;
 }
 
-void VariableNode::show(std::ostream& out, int depth) const
-{
-	indent(out, depth);
-	out << "Variable: " << name_ << endl;
-}
-
 IntNode* IntNode::create(long value)
 {
 	IntNode* node = new IntNode;
@@ -193,12 +99,6 @@ IntNode* IntNode::create(long value)
 
 	node->value_ = value;
 	return node;
-}
-
-void IntNode::show(std::ostream& out, int depth) const
-{
-	indent(out, depth);
-	out << "Int: " << value_ << endl;
 }
 
 BlockNode* BlockNode::create()
@@ -214,15 +114,6 @@ void BlockNode::prepend(StatementNode* child)
 	children_.push_back(child);
 }
 
-void BlockNode::show(ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	for (list<StatementNode*>::const_iterator i = children_.begin(); i != children_.end(); ++i)
-	{
-		(*i)->show(out, depth + 1);
-	}
-}
-
 IfNode* IfNode::create(ExpressionNode* condition, StatementNode* body)
 {
 	IfNode* node = new IfNode;
@@ -231,13 +122,6 @@ IfNode* IfNode::create(ExpressionNode* condition, StatementNode* body)
 	node->condition_ = condition;
 	node->body_ = body;
 	return node;
-}
-
-void IfNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	condition_->show(out, depth + 1);
-	body_->show(out, depth + 1);
 }
 
 IfElseNode* IfElseNode::create(ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
@@ -251,14 +135,6 @@ IfElseNode* IfElseNode::create(ExpressionNode* condition, StatementNode* body, S
 	return node;
 }
 
-void IfElseNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	condition_->show(out, depth + 1);
-	body_->show(out, depth + 1);
-	else_body_->show(out, depth + 1);
-}
-
 GotoNode* GotoNode::create(const char* target)
 {
 	GotoNode* node = new GotoNode;
@@ -266,12 +142,6 @@ GotoNode* GotoNode::create(const char* target)
 
 	node->target_ = target;
 	return node;
-}
-
-void GotoNode::show(std::ostream& out, int depth) const
-{
-	indent(out, depth);
-	out << "Goto: " << target_ << endl;
 }
 
 PrintNode* PrintNode::create(ExpressionNode* expression)
@@ -283,23 +153,12 @@ PrintNode* PrintNode::create(ExpressionNode* expression)
 	return node;
 }
 
-void PrintNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	expression_->show(out, depth + 1);
-}
-
 ReadNode* ReadNode::create()
 {
 	ReadNode* node = new ReadNode;
 	MemoryManager::addNode(node);
 
 	return node;
-}
-
-void ReadNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
 }
 
 WhileNode* WhileNode::create(ExpressionNode* condition, StatementNode* body)
@@ -312,13 +171,6 @@ WhileNode* WhileNode::create(ExpressionNode* condition, StatementNode* body)
 	return node;
 }
 
-void WhileNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	condition_->show(out, depth + 1);
-	body_->show(out, depth + 1);
-}
-
 AssignNode* AssignNode::create(const char* target, ExpressionNode* value)
 {
 	AssignNode* node = new AssignNode;
@@ -327,16 +179,6 @@ AssignNode* AssignNode::create(const char* target, ExpressionNode* value)
 	node->target_ = target;
 	node->value_ = value;
 	return node;
-}
-
-void AssignNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-
-	indent(out, depth + 1);
-	out << target_ << endl;
-
-	value_->show(out, depth + 1);
 }
 
 FunctionDefNode* FunctionDefNode::create(const char* name, StatementNode* body)
@@ -349,13 +191,6 @@ FunctionDefNode* FunctionDefNode::create(const char* name, StatementNode* body)
 	return node;
 }
 
-void FunctionDefNode::show(std::ostream& out, int depth) const
-{
-	indent(out, depth);
-	out << "Function: " << name_ << endl;
-	body_->show(out, depth + 1);
-}
-
 FunctionCallNode* FunctionCallNode::create(const char* target)
 {
 	FunctionCallNode* node = new FunctionCallNode;
@@ -365,12 +200,6 @@ FunctionCallNode* FunctionCallNode::create(const char* target)
 	return node;
 }
 
-void FunctionCallNode::show(std::ostream& out, int depth) const
-{
-	indent(out, depth);
-	out << "FunctionCall: " << target_ << endl;
-}
-
 ReturnNode* ReturnNode::create(ExpressionNode* expression)
 {
 	ReturnNode* node = new ReturnNode;
@@ -378,10 +207,4 @@ ReturnNode* ReturnNode::create(ExpressionNode* expression)
 
 	node->expression_ = expression;
 	return node;
-}
-
-void ReturnNode::show(std::ostream& out, int depth) const
-{
-	AstNode::show(out, depth);
-	expression_->show(out, depth + 1);
 }
