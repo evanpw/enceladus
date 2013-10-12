@@ -1,4 +1,4 @@
-# Almost solves Project Euler 3
+# Solves Project Euler 3
 
 n = 600851475143
 biggest = 0

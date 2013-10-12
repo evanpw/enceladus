@@ -109,13 +109,13 @@ void CodeGen::visit(BinaryOperatorNode* node)
 
 	case BinaryOperatorNode::kDivide:
 		out_ << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "cdq" << std::endl;
+		out_ << "cqo" << std::endl;
 		out_ << "idiv qword [rsp]" << std::endl;
 		break;
 
 	case BinaryOperatorNode::kMod:
 		out_ << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "cdq" << std::endl;
+		out_ << "cqo" << std::endl;
 		out_ << "idiv qword [rsp]" << std::endl;
 		out_ << "mov rax, rdx" << std::endl;
 		break;
