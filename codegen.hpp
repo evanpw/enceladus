@@ -3,6 +3,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <iostream>
+#include <vector>
 #include "ast.hpp"
 #include "ast_visitor.hpp"
 
@@ -10,7 +11,7 @@ class CodeGen : public AstVisitor
 {
 public:
 	CodeGen() : labels_(0), out_(std::cout) {}
-	
+
 	virtual void visit(ProgramNode* node);
 	virtual void visit(NotNode* node);
 	virtual void visit(ComparisonNode* node);
@@ -27,11 +28,16 @@ public:
 	virtual void visit(VariableNode* node);
 	virtual void visit(IntNode* node);
 	virtual void visit(GotoNode* node);
-	
-private:	
-	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }  
+	virtual void visit(FunctionDefNode* node);
+	virtual void visit(FunctionCallNode* node);
+
+private:
+	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
 	int labels_;
 	std::ostream& out_;
+
+	// Keep track of the function definitions so that we can walk through them after the main function
+	std::vector<FunctionDefNode*> functionDefs_;
 };
 
 #endif

@@ -6,7 +6,7 @@ void AstVisitor::visit(ProgramNode* node)
 {
 	for (std::list<AstNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
 	{
-		(*i)->accept(this);	
+		(*i)->accept(this);
 	}
 }
 
@@ -37,7 +37,7 @@ void AstVisitor::visit(BlockNode* node)
 {
 	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
 	{
-		(*i)->accept(this);	
+		(*i)->accept(this);
 	}
 }
 
@@ -69,3 +69,9 @@ void AstVisitor::visit(AssignNode* node)
 {
 	node->value()->accept(this);
 }
+
+void AstVisitor::visit(FunctionDefNode* node)
+{
+	node->body()->accept(this);
+}
+

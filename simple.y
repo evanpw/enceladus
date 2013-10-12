@@ -39,7 +39,8 @@ void yyerror(const char* msg);
 %type<expression> expression
 %type<block> statement_list
 
-%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS
+%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT
+%token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF AS CALL
 %token<str> IDENT
 %token<number> INT_LIT WHITESPACE
 
@@ -108,6 +109,14 @@ statement: IF expression THEN suite
 	| IDENT ASSIGN expression EOL
 		{
 			$$ = AssignNode::create($1, $3);
+		}
+	| DEF IDENT AS suite
+		{
+			$$ = FunctionDefNode::create($2, $4);
+		}
+	| CALL IDENT EOL
+		{
+			$$ = FunctionCallNode::create($2);
 		}
 	;
 

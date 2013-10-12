@@ -1,0 +1,12 @@
+def something as
+    print 4
+    print 5
+    print 6
+
+n = -10
+while n <= 10 do
+	print n
+
+	n = n + 1
+
+call something

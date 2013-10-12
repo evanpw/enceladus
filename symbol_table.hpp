@@ -5,7 +5,7 @@
 
 class AstNode;
 
-enum Kind {kLabel, kVariable};
+enum Kind {kLabel, kVariable, kFunction};
 
 struct Symbol
 {
@@ -13,10 +13,10 @@ struct Symbol
 	// not by string, so there cannot be multiple copies of the same string or bad things will
 	// happen.
 	const char* name;
-	
-	// Label or variable?
+
+	// Label, variable, function, ...?
 	Kind type;
-	
+
 	// For a label, the node at which the label is declared. For a variable, null
 	AstNode* node;
 };
@@ -26,14 +26,14 @@ class SymbolTable
 public:
 	// Returns 0 if the symbol is not found in the symbol table
 	static Symbol* find(const char* name);
-	
+
 	static Symbol* insert(const char* name, Kind type, AstNode* node = 0);
 	static void freeSymbols();
 	static const std::map<const char*, Symbol*>& symbols() { return symbols_; }
-	
+
 private:
 	SymbolTable();
-	
+
 	static std::map<const char*, Symbol*> symbols_;
 };
 

@@ -318,4 +318,40 @@ private:
 	ExpressionNode* value_;
 };
 
+class FunctionDefNode : public StatementNode
+{
+public:
+	static FunctionDefNode* create(const char* name, StatementNode* body);
+	virtual const char* str() const { return "FunctionDef"; }
+	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const char* name() { return name_; }
+	StatementNode* body() { return body_; }
+
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
+private:
+	FunctionDefNode() {}
+	const char* name_;
+	StatementNode* body_;
+
+	Symbol* symbol_;
+};
+
+class FunctionCallNode : public StatementNode
+{
+public:
+	static FunctionCallNode* create(const char* target);
+	virtual const char* str() const { return "FunctionCall"; }
+	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const char* target() { return target_; }
+
+private:
+	FunctionCallNode() {}
+	const char* target_;
+};
+
 #endif

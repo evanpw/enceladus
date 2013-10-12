@@ -1,0 +1,12 @@
+Todo
+----
+* Make lhs of assignment a VariableNode and make it a declaration
+* Fatal error on integer literal out of range
+* Don't continue build when lexing / parsing fails
+* Pass parameters / return values from a function call
+* Better memory management
+* Get rid of str() and show() methods in AST classes to simplify things
+* Remove labels / gotos
+* Clean up Makefile
+* Rename output executable from parser
+* Separate kinds (variable, label, function) from type (int, bool)

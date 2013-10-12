@@ -340,3 +340,36 @@ void AssignNode::show(std::ostream& out, int depth) const
 
 	value_->show(out, depth + 1);
 }
+
+FunctionDefNode* FunctionDefNode::create(const char* name, StatementNode* body)
+{
+	FunctionDefNode* node = new FunctionDefNode;
+	MemoryManager::addNode(node);
+
+	node->name_ = name;
+	node->body_ = body;
+	return node;
+}
+
+void FunctionDefNode::show(std::ostream& out, int depth) const
+{
+	indent(out, depth);
+	out << "Function: " << name_ << endl;
+	body_->show(out, depth + 1);
+}
+
+FunctionCallNode* FunctionCallNode::create(const char* target)
+{
+	FunctionCallNode* node = new FunctionCallNode;
+	MemoryManager::addNode(node);
+
+	node->target_ = target;
+	return node;
+}
+
+void FunctionCallNode::show(std::ostream& out, int depth) const
+{
+	indent(out, depth);
+	out << "FunctionCall: " << target_ << endl;
+}
+

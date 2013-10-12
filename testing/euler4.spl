@@ -1,0 +1,26 @@
+# Solve Project Euler 4
+
+biggest = 0
+
+i = 100
+while i <= 999 do
+    j = 100
+    while j <= 999 do
+        x = i * j
+
+        copy_x = x
+        y = 0
+
+        while copy_x != 0 do
+            y = y * 10
+            y = y + (copy_x mod 10)
+            copy_x = copy_x / 10
+
+        if x == y and x > biggest then
+            biggest = x
+
+        j = j + 1
+
+    i = i + 1
+
+print biggest

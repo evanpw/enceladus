@@ -11,12 +11,21 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "extern __read, __print, __exit" << std::endl;
 	out_ << "__main:" << std::endl;
 
+	// Main function
 	for (std::list<AstNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
 	{
 		(*i)->accept(this);
 	}
 
 	out_ << "ret" << std::endl;
+
+	// All other functions
+	for (FunctionDefNode* node : functionDefs_)
+	{
+		out_ << "_" << node->name() << ":" << std::endl;
+		node->body()->accept(this);
+		out_ << "ret" << std::endl;
+	}
 
 	out_ << "section .data" << std::endl;
 	const std::map<const char*, Symbol*>& symbols = SymbolTable::symbols();
@@ -231,4 +240,14 @@ void CodeGen::visit(AssignNode* node)
 {
 	node->value()->accept(this);
 	out_ << "mov [rel _" << node->target() << "], rax" << std::endl;
+}
+
+void CodeGen::visit(FunctionDefNode* node)
+{
+	functionDefs_.push_back(node);
+}
+
+void CodeGen::visit(FunctionCallNode* node)
+{
+	out_ << "call _" << node->target() << std::endl;
 }

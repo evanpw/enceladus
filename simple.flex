@@ -72,6 +72,9 @@ int yycolumn = 1;
 "read"		{ return READ; }
 "while"		{ return WHILE; }
 "do"		{ return DO; }
+"def"		{ return DEF; }
+"as"		{ return AS; }
+"call"		{ return CALL; }
 
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
 \n						 { yycolumn = 1; return EOL; }

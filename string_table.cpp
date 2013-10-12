@@ -1,5 +1,5 @@
 #include <iostream>
-#include <string>
+#include <cstring>
 #include "string_table.hpp"
 
 using namespace std;
@@ -16,12 +16,12 @@ const char* StringTable::add(const char* str)
 			return *i;
 		}
 	}
-	
+
 	char* copy = new char[strlen(str) + 1];
 	strcpy(copy, str);
 	strings_.push_back(copy);
-	
-	return copy;	
+
+	return copy;
 }
 
 void StringTable::freeStrings()
@@ -30,6 +30,6 @@ void StringTable::freeStrings()
 	{
 		delete[] *i;
 	}
-	
+
 	strings_.clear();
 }
