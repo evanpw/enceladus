@@ -19,7 +19,6 @@ public:
 	virtual ~AstNode();
 	virtual void accept(AstVisitor* visitor) = 0;
 
-	std::stringstream& code() { return code_; }
 	YYLTYPE* location() { return location_; }
 	Type type() { return type_; }
 
