@@ -29,7 +29,7 @@ void yyerror(const char* msg);
 	BlockNode* block;
 	ExpressionNode* expression;
 	const char* str;
-	int number;
+	long number;
 }
 
 %type<program> program
@@ -60,7 +60,7 @@ program: /* empty */
 			// Ignore blank lines
 			if ($2 != NULL)
 				$1->prepend($2);
-				
+
 			$$ = $1;
 		}
 	;
@@ -74,7 +74,7 @@ logical_line: label
 			$$ = $1;
 		}
 	;
-     
+
 label: IDENT ':' EOL
 		{
 			$$ = LabelNode::create($1);
@@ -110,7 +110,7 @@ statement: IF expression THEN suite
 			$$ = AssignNode::create($1, $3);
 		}
 	;
-	
+
 suite: statement
 		{
 			$$ = $1;
@@ -119,7 +119,7 @@ suite: statement
 		{
 			$$ = $3;
 		}
-	
+
 statement_list: statement
 		{
 			$$ = BlockNode::create();
@@ -127,11 +127,11 @@ statement_list: statement
 		}
 	| statement_list statement
 		{
-			$1->prepend($2);	
+			$1->prepend($2);
 			$$ = $1;
 		}
 	;
-	   
+
 expression: NOT expression
 		{
 			$$ = NotNode::create($2);
@@ -150,7 +150,7 @@ expression: NOT expression
 		}
 	| expression '<' expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kLess, $3);	
+			$$ = ComparisonNode::create($1, ComparisonNode::kLess, $3);
 		}
 	| expression GE expression
 		{
@@ -158,7 +158,7 @@ expression: NOT expression
 		}
 	| expression LE expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kLessOrEqual, $3);	
+			$$ = ComparisonNode::create($1, ComparisonNode::kLessOrEqual, $3);
 		}
 	| expression EQUALS expression
 		{

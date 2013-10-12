@@ -29,7 +29,7 @@ int yycolumn = 1;
 -?[0-9][0-9]*	{
 					try
 					{
-						yylval.number = boost::lexical_cast<int>(yytext);
+						yylval.number = boost::lexical_cast<long>(yytext);
 					}
 					catch (boost::bad_lexical_cast&)
 					{
@@ -38,7 +38,7 @@ int yycolumn = 1;
 						 		  << "column " << yylloc.first_column << ": "
 						 		  << "error: integer literal out of range: " << yytext << std::endl;
 					}
-					
+
 					return INT_LIT;
 				}
 "#".*			/* Ignore comments */
@@ -75,7 +75,7 @@ int yycolumn = 1;
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
 \n						 { yycolumn = 1; return EOL; }
 [ \t]+				     { yylval.number = count_whitespace(yytext, yyleng); return WHITESPACE; }
-.						 { 
+.						 {
 						 	std::cerr << "Near line " << yylloc.first_line << ", "
 						 			  << "column " << yylloc.first_column << ": "
 						 			  << "error: stray '" << yytext[0] << "'" << std::endl;

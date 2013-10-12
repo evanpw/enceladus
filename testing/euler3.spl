@@ -1,6 +1,6 @@
-# Solves a smaller version of Project Euler 3
+# Almost solves Project Euler 3
 
-n = 13195
+n = 600851475143
 biggest = 0
 
 # Loop over all possible divisors of n
