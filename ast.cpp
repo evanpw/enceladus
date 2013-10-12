@@ -289,19 +289,17 @@ void PrintNode::show(std::ostream& out, int depth) const
 	expression_->show(out, depth + 1);
 }
 
-ReadNode* ReadNode::create(const char* target)
+ReadNode* ReadNode::create()
 {
 	ReadNode* node = new ReadNode;
 	MemoryManager::addNode(node);
 
-	node->target_ = target;
 	return node;
 }
 
 void ReadNode::show(std::ostream& out, int depth) const
 {
-	indent(out, depth);
-	out << "Read: " << target_ << endl;
+	AstNode::show(out, depth);
 }
 
 WhileNode* WhileNode::create(ExpressionNode* condition, StatementNode* body)

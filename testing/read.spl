@@ -1,2 +1,2 @@
-read i
-print i + 2
+x = read
+print x + 1

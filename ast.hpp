@@ -200,6 +200,18 @@ private:
 	const char* target_;
 };
 
+class ReadNode : public ExpressionNode
+{
+public:
+	static ReadNode* create();
+	virtual const char* str() const { return "Read"; }
+	virtual void show(std::ostream& out, int depth) const;
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+private:
+	ReadNode() {}
+};
+
 /* Statement nodes */
 class BlockNode : public StatementNode
 {
@@ -282,25 +294,6 @@ public:
 private:
 	PrintNode() {}
 	ExpressionNode* expression_;
-};
-
-class ReadNode : public StatementNode
-{
-public:
-	static ReadNode* create(const char* target);
-	virtual const char* str() const { return "Read"; }
-	virtual void show(std::ostream& out, int depth) const;
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	const char* target() { return target_; }
-
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
-
-private:
-	ReadNode() {}
-	const char* target_;
-
-	Symbol* symbol_;
 };
 
 class WhileNode : public StatementNode

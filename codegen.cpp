@@ -223,7 +223,6 @@ void CodeGen::visit(PrintNode* node)
 void CodeGen::visit(ReadNode* node)
 {
 	out_ << "call __read" << std::endl;
-	out_ << "mov [rel _" << node->target() << "], rax" << std::endl;
 }
 
 void CodeGen::visit(WhileNode* node)

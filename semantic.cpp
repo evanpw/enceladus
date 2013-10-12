@@ -132,36 +132,6 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 }
 
-void SemanticPass1::visit(ReadNode* node)
-{
-	const char* target = node->target();
-
-	Symbol* symbol = SymbolTable::find(target);
-	if (symbol != 0)
-	{
-		if (symbol->type == kLabel)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used label \"" << target << "\" as target of read" << endl;
-
-			success_ = false;
-		}
-		else if (symbol->type == kFunction)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used function name \"" << target << "\" as target of read" << endl;
-
-			success_ = false;
-		}
-	}
-	else
-	{
-		node->attachSymbol(SymbolTable::insert(target, kVariable, node));
-	}
-}
-
 void SemanticPass1::visit(AssignNode* node)
 {
 	const char* target = node->target();
@@ -379,8 +349,7 @@ void TypeChecker::visit(PrintNode* node)
 
 void TypeChecker::visit(ReadNode* node)
 {
-	// Target has already been verified as a variable, and variables are always ints
-	node->setType(kNone);
+	node->setType(kInt);
 }
 
 void TypeChecker::visit(WhileNode* node)

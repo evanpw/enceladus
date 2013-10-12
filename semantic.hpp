@@ -21,7 +21,6 @@ public:
 	virtual void visit(LabelNode* node);
 	virtual void visit(VariableNode* node);
 	virtual void visit(FunctionDefNode* node);
-	virtual void visit(ReadNode* node);
 	virtual void visit(AssignNode* node);
 
 	bool success() const { return success_; }

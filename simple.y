@@ -98,10 +98,6 @@ statement: IF expression THEN suite
 		{
 			$$ = PrintNode::create($2);
 		}
-	| READ IDENT EOL
-		{
-			$$ = ReadNode::create($2);
-		}
 	| WHILE expression DO suite
 		{
 			$$ = WhileNode::create($2, $4);
@@ -200,6 +196,10 @@ expression: NOT expression
 	| CALL IDENT
 		{
 			$$ = FunctionCallNode::create($2);
+		}
+	| READ
+		{
+			$$ = ReadNode::create();
 		}
 	| '(' expression ')'
 		{
