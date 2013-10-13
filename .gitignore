@@ -5,3 +5,5 @@ parser.dSYM
 simple.tab.c
 simple.tab.h
 lex.yy.c
+simplec
+simplec.dSYM
