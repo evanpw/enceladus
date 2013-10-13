@@ -2,7 +2,6 @@
 #include <iostream>
 #include "ast.hpp"
 #include "simple.tab.h"
-#include "utilities.hpp"
 
 using namespace std;
 
