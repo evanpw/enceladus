@@ -258,9 +258,9 @@ bool TypeChecker::typeCheck(AstNode* node, Type type)
 // Internal nodes
 void TypeChecker::visit(ProgramNode* node)
 {
-	for (std::list<AstNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	for (auto& child : node->children())
 	{
-		(*i)->accept(this);
+		child->accept(this);
 	}
 
 	node->setType(kNone);
@@ -310,9 +310,9 @@ void TypeChecker::visit(LogicalNode* node)
 
 void TypeChecker::visit(BlockNode* node)
 {
-	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	for (auto& child : node->children())
 	{
-		(*i)->accept(this);
+		child->accept(this);
 	}
 
 	node->setType(kNone);

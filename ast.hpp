@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <list>
-#include <sstream>
+#include <memory>
 #include "ast_visitor.hpp"
 #include "string_table.hpp"
 #include "symbol_table.hpp"
@@ -25,7 +25,6 @@ public:
 	void setType(Type type) { type_ = type; }
 
 protected:
-	std::stringstream code_;
 	YYLTYPE* location_;
 	Type type_;
 };
@@ -38,22 +37,20 @@ class ExpressionNode : public AstNode {};
 class ProgramNode : public AstNode
 {
 public:
-	static ProgramNode* create();
 	void prepend(AstNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::list<AstNode*>& children() const { return children_; }
+	const std::list<std::unique_ptr<AstNode>>& children() const { return children_; }
 
 private:
-	ProgramNode() {}
-	std::list<AstNode*> children_;
+	std::list<std::unique_ptr<AstNode>> children_;
 };
 
 class LabelNode : public AstNode
 {
 public:
-	static LabelNode* create(const char* name);
+	LabelNode(const char* name) : name_(name), symbol_(nullptr) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* name() { return name_; }
@@ -62,7 +59,6 @@ public:
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	LabelNode() {}
 	const char* name_;
 	Symbol* symbol_;
 };
@@ -71,50 +67,55 @@ private:
 class NotNode : public ExpressionNode
 {
 public:
-	static NotNode* create(ExpressionNode* expression);
+	NotNode(ExpressionNode* expression) : expression_(expression) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* child() { return expression_; }
+	ExpressionNode* child() { return expression_.get(); }
 
 private:
-	NotNode() {}
-	ExpressionNode* expression_;
+	std::unique_ptr<ExpressionNode> expression_;
 };
 
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
 	enum Operator {kPlus, kMinus, kTimes, kDivide, kMod};
-	static BinaryOperatorNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
+
+	BinaryOperatorNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	: lhs_(lhs), op_(op), rhs_(rhs)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* lhs() { return lhs_; }
+	ExpressionNode* lhs() { return lhs_.get(); }
 	Operator op() { return op_; }
-	ExpressionNode* rhs() { return rhs_; }
+	ExpressionNode* rhs() { return rhs_.get(); }
 
 protected:
-	BinaryOperatorNode() {}
-	ExpressionNode* lhs_;
+	std::unique_ptr<ExpressionNode> lhs_;
 	Operator op_;
-	ExpressionNode* rhs_;
+	std::unique_ptr<ExpressionNode> rhs_;
 };
 
 class LogicalNode : public ExpressionNode
 {
 public:
 	enum Operator {kAnd, kOr};
-	static LogicalNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
+
+	LogicalNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	: lhs_(lhs), op_(op), rhs_(rhs)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* lhs() { return lhs_; }
+	ExpressionNode* lhs() { return lhs_.get(); }
 	Operator op() { return op_; }
-	ExpressionNode* rhs() { return rhs_; }
+	ExpressionNode* rhs() { return rhs_.get(); }
 
 protected:
-	LogicalNode() {}
-	ExpressionNode* lhs_;
+	std::unique_ptr<ExpressionNode> lhs_;
 	Operator op_;
-	ExpressionNode* rhs_;
+	std::unique_ptr<ExpressionNode> rhs_;
 };
 
 class ComparisonNode : public ExpressionNode
@@ -122,24 +123,27 @@ class ComparisonNode : public ExpressionNode
 public:
 	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual, kNotEqual };
 
-	static ComparisonNode* create(ExpressionNode* lhs, Operator op, ExpressionNode* rhs);
+	ComparisonNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	: lhs_(lhs), op_(op), rhs_(rhs)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* lhs() { return lhs_; }
+	ExpressionNode* lhs() { return lhs_.get(); }
 	Operator op() { return op_; }
-	ExpressionNode* rhs() { return rhs_; }
+	ExpressionNode* rhs() { return rhs_.get(); }
 
 protected:
-	ComparisonNode() {}
-	ExpressionNode* lhs_;
+	std::unique_ptr<ExpressionNode> lhs_;
 	Operator op_;
-	ExpressionNode* rhs_;
+	std::unique_ptr<ExpressionNode> rhs_;
 };
 
 class VariableNode : public ExpressionNode
 {
 public:
-	static VariableNode* create(const char* name);
+	VariableNode(const char* name) : name_(name), symbol_(nullptr) {}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* name() { return name_; }
@@ -148,7 +152,6 @@ public:
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	VariableNode() {}
 	const char* name_;
 	Symbol* symbol_;
 };
@@ -156,143 +159,135 @@ private:
 class IntNode : public ExpressionNode
 {
 public:
-	static IntNode* create(long value);
+	IntNode(long value) : value_(value) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	long value() { return value_; }
 
 private:
-	IntNode() {}
 	long value_;
 };
 
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	static FunctionCallNode* create(const char* target);
+	FunctionCallNode(const char* target) : target_(target) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* target() { return target_; }
 
 private:
-	FunctionCallNode() {}
 	const char* target_;
 };
 
 class ReadNode : public ExpressionNode
 {
 public:
-	static ReadNode* create();
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-private:
-	ReadNode() {}
 };
 
 /* Statement nodes */
 class BlockNode : public StatementNode
 {
 public:
-	static BlockNode* create();
 	void prepend(StatementNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::list<StatementNode*>& children() const { return children_; }
+	const std::list<std::unique_ptr<StatementNode>>& children() const { return children_; }
 
 private:
-	BlockNode() {}
-	std::list<StatementNode*> children_;
+	std::list<std::unique_ptr<StatementNode>> children_;
 };
 
 class IfNode : public StatementNode
 {
 public:
-	static IfNode* create(ExpressionNode* condition, StatementNode* body);
+	IfNode(ExpressionNode* condition, StatementNode* body) : condition_(condition), body_(body) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* condition() { return condition_; }
-	StatementNode* body() { return body_; }
+	ExpressionNode* condition() { return condition_.get(); }
+	StatementNode* body() { return body_.get(); }
 
 private:
-	IfNode() {}
-	ExpressionNode* condition_;
-	StatementNode* body_;
+	std::unique_ptr<ExpressionNode> condition_;
+	std::unique_ptr<StatementNode> body_;
 };
 
 class IfElseNode : public StatementNode
 {
 public:
-	static IfElseNode* create(ExpressionNode* condition, StatementNode* body, StatementNode* else_body);
+	IfElseNode(ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
+	: condition_(condition), body_(body), else_body_(else_body)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* condition() { return condition_; }
-	StatementNode* body() { return body_; }
-	StatementNode* else_body() { return else_body_; }
+	ExpressionNode* condition() { return condition_.get(); }
+	StatementNode* body() { return body_.get(); }
+	StatementNode* else_body() { return else_body_.get(); }
 
 private:
-	IfElseNode() {}
-	ExpressionNode* condition_;
-	StatementNode* body_;
-	StatementNode* else_body_;
+	std::unique_ptr<ExpressionNode> condition_;
+	std::unique_ptr<StatementNode> body_;
+	std::unique_ptr<StatementNode> else_body_;
 };
 
 class GotoNode : public StatementNode
 {
 public:
-	static GotoNode* create(const char* target);
+	GotoNode(const char* target) : target_(target) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* target() const { return target_; }
 
 private:
-	GotoNode() {}
 	const char* target_;
 };
 
 class PrintNode : public StatementNode
 {
 public:
-	static PrintNode* create(ExpressionNode* expression);
+	PrintNode(ExpressionNode* expression) : expression_(expression) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* expression() { return expression_; }
+	ExpressionNode* expression() { return expression_.get(); }
 
 private:
-	PrintNode() {}
-	ExpressionNode* expression_;
+	std::unique_ptr<ExpressionNode> expression_;
 };
 
 class WhileNode : public StatementNode
 {
 public:
-	static WhileNode* create(ExpressionNode* condition, StatementNode* body);
+	WhileNode(ExpressionNode* condition, StatementNode* body) : condition_(condition), body_(body) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* condition() { return condition_; }
-	StatementNode* body() { return body_; }
+	ExpressionNode* condition() { return condition_.get(); }
+	StatementNode* body() { return body_.get(); }
 
 private:
-	WhileNode() {}
-	ExpressionNode* condition_;
-	StatementNode* body_;
+	std::unique_ptr<ExpressionNode> condition_;
+	std::unique_ptr<StatementNode> body_;
 };
 
 class AssignNode : public StatementNode
 {
 public:
-	static AssignNode* create(const char* target, ExpressionNode* value);
+	AssignNode(const char* target, ExpressionNode* value)
+	: target_(target), value_(value), symbol_(nullptr)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* target() { return target_; }
-	ExpressionNode* value() { return value_; }
+	ExpressionNode* value() { return value_.get(); }
 
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	AssignNode() {}
 	const char* target_;
-	ExpressionNode* value_;
+	std::unique_ptr<ExpressionNode> value_;
 
 	Symbol* symbol_;
 };
@@ -300,18 +295,20 @@ private:
 class FunctionDefNode : public StatementNode
 {
 public:
-	static FunctionDefNode* create(const char* name, StatementNode* body);
+	FunctionDefNode(const char* name, StatementNode* body)
+	: name_(name), body_(body), symbol_(nullptr)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* name() { return name_; }
-	StatementNode* body() { return body_; }
+	StatementNode* body() { return body_.get(); }
 
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	FunctionDefNode() {}
 	const char* name_;
-	StatementNode* body_;
+	std::unique_ptr<StatementNode> body_;
 
 	Symbol* symbol_;
 };
@@ -319,14 +316,14 @@ private:
 class ReturnNode : public StatementNode
 {
 public:
-	static ReturnNode* create(ExpressionNode* expression);
+	ReturnNode(ExpressionNode* expression) : expression_(expression) {}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* expression() { return expression_; }
+	ExpressionNode* expression() { return expression_.get(); }
 
 private:
-	ReturnNode() {}
-	ExpressionNode* expression_;
+	std::unique_ptr<ExpressionNode> expression_;
 };
 
 #endif

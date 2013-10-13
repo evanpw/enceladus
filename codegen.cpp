@@ -13,9 +13,9 @@ void CodeGen::visit(ProgramNode* node)
 	currentFunction_ = "_main";
 
 	// Main function
-	for (std::list<AstNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	for (auto& child : node->children())
 	{
-		(*i)->accept(this);
+		child->accept(this);
 	}
 
 	out_ << "__end__main:" << std::endl;
@@ -175,9 +175,9 @@ void CodeGen::visit(IntNode* node)
 
 void CodeGen::visit(BlockNode* node)
 {
-	for (std::list<StatementNode*>::const_iterator i = node->children().begin(); i != node->children().end(); ++i)
+	for (auto& child : node->children())
 	{
-		(*i)->accept(this);
+		child->accept(this);
 	}
 }
 

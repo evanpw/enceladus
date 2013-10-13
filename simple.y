@@ -1,7 +1,6 @@
 %{
 #include <iostream>
 #include "ast.hpp"
-#include "memory_manager.hpp"
 #include "string_table.hpp"
 
 using namespace std;
@@ -54,7 +53,7 @@ void yyerror(const char* msg);
 
 program: /* empty */
 		{
-			root = $$ = ProgramNode::create();
+			root = $$ = new ProgramNode;
 		}
 	| program logical_line
 		{
@@ -78,41 +77,41 @@ logical_line: label
 
 label: IDENT ':' EOL
 		{
-			$$ = LabelNode::create($1);
+			$$ = new LabelNode($1);
 		}
 	;
 
 statement: IF expression THEN suite
 		{
-			$$ = IfNode::create($2, $4);
+			$$ = new IfNode($2, $4);
 		}
 	| IF expression THEN suite ELSE suite
 		{
-			$$ = IfElseNode::create($2, $4, $6);
+			$$ = new IfElseNode($2, $4, $6);
 		}
 	| GOTO IDENT EOL
 		{
-			$$ = GotoNode::create($2);
+			$$ = new GotoNode($2);
 		}
 	| PRINT expression EOL
 		{
-			$$ = PrintNode::create($2);
+			$$ = new PrintNode($2);
 		}
 	| WHILE expression DO suite
 		{
-			$$ = WhileNode::create($2, $4);
+			$$ = new WhileNode($2, $4);
 		}
 	| IDENT ASSIGN expression EOL
 		{
-			$$ = AssignNode::create($1, $3);
+			$$ = new AssignNode($1, $3);
 		}
 	| DEF IDENT AS suite
 		{
-			$$ = FunctionDefNode::create($2, $4);
+			$$ = new FunctionDefNode($2, $4);
 		}
 	| RETURN expression EOL
 		{
-			$$ = ReturnNode::create($2);
+			$$ = new ReturnNode($2);
 		}
 	;
 
@@ -127,7 +126,7 @@ suite: statement
 
 statement_list: statement
 		{
-			$$ = BlockNode::create();
+			$$ = new BlockNode;
 			$$->prepend($1);
 		}
 	| statement_list statement
@@ -139,67 +138,67 @@ statement_list: statement
 
 expression: NOT expression
 		{
-			$$ = NotNode::create($2);
+			$$ = new NotNode($2);
 		}
 	| expression AND expression
 		{
-			$$ = LogicalNode::create($1, LogicalNode::kAnd, $3);
+			$$ = new LogicalNode($1, LogicalNode::kAnd, $3);
 		}
 	| expression OR expression
 		{
-			$$ = LogicalNode::create($1, LogicalNode::kOr, $3);
+			$$ = new LogicalNode($1, LogicalNode::kOr, $3);
 		}
 	| expression '>' expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kGreater, $3);
+			$$ = new ComparisonNode($1, ComparisonNode::kGreater, $3);
 		}
 	| expression '<' expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kLess, $3);
+			$$ = new ComparisonNode($1, ComparisonNode::kLess, $3);
 		}
 	| expression GE expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kGreaterOrEqual, $3);
+			$$ = new ComparisonNode($1, ComparisonNode::kGreaterOrEqual, $3);
 		}
 	| expression LE expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kLessOrEqual, $3);
+			$$ = new ComparisonNode($1, ComparisonNode::kLessOrEqual, $3);
 		}
 	| expression EQUALS expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kEqual, $3);
+			$$ = new ComparisonNode($1, ComparisonNode::kEqual, $3);
 		}
 	| expression NE expression
 		{
-			$$ = ComparisonNode::create($1, ComparisonNode::kNotEqual, $3);
+			$$ = new ComparisonNode($1, ComparisonNode::kNotEqual, $3);
 		}
 	| expression '+' expression
 		{
-			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kPlus, $3);
+			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kPlus, $3);
 		}
 	| expression '-' expression
 		{
-			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kMinus, $3);
+			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMinus, $3);
 		}
 	| expression '*' expression
 		{
-			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kTimes, $3);
+			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kTimes, $3);
 		}
 	| expression '/' expression
 		{
-			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kDivide, $3);
+			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kDivide, $3);
 		}
 	| expression MOD expression
 		{
-			$$ = BinaryOperatorNode::create($1, BinaryOperatorNode::kMod, $3);
+			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMod, $3);
 		}
 	| CALL IDENT
 		{
-			$$ = FunctionCallNode::create($2);
+			$$ = new FunctionCallNode($2);
 		}
 	| READ
 		{
-			$$ = ReadNode::create();
+			$$ = new ReadNode;
 		}
 	| '(' expression ')'
 		{
@@ -207,11 +206,11 @@ expression: NOT expression
 		}
 	| IDENT
 		{
-			$$ = VariableNode::create($1);
+			$$ = new VariableNode($1);
 		}
 	| INT_LIT
 		{
-			$$ = IntNode::create($1);
+			$$ = new IntNode($1);
 		}
 	;
 
