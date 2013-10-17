@@ -22,22 +22,33 @@ int main(int argc, char* argv[])
 	}
 
 	yyin = fopen(argv[1], "r");
-
-	int parse_result = yyparse();
-
-	SemanticAnalyzer semant(root);
-	bool semantic_result = semant.analyze();
-
-	if (parse_result == 0 && semantic_result)
+	if (yyin == nullptr)
 	{
-		CodeGen codegen;
-		root->accept(&codegen);
+		std::cerr << "File " << argv[1] << " not found" << std::endl;
+		return 1;
+	}
+
+	int return_value = 1;
+
+	int parse_failure = yyparse();
+	if (parse_failure == 0)
+	{
+		SemanticAnalyzer semant(root);
+		bool semantic_success = semant.analyze();
+
+		if (semantic_success)
+		{
+			CodeGen codegen;
+			root->accept(&codegen);
+
+			return_value = 0;
+		}
 	}
 
 	delete root;
 	StringTable::freeStrings();
 	SymbolTable::freeSymbols();
-
 	fclose(yyin);
-	return 0;
+
+	return return_value;
 }
