@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include "semantic.hpp"
 #include "simple.tab.h"
 #include "symbol_table.hpp"
@@ -25,9 +26,13 @@ bool SemanticAnalyzer::analyze()
 	return pass1.success() && pass2.success() && typeChecker.success();
 }
 
-SemanticPass1::SemanticPass1()
-: success_(true)
+void SemanticBase::semanticError(AstNode* node, const std::string& msg)
 {
+	std::cerr << "Near line " << node->location()->first_line << ", "
+	  	      << "column " << node->location()->first_column << ": "
+	  	      << "error: " << msg << std::endl;
+
+	success_ = false;
 }
 
 void SemanticPass1::visit(LabelNode* node)
@@ -35,36 +40,12 @@ void SemanticPass1::visit(LabelNode* node)
 	const char* name = node->name();
 
 	Symbol* symbol = SymbolTable::find(name);
-	if (symbol != 0)
+	if (symbol != nullptr)
 	{
-		if (symbol->type == kLabel)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: repeated label \"" << name << "\"" << endl;
+		std::stringstream msg;
+		msg << "symbol \"" << name << "\" has already been defined.";
 
-			success_ = false;
-		}
-		else if (symbol->type == kFunction)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used function \"" << name << "\" as a label" << endl;
-
-			success_ = false;
-		}
-		else if (symbol->type == kVariable)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used variable \"" << name << "\" as a label" << endl;
-
-			success_ = false;
-		}
-		else
-		{
-			assert(false);
-		}
+		semanticError(node, msg.str());
 	}
 	else
 	{
@@ -77,24 +58,12 @@ void SemanticPass1::visit(VariableNode* node)
 	const char* name = node->name();
 
 	Symbol* symbol = SymbolTable::find(name);
-	if (symbol != 0)
+	if (symbol != nullptr && symbol->type != kVariable)
 	{
-		if (symbol->type == kLabel)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used label \"" << name << "\" as a variable" << endl;
+		std::stringstream msg;
+		msg << "symbol \"" << name << "\" is not a variable.";
 
-			success_ = false;
-		}
-		else if (symbol->type == kFunction)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used function \"" << name << "\" as a variable" << endl;
-
-			success_ = false;
-		}
+		semanticError(node, msg.str());
 	}
 	else
 	{
@@ -107,24 +76,12 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	const char* name = node->name();
 
 	Symbol* symbol = SymbolTable::find(name);
-	if (symbol != 0)
+	if (symbol != nullptr)
 	{
-		if (symbol->type == kLabel)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used label \"" << name << "\" as function name" << endl;
+		std::stringstream msg;
+		msg << "symbol \"" << name << "\" is already defined.";
 
-			success_ = false;
-		}
-		else if (symbol->type == kVariable)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used variable \"" << name << "\" as function name" << endl;
-
-			success_ = false;
-		}
+		semanticError(node, msg.str());
 	}
 	else
 	{
@@ -137,24 +94,12 @@ void SemanticPass1::visit(AssignNode* node)
 	const char* target = node->target();
 
 	Symbol* symbol = SymbolTable::find(target);
-	if (symbol != 0)
+	if (symbol != nullptr && symbol->type != kVariable)
 	{
-		if (symbol->type == kLabel)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used label \"" << target << "\" as target of read" << endl;
+		std::stringstream msg;
+		msg << "symbol \"" << symbol->name << "\" is not a variable.";
 
-			success_ = false;
-		}
-		else if (symbol->type == kFunction)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: used function name \"" << target << "\" as target of read" << endl;
-
-			success_ = false;
-		}
+		semanticError(node, msg.str());
 	}
 	else
 	{
@@ -162,42 +107,24 @@ void SemanticPass1::visit(AssignNode* node)
 	}
 }
 
-SemanticPass2::SemanticPass2()
-: success_(true)
-{
-}
-
 void SemanticPass2::visit(GotoNode* node)
 {
 	const char* name = node->target();
 	Symbol* symbol = SymbolTable::find(name);
 
-	if (symbol == 0)
+	if (symbol == nullptr)
 	{
-		cerr << "Near line " << node->location()->first_line << ", "
-			 << "column " << node->location()->first_column << ": "
-			 << "error: undefined goto target \"" << name << "\"" << endl;
+		std::stringstream msg;
+		msg << "undefined goto target \"" << symbol->name << "\".";
 
-		success_ = false;
+		semanticError(node, msg.str());
 	}
-	else
+	else if (symbol->type != kLabel)
 	{
-		if (symbol->type == kVariable)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: variable name \"" << name << "\" used as target of goto" << endl;
+		std::stringstream msg;
+		msg << "goto target \"" << symbol->name << "\" is not a label.";
 
-			success_ = false;
-		}
-		else if (symbol->type == kFunction)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: function name \"" << name << "\" used as target of goto" << endl;
-
-			success_ = false;
-		}
+		semanticError(node, msg.str());
 	}
 }
 
@@ -206,53 +133,31 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	const char* name = node->target();
 	Symbol* symbol = SymbolTable::find(name);
 
-	if (symbol == 0)
+	if (symbol == nullptr)
 	{
-		cerr << "Near line " << node->location()->first_line << ", "
-			 << "column " << node->location()->first_column << ": "
-			 << "error: tried to call undefined function \"" << name << "\"" << endl;
+		std::stringstream msg;
+		msg << "function \"" << symbol->name << "\" is not defined.";
 
-		success_ = false;
+		semanticError(node, msg.str());
 	}
-	else
+	else if (symbol->type != kFunction)
 	{
-		if (symbol->type == kVariable)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: variable name \"" << name << "\" used as target of function call" << endl;
+		std::stringstream msg;
+		msg << "target of function call \"" << symbol->name << "\" is not a function.";
 
-			success_ = false;
-		}
-		else if (symbol->type == kLabel)
-		{
-			cerr << "Near line " << node->location()->first_line << ", "
-			  	 << "column " << node->location()->first_column << ": "
-			  	 << "error: label name \"" << name << "\" used as target of function call" << endl;
-
-			success_ = false;
-		}
+		semanticError(node, msg.str());
 	}
 }
 
-TypeChecker::TypeChecker()
-: success_(true)
-{
-}
-
-bool TypeChecker::typeCheck(AstNode* node, Type type)
+void TypeChecker::typeCheck(AstNode* node, Type type)
 {
 	if (node->type() != type)
 	{
-		cerr << "Near line " << node->location()->first_line << ", "
-			 << "column " << node->location()->first_column << ": "
-			 << "type error: expected " << typeNames[type] << ", but got " << typeNames[node->type()] << endl;
+		std::stringstream msg;
+		msg << "expected type " << typeNames[type] << ", but got " << typeNames[node->type()];
 
-		success_ = false;
-		return false;
+		semanticError(node, msg.str());
 	}
-
-	return true;
 }
 
 // Internal nodes

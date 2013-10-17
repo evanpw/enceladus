@@ -3,15 +3,17 @@
 
 using namespace std;
 
+const char* kindNames[] = {"kLabel", "kVariable", "kFunction"};
+
 map<const char*, Symbol*> SymbolTable::symbols_;
 
 Symbol* SymbolTable::find(const char* name)
 {
 	map<const char*, Symbol*>::iterator i = symbols_.find(name);
-	
+
 	if (i == symbols_.end())
 	{
-		return 0;
+		return nullptr;
 	}
 	else
 	{
@@ -25,9 +27,9 @@ Symbol* SymbolTable::insert(const char* name, Kind type, AstNode* node)
 	symbol->name = name;
 	symbol->type = type;
 	symbol->node = node;
-	
+
 	symbols_[name] = symbol;
-	
+
 	return symbol;
 }
 
@@ -38,6 +40,6 @@ void SymbolTable::freeSymbols()
 	{
 		delete i->second;
 	}
-	
+
 	symbols_.clear();
 }

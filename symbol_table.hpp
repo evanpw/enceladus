@@ -5,7 +5,8 @@
 
 class AstNode;
 
-enum Kind {kLabel, kVariable, kFunction};
+enum Kind {kLabel = 0, kVariable = 1, kFunction = 2};
+extern const char* kindNames[];
 
 struct Symbol
 {

@@ -13,42 +13,41 @@ private:
 	ProgramNode* root_;
 };
 
-// Semantic analysis pass 1 - declarations
-class SemanticPass1 : public AstVisitor
+class SemanticBase : public AstVisitor
 {
 public:
-	SemanticPass1();
+	SemanticBase() : success_(true) {}
+
+	void semanticError(AstNode* node, const std::string& msg);
+
+	bool success() const { return success_; }
+
+private:
+	bool success_;
+};
+
+// Semantic analysis pass 1 - declarations
+class SemanticPass1 : public SemanticBase
+{
+public:
 	virtual void visit(LabelNode* node);
 	virtual void visit(VariableNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(AssignNode* node);
-
-	bool success() const { return success_; }
-
-private:
-	bool success_;
 };
 
 // Semantic analysis pass 2 - gotos / function calls
-class SemanticPass2 : public AstVisitor
+class SemanticPass2 : public SemanticBase
 {
 public:
-	SemanticPass2();
 	virtual void visit(GotoNode* node);
 	virtual void visit(FunctionCallNode* node);
-
-	bool success() const { return success_; }
-
-private:
-	bool success_;
 };
 
 // Pass 3
-class TypeChecker : public AstVisitor
+class TypeChecker : public SemanticBase
 {
 public:
-	TypeChecker();
-
 	// Internal nodes
 	virtual void visit(ProgramNode* node);
 	virtual void visit(NotNode* node);
@@ -72,12 +71,8 @@ public:
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
 
-	bool success() const { return success_; }
-
 private:
-	bool typeCheck(AstNode* node, Type type);
-
-	bool success_;
+	void typeCheck(AstNode* node, Type type);
 };
 
 #endif
