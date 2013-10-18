@@ -30,16 +30,16 @@ int yycolumn = 1;
 					try
 					{
 						yylval.number = boost::lexical_cast<long>(yytext);
+						return INT_LIT;
 					}
 					catch (boost::bad_lexical_cast&)
 					{
-						yylval.number = INT_MAX;
 						std::cerr << "Near line " << yylloc.first_line << ", "
 						 		  << "column " << yylloc.first_column << ": "
 						 		  << "error: integer literal out of range: " << yytext << std::endl;
-					}
 
-					return INT_LIT;
+						return ERROR;
+					}
 				}
 "#".*			/* Ignore comments */
 
@@ -84,6 +84,8 @@ int yycolumn = 1;
 						 	std::cerr << "Near line " << yylloc.first_line << ", "
 						 			  << "column " << yylloc.first_column << ": "
 						 			  << "error: stray '" << yytext[0] << "'" << std::endl;
+
+						 	return ERROR;
 						 }
 
 %%
