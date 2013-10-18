@@ -58,7 +58,7 @@ void SemanticPass1::visit(VariableNode* node)
 	const char* name = node->name();
 
 	Symbol* symbol = SymbolTable::find(name);
-	if (symbol != nullptr && symbol->type != kVariable)
+	if (symbol != nullptr && symbol->kind != kVariable)
 	{
 		std::stringstream msg;
 		msg << "symbol \"" << name << "\" is not a variable.";
@@ -94,7 +94,7 @@ void SemanticPass1::visit(AssignNode* node)
 	const char* target = node->target();
 
 	Symbol* symbol = SymbolTable::find(target);
-	if (symbol != nullptr && symbol->type != kVariable)
+	if (symbol != nullptr && symbol->kind != kVariable)
 	{
 		std::stringstream msg;
 		msg << "symbol \"" << symbol->name << "\" is not a variable.";
@@ -119,7 +119,7 @@ void SemanticPass2::visit(GotoNode* node)
 
 		semanticError(node, msg.str());
 	}
-	else if (symbol->type != kLabel)
+	else if (symbol->kind != kLabel)
 	{
 		std::stringstream msg;
 		msg << "goto target \"" << symbol->name << "\" is not a label.";
@@ -140,7 +140,7 @@ void SemanticPass2::visit(FunctionCallNode* node)
 
 		semanticError(node, msg.str());
 	}
-	else if (symbol->type != kFunction)
+	else if (symbol->kind != kFunction)
 	{
 		std::stringstream msg;
 		msg << "target of function call \"" << symbol->name << "\" is not a function.";

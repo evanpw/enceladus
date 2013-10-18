@@ -38,7 +38,7 @@ void CodeGen::visit(ProgramNode* node)
 	std::map<const char*, Symbol*>::const_iterator i;
 	for (i = symbols.begin(); i != symbols.end(); ++i)
 	{
-		if (i->second->type == kVariable)
+		if (i->second->kind == kVariable)
 		{
 			out_ << "_" << i->second->name << ": dq 0" << std::endl;
 		}

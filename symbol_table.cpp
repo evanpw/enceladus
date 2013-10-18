@@ -21,11 +21,11 @@ Symbol* SymbolTable::find(const char* name)
 	}
 }
 
-Symbol* SymbolTable::insert(const char* name, Kind type, AstNode* node)
+Symbol* SymbolTable::insert(const char* name, Kind kind, AstNode* node)
 {
 	Symbol* symbol = new Symbol;
 	symbol->name = name;
-	symbol->type = type;
+	symbol->kind = kind;
 	symbol->node = node;
 
 	symbols_[name] = symbol;
