@@ -76,8 +76,19 @@ void SemanticPass1::visit(FunctionDefNode* node)
 		node->attachSymbol(symbol);
 	}
 
+	enterScope(node->scope());
+
+	// Add symbols corresponding to the formal parameters to the
+	// function's scope
+	for (const char* param : node->params())
+	{
+		Symbol* paramSymbol = new Symbol(param, kVariable, node);
+		topScope()->insert(paramSymbol);
+	}
+
 	// Recurse
-	AstVisitor::visit(node);
+	node->body()->accept(this);
+	exitScope();
 }
 
 void SemanticPass1::visit(AssignNode* node)

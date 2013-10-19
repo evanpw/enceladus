@@ -3,6 +3,7 @@ def something(a, b) as
     print 2
     print 3
     return 4
+    print a
 
 n = -10
 while n <= 10 do

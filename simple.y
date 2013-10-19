@@ -124,6 +124,7 @@ statement: IF expression THEN suite
 param_list: IDENT
 		{
 			$$ = new ParamListNode();
+			$$->prepend($1);
 		}
 	| param_list ',' IDENT
 		{

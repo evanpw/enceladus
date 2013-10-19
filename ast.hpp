@@ -58,10 +58,10 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::list<const char*>& params() const { return params_; }
+	const std::list<const char*>& names() const { return names_; }
 
 private:
-	std::list<const char*> params_;
+	std::list<const char*> names_;
 };
 
 class LabelNode : public AstNode
@@ -321,7 +321,7 @@ public:
 
 	const char* name() { return name_; }
 	StatementNode* body() { return body_.get(); }
-	ParamListNode* params() { return params_.get(); }
+	const std::list<const char*>& params() { return params_->names(); }
 
 	Scope* scope() { return scope_.get(); }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }

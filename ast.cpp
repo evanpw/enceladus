@@ -22,7 +22,7 @@ void ProgramNode::prepend(AstNode* child)
 
 void ParamListNode::prepend(const char* param)
 {
-    params_.emplace_back(param);
+    names_.emplace_back(param);
 }
 
 void BlockNode::prepend(StatementNode* child)
