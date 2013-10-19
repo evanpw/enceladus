@@ -114,6 +114,9 @@ void SemanticPass1::visit(AssignNode* node)
 	}
 
 	node->attachSymbol(symbol);
+
+	// Recurse to children
+	AstVisitor::visit(node);
 }
 
 void SemanticPass2::visit(GotoNode* node)
@@ -156,6 +159,9 @@ void SemanticPass2::visit(FunctionCallNode* node)
 
 		semanticError(node, msg.str());
 	}
+
+	// Recurse to children
+	AstVisitor::visit(node);
 }
 
 void SemanticPass2::visit(VariableNode* node)
