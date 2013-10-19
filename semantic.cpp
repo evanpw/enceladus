@@ -115,7 +115,7 @@ void SemanticPass2::visit(GotoNode* node)
 	if (symbol == nullptr)
 	{
 		std::stringstream msg;
-		msg << "undefined goto target \"" << symbol->name << "\".";
+		msg << "undefined goto target \"" << name << "\".";
 
 		semanticError(node, msg.str());
 	}
@@ -136,7 +136,7 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	if (symbol == nullptr)
 	{
 		std::stringstream msg;
-		msg << "function \"" << symbol->name << "\" is not defined.";
+		msg << "function \"" << name << "\" is not defined.";
 
 		semanticError(node, msg.str());
 	}
