@@ -32,7 +32,6 @@ class SemanticPass1 : public SemanticBase
 {
 public:
 	virtual void visit(LabelNode* node);
-	virtual void visit(VariableNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(AssignNode* node);
 };
@@ -43,6 +42,7 @@ class SemanticPass2 : public SemanticBase
 public:
 	virtual void visit(GotoNode* node);
 	virtual void visit(FunctionCallNode* node);
+	virtual void visit(VariableNode* node);
 };
 
 // Pass 3

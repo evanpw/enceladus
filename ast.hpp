@@ -286,6 +286,7 @@ public:
 
 	const char* target() { return target_; }
 	ExpressionNode* value() { return value_.get(); }
+	Symbol* symbol() { return symbol_; }
 
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 

@@ -56,30 +56,6 @@ void SemanticPass1::visit(LabelNode* node)
 	}
 }
 
-void SemanticPass1::visit(VariableNode* node)
-{
-	const char* name = node->name();
-
-	Symbol* symbol = searchScopes(name);
-	if (symbol != nullptr)
-	{
-		if (symbol->kind != kVariable)
-		{
-			std::stringstream msg;
-			msg << "symbol \"" << name << "\" is not a variable.";
-
-			semanticError(node, msg.str());
-		}
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "variable \"" << name << "\" is not defined in this scope.";
-
-		semanticError(node, msg.str());
-	}
-}
-
 void SemanticPass1::visit(FunctionDefNode* node)
 {
 	const char* name = node->name();
@@ -115,16 +91,18 @@ void SemanticPass1::visit(AssignNode* node)
 		{
 			std::stringstream msg;
 			msg << "symbol \"" << symbol->name << "\" is not a variable.";
-
 			semanticError(node, msg.str());
+
+			return;
 		}
 	}
 	else
 	{
-		Symbol* symbol = new Symbol(target, kVariable, node);
+		symbol = new Symbol(target, kVariable, node);
 		topScope()->insert(symbol);
-		node->attachSymbol(symbol);
 	}
+
+	node->attachSymbol(symbol);
 }
 
 void SemanticPass2::visit(GotoNode* node)
@@ -164,6 +142,32 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	{
 		std::stringstream msg;
 		msg << "target of function call \"" << symbol->name << "\" is not a function.";
+
+		semanticError(node, msg.str());
+	}
+}
+
+void SemanticPass2::visit(VariableNode* node)
+{
+	const char* name = node->name();
+
+	Symbol* symbol = searchScopes(name);
+	if (symbol != nullptr)
+	{
+		if (symbol->kind != kVariable)
+		{
+			std::stringstream msg;
+			msg << "symbol \"" << name << "\" is not a variable.";
+
+			semanticError(node, msg.str());
+		}
+
+		node->attachSymbol(symbol);
+	}
+	else
+	{
+		std::stringstream msg;
+		msg << "variable \"" << name << "\" is not defined in this scope.";
 
 		semanticError(node, msg.str());
 	}

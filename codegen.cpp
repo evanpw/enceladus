@@ -1,7 +1,33 @@
+#include <cassert>
 #include <iostream>
 #include <map>
 #include "codegen.hpp"
 #include "scope.hpp"
+
+std::string CodeGen::access(const Symbol* symbol)
+{
+	for (int i = scopes_.size() - 1; i >= 0; --i)
+	{
+		if (scopes_[i]->contains(symbol))
+		{
+			if (i != 0)
+			{
+				std::cerr << "Local variables not yet implemented." << std::endl;
+				assert(false);
+			}
+			else
+			{
+				std::stringstream result;
+				result << "[rel _" << symbol->name << "]";
+
+				return result.str();
+			}
+		}
+	}
+
+	std::cerr << "Unknown symbol \"" << symbol->name << "\" in code generator." << std::endl;
+	assert(false);
+}
 
 void CodeGen::visit(ProgramNode* node)
 {
@@ -31,6 +57,7 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "ret" << std::endl;
 	}
 
+	// Declare global variables in the data segment
 	out_ << "section .data" << std::endl;
 	for (auto& i : topScope()->symbols())
 	{
@@ -161,7 +188,7 @@ void CodeGen::visit(LogicalNode* node)
 
 void CodeGen::visit(VariableNode* node)
 {
-	out_ << "mov rax, [rel _" << node->name() << "]" << std::endl;
+	out_ << "mov rax, " << access(node->symbol()) << std::endl;
 }
 
 void CodeGen::visit(IntNode* node)
@@ -240,7 +267,7 @@ void CodeGen::visit(WhileNode* node)
 void CodeGen::visit(AssignNode* node)
 {
 	node->value()->accept(this);
-	out_ << "mov [rel _" << node->target() << "], rax" << std::endl;
+	out_ << "mov " << access(node->symbol()) << ", rax" << std::endl;
 }
 
 void CodeGen::visit(FunctionDefNode* node)

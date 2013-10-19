@@ -32,6 +32,10 @@ public:
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
 
+	// Generate a code fragment to access the symbol with the given name in the
+	// current scope.
+	std::string access(const Symbol* symbol);
+
 private:
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
 	int labels_;
