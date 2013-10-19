@@ -202,8 +202,6 @@ void TypeChecker::visit(ProgramNode* node)
 	{
 		child->accept(this);
 	}
-
-	node->setType(kNone);
 }
 
 void TypeChecker::visit(NotNode* node)
@@ -254,8 +252,6 @@ void TypeChecker::visit(BlockNode* node)
 	{
 		child->accept(this);
 	}
-
-	node->setType(kNone);
 }
 
 void TypeChecker::visit(IfNode* node)
@@ -264,8 +260,6 @@ void TypeChecker::visit(IfNode* node)
 	typeCheck(node->condition(), kBool);
 
 	node->body()->accept(this);
-
-	node->setType(kNone);
 }
 
 void TypeChecker::visit(IfElseNode* node)
@@ -275,16 +269,12 @@ void TypeChecker::visit(IfElseNode* node)
 
 	node->body()->accept(this);
 	node->else_body()->accept(this);
-
-	node->setType(kNone);
 }
 
 void TypeChecker::visit(PrintNode* node)
 {
 	node->expression()->accept(this);
 	typeCheck(node->expression(), kInt);
-
-	node->setType(kNone);
 }
 
 void TypeChecker::visit(ReadNode* node)
@@ -298,8 +288,6 @@ void TypeChecker::visit(WhileNode* node)
 	typeCheck(node->condition(), kBool);
 
 	node->body()->accept(this);
-
-	node->setType(kNone);
 }
 
 void TypeChecker::visit(AssignNode* node)
@@ -311,11 +299,6 @@ void TypeChecker::visit(AssignNode* node)
 }
 
 // Leaf nodes
-void TypeChecker::visit(LabelNode* node)
-{
-	node->setType(kNone);
-}
-
 void TypeChecker::visit(VariableNode* node)
 {
 	node->setType(kInt);
@@ -326,24 +309,22 @@ void TypeChecker::visit(IntNode* node)
 	node->setType(kInt);
 }
 
-void TypeChecker::visit(GotoNode* node)
-{
-	node->setType(kNone);
-}
-
-void TypeChecker::visit(FunctionDefNode* node)
-{
-	node->setType(kNone);
-}
-
 void TypeChecker::visit(FunctionCallNode* node)
 {
 	// All return values are integers for now
 	node->setType(kInt);
+
+	for (auto& argument : node->arguments())
+	{
+		// All function arguments are integers also
+		argument.get()->accept(this);
+		typeCheck(argument.get(), kInt);
+	}
 }
 
 void TypeChecker::visit(ReturnNode* node)
 {
+	node->expression()->accept(this);
+
 	typeCheck(node->expression(), kInt);
-	node->setType(kNone);
 }

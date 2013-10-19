@@ -41,6 +41,8 @@ public:
 	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
 	virtual void visit(FunctionDefNode* node);
+	virtual void visit(FunctionCallNode* node);
+	virtual void visit(ReturnNode* node);
 
 	// Leaf nodes
 	virtual void visit(ReadNode* node) {}
@@ -48,8 +50,6 @@ public:
 	virtual void visit(VariableNode* node) {}
 	virtual void visit(IntNode* node) {}
 	virtual void visit(GotoNode* node) {}
-	virtual void visit(FunctionCallNode* node) {}
-	virtual void visit(ReturnNode* node) {}
 	virtual void visit(ParamListNode* node) {}
 
 protected:

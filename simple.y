@@ -28,6 +28,7 @@ void yyerror(const char* msg);
 	BlockNode* block;
 	ExpressionNode* expression;
 	ParamListNode* params;
+	ArgList* arguments;
 	const char* str;
 	long number;
 }
@@ -39,6 +40,7 @@ void yyerror(const char* msg);
 %type<expression> expression
 %type<block> statement_list
 %type<params> param_list
+%type<arguments> arg_list;
 
 %token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT RETURN
 %token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF AS CALL
@@ -133,6 +135,18 @@ param_list: IDENT
 		}
 	;
 
+arg_list: expression
+		{
+			$$ = new ArgList();
+			$$->emplace_back($1);
+		}
+	| arg_list ',' expression
+		{
+			$1->emplace_back($3);
+			$$ = $1;
+		}
+	;
+
 suite: statement
 		{
 			$$ = $1;
@@ -210,9 +224,13 @@ expression: NOT expression
 		{
 			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMod, $3);
 		}
-	| CALL IDENT
+	| CALL IDENT '(' ')'
 		{
-			$$ = new FunctionCallNode($2);
+			$$ = new FunctionCallNode($2, new ArgList());
+		}
+	| CALL IDENT '(' arg_list ')'
+		{
+			$$ = new FunctionCallNode($2, $4);
 		}
 	| READ
 		{

@@ -185,16 +185,25 @@ private:
 	long value_;
 };
 
+typedef std::list<std::unique_ptr<ExpressionNode>> ArgList;
+
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(const char* target) : target_(target) {}
+	FunctionCallNode(const char* target, ArgList* arguments)
+	: target_(target)
+	{
+		arguments_.reset(arguments);
+	}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* target() { return target_; }
+	ArgList& arguments() { return *arguments_.get(); }
 
 private:
 	const char* target_;
+	std::unique_ptr<ArgList> arguments_;
 };
 
 class ReadNode : public ExpressionNode

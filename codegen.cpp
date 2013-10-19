@@ -25,7 +25,7 @@ std::string CodeGen::access(const Symbol* symbol)
 						if (strcmp(param, symbol->name) == 0)
 						{
 							std::stringstream result;
-							result << "[rbp + " << 8 * (offset + 1) << "]";
+							result << "[rbp + " << 8 * (offset + 2) << "]";
 							return result.str();
 						}
 
@@ -76,11 +76,14 @@ void CodeGen::visit(ProgramNode* node)
 	{
 		currentFunction_ = function->name();
 		out_ << "_" << function->name() << ":" << std::endl;
+		out_ << "push rbp" << std::endl;
+		out_ << "mov rbp, rsp" << std::endl;
 
 		// Recurse to children
 		AstVisitor::visit(function);
 
 		out_ << "__end_" << function->name() << ":" << std::endl;
+		out_ << "pop rbp" << std::endl;
 		out_ << "ret" << std::endl;
 	}
 
@@ -304,7 +307,14 @@ void CodeGen::visit(FunctionDefNode* node)
 
 void CodeGen::visit(FunctionCallNode* node)
 {
+	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
+	{
+		(*i)->accept(this);
+		out_ << "push rax" << std::endl;
+	}
+
 	out_ << "call _" << node->target() << std::endl;
+	out_ << "add rsp, " << 8 * node->arguments().size() << std::endl;
 }
 
 void CodeGen::visit(ReturnNode* node)

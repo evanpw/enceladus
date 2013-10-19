@@ -54,6 +54,14 @@ void AstVisitor::visit(BlockNode* node)
 	}
 }
 
+void AstVisitor::visit(FunctionCallNode* node)
+{
+	for (auto& argument : node->arguments())
+	{
+		argument->accept(this);
+	}
+}
+
 void AstVisitor::visit(IfNode* node)
 {
 	node->condition()->accept(this);
@@ -88,5 +96,10 @@ void AstVisitor::visit(FunctionDefNode* node)
 	enterScope(node->scope());
 	node->body()->accept(this);
 	exitScope();
+}
+
+void AstVisitor::visit(ReturnNode* node)
+{
+	node->expression()->accept(this);
 }
 

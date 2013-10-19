@@ -1,14 +1,5 @@
-def something(a, b) as
-    print 1
-    print 2
-    print 3
+def func(a, b) as
     print a
-    return 4
+    print b
 
-n = -10
-while n <= 10 do
-	print n
-
-	n = n + 1
-
-print call something
+x = call func(10, 20)
