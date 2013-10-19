@@ -1,10 +1,9 @@
 Todo
 ----
-* Pass parameters / return values from a function call
 * Better memory management
-* Remove labels / gotos
 * Clean up Makefile
 * Add explicit variable declarations
 * Add some automatic regression tests
 * Handle local variables
 * Ignore the result of a function call
+* Make semantic analysis more rigorous

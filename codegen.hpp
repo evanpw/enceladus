@@ -24,10 +24,8 @@ public:
 	virtual void visit(ReadNode* node);
 	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
-	virtual void visit(LabelNode* node);
 	virtual void visit(VariableNode* node);
 	virtual void visit(IntNode* node);
-	virtual void visit(GotoNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(ReturnNode* node);

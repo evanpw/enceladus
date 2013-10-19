@@ -64,22 +64,6 @@ private:
 	std::list<const char*> names_;
 };
 
-class LabelNode : public AstNode
-{
-public:
-	LabelNode(const char* name) : name_(name), symbol_(nullptr) {}
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	const char* name() { return name_; }
-	const Symbol* symbol() { return symbol_; }
-
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
-
-private:
-	const char* name_;
-	Symbol* symbol_;
-};
-
 /* Expression nodes */
 class NotNode : public ExpressionNode
 {
@@ -257,18 +241,6 @@ private:
 	std::unique_ptr<ExpressionNode> condition_;
 	std::unique_ptr<StatementNode> body_;
 	std::unique_ptr<StatementNode> else_body_;
-};
-
-class GotoNode : public StatementNode
-{
-public:
-	GotoNode(const char* target) : target_(target) {}
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	const char* target() const { return target_; }
-
-private:
-	const char* target_;
 };
 
 class PrintNode : public StatementNode

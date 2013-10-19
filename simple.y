@@ -22,8 +22,6 @@ void yyerror(const char* msg);
 %union
 {
 	ProgramNode* program;
-	AstNode* line;
-	LabelNode* label;
 	StatementNode* statement;
 	BlockNode* block;
 	ExpressionNode* expression;
@@ -34,15 +32,13 @@ void yyerror(const char* msg);
 }
 
 %type<program> program
-%type<line> logical_line
-%type<label> label
 %type<statement> statement suite
 %type<expression> expression
 %type<block> statement_list
 %type<params> param_list
 %type<arguments> arg_list;
 
-%token ERROR IF THEN ELSE GOTO PRINT READ NOT RETURN
+%token ERROR IF THEN ELSE PRINT READ NOT RETURN
 %token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF
 %token<str> IDENT
 %token<number> INT_LIT WHITESPACE
@@ -59,29 +55,13 @@ program: /* empty */
 		{
 			root = $$ = new ProgramNode;
 		}
-	| program logical_line
+	| program statement
 		{
 			// Ignore blank lines
 			if ($2 != NULL)
 				$1->prepend($2);
 
 			$$ = $1;
-		}
-	;
-
-logical_line: label
-		{
-			$$ = $1;
-		}
-	| statement
-		{
-			$$ = $1;
-		}
-	;
-
-label: IDENT ':' EOL
-		{
-			$$ = new LabelNode($1);
 		}
 	;
 
@@ -92,10 +72,6 @@ statement: IF expression THEN suite
 	| IF expression THEN suite ELSE suite
 		{
 			$$ = new IfElseNode($2, $4, $6);
-		}
-	| GOTO IDENT EOL
-		{
-			$$ = new GotoNode($2);
 		}
 	| PRINT expression EOL
 		{

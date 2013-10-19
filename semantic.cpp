@@ -35,27 +35,6 @@ void SemanticBase::semanticError(AstNode* node, const std::string& msg)
 	success_ = false;
 }
 
-void SemanticPass1::visit(LabelNode* node)
-{
-	const char* name = node->name();
-
-	Symbol* symbol = topScope()->find(name);
-	if (symbol != nullptr)
-	{
-		std::stringstream msg;
-		msg << "symbol \"" << name << "\" has already been defined in this scope.";
-		semanticError(node, msg.str());
-
-		return;
-	}
-	else
-	{
-		Symbol* symbol = new Symbol(name, kLabel, node);
-		topScope()->insert(symbol);
-		node->attachSymbol(symbol);
-	}
-}
-
 void SemanticPass1::visit(FunctionDefNode* node)
 {
 	const char* name = node->name();
@@ -117,27 +96,6 @@ void SemanticPass1::visit(AssignNode* node)
 
 	// Recurse to children
 	AstVisitor::visit(node);
-}
-
-void SemanticPass2::visit(GotoNode* node)
-{
-	const char* name = node->target();
-	Symbol* symbol = searchScopes(name);
-
-	if (symbol == nullptr)
-	{
-		std::stringstream msg;
-		msg << "undefined goto target \"" << name << "\".";
-
-		semanticError(node, msg.str());
-	}
-	else if (symbol->kind != kLabel)
-	{
-		std::stringstream msg;
-		msg << "goto target \"" << symbol->name << "\" is not a label.";
-
-		semanticError(node, msg.str());
-	}
 }
 
 void SemanticPass2::visit(FunctionCallNode* node)

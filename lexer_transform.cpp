@@ -10,39 +10,6 @@ extern int yylex_raw();
 std::stack<int> indentation;
 std::deque<int> token_queue;
 
-const char* token_to_string(int token)
-{
-    static char short_one[2] = {0, 0};
-
-    switch (token)
-    {
-        case ERROR: return "ERROR";
-        case IF: return "IF";
-        case THEN: return "THEN";
-        case ELSE: return "ELSE";
-        case GOTO: return "GOTO";
-        case PRINT: return "PRINT";
-        case READ: return "READ";
-        case NOT: return "NOT";
-        case AND: return "AND";
-        case OR: return "OR";
-        case EOL: return "EOL";
-        case MOD: return "MOD";
-        case WHILE: return "WHILE";
-        case DO: return "DO";
-        case INDENT: return "INDENT";
-        case DEDENT: return "DEDENT";
-        case IDENT: return "IDENT";
-        case INT_LIT: return "INT_LIT";
-        case WHITESPACE: return "WHITESPACE";
-        case GE: return "GE";
-        case LE: return "LE";
-        default: short_one[0] = token; return short_one;
-    }
-}
-
-const bool DEBUG_LEXER = false;
-
 // The scanner function seen by the parser. Handles initial whitespace
 // and python-style indentation
 int yylex()
@@ -60,14 +27,11 @@ int yylex()
             int token = token_queue.front();
             token_queue.pop_front();
 
-            if (DEBUG_LEXER) std::cerr << token_to_string(token) << std::endl;
             last_returned_token = last_token = token;
             return token;
         }
 
         int token = yylex_raw();
-
-        if (DEBUG_LEXER) std::cerr << "Reading token " << token_to_string(token) << ", last = " << token_to_string(last_token) << std::endl;
 
         // Handle unfinished indentation blocks when EOF is reached
         if (token == 0)
@@ -97,14 +61,11 @@ int yylex()
             {
                 // Increase of indentation -> INDENT
                 indentation.push(new_level);
-                if (DEBUG_LEXER) std::cerr << "INDENT" << std::endl;
                 token_queue.push_back(INDENT);
                 continue;
             }
             else if (new_level < indentation.top())
             {
-                if (DEBUG_LEXER) std::cerr << "Dedenting from " << indentation.top() << " to " << new_level << std::endl;
-
                 // Decrease of indentation -> DEDENT(s)
                 while (new_level < indentation.top())
                 {
@@ -116,7 +77,6 @@ int yylex()
                 if (new_level != indentation.top())
                 {
                     //TODO: throw SyntaxError("Unexpected indentation level on line X");
-                    if (DEBUG_LEXER) std::cerr << "Unexpected indentation" << std::endl;
                     token_queue.push_back(0);
                     continue;
                 }
@@ -135,7 +95,6 @@ int yylex()
         {
             if (token != WHITESPACE)
             {
-                if (DEBUG_LEXER) std::cerr << token_to_string(token) << std::endl;
                 token_queue.push_back(token);
             }
         }

@@ -16,10 +16,8 @@ class PrintNode;
 class ReadNode;
 class WhileNode;
 class AssignNode;
-class LabelNode;
 class VariableNode;
 class IntNode;
-class GotoNode;
 class FunctionDefNode;
 class FunctionCallNode;
 class ReturnNode;
@@ -46,10 +44,8 @@ public:
 
 	// Leaf nodes
 	virtual void visit(ReadNode* node) {}
-	virtual void visit(LabelNode* node) {}
 	virtual void visit(VariableNode* node) {}
 	virtual void visit(IntNode* node) {}
-	virtual void visit(GotoNode* node) {}
 	virtual void visit(ParamListNode* node) {}
 
 protected:

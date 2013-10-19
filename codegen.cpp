@@ -98,11 +98,6 @@ void CodeGen::visit(ProgramNode* node)
 	}
 }
 
-void CodeGen::visit(LabelNode* node)
-{
-	out_ << "_" << node->name() << ":" << std::endl;
-}
-
 void CodeGen::visit(NotNode* node)
 {
 	// Load the value of the child expression in eax
@@ -260,11 +255,6 @@ void CodeGen::visit(IfElseNode* node)
 	out_ << elseLabel << ":" << std::endl;
 	node->else_body()->accept(this);
 	out_ << endLabel << ":" << std::endl;
-}
-
-void CodeGen::visit(GotoNode* node)
-{
-	out_ << "jmp _" << node->target() << std::endl;
 }
 
 void CodeGen::visit(PrintNode* node)

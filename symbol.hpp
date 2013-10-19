@@ -3,7 +3,7 @@
 
 class AstNode;
 
-enum Kind {kLabel = 0, kVariable = 1, kFunction = 2};
+enum Kind {kVariable = 0, kFunction = 1};
 
 struct Symbol
 {
