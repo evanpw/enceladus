@@ -43,7 +43,7 @@ void yyerror(const char* msg);
 %type<arguments> arg_list;
 
 %token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT RETURN
-%token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF AS CALL
+%token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF AS
 %token<str> IDENT
 %token<number> INT_LIT WHITESPACE
 
@@ -224,13 +224,13 @@ expression: NOT expression
 		{
 			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMod, $3);
 		}
-	| CALL IDENT '(' ')'
+	| IDENT '(' ')'
 		{
-			$$ = new FunctionCallNode($2, new ArgList());
+			$$ = new FunctionCallNode($1, new ArgList());
 		}
-	| CALL IDENT '(' arg_list ')'
+	| IDENT '(' arg_list ')'
 		{
-			$$ = new FunctionCallNode($2, $4);
+			$$ = new FunctionCallNode($1, $3);
 		}
 	| READ
 		{
