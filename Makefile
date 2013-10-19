@@ -1,10 +1,14 @@
-CFLAGS=-I/opt/local/include -g -Wall -Wfatal-errors -std=c++0x
+CFLAGS=-I/opt/local/include -g -Wall -Wfatal-errors -std=c++11
 
 SOURCES=$(wildcard *.cpp) lex.yy.c simple.tab.c
 HEADERS=$(wildcard *.hpp) simple.tab.h
 
 ifeq ($(shell uname -s),Darwin)
     CC=g++-4.8
+endif
+
+ifeq ($(shell uname -s),Linux)
+    CC=g++
 endif
 
 all: simplec
