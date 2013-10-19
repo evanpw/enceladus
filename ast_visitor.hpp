@@ -1,6 +1,9 @@
 #ifndef AST_VISITOR_HPP
 #define AST_VISITOR_HPP
 
+#include <vector>
+#include "scope.hpp"
+
 class ProgramNode;
 class NotNode;
 class ComparisonNode;
@@ -46,6 +49,14 @@ public:
 	virtual void visit(GotoNode* node) {}
 	virtual void visit(FunctionCallNode* node) {}
 	virtual void visit(ReturnNode* node) {}
+
+protected:
+	Scope* topScope() { return scopes_.back(); }
+	Symbol* searchScopes(const char* name);
+	void enterScope(Scope* scope) { scopes_.push_back(scope); }
+	void exitScope() { scopes_.pop_back(); }
+
+	std::vector<Scope*> scopes_;
 };
 
 #endif

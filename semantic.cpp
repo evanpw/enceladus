@@ -1,9 +1,9 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include "scope.hpp"
 #include "semantic.hpp"
 #include "simple.tab.h"
-#include "symbol_table.hpp"
 
 using namespace std;
 
@@ -39,17 +39,20 @@ void SemanticPass1::visit(LabelNode* node)
 {
 	const char* name = node->name();
 
-	Symbol* symbol = SymbolTable::find(name);
+	Symbol* symbol = topScope()->find(name);
 	if (symbol != nullptr)
 	{
 		std::stringstream msg;
-		msg << "symbol \"" << name << "\" has already been defined.";
-
+		msg << "symbol \"" << name << "\" has already been defined in this scope.";
 		semanticError(node, msg.str());
+
+		return;
 	}
 	else
 	{
-		node->attachSymbol(SymbolTable::insert(name, kLabel, node));
+		Symbol* symbol = new Symbol(name, kLabel, node);
+		topScope()->insert(symbol);
+		node->attachSymbol(symbol);
 	}
 }
 
@@ -57,17 +60,23 @@ void SemanticPass1::visit(VariableNode* node)
 {
 	const char* name = node->name();
 
-	Symbol* symbol = SymbolTable::find(name);
-	if (symbol != nullptr && symbol->kind != kVariable)
+	Symbol* symbol = searchScopes(name);
+	if (symbol != nullptr)
 	{
-		std::stringstream msg;
-		msg << "symbol \"" << name << "\" is not a variable.";
+		if (symbol->kind != kVariable)
+		{
+			std::stringstream msg;
+			msg << "symbol \"" << name << "\" is not a variable.";
 
-		semanticError(node, msg.str());
+			semanticError(node, msg.str());
+		}
 	}
 	else
 	{
-		node->attachSymbol(SymbolTable::insert(name, kVariable, node));
+		std::stringstream msg;
+		msg << "variable \"" << name << "\" is not defined in this scope.";
+
+		semanticError(node, msg.str());
 	}
 }
 
@@ -75,42 +84,53 @@ void SemanticPass1::visit(FunctionDefNode* node)
 {
 	const char* name = node->name();
 
-	Symbol* symbol = SymbolTable::find(name);
+	Symbol* symbol = searchScopes(name);
 	if (symbol != nullptr)
 	{
 		std::stringstream msg;
 		msg << "symbol \"" << name << "\" is already defined.";
-
 		semanticError(node, msg.str());
+
+		return;
 	}
 	else
 	{
-		node->attachSymbol(SymbolTable::insert(name, kFunction, node));
+		Symbol* symbol = new Symbol(name, kFunction, node);
+		topScope()->insert(symbol);
+		node->attachSymbol(symbol);
 	}
+
+	// Recurse
+	AstVisitor::visit(node);
 }
 
 void SemanticPass1::visit(AssignNode* node)
 {
 	const char* target = node->target();
 
-	Symbol* symbol = SymbolTable::find(target);
-	if (symbol != nullptr && symbol->kind != kVariable)
+	Symbol* symbol = searchScopes(target);
+	if (symbol != nullptr)
 	{
-		std::stringstream msg;
-		msg << "symbol \"" << symbol->name << "\" is not a variable.";
+		if (symbol->kind != kVariable)
+		{
+			std::stringstream msg;
+			msg << "symbol \"" << symbol->name << "\" is not a variable.";
 
-		semanticError(node, msg.str());
+			semanticError(node, msg.str());
+		}
 	}
 	else
 	{
-		node->attachSymbol(SymbolTable::insert(target, kVariable, node));
+		Symbol* symbol = new Symbol(target, kVariable, node);
+		topScope()->insert(symbol);
+		node->attachSymbol(symbol);
 	}
 }
 
 void SemanticPass2::visit(GotoNode* node)
 {
 	const char* name = node->target();
-	Symbol* symbol = SymbolTable::find(name);
+	Symbol* symbol = searchScopes(name);
 
 	if (symbol == nullptr)
 	{
@@ -131,7 +151,7 @@ void SemanticPass2::visit(GotoNode* node)
 void SemanticPass2::visit(FunctionCallNode* node)
 {
 	const char* name = node->target();
-	Symbol* symbol = SymbolTable::find(name);
+	Symbol* symbol = searchScopes(name);
 
 	if (symbol == nullptr)
 	{

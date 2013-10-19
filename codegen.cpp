@@ -1,7 +1,7 @@
 #include <iostream>
 #include <map>
 #include "codegen.hpp"
-#include "symbol_table.hpp"
+#include "scope.hpp"
 
 void CodeGen::visit(ProgramNode* node)
 {
@@ -12,35 +12,31 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "__main:" << std::endl;
 	currentFunction_ = "_main";
 
-	// Main function
-	for (auto& child : node->children())
-	{
-		child->accept(this);
-	}
+	// Recurse to child nodes
+	AstVisitor::visit(node);
 
 	out_ << "__end__main:" << std::endl;
 	out_ << "ret" << std::endl;
 
 	// All other functions
-	for (FunctionDefNode* node : functionDefs_)
+	for (FunctionDefNode* function : functionDefs_)
 	{
-		currentFunction_ = node->name();
-		out_ << "_" << node->name() << ":" << std::endl;
+		currentFunction_ = function->name();
+		out_ << "_" << function->name() << ":" << std::endl;
 
-		node->body()->accept(this);
+		// Recurse to children
+		AstVisitor::visit(function);
 
-		out_ << "__end_" << node->name() << ":" << std::endl;
+		out_ << "__end_" << function->name() << ":" << std::endl;
 		out_ << "ret" << std::endl;
 	}
 
 	out_ << "section .data" << std::endl;
-	const std::map<const char*, Symbol*>& symbols = SymbolTable::symbols();
-	std::map<const char*, Symbol*>::const_iterator i;
-	for (i = symbols.begin(); i != symbols.end(); ++i)
+	for (auto& i : topScope()->symbols())
 	{
-		if (i->second->kind == kVariable)
+		if (i.second->kind == kVariable)
 		{
-			out_ << "_" << i->second->name << ": dq 0" << std::endl;
+			out_ << "_" << i.second->name << ": dq 0" << std::endl;
 		}
 	}
 }

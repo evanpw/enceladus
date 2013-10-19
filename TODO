@@ -13,3 +13,5 @@ Todo
 * Add explicit variable declarations
 * Factor out some of the code from pass1 of semantic analysis
 * Add some automatic regression tests
+* Handle local variables
+* Function parameters

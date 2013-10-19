@@ -2,8 +2,21 @@
 #include "ast.hpp"
 #include "ast_visitor.hpp"
 
+Symbol* AstVisitor::searchScopes(const char* name)
+{
+	for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i)
+	{
+		Symbol* symbol = (*i)->find(name);
+		if (symbol != nullptr) return symbol;
+	}
+
+	return nullptr;
+}
+
 void AstVisitor::visit(ProgramNode* node)
 {
+	scopes_.push_back(node->scope());
+
 	for (auto& child : node->children())
 	{
 		child->accept(this);
@@ -72,6 +85,8 @@ void AstVisitor::visit(AssignNode* node)
 
 void AstVisitor::visit(FunctionDefNode* node)
 {
+	enterScope(node->scope());
 	node->body()->accept(this);
+	exitScope();
 }
 

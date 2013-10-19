@@ -5,8 +5,8 @@
 #include <list>
 #include <memory>
 #include "ast_visitor.hpp"
+#include "scope.hpp"
 #include "string_table.hpp"
-#include "symbol_table.hpp"
 #include "types.hpp"
 
 struct YYLTYPE;
@@ -37,14 +37,18 @@ class ExpressionNode : public AstNode {};
 class ProgramNode : public AstNode
 {
 public:
+	ProgramNode() : scope_(new Scope) {}
+
 	void prepend(AstNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const std::list<std::unique_ptr<AstNode>>& children() const { return children_; }
+	Scope* scope() { return scope_.get(); }
 
 private:
 	std::list<std::unique_ptr<AstNode>> children_;
+	std::unique_ptr<Scope> scope_;
 };
 
 class LabelNode : public AstNode
@@ -296,13 +300,14 @@ class FunctionDefNode : public StatementNode
 {
 public:
 	FunctionDefNode(const char* name, StatementNode* body)
-	: name_(name), body_(body), symbol_(nullptr)
+	: name_(name), body_(body), symbol_(nullptr), scope_(new Scope)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* name() { return name_; }
 	StatementNode* body() { return body_.get(); }
+	Scope* scope() { return scope_.get(); }
 
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
@@ -311,6 +316,7 @@ private:
 	std::unique_ptr<StatementNode> body_;
 
 	Symbol* symbol_;
+	std::unique_ptr<Scope> scope_;
 };
 
 class ReturnNode : public StatementNode

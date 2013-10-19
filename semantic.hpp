@@ -1,6 +1,7 @@
 #ifndef SEMANTIC_HPP
 #define SEMANTIC_HPP
 
+#include <vector>
 #include "ast.hpp"
 
 class SemanticAnalyzer
@@ -26,7 +27,7 @@ private:
 	bool success_;
 };
 
-// Semantic analysis pass 1 - declarations
+// Semantic analysis pass 1 - handle declarations and build the symbol tables
 class SemanticPass1 : public SemanticBase
 {
 public:
