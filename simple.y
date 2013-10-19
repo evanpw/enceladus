@@ -27,6 +27,7 @@ void yyerror(const char* msg);
 	StatementNode* statement;
 	BlockNode* block;
 	ExpressionNode* expression;
+	ParamListNode* params;
 	const char* str;
 	long number;
 }
@@ -37,6 +38,7 @@ void yyerror(const char* msg);
 %type<statement> statement suite
 %type<expression> expression
 %type<block> statement_list
+%type<params> param_list
 
 %token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT RETURN
 %token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF AS CALL
@@ -105,13 +107,28 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| DEF IDENT AS suite
+	| DEF IDENT '(' ')' AS suite
 		{
-			$$ = new FunctionDefNode($2, $4);
+			$$ = new FunctionDefNode($2, $6, new ParamListNode());
+		}
+	| DEF IDENT '(' param_list ')' AS suite
+		{
+			$$ = new FunctionDefNode($2, $7, $4);
 		}
 	| RETURN expression EOL
 		{
 			$$ = new ReturnNode($2);
+		}
+	;
+
+param_list: IDENT
+		{
+			$$ = new ParamListNode();
+		}
+	| param_list ',' IDENT
+		{
+			$1->prepend($3);
+			$$ = $1;
 		}
 	;
 

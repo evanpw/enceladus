@@ -20,6 +20,11 @@ void ProgramNode::prepend(AstNode* child)
 	children_.emplace_back(child);
 }
 
+void ParamListNode::prepend(const char* param)
+{
+    params_.emplace_back(param);
+}
+
 void BlockNode::prepend(StatementNode* child)
 {
 	children_.emplace_back(child);

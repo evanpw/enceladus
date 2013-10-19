@@ -23,6 +23,7 @@ class GotoNode;
 class FunctionDefNode;
 class FunctionCallNode;
 class ReturnNode;
+class ParamListNode;
 
 class AstVisitor
 {
@@ -49,6 +50,7 @@ public:
 	virtual void visit(GotoNode* node) {}
 	virtual void visit(FunctionCallNode* node) {}
 	virtual void visit(ReturnNode* node) {}
+	virtual void visit(ParamListNode* node) {}
 
 protected:
 	Scope* topScope() { return scopes_.back(); }

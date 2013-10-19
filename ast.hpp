@@ -51,6 +51,19 @@ private:
 	std::unique_ptr<Scope> scope_;
 };
 
+class ParamListNode : public AstNode
+{
+public:
+	void prepend(const char* param);
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::list<const char*>& params() const { return params_; }
+
+private:
+	std::list<const char*> params_;
+};
+
 class LabelNode : public AstNode
 {
 public:
@@ -300,21 +313,23 @@ private:
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const char* name, StatementNode* body)
-	: name_(name), body_(body), symbol_(nullptr), scope_(new Scope)
+	FunctionDefNode(const char* name, StatementNode* body, ParamListNode* params)
+	: name_(name), body_(body), params_(params), symbol_(nullptr), scope_(new Scope)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const char* name() { return name_; }
 	StatementNode* body() { return body_.get(); }
-	Scope* scope() { return scope_.get(); }
+	ParamListNode* params() { return params_.get(); }
 
+	Scope* scope() { return scope_.get(); }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
 	const char* name_;
 	std::unique_ptr<StatementNode> body_;
+	std::unique_ptr<ParamListNode> params_;
 
 	Symbol* symbol_;
 	std::unique_ptr<Scope> scope_;

@@ -58,6 +58,7 @@ int yycolumn = 1;
 ":"		{ return ':'; }
 "("		{ return '('; }
 ")"		{ return ')'; }
+","		{ return ','; }
 "="		{ return ASSIGN; }
 "not"	{ return NOT; }
 "and"	{ return AND; }
