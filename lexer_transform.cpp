@@ -23,7 +23,6 @@ const char* token_to_string(int token)
         case GOTO: return "GOTO";
         case PRINT: return "PRINT";
         case READ: return "READ";
-        case ASSIGN: return "ASSIGN";
         case NOT: return "NOT";
         case AND: return "AND";
         case OR: return "OR";

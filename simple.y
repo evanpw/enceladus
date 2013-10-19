@@ -42,8 +42,8 @@ void yyerror(const char* msg);
 %type<params> param_list
 %type<arguments> arg_list;
 
-%token ERROR IF THEN ELSE GOTO PRINT READ ASSIGN NOT RETURN
-%token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF AS
+%token ERROR IF THEN ELSE GOTO PRINT READ NOT RETURN
+%token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF
 %token<str> IDENT
 %token<number> INT_LIT WHITESPACE
 
@@ -105,15 +105,15 @@ statement: IF expression THEN suite
 		{
 			$$ = new WhileNode($2, $4);
 		}
-	| IDENT ASSIGN expression EOL
+	| IDENT '=' expression EOL
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| DEF IDENT '(' ')' AS suite
+	| DEF IDENT '(' ')' '=' suite
 		{
 			$$ = new FunctionDefNode($2, $6, new ParamListNode());
 		}
-	| DEF IDENT '(' param_list ')' AS suite
+	| DEF IDENT '(' param_list ')' '=' suite
 		{
 			$$ = new FunctionDefNode($2, $7, $4);
 		}

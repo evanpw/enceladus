@@ -59,7 +59,7 @@ int yycolumn = 1;
 "("		{ return '('; }
 ")"		{ return ')'; }
 ","		{ return ','; }
-"="		{ return ASSIGN; }
+"="		{ return '='; }
 "not"	{ return NOT; }
 "and"	{ return AND; }
 "or"	{ return OR; }
@@ -74,7 +74,6 @@ int yycolumn = 1;
 "while"		{ return WHILE; }
 "do"		{ return DO; }
 "def"		{ return DEF; }
-"as"		{ return AS; }
 "return"	{ return RETURN; }
 
 [a-zA-Z][a-zA-Z0-9_]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
