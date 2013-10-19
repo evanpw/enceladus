@@ -1,0 +1,17 @@
+# Solve Project Euler 5 
+
+def gcd(a, b) as
+	if b == 0 then
+		return a
+	else
+		return call gcd(b, a mod b)
+
+def lcm(a, b) as return a * b / call gcd(a, b)
+
+n = 1
+i = 1
+while i <= 20 do
+	n = call lcm(n, i)
+	i = i + 1
+
+print n
