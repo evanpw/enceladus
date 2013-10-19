@@ -1,0 +1,22 @@
+# Solves Project Euler 2
+
+def sum_of_squares(n) =
+	sum = 0
+	i = 1
+	while i <= n do
+		sum = sum + i * i
+		i = i + 1
+
+	return sum
+
+def square_of_sum(n) = 
+	sum = 0
+	i = 1
+	while i <= n do
+		sum = sum + i
+		i = i + 1
+
+	return sum * sum
+
+print sum_of_squares(10) - square_of_sum(10)
+
