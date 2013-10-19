@@ -12,8 +12,35 @@ std::string CodeGen::access(const Symbol* symbol)
 		{
 			if (i != 0)
 			{
-				std::cerr << "Local variables not yet implemented." << std::endl;
-				assert(false);
+				if (symbol->isParam)
+				{
+					FunctionDefNode* enclosingFunction = dynamic_cast<FunctionDefNode*>(symbol->node);
+					assert(enclosingFunction != nullptr);
+
+					std::list<const char*> paramList = enclosingFunction->params();
+
+					size_t offset = 0;
+					for (const char* param : paramList)
+					{
+						if (strcmp(param, symbol->name) == 0)
+						{
+							std::stringstream result;
+							result << "[rbp + " << 8 * (offset + 1) << "]";
+							return result.str();
+						}
+
+						++offset;
+					}
+
+					// This symbol is supposed to be a parameter, but we can't find it in the
+					// parameter list of the function.
+					assert(false);
+				}
+				else
+				{
+					std::cerr << "Local variables not yet implemented." << std::endl;
+					assert(false);
+				}
 			}
 			else
 			{

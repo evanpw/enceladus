@@ -82,7 +82,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	// function's scope
 	for (const char* param : node->params())
 	{
-		Symbol* paramSymbol = new Symbol(param, kVariable, node);
+		Symbol* paramSymbol = new Symbol(param, kVariable, node, true);
 		topScope()->insert(paramSymbol);
 	}
 

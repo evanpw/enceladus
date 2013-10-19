@@ -7,8 +7,8 @@ enum Kind {kLabel = 0, kVariable = 1, kFunction = 2};
 
 struct Symbol
 {
-    Symbol(const char* name, Kind kind, AstNode* node)
-    : name(name), kind(kind), node(node) {}
+    Symbol(const char* name, Kind kind, AstNode* node, bool isParam = false)
+    : name(name), kind(kind), node(node), isParam(isParam) {}
 
     // This name MUST BE stored in the string table. The symbol table is indexed by pointer,
     // not by string, so there cannot be multiple copies of the same string or bad things will
@@ -20,6 +20,9 @@ struct Symbol
 
     // The node at which this symbol is first declared.
     AstNode* node;
+
+    // Is this symbol a function parameter?
+    bool isParam;
 };
 
 #endif
