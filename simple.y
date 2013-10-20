@@ -40,6 +40,7 @@ void yyerror(const char* msg);
 
 %token ERROR IF THEN ELSE PRINT READ NOT RETURN
 %token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF
+%token TRUE FALSE
 %token<str> IDENT
 %token<number> INT_LIT WHITESPACE
 
@@ -220,6 +221,14 @@ expression: NOT expression
 	| INT_LIT
 		{
 			$$ = new IntNode($1);
+		}
+	| TRUE
+		{
+			$$ = new BoolNode(true);
+		}
+	| FALSE
+		{
+			$$ = new BoolNode(false);
 		}
 	;
 

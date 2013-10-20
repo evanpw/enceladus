@@ -237,6 +237,18 @@ void CodeGen::visit(IntNode* node)
 	out_ << "mov rax, " << node->value() << std::endl;
 }
 
+void CodeGen::visit(BoolNode* node)
+{
+	if (node->value())
+	{
+		out_ << "mov rax, 1" << std::endl;
+	}
+	else
+	{
+		out_ << "mov rax, 0" << std::endl;
+	}
+}
+
 void CodeGen::visit(BlockNode* node)
 {
 	for (auto& child : node->children())

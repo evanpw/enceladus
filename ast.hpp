@@ -169,6 +169,18 @@ private:
 	long value_;
 };
 
+class BoolNode : public ExpressionNode
+{
+public:
+	BoolNode(bool value) : value_(value) {}
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	bool value() { return value_; }
+
+private:
+	bool value_;
+};
+
 typedef std::list<std::unique_ptr<ExpressionNode>> ArgList;
 
 class FunctionCallNode : public ExpressionNode

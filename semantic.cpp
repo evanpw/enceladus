@@ -285,6 +285,11 @@ void TypeChecker::visit(IntNode* node)
 	node->setType(kInt);
 }
 
+void TypeChecker::visit(BoolNode* node)
+{
+	node->setType(kBool);
+}
+
 void TypeChecker::visit(FunctionCallNode* node)
 {
 	// All return values are integers for now

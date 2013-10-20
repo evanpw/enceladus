@@ -18,6 +18,7 @@ class WhileNode;
 class AssignNode;
 class VariableNode;
 class IntNode;
+class BoolNode;
 class FunctionDefNode;
 class FunctionCallNode;
 class ReturnNode;
@@ -46,6 +47,7 @@ public:
 	virtual void visit(ReadNode* node) {}
 	virtual void visit(VariableNode* node) {}
 	virtual void visit(IntNode* node) {}
+	virtual void visit(BoolNode* node) {}
 	virtual void visit(ParamListNode* node) {}
 
 protected:
