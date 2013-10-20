@@ -31,8 +31,13 @@ private:
 class SemanticPass1 : public SemanticBase
 {
 public:
+	SemanticPass1() : _enclosingFunction(nullptr) {}
+
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(AssignNode* node);
+
+private:
+	FunctionDefNode* _enclosingFunction;
 };
 
 // Semantic analysis pass 2 - gotos / function calls

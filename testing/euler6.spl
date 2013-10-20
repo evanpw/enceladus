@@ -1,4 +1,4 @@
-# Solves Project Euler 2
+# Solves Project Euler 6
 
 def sum_of_squares(n) =
 	sum = 0
@@ -9,7 +9,7 @@ def sum_of_squares(n) =
 
 	return sum
 
-def square_of_sum(n) = 
+def square_of_sum(n) =
 	sum = 0
 	i = 1
 	while i <= n do

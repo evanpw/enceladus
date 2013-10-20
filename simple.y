@@ -57,10 +57,7 @@ program: /* empty */
 		}
 	| program statement
 		{
-			// Ignore blank lines
-			if ($2 != NULL)
-				$1->prepend($2);
-
+			$1->prepend($2);
 			$$ = $1;
 		}
 	;

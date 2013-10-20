@@ -1,59 +1,57 @@
 #include <cassert>
 #include <iostream>
 #include <map>
+#include "ast.hpp"
 #include "codegen.hpp"
 #include "scope.hpp"
+#include "simple.tab.h"
 
 std::string CodeGen::access(const Symbol* symbol)
 {
-	for (int i = scopes_.size() - 1; i >= 0; --i)
+	assert(symbol->kind == kVariable);
+
+	FunctionDefNode* enclosingFunction = symbol->enclosingFunction;
+
+	// Global symbol
+	if (symbol->enclosingFunction == nullptr)
 	{
-		if (scopes_[i]->contains(symbol))
+		std::stringstream result;
+		result << "[rel _" << symbol->name << "]";
+
+		return result.str();
+	}
+	else
+	{
+		if (symbol->isParam)
 		{
-			if (i != 0)
+			std::list<const char*> paramList = enclosingFunction->params();
+
+			size_t offset = 0;
+			for (const char* param : paramList)
 			{
-				if (symbol->isParam)
+				if (strcmp(param, symbol->name) == 0)
 				{
-					FunctionDefNode* enclosingFunction = dynamic_cast<FunctionDefNode*>(symbol->node);
-					assert(enclosingFunction != nullptr);
-
-					std::list<const char*> paramList = enclosingFunction->params();
-
-					size_t offset = 0;
-					for (const char* param : paramList)
-					{
-						if (strcmp(param, symbol->name) == 0)
-						{
-							std::stringstream result;
-							result << "[rbp + " << 8 * (offset + 2) << "]";
-							return result.str();
-						}
-
-						++offset;
-					}
-
-					// This symbol is supposed to be a parameter, but we can't find it in the
-					// parameter list of the function.
-					assert(false);
+					std::stringstream result;
+					result << "[rbp + " << 8 * (offset + 2) << "]";
+					return result.str();
 				}
-				else
-				{
-					std::cerr << "Local variables not yet implemented." << std::endl;
-					assert(false);
-				}
-			}
-			else
-			{
-				std::stringstream result;
-				result << "[rel _" << symbol->name << "]";
 
-				return result.str();
+				++offset;
 			}
+
+			// This symbol is supposed to be a parameter, but we can't find it in the
+			// parameter list of the function.
+			assert(false);
+		}
+		else
+		{
+			std::cerr << "Near line " << symbol->node->location()->first_line << ", "
+	  	      		  << "column " << symbol->node->location()->first_column << ": "
+	  	              << "error: local variables not yet implemented." << std::endl;
+
+	  	    assert(false);
 		}
 	}
-
-	std::cerr << "Unknown symbol \"" << symbol->name << "\" in code generator." << std::endl;
-	assert(false);
 }
 
 void CodeGen::visit(ProgramNode* node)

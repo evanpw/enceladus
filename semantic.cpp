@@ -37,6 +37,15 @@ void SemanticBase::semanticError(AstNode* node, const std::string& msg)
 
 void SemanticPass1::visit(FunctionDefNode* node)
 {
+	if (_enclosingFunction != nullptr)
+	{
+		std::stringstream msg;
+		msg << "functions cannot be nested.";
+
+		semanticError(node, msg.str());
+		return;
+	}
+
 	const char* name = node->name();
 
 	Symbol* symbol = searchScopes(name);
@@ -50,23 +59,26 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 	else
 	{
-		Symbol* symbol = new Symbol(name, kFunction, node);
+		Symbol* symbol = new Symbol(name, kFunction, node, _enclosingFunction);
 		topScope()->insert(symbol);
 		node->attachSymbol(symbol);
 	}
 
 	enterScope(node->scope());
+	_enclosingFunction = node;
 
 	// Add symbols corresponding to the formal parameters to the
 	// function's scope
 	for (const char* param : node->params())
 	{
-		Symbol* paramSymbol = new Symbol(param, kVariable, node, true);
+		Symbol* paramSymbol = new Symbol(param, kVariable, node, node, true);
 		topScope()->insert(paramSymbol);
 	}
 
 	// Recurse
-	node->body()->accept(this);
+	AstVisitor::visit(node);
+
+	_enclosingFunction = nullptr;
 	exitScope();
 }
 
@@ -88,7 +100,7 @@ void SemanticPass1::visit(AssignNode* node)
 	}
 	else
 	{
-		symbol = new Symbol(target, kVariable, node);
+		symbol = new Symbol(target, kVariable, node, _enclosingFunction);
 		topScope()->insert(symbol);
 	}
 
