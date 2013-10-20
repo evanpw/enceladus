@@ -22,7 +22,7 @@ lex.yy.c: simple.flex
 	flex simple.flex
 
 simple.tab.c simple.tab.h: simple.y
-	bison -d simple.y
+	bison --report=state -d simple.y
 
 simplec: $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) $(SOURCES) -o simplec

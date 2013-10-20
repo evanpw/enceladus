@@ -1,17 +1,18 @@
-# Solve Project Euler 5 
+# Solve Project Euler 5
 
-def gcd(a, b) = 
+def gcd a b :: Int =
 	if b == 0 then
 		return a
 	else
-		return gcd(b, a mod b)
+		return gcd b (a mod b)
 
-def lcm(a, b) = return a * b / gcd(a, b)
+def lcm a b :: Int =
+    return a * b / gcd a b
 
 n = 1
 i = 1
 while i <= 20 do
-	n = lcm(n, i)
+	n = lcm n i
 	i = i + 1
 
 print n

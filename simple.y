@@ -33,10 +33,10 @@ void yyerror(const char* msg);
 
 %type<program> program
 %type<statement> statement suite
-%type<expression> expression
+%type<expression> expression fexpression simple_expression
 %type<block> statement_list
 %type<params> param_list parameters
-%type<arguments> arg_list;
+%type<arguments> arg_list
 
 %token ERROR
 %token IF THEN ELSE
@@ -59,6 +59,7 @@ void yyerror(const char* msg);
 %nonassoc '>' '<' LE GE EQUALS NE
 %left '+' '-'
 %left '*' '/' MOD
+%left IDENT
 
 %%
 
@@ -140,18 +141,6 @@ param_list: IDENT
 		}
 	;
 
-arg_list: expression
-		{
-			$$ = new ArgList();
-			$$->emplace_back($1);
-		}
-	| arg_list ',' expression
-		{
-			$1->emplace_back($3);
-			$$ = $1;
-		}
-	;
-
 suite: statement
 		{
 			$$ = $1;
@@ -173,6 +162,7 @@ statement_list: statement
 		}
 	;
 
+/* An expression that is not a function call */
 expression: NOT expression
 		{
 			$$ = new NotNode($2);
@@ -229,15 +219,34 @@ expression: NOT expression
 		{
 			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMod, $3);
 		}
-	| IDENT '(' ')'
+	| fexpression
 		{
-			$$ = new FunctionCallNode($1, new ArgList());
+			$$ = $1;
 		}
-	| IDENT '(' arg_list ')'
+	;
+
+fexpression: simple_expression
 		{
-			$$ = new FunctionCallNode($1, $3);
+			$$ = $1;
 		}
-	| READ
+	| IDENT arg_list
+		{
+			$$ = new FunctionCallNode($1, $2);
+		}
+
+arg_list: simple_expression
+        {
+                $$ = new ArgList();
+                $$->emplace_back($1);
+        }
+	| arg_list simple_expression
+        {
+                $1->emplace_back($2);
+                $$ = $1;
+        }
+        ;
+
+simple_expression: READ
 		{
 			$$ = new ReadNode;
 		}
@@ -261,7 +270,6 @@ expression: NOT expression
 		{
 			$$ = new BoolNode(false);
 		}
-	;
 
 %%
 

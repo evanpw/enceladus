@@ -11,7 +11,7 @@ def is_prime x :: Bool =
 x = 2
 count = 0
 while count < 10001 do
-    if is_prime(x) then count += 1
+    if is_prime x then count += 1
 
     if count == 10001 then
         print x

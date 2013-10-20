@@ -4,9 +4,9 @@ def equal x y :: Bool =
 def four :: Int =
     return 4
 
-if equal(1, 1) then
+if equal 1 1 then
     print 1
 else
     print 0
 
-print four()
+print four
