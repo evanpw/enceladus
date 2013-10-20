@@ -59,7 +59,6 @@ void yyerror(const char* msg);
 %nonassoc '>' '<' LE GE EQUALS NE
 %left '+' '-'
 %left '*' '/' MOD
-%left IDENT
 
 %%
 

@@ -1,3 +1,5 @@
 #include "types.hpp"
 
-const char* typeNames[] = {"None", "Int", "Bool"};
+const Type Type::Void("Void");
+const Type Type::Int("Int");
+const Type Type::Bool("Bool");

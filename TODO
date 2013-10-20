@@ -13,3 +13,4 @@ Todo
 * Types for functions parameters
 * Types for variables
 * Move to a functional language?
+* Merge linux and osx libraries using macros

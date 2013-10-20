@@ -6,7 +6,7 @@
 using namespace std;
 
 AstNode::AstNode()
-: type_(kNone)
+: type_(&Type::Void)
 {
 	location_ = new YYLTYPE(yylloc);
 }

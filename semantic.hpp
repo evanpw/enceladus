@@ -77,7 +77,7 @@ public:
 	virtual void visit(ReturnNode* node);
 
 private:
-	void typeCheck(AstNode* node, Type type);
+	void typeCheck(AstNode* node, const Type* type);
 	FunctionDefNode* _enclosingFunction;
 };
 

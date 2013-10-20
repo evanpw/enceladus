@@ -49,14 +49,14 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Function declaration must specify a valid return type
-	Type returnType;
+	const Type* returnType;
 	if (strcmp(node->typeDecl(), "Int") == 0)
 	{
-		returnType = kInt;
+		returnType = &Type::Int;
 	}
 	else if (strcmp(node->typeDecl(), "Bool") == 0)
 	{
-		returnType = kBool;
+		returnType = &Type::Bool;
 	}
 	else
 	{
@@ -95,7 +95,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	{
 		Symbol* paramSymbol = new Symbol(param, kVariable, node, node);
 		paramSymbol->isParam = true;
-		paramSymbol->type = kInt; // For now, all function parameters are integers
+		paramSymbol->type = &Type::Int; // For now, all function parameters are integers
 		topScope()->insert(paramSymbol);
 	}
 
@@ -125,7 +125,7 @@ void SemanticPass1::visit(AssignNode* node)
 	else
 	{
 		symbol = new Symbol(target, kVariable, node, _enclosingFunction);
-		symbol->type = kInt; // For now, variables can only store integers
+		symbol->type = &Type::Int; // For now, variables can only store integers
 		topScope()->insert(symbol);
 	}
 
@@ -196,12 +196,12 @@ void SemanticPass2::visit(VariableNode* node)
 	}
 }
 
-void TypeChecker::typeCheck(AstNode* node, Type type)
+void TypeChecker::typeCheck(AstNode* node, const Type* type)
 {
 	if (node->type() != type)
 	{
 		std::stringstream msg;
-		msg << "expected type " << typeNames[type] << ", but got " << typeNames[node->type()];
+		msg << "expected type " << type->name() << ", but got " << node->type()->name();
 
 		semanticError(node, msg.str());
 	}
@@ -220,42 +220,42 @@ void TypeChecker::visit(NotNode* node)
 {
 	node->child()->accept(this);
 
-	typeCheck(node->child(), kBool);
+	typeCheck(node->child(), &Type::Bool);
 
-	node->setType(kBool);
+	node->setType(&Type::Bool);
 }
 
 void TypeChecker::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
-	typeCheck(node->lhs(), kInt);
+	typeCheck(node->lhs(), &Type::Int);
 
 	node->rhs()->accept(this);
-	typeCheck(node->rhs(), kInt);
+	typeCheck(node->rhs(), &Type::Int);
 
-	node->setType(kBool);
+	node->setType(&Type::Bool);
 }
 
 void TypeChecker::visit(BinaryOperatorNode* node)
 {
 	node->lhs()->accept(this);
-	typeCheck(node->lhs(), kInt);
+	typeCheck(node->lhs(), &Type::Int);
 
 	node->rhs()->accept(this);
-	typeCheck(node->rhs(), kInt);
+	typeCheck(node->rhs(), &Type::Int);
 
-	node->setType(kInt);
+	node->setType(&Type::Int);
 }
 
 void TypeChecker::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);
-	typeCheck(node->lhs(), kBool);
+	typeCheck(node->lhs(), &Type::Bool);
 
 	node->rhs()->accept(this);
-	typeCheck(node->rhs(), kBool);
+	typeCheck(node->rhs(), &Type::Bool);
 
-	node->setType(kBool);
+	node->setType(&Type::Bool);
 }
 
 void TypeChecker::visit(BlockNode* node)
@@ -269,7 +269,7 @@ void TypeChecker::visit(BlockNode* node)
 void TypeChecker::visit(IfNode* node)
 {
 	node->condition()->accept(this);
-	typeCheck(node->condition(), kBool);
+	typeCheck(node->condition(), &Type::Bool);
 
 	node->body()->accept(this);
 }
@@ -277,7 +277,7 @@ void TypeChecker::visit(IfNode* node)
 void TypeChecker::visit(IfElseNode* node)
 {
 	node->condition()->accept(this);
-	typeCheck(node->condition(), kBool);
+	typeCheck(node->condition(), &Type::Bool);
 
 	node->body()->accept(this);
 	node->else_body()->accept(this);
@@ -286,18 +286,18 @@ void TypeChecker::visit(IfElseNode* node)
 void TypeChecker::visit(PrintNode* node)
 {
 	node->expression()->accept(this);
-	typeCheck(node->expression(), kInt);
+	typeCheck(node->expression(), &Type::Int);
 }
 
 void TypeChecker::visit(ReadNode* node)
 {
-	node->setType(kInt);
+	node->setType(&Type::Int);
 }
 
 void TypeChecker::visit(WhileNode* node)
 {
 	node->condition()->accept(this);
-	typeCheck(node->condition(), kBool);
+	typeCheck(node->condition(), &Type::Bool);
 
 	node->body()->accept(this);
 }
@@ -307,23 +307,23 @@ void TypeChecker::visit(AssignNode* node)
 	// node->target() is a variable, and variables are always integers
 
 	node->value()->accept(this);
-	typeCheck(node->value(), kInt);
+	typeCheck(node->value(), &Type::Int);
 }
 
 // Leaf nodes
 void TypeChecker::visit(VariableNode* node)
 {
-	node->setType(kInt);
+	node->setType(&Type::Int);
 }
 
 void TypeChecker::visit(IntNode* node)
 {
-	node->setType(kInt);
+	node->setType(&Type::Int);
 }
 
 void TypeChecker::visit(BoolNode* node)
 {
-	node->setType(kBool);
+	node->setType(&Type::Bool);
 }
 
 void TypeChecker::visit(FunctionCallNode* node)
@@ -335,7 +335,7 @@ void TypeChecker::visit(FunctionCallNode* node)
 	{
 		// All function arguments are integers also
 		argument.get()->accept(this);
-		typeCheck(argument.get(), kInt);
+		typeCheck(argument.get(), &Type::Int);
 	}
 }
 

@@ -20,13 +20,13 @@ public:
 	virtual void accept(AstVisitor* visitor) = 0;
 
 	YYLTYPE* location() { return location_; }
-	Type type() { return type_; }
+	const Type* type() { return type_; }
 
-	void setType(Type type) { type_ = type; }
+	void setType(const Type* type) { type_ = type; }
 
 protected:
 	YYLTYPE* location_;
-	Type type_;
+	const Type* type_;
 };
 
 class StatementNode : public AstNode {};
