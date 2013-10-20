@@ -102,13 +102,13 @@ statement: IF expression THEN suite
 		}
 	;
 
-parameters: '(' ')'
+parameters: /* empty */
 		{
 			$$ = new ParamListNode();
 		}
-	| '(' param_list ')'
+	| param_list
 		{
-			$$ = $2;
+			$$ = $1;
 		}
 
 param_list: IDENT
@@ -116,9 +116,9 @@ param_list: IDENT
 			$$ = new ParamListNode();
 			$$->append($1);
 		}
-	| param_list ',' IDENT
+	| param_list IDENT
 		{
-			$1->append($3);
+			$1->append($2);
 			$$ = $1;
 		}
 	;
