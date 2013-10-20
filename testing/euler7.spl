@@ -4,16 +4,16 @@ def is_prime x :: Bool =
     i = 2
     while i * i <= x do
         if x mod i == 0 then return False
-        i = i + 1
+        i += 1
 
     return True
 
 x = 2
 count = 0
 while count < 10001 do
-    if is_prime(x) then count = count + 1
+    if is_prime(x) then count += 1
 
     if count == 10001 then
         print x
     else
-        x = x + 1
+        x += 1

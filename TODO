@@ -4,6 +4,12 @@ Todo
 * Clean up Makefile
 * Add explicit variable declarations
 * Add some automatic regression tests
-* Handle local variables
 * Ignore the result of a function call
 * Make semantic analysis more rigorous
+* Garbage collection, reference counting, or leak memory?
+* Functional-style singly-linked lists, or python-style lists?
+* Imports and a native-language standard library
+* Get rid of parentheses in function calls (need to handle null-ary functions vs variables carefully)
+* Types for functions parameters
+* Types for variables
+* Move to a functional language?

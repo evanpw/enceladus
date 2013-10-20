@@ -49,6 +49,7 @@ void yyerror(const char* msg);
 %token DEF
 %token DCOLON
 %token TRUE FALSE
+%token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL
 %token<str> IDENT
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
@@ -91,6 +92,22 @@ statement: IF expression THEN suite
 	| IDENT '=' expression EOL
 		{
 			$$ = new AssignNode($1, $3);
+		}
+	| IDENT PLUS_EQUAL expression EOL
+		{
+			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kPlus, $3));
+		}
+	| IDENT MINUS_EQUAL expression EOL
+		{
+			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kMinus, $3));
+		}
+	| IDENT TIMES_EQUAL expression EOL
+		{
+			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kTimes, $3));
+		}
+	| IDENT DIV_EQUAL expression EOL
+		{
+			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kDivide, $3));
 		}
 	| DEF IDENT parameters DCOLON IDENT '=' suite
 		{

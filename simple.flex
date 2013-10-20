@@ -65,6 +65,12 @@ int yycolumn = 1;
 "and"	{ return AND; }
 "or"	{ return OR; }
 
+ /* Syntactic sugar */
+"+="	{ return PLUS_EQUAL; }
+"-="	{ return MINUS_EQUAL; }
+"*="	{ return TIMES_EQUAL; }
+"/="	{ return DIV_EQUAL; }
+
  /* Keywords */
 "if"		{ return IF; }
 "then"		{ return THEN; }

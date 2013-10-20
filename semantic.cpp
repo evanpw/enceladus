@@ -81,6 +81,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	{
 		Symbol* symbol = new Symbol(name, kFunction, node, _enclosingFunction);
 		symbol->type = returnType;
+		symbol->arity = node->params().size();
 		topScope()->insert(symbol);
 		node->attachSymbol(symbol);
 	}
@@ -156,6 +157,13 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	else
 	{
 		node->attachSymbol(symbol);
+
+		if (symbol->arity != node->arguments().size())
+		{
+			std::stringstream msg;
+			msg << "call to \"" << symbol->name << "\" does not respect function arity.";
+			semanticError(node, msg.str());
+		}
 	}
 
 	// Recurse to children

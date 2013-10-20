@@ -36,6 +36,9 @@ struct Symbol
 
     // For variables, the type; for functions, the type of the return value
     Type type;
+
+    // Valid only for functions
+    unsigned int arity;
 };
 
 #endif
