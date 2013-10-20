@@ -187,7 +187,7 @@ class FunctionCallNode : public ExpressionNode
 {
 public:
 	FunctionCallNode(const char* target, ArgList* arguments)
-	: target_(target)
+	: target_(target), symbol_(nullptr)
 	{
 		arguments_.reset(arguments);
 	}
@@ -197,9 +197,14 @@ public:
 	const char* target() { return target_; }
 	ArgList& arguments() { return *arguments_.get(); }
 
+	Symbol* symbol() { return symbol_; }
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
 private:
 	const char* target_;
 	std::unique_ptr<ArgList> arguments_;
+
+	Symbol* symbol_;
 };
 
 class ReadNode : public ExpressionNode
@@ -306,8 +311,8 @@ private:
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const char* name, StatementNode* body, ParamListNode* params)
-	: name_(name), body_(body), params_(params), symbol_(nullptr), scope_(new Scope)
+	FunctionDefNode(const char* name, StatementNode* body, ParamListNode* params, const char* typeDecl)
+	: name_(name), body_(body), params_(params), typeDecl_(typeDecl), symbol_(nullptr), scope_(new Scope)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -315,14 +320,18 @@ public:
 	const char* name() { return name_; }
 	StatementNode* body() { return body_.get(); }
 	const std::list<const char*>& params() { return params_->names(); }
+	const char* typeDecl() { return typeDecl_; }
 
 	Scope* scope() { return scope_.get(); }
+
+	Symbol* symbol() { return symbol_; }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
 	const char* name_;
 	std::unique_ptr<StatementNode> body_;
 	std::unique_ptr<ParamListNode> params_;
+	const char* typeDecl_;
 
 	Symbol* symbol_;
 	std::unique_ptr<Scope> scope_;

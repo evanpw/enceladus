@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include "scope.hpp"
@@ -37,6 +38,7 @@ void SemanticBase::semanticError(AstNode* node, const std::string& msg)
 
 void SemanticPass1::visit(FunctionDefNode* node)
 {
+	// Functions cannot be declared inside of another function
 	if (_enclosingFunction != nullptr)
 	{
 		std::stringstream msg;
@@ -46,8 +48,26 @@ void SemanticPass1::visit(FunctionDefNode* node)
 		return;
 	}
 
-	const char* name = node->name();
+	// Function declaration must specify a valid return type
+	Type returnType;
+	if (strcmp(node->typeDecl(), "Int") == 0)
+	{
+		returnType = kInt;
+	}
+	else if (strcmp(node->typeDecl(), "Bool") == 0)
+	{
+		returnType = kBool;
+	}
+	else
+	{
+		std::stringstream msg;
+		msg << "unknown return type \"" << node->typeDecl() << "\".";
+		semanticError(node, msg.str());
+		return;
+	}
 
+	// The function name cannot have already been used as something else
+	const char* name = node->name();
 	Symbol* symbol = searchScopes(name);
 	if (symbol != nullptr)
 	{
@@ -60,6 +80,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	else
 	{
 		Symbol* symbol = new Symbol(name, kFunction, node, _enclosingFunction);
+		symbol->type = returnType;
 		topScope()->insert(symbol);
 		node->attachSymbol(symbol);
 	}
@@ -71,12 +92,14 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	// function's scope
 	for (const char* param : node->params())
 	{
-		Symbol* paramSymbol = new Symbol(param, kVariable, node, node, true);
+		Symbol* paramSymbol = new Symbol(param, kVariable, node, node);
+		paramSymbol->isParam = true;
+		paramSymbol->type = kInt; // For now, all function parameters are integers
 		topScope()->insert(paramSymbol);
 	}
 
 	// Recurse
-	AstVisitor::visit(node);
+	node->body()->accept(this);
 
 	_enclosingFunction = nullptr;
 	exitScope();
@@ -101,6 +124,7 @@ void SemanticPass1::visit(AssignNode* node)
 	else
 	{
 		symbol = new Symbol(target, kVariable, node, _enclosingFunction);
+		symbol->type = kInt; // For now, variables can only store integers
 		topScope()->insert(symbol);
 	}
 
@@ -128,6 +152,10 @@ void SemanticPass2::visit(FunctionCallNode* node)
 		msg << "target of function call \"" << symbol->name << "\" is not a function.";
 
 		semanticError(node, msg.str());
+	}
+	else
+	{
+		node->attachSymbol(symbol);
 	}
 
 	// Recurse to children
@@ -292,8 +320,8 @@ void TypeChecker::visit(BoolNode* node)
 
 void TypeChecker::visit(FunctionCallNode* node)
 {
-	// All return values are integers for now
-	node->setType(kInt);
+	// The type of a function call is the return type of the function
+	node->setType(node->symbol()->type);
 
 	for (auto& argument : node->arguments())
 	{
@@ -305,7 +333,30 @@ void TypeChecker::visit(FunctionCallNode* node)
 
 void TypeChecker::visit(ReturnNode* node)
 {
+	// This isn't really type checking, but this is the easiest place to put this check.
+	if (_enclosingFunction == nullptr)
+	{
+		std::stringstream msg;
+		msg << "Cannot return from top level.";
+		semanticError(node, msg.str());
+
+		return;
+	}
+
 	node->expression()->accept(this);
 
-	typeCheck(node->expression(), kInt);
+	// Value of expression must equal the return type of the enclosing function.
+	typeCheck(node->expression(), _enclosingFunction->symbol()->type);
+}
+
+void TypeChecker::visit(FunctionDefNode* node)
+{
+	enterScope(node->scope());
+	_enclosingFunction = node;
+
+	// Recurse
+	node->body()->accept(this);
+
+	_enclosingFunction = nullptr;
+	exitScope();
 }

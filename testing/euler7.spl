@@ -1,17 +1,19 @@
 # Solves Project Euler 7
 
-def is_prime(x) =
-    i = 1
-    while i * i < x do
-        if x mod i == 0 then return True
+def is_prime(x) :: Bool =
+    i = 2
+    while i * i <= x do
+        if x mod i == 0 then return False
         i = i + 1
 
-    return False
+    return True
 
 x = 2
 count = 0
 while count < 10001 do
     if is_prime(x) then count = count + 1
-    x = x + 1
 
-print x
+    if count == 10001 then
+        print x
+    else
+        x = x + 1

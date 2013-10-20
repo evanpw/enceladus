@@ -52,6 +52,8 @@ public:
 class TypeChecker : public SemanticBase
 {
 public:
+	TypeChecker() : _enclosingFunction(nullptr) {}
+
 	// Internal nodes
 	virtual void visit(ProgramNode* node);
 	virtual void visit(NotNode* node);
@@ -65,6 +67,7 @@ public:
 	virtual void visit(ReadNode* node);
 	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
+	virtual void visit(FunctionDefNode* node);
 
 	// Leaf nodes
 	virtual void visit(VariableNode* node);
@@ -75,6 +78,7 @@ public:
 
 private:
 	void typeCheck(AstNode* node, Type type);
+	FunctionDefNode* _enclosingFunction;
 };
 
 #endif

@@ -60,6 +60,7 @@ int yycolumn = 1;
 ")"		{ return ')'; }
 ","		{ return ','; }
 "="		{ return '='; }
+"::"	{ return DCOLON; }
 "not"	{ return NOT; }
 "and"	{ return AND; }
 "or"	{ return OR; }

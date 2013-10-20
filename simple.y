@@ -35,14 +35,23 @@ void yyerror(const char* msg);
 %type<statement> statement suite
 %type<expression> expression
 %type<block> statement_list
-%type<params> param_list
+%type<params> param_list parameters
 %type<arguments> arg_list;
 
-%token ERROR IF THEN ELSE PRINT READ NOT RETURN
-%token AND OR EOL MOD WHILE DO INDENT DEDENT EQUALS DEF
+%token ERROR
+%token IF THEN ELSE
+%token PRINT READ
+%token NOT AND OR MOD EQUALS
+%token RETURN
+%token WHILE DO
+%token INDENT DEDENT
+%token EOL
+%token DEF
+%token DCOLON
 %token TRUE FALSE
 %token<str> IDENT
-%token<number> INT_LIT WHITESPACE
+%token<number> INT_LIT
+%token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
 %nonassoc NOT
 %left AND OR
@@ -83,19 +92,24 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| DEF IDENT '(' ')' '=' suite
+	| DEF IDENT parameters DCOLON IDENT '=' suite
 		{
-			$$ = new FunctionDefNode($2, $6, new ParamListNode());
-		}
-	| DEF IDENT '(' param_list ')' '=' suite
-		{
-			$$ = new FunctionDefNode($2, $7, $4);
+			$$ = new FunctionDefNode($2, $7, $3, $5);
 		}
 	| RETURN expression EOL
 		{
 			$$ = new ReturnNode($2);
 		}
 	;
+
+parameters: '(' ')'
+		{
+			$$ = new ParamListNode();
+		}
+	| '(' param_list ')'
+		{
+			$$ = $2;
+		}
 
 param_list: IDENT
 		{

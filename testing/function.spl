@@ -1,5 +1,7 @@
-def func(a, b) =
-    y = a + b
-    print y
+def equal(x, y) :: Bool =
+    return (x == y)
 
-x = func(10, 20)
+if equal(2, 2) then
+    print 1
+else
+    print 0
