@@ -18,5 +18,5 @@ def square_of_sum(n) =
 
 	return sum * sum
 
-print sum_of_squares(10) - square_of_sum(10)
+print square_of_sum(100) - sum_of_squares(100)
 

@@ -16,17 +16,17 @@ AstNode::~AstNode()
 	delete location_;
 }
 
-void ProgramNode::prepend(AstNode* child)
+void ProgramNode::append(AstNode* child)
 {
 	children_.emplace_back(child);
 }
 
-void ParamListNode::prepend(const char* param)
+void ParamListNode::append(const char* param)
 {
     names_.emplace_back(param);
 }
 
-void BlockNode::prepend(StatementNode* child)
+void BlockNode::append(StatementNode* child)
 {
 	children_.emplace_back(child);
 }

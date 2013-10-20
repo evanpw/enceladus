@@ -57,7 +57,7 @@ program: /* empty */
 		}
 	| program statement
 		{
-			$1->prepend($2);
+			$1->append($2);
 			$$ = $1;
 		}
 	;
@@ -99,11 +99,11 @@ statement: IF expression THEN suite
 param_list: IDENT
 		{
 			$$ = new ParamListNode();
-			$$->prepend($1);
+			$$->append($1);
 		}
 	| param_list ',' IDENT
 		{
-			$1->prepend($3);
+			$1->append($3);
 			$$ = $1;
 		}
 	;
@@ -132,11 +132,11 @@ suite: statement
 statement_list: statement
 		{
 			$$ = new BlockNode;
-			$$->prepend($1);
+			$$->append($1);
 		}
 	| statement_list statement
 		{
-			$1->prepend($2);
+			$1->append($2);
 			$$ = $1;
 		}
 	;

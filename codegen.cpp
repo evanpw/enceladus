@@ -24,6 +24,9 @@ std::string CodeGen::access(const Symbol* symbol)
 	{
 		if (symbol->isParam)
 		{
+			// Symbols should not be assigned a place among the local variables.
+			assert(symbol->offset == 0);
+
 			std::list<const char*> paramList = enclosingFunction->params();
 
 			size_t offset = 0;
@@ -45,11 +48,12 @@ std::string CodeGen::access(const Symbol* symbol)
 		}
 		else
 		{
-			std::cerr << "Near line " << symbol->node->location()->first_line << ", "
-	  	      		  << "column " << symbol->node->location()->first_column << ": "
-	  	              << "error: local variables not yet implemented." << std::endl;
+			// This local variable should have been assigned a location on the stack already.
+			assert(symbol->offset > 0);
 
-	  	    assert(false);
+			std::stringstream result;
+			result << "[rbp - " << symbol->offset << "]";
+			return result.str();
 		}
 	}
 }
@@ -77,10 +81,24 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "push rbp" << std::endl;
 		out_ << "mov rbp, rsp" << std::endl;
 
+		// Assign a location for all of the local variables and parameters.
+		int locals = 0;
+		for (auto& i : function->scope()->symbols())
+		{
+			auto& symbol = i.second;
+			if (!symbol->isParam)
+			{
+				symbol->offset = 8 * (locals + 1);
+				++locals;
+			}
+		}
+		if (locals > 0) out_ << "add rsp, -" << (8 * locals) << std::endl;
+
 		// Recurse to children
 		AstVisitor::visit(function);
 
 		out_ << "__end_" << function->name() << ":" << std::endl;
+		out_ << "mov rsp, rbp" << std::endl;
 		out_ << "pop rbp" << std::endl;
 		out_ << "ret" << std::endl;
 	}
@@ -98,7 +116,7 @@ void CodeGen::visit(ProgramNode* node)
 
 void CodeGen::visit(NotNode* node)
 {
-	// Load the value of the child expression in eax
+	// Load the value of the child expression in rax
 	node->child()->accept(this);
 	out_ << "xor rax, 1" << std::endl;
 }
@@ -302,7 +320,9 @@ void CodeGen::visit(FunctionCallNode* node)
 	}
 
 	out_ << "call _" << node->target() << std::endl;
-	out_ << "add rsp, " << 8 * node->arguments().size() << std::endl;
+
+	size_t args = node->arguments().size();
+	if (args > 0) out_ << "add rsp, " << 8 * args << std::endl;
 }
 
 void CodeGen::visit(ReturnNode* node)

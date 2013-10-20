@@ -1,5 +1,5 @@
-def func(a, b) as
-    print a
-    print b
+def func(a, b) =
+    y = a + b
+    print y
 
-x = call func(10, 20)
+x = func(10, 20)

@@ -39,7 +39,7 @@ class ProgramNode : public AstNode
 public:
 	ProgramNode() : scope_(new Scope) {}
 
-	void prepend(AstNode* child);
+	void append(AstNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
@@ -54,7 +54,7 @@ private:
 class ParamListNode : public AstNode
 {
 public:
-	void prepend(const char* param);
+	void append(const char* param);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
@@ -200,7 +200,7 @@ public:
 class BlockNode : public StatementNode
 {
 public:
-	void prepend(StatementNode* child);
+	void append(StatementNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
