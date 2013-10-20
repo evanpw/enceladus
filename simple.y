@@ -72,7 +72,6 @@ program: /* empty */
 			$1->append($2);
 			$$ = $1;
 		}
-	;
 
 statement: IF expression THEN suite
 		{
@@ -118,7 +117,6 @@ statement: IF expression THEN suite
 		{
 			$$ = new ReturnNode($2);
 		}
-	;
 
 parameters: /* empty */
 		{
@@ -139,7 +137,6 @@ param_list: IDENT
 			$1->append($2);
 			$$ = $1;
 		}
-	;
 
 suite: statement
 		{
@@ -160,7 +157,6 @@ statement_list: statement
 			$1->append($2);
 			$$ = $1;
 		}
-	;
 
 /* An expression that is not a function call */
 expression: NOT expression
@@ -223,7 +219,6 @@ expression: NOT expression
 		{
 			$$ = $1;
 		}
-	;
 
 fexpression: simple_expression
 		{
@@ -236,15 +231,14 @@ fexpression: simple_expression
 
 arg_list: simple_expression
         {
-                $$ = new ArgList();
-                $$->emplace_back($1);
+            $$ = new ArgList();
+            $$->emplace_back($1);
         }
 	| arg_list simple_expression
         {
-                $1->emplace_back($2);
-                $$ = $1;
+            $1->emplace_back($2);
+            $$ = $1;
         }
-        ;
 
 simple_expression: READ
 		{
