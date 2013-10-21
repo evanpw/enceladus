@@ -56,6 +56,7 @@ void yyerror(const char* msg);
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
+%right '$'
 %nonassoc NOT HEAD TAIL ISNULL
 %left AND OR
 %nonassoc '>' '<' LE GE EQUALS NE
@@ -180,6 +181,13 @@ expression: NOT expression
 	| ISNULL expression
 		{
 			$$ = new NullNode($2);
+		}
+	| IDENT '$' expression
+		{
+			ArgList* argList = new ArgList();
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode($1, argList);
 		}
 	| expression AND expression
 		{

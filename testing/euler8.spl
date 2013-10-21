@@ -1,19 +1,16 @@
 # Will eventually solve Project Euler 8
 
+def length xs :: Int =
+    if null xs then
+        return 0
+    else
+        return 1 + length $ tail xs
+
+def sum xs :: Int =
+    if null xs then
+        return 0
+    else return head xs + sum $ tail xs
+
 let xs :: List = 1 : 2 : 3 : 4 : 5 : []
-
-# Length
-let n :: Int = 0
-let ys :: List = xs
-while not null ys do
-    ys = tail ys
-    n += 1
-print n
-
-# Sum
-let m :: Int = 0
-ys = xs
-while not null ys do
-    m += head ys
-    ys = tail ys
-print m
+print length xs
+print sum xs
