@@ -2,7 +2,7 @@ bits 64
 section .text
 extern _printf, _scanf, _malloc
 extern __main
-global _main, __read, __print
+global _main, __read, __print, __cons
 
 _main:
     ; The main function from the compiled program
@@ -75,6 +75,7 @@ __cons:
     mov qword [rax + 8], rsi
 
     mov rsp, rbp
+    pop rbp
     ret
 
 

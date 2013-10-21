@@ -32,6 +32,10 @@ public:
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
+	virtual void visit(ConsNode* node);
+	virtual void visit(HeadNode* node);
+	virtual void visit(TailNode* node);
+	virtual void visit(NullNode* node);
 
 	// Generate a code fragment to access the symbol with the given name in the
 	// current scope.

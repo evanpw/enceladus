@@ -63,7 +63,7 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "bits 64" << std::endl;
 	out_ << "section .text" << std::endl;
 	out_ << "global __main" << std::endl;
-	out_ << "extern __read, __print, __exit" << std::endl;
+	out_ << "extern __read, __print, __cons" << std::endl;
 	out_ << "__main:" << std::endl;
 	currentFunction_ = "_main";
 
@@ -118,6 +118,42 @@ void CodeGen::visit(NotNode* node)
 {
 	// Load the value of the child expression in rax
 	node->child()->accept(this);
+	out_ << "xor rax, 1" << std::endl;
+}
+
+void CodeGen::visit(ConsNode* node)
+{
+	node->lhs()->accept(this);
+	out_ << "push rax" << std::endl;
+
+	node->rhs()->accept(this);
+	out_ << "mov rsi, rax" << std::endl;
+	out_ << "pop rdi" << std::endl;
+
+	out_ << "call __cons" << std::endl;
+}
+
+void CodeGen::visit(HeadNode* node)
+{
+	node->child()->accept(this);
+	out_ << "mov rax, qword [rax]" << std::endl;
+}
+
+void CodeGen::visit(TailNode* node)
+{
+	node->child()->accept(this);
+	out_ << "mov rax, qword [rax + 8]" << std::endl;
+}
+
+void CodeGen::visit(NullNode* node)
+{
+	std::string finish = uniqueLabel();
+
+	node->child()->accept(this);
+	out_ << "cmp rax, 0" << std::endl;
+	out_ << "je " << finish << std::endl;
+	out_ << "mov rax, 1" << std::endl;
+	out_ << finish << ":" << std::endl;
 	out_ << "xor rax, 1" << std::endl;
 }
 

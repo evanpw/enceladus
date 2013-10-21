@@ -269,6 +269,41 @@ void TypeChecker::visit(BinaryOperatorNode* node)
 	node->setType(&Type::Int);
 }
 
+void TypeChecker::visit(ConsNode* node)
+{
+	node->lhs()->accept(this);
+	typeCheck(node->lhs(), &Type::Int);
+
+	node->rhs()->accept(this);
+	typeCheck(node->rhs(), &Type::List);
+
+	node->setType(&Type::List);
+}
+
+void TypeChecker::visit(HeadNode* node)
+{
+	node->child()->accept(this);
+	typeCheck(node->child(), &Type::List);
+
+	node->setType(&Type::Int);
+}
+
+void TypeChecker::visit(TailNode* node)
+{
+	node->child()->accept(this);
+	typeCheck(node->child(), &Type::List);
+
+	node->setType(&Type::List);
+}
+
+void TypeChecker::visit(NullNode* node)
+{
+	node->child()->accept(this);
+	typeCheck(node->child(), &Type::List);
+
+	node->setType(&Type::Bool);
+}
+
 void TypeChecker::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);

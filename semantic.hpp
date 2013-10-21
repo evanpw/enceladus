@@ -69,6 +69,10 @@ public:
 	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
 	virtual void visit(FunctionDefNode* node);
+	virtual void visit(ConsNode* node);
+	virtual void visit(HeadNode* node);
+	virtual void visit(TailNode* node);
+	virtual void visit(NullNode* node);
 
 	// Leaf nodes
 	virtual void visit(VariableNode* node);

@@ -8,6 +8,7 @@ class ProgramNode;
 class NotNode;
 class ComparisonNode;
 class BinaryOperatorNode;
+class ConsNode;
 class LogicalNode;
 class BlockNode;
 class IfNode;
@@ -25,6 +26,9 @@ class ReturnNode;
 class ParamListNode;
 class NilNode;
 class LetNode;
+class HeadNode;
+class TailNode;
+class NullNode;
 
 class AstVisitor
 {
@@ -34,6 +38,7 @@ public:
 	virtual void visit(NotNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(BinaryOperatorNode* node);
+	virtual void visit(ConsNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(IfNode* node);
@@ -45,6 +50,9 @@ public:
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
+	virtual void visit(HeadNode* node);
+	virtual void visit(TailNode* node);
+	virtual void visit(NullNode* node);
 
 	// Leaf nodes
 	virtual void visit(ReadNode* node) {}

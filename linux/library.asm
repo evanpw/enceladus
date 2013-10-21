@@ -75,6 +75,7 @@ __cons:
     mov qword [rax + 8], rsi
 
     mov rsp, rbp
+    pop rbp
     ret
 
 section .data

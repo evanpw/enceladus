@@ -77,6 +77,42 @@ private:
 	std::unique_ptr<ExpressionNode> expression_;
 };
 
+class HeadNode : public ExpressionNode
+{
+public:
+	HeadNode(ExpressionNode* expression) : expression_(expression) {}
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	ExpressionNode* child() { return expression_.get(); }
+
+private:
+	std::unique_ptr<ExpressionNode> expression_;
+};
+
+class TailNode : public ExpressionNode
+{
+public:
+	TailNode(ExpressionNode* expression) : expression_(expression) {}
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	ExpressionNode* child() { return expression_.get(); }
+
+private:
+	std::unique_ptr<ExpressionNode> expression_;
+};
+
+class NullNode : public ExpressionNode
+{
+public:
+	NullNode(ExpressionNode* expression) : expression_(expression) {}
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	ExpressionNode* child() { return expression_.get(); }
+
+private:
+	std::unique_ptr<ExpressionNode> expression_;
+};
+
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
@@ -96,6 +132,22 @@ protected:
 	std::unique_ptr<ExpressionNode> lhs_;
 	Operator op_;
 	std::unique_ptr<ExpressionNode> rhs_;
+};
+
+class ConsNode : public ExpressionNode
+{
+public:
+	ConsNode(ExpressionNode* lhs, ExpressionNode* rhs)
+	: lhs_(lhs), rhs_(rhs)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	ExpressionNode* lhs() { return lhs_.get(); }
+	ExpressionNode* rhs() { return rhs_.get(); }
+
+private:
+	std::unique_ptr<ExpressionNode> lhs_, rhs_;
 };
 
 class LogicalNode : public ExpressionNode

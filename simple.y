@@ -50,15 +50,16 @@ void yyerror(const char* msg);
 %token DEF
 %token DCOLON
 %token TRUE FALSE
-%token NIL
+%token NIL HEAD TAIL ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL
 %token<str> IDENT
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
-%nonassoc NOT
+%nonassoc NOT HEAD TAIL ISNULL
 %left AND OR
 %nonassoc '>' '<' LE GE EQUALS NE
+%right ':'
 %left '+' '-'
 %left '*' '/' MOD
 
@@ -168,6 +169,18 @@ expression: NOT expression
 		{
 			$$ = new NotNode($2);
 		}
+	| HEAD expression
+		{
+			$$ = new HeadNode($2);
+		}
+	| TAIL expression
+		{
+			$$ = new TailNode($2);
+		}
+	| ISNULL expression
+		{
+			$$ = new NullNode($2);
+		}
 	| expression AND expression
 		{
 			$$ = new LogicalNode($1, LogicalNode::kAnd, $3);
@@ -219,6 +232,10 @@ expression: NOT expression
 	| expression MOD expression
 		{
 			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMod, $3);
+		}
+	| expression ':' expression
+		{
+			$$ = new ConsNode($1, $3);
 		}
 	| fexpression
 		{

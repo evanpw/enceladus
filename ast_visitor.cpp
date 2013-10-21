@@ -28,6 +28,21 @@ void AstVisitor::visit(NotNode* node)
 	node->child()->accept(this);
 }
 
+void AstVisitor::visit(HeadNode* node)
+{
+	node->child()->accept(this);
+}
+
+void AstVisitor::visit(TailNode* node)
+{
+	node->child()->accept(this);
+}
+
+void AstVisitor::visit(NullNode* node)
+{
+	node->child()->accept(this);
+}
+
 void AstVisitor::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
@@ -35,6 +50,12 @@ void AstVisitor::visit(ComparisonNode* node)
 }
 
 void AstVisitor::visit(BinaryOperatorNode* node)
+{
+	node->lhs()->accept(this);
+	node->rhs()->accept(this);
+}
+
+void AstVisitor::visit(ConsNode* node)
 {
 	node->lhs()->accept(this);
 	node->rhs()->accept(this);
