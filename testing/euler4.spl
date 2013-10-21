@@ -1,15 +1,15 @@
 # Solve Project Euler 4
 
-biggest = 0
+let biggest :: Int = 0
 
-i = 100
+let i :: Int = 100
 while i <= 999 do
-    j = 100
+    let j :: Int = 100
     while j <= 999 do
-        x = i * j
+        let x :: Int = i * j
 
-        copy_x = x
-        y = 0
+        let copy_x :: Int = x
+        let y :: Int = 0
 
         while copy_x != 0 do
             y = y * 10

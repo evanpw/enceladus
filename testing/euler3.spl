@@ -1,19 +1,19 @@
 # Solves Project Euler 3
 
-n = 600851475143
-biggest = 0
+let n :: Int = 600851475143
+let biggest :: Int = 0
 
 # Loop over all possible divisors of n
-i = 2
+let i :: Int = 2
 while i * i <= n do
 
 	# When we find a divisor, determine whether it is a prime number
 	if n mod i == 0 then
-		j = 2
-		is_prime = 1
+		let j :: Int = 2
+		let is_prime :: Int = 1
 		while j * j <= i do
 			if i mod j == 0 then
-				is_prime = 0
+				is_prime  = 0
 
 				# We don't have a "break" statement
 				j = i

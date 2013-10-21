@@ -23,6 +23,8 @@ class FunctionDefNode;
 class FunctionCallNode;
 class ReturnNode;
 class ParamListNode;
+class NilNode;
+class LetNode;
 
 class AstVisitor
 {
@@ -39,6 +41,7 @@ public:
 	virtual void visit(PrintNode* node);
 	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
+	virtual void visit(LetNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
@@ -49,6 +52,7 @@ public:
 	virtual void visit(IntNode* node) {}
 	virtual void visit(BoolNode* node) {}
 	virtual void visit(ParamListNode* node) {}
+	virtual void visit(NilNode* node) {}
 
 protected:
 	Scope* topScope() { return scopes_.back(); }

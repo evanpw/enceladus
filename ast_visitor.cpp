@@ -91,6 +91,11 @@ void AstVisitor::visit(AssignNode* node)
 	node->value()->accept(this);
 }
 
+void AstVisitor::visit(LetNode* node)
+{
+	node->value()->accept(this);
+}
+
 void AstVisitor::visit(FunctionDefNode* node)
 {
 	enterScope(node->scope());

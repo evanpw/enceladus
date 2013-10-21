@@ -61,6 +61,7 @@ int yycolumn = 1;
 ","		{ return ','; }
 "="		{ return '='; }
 "::"	{ return DCOLON; }
+"[]"	{ return NIL; }
 "not"	{ return NOT; }
 "and"	{ return AND; }
 "or"	{ return OR; }
@@ -81,6 +82,7 @@ int yycolumn = 1;
 "do"		{ return DO; }
 "def"		{ return DEF; }
 "return"	{ return RETURN; }
+"let"		{ return LET; }
 "True"		{ return TRUE; }
 "False"		{ return FALSE; }
 

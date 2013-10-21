@@ -1,6 +1,6 @@
 bits 64
 section .text
-extern _printf, _scanf
+extern _printf, _scanf, _malloc
 extern __main
 global _main, __read, __print
 
@@ -46,6 +46,37 @@ __print:
     mov rsp, rbx
 
     ret
+
+; Create a list with head = rdi (an Int), tail = rsi (a pointer).
+; returns the pointer to the new cons cell in rax
+__cons:
+    push rbp
+    mov rbp, rsp
+
+    push rdi
+    push rsi
+
+    ; Realign stack to 16 bytes
+    mov rbx, rsp
+    and rsp, -16
+    add rsp, -8
+    push rbx
+
+    mov rdi, 16
+    call _malloc
+
+    ; Unalign
+    pop rbx
+    mov rsp, rbx
+
+    pop rsi
+    pop rdi
+    mov qword [rax], rdi
+    mov qword [rax + 8], rsi
+
+    mov rsp, rbp
+    ret
+
 
 section .data
 __format: db "%ld", 0xA, 0

@@ -18,13 +18,21 @@ bool SemanticAnalyzer::analyze()
 	SemanticPass1 pass1;
 	root_->accept(&pass1);
 
-	SemanticPass2 pass2;
-	root_->accept(&pass2);
+	if (pass1.success())
+	{
+		SemanticPass2 pass2;
+		root_->accept(&pass2);
 
-	TypeChecker typeChecker;
-	root_->accept(&typeChecker);
+		if (pass2.success())
+		{
+			TypeChecker typeChecker;
+			root_->accept(&typeChecker);
 
-	return pass1.success() && pass2.success() && typeChecker.success();
+			return typeChecker.success();
+		}
+	}
+
+	return false;
 }
 
 void SemanticBase::semanticError(AstNode* node, const std::string& msg)
@@ -49,16 +57,8 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Function declaration must specify a valid return type
-	const Type* returnType;
-	if (strcmp(node->typeDecl(), "Int") == 0)
-	{
-		returnType = &Type::Int;
-	}
-	else if (strcmp(node->typeDecl(), "Bool") == 0)
-	{
-		returnType = &Type::Bool;
-	}
-	else
+	const Type* returnType = Type::lookup(node->typeDecl());
+	if (returnType == nullptr)
 	{
 		std::stringstream msg;
 		msg << "unknown return type \"" << node->typeDecl() << "\".";
@@ -106,27 +106,49 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	exitScope();
 }
 
-void SemanticPass1::visit(AssignNode* node)
+void SemanticPass1::visit(LetNode* node)
+{
+	const char* target = node->target();
+
+	Symbol* symbol = topScope()->find(target);
+	if (symbol != nullptr)
+	{
+		std::stringstream msg;
+		msg << "symbol \"" << symbol->name << "\" already declared in this scope.";
+		semanticError(node, msg.str());
+		return;
+	}
+
+	// Function declaration must specify a valid return type
+	const Type* type = Type::lookup(node->typeDecl());
+	if (type == nullptr)
+	{
+		std::stringstream msg;
+		msg << "unknown type \"" << node->typeDecl() << "\".";
+		semanticError(node, msg.str());
+		return;
+	}
+
+	symbol = new Symbol(target, kVariable, node, _enclosingFunction);
+	symbol->type = type;
+	topScope()->insert(symbol);
+	node->attachSymbol(symbol);
+
+	// Recurse to children
+	AstVisitor::visit(node);
+}
+
+void SemanticPass2::visit(AssignNode* node)
 {
 	const char* target = node->target();
 
 	Symbol* symbol = searchScopes(target);
-	if (symbol != nullptr)
+	if (symbol == nullptr)
 	{
-		if (symbol->kind != kVariable)
-		{
-			std::stringstream msg;
-			msg << "symbol \"" << symbol->name << "\" is not a variable.";
-			semanticError(node, msg.str());
-
-			return;
-		}
-	}
-	else
-	{
-		symbol = new Symbol(target, kVariable, node, _enclosingFunction);
-		symbol->type = &Type::Int; // For now, variables can only store integers
-		topScope()->insert(symbol);
+		std::stringstream msg;
+		msg << "symbol \"" << target << "\" is not defined.";
+		semanticError(node, msg.str());
+		return;
 	}
 
 	node->attachSymbol(symbol);
@@ -304,16 +326,14 @@ void TypeChecker::visit(WhileNode* node)
 
 void TypeChecker::visit(AssignNode* node)
 {
-	// node->target() is a variable, and variables are always integers
-
 	node->value()->accept(this);
-	typeCheck(node->value(), &Type::Int);
+	typeCheck(node->value(), node->symbol()->type);
 }
 
 // Leaf nodes
 void TypeChecker::visit(VariableNode* node)
 {
-	node->setType(&Type::Int);
+	node->setType(node->symbol()->type);
 }
 
 void TypeChecker::visit(IntNode* node)
@@ -326,6 +346,11 @@ void TypeChecker::visit(BoolNode* node)
 	node->setType(&Type::Bool);
 }
 
+void TypeChecker::visit(NilNode* node)
+{
+	node->setType(&Type::List);
+}
+
 void TypeChecker::visit(FunctionCallNode* node)
 {
 	// The type of a function call is the return type of the function
@@ -333,7 +358,7 @@ void TypeChecker::visit(FunctionCallNode* node)
 
 	for (auto& argument : node->arguments())
 	{
-		// All function arguments are integers also
+		// FIXME: All function arguments must be integers
 		argument.get()->accept(this);
 		typeCheck(argument.get(), &Type::Int);
 	}

@@ -181,6 +181,12 @@ private:
 	bool value_;
 };
 
+class NilNode : public ExpressionNode
+{
+public:
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+};
+
 typedef std::list<std::unique_ptr<ExpressionNode>> ArgList;
 
 class FunctionCallNode : public ExpressionNode
@@ -303,6 +309,31 @@ public:
 
 private:
 	const char* target_;
+	std::unique_ptr<ExpressionNode> value_;
+
+	Symbol* symbol_;
+};
+
+class LetNode : public StatementNode
+{
+public:
+	LetNode(const char* target, const char* typeDecl, ExpressionNode* value)
+	: target_(target), typeDecl_(typeDecl), value_(value), symbol_(nullptr)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const char* target() { return target_; }
+	const char* typeDecl() { return typeDecl_; }
+	ExpressionNode* value() { return value_.get(); }
+
+	Symbol* symbol() { return symbol_; }
+
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
+private:
+	const char* target_;
+	const char* typeDecl_;
 	std::unique_ptr<ExpressionNode> value_;
 
 	Symbol* symbol_;

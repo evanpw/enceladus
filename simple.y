@@ -41,6 +41,7 @@ void yyerror(const char* msg);
 %token ERROR
 %token IF THEN ELSE
 %token PRINT READ
+%token LET
 %token NOT AND OR MOD EQUALS
 %token RETURN
 %token WHILE DO
@@ -49,6 +50,7 @@ void yyerror(const char* msg);
 %token DEF
 %token DCOLON
 %token TRUE FALSE
+%token NIL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL
 %token<str> IDENT
 %token<number> INT_LIT
@@ -91,6 +93,10 @@ statement: IF expression THEN suite
 	| IDENT '=' expression EOL
 		{
 			$$ = new AssignNode($1, $3);
+		}
+	| LET IDENT DCOLON IDENT '=' expression EOL
+		{
+			$$ = new LetNode($2, $4, $6);
 		}
 	| IDENT PLUS_EQUAL expression EOL
 		{
@@ -262,6 +268,10 @@ simple_expression: READ
 	| FALSE
 		{
 			$$ = new BoolNode(false);
+		}
+	| NIL
+		{
+			$$ = new NilNode();
 		}
 
 %%

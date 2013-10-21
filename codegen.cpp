@@ -237,6 +237,11 @@ void CodeGen::visit(IntNode* node)
 	out_ << "mov rax, " << node->value() << std::endl;
 }
 
+void CodeGen::visit(NilNode* node)
+{
+	out_ << "mov rax, 0" << std::endl;
+}
+
 void CodeGen::visit(BoolNode* node)
 {
 	if (node->value())
@@ -313,6 +318,12 @@ void CodeGen::visit(WhileNode* node)
 }
 
 void CodeGen::visit(AssignNode* node)
+{
+	node->value()->accept(this);
+	out_ << "mov " << access(node->symbol()) << ", rax" << std::endl;
+}
+
+void CodeGen::visit(LetNode* node)
 {
 	node->value()->accept(this);
 	out_ << "mov " << access(node->symbol()) << ", rax" << std::endl;

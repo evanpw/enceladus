@@ -9,6 +9,9 @@ public:
     static const Type Void;
     static const Type Int;
     static const Type Bool;
+    static const Type List;
+
+    static const Type* lookup(const char* name);
 
 private:
     Type(const char* name) : name_(name) {}
