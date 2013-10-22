@@ -57,6 +57,7 @@ int yycolumn = 1;
 "="		{ return '='; }
 "$"		{ return '$'; }
 "mod"	{ return MOD; }
+"->"	{ return RARROW; }
 "<="	{ return LE; }
 ">="	{ return GE; }
 "=="	{ return EQUALS; }

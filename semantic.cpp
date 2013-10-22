@@ -57,11 +57,11 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Function declaration must specify a valid return type
-	const Type* returnType = Type::lookup(node->typeDecl());
+	const Type* returnType = Type::lookup(node->typeDecl()->back());
 	if (returnType == nullptr)
 	{
 		std::stringstream msg;
-		msg << "unknown return type \"" << node->typeDecl() << "\".";
+		msg << "unknown return type \"" << node->typeDecl()->back() << "\".";
 		semanticError(node, msg.str());
 		return;
 	}

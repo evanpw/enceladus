@@ -11,7 +11,7 @@
 
 struct YYLTYPE;
 
-/* Abstract base nodes */
+////// Abstract base nodes /////////////////////////////////////////////////////
 class AstNode
 {
 public:
@@ -32,7 +32,15 @@ protected:
 class StatementNode : public AstNode {};
 class ExpressionNode : public AstNode {};
 
-/* Top-level nodes */
+
+
+////// Utility classes other than AST nodes ////////////////////////////////////
+typedef std::list<std::unique_ptr<ExpressionNode>> ArgList;
+typedef std::vector<const char*> TypeDecl;
+
+
+
+////// Top-level nodes /////////////////////////////////////////////////////////
 
 class ProgramNode : public AstNode
 {
@@ -51,20 +59,7 @@ private:
 	std::unique_ptr<Scope> scope_;
 };
 
-class ParamListNode : public AstNode
-{
-public:
-	void append(const char* param);
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	const std::list<const char*>& names() const { return names_; }
-
-private:
-	std::list<const char*> names_;
-};
-
-/* Expression nodes */
+////// Expression nodes ////////////////////////////////////////////////////////
 class NotNode : public ExpressionNode
 {
 public:
@@ -239,8 +234,6 @@ public:
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 };
 
-typedef std::list<std::unique_ptr<ExpressionNode>> ArgList;
-
 class FunctionCallNode : public ExpressionNode
 {
 public:
@@ -271,7 +264,9 @@ public:
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 };
 
-/* Statement nodes */
+
+
+////// Statement nodes /////////////////////////////////////////////////////////
 class BlockNode : public StatementNode
 {
 public:
@@ -391,10 +386,23 @@ private:
 	Symbol* symbol_;
 };
 
+class ParamListNode : public AstNode
+{
+public:
+	void append(const char* param);
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::list<const char*>& names() const { return names_; }
+
+private:
+	std::list<const char*> names_;
+};
+
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const char* name, StatementNode* body, ParamListNode* params, const char* typeDecl)
+	FunctionDefNode(const char* name, StatementNode* body, ParamListNode* params, TypeDecl* typeDecl)
 	: name_(name), body_(body), params_(params), typeDecl_(typeDecl), symbol_(nullptr), scope_(new Scope)
 	{}
 
@@ -403,7 +411,7 @@ public:
 	const char* name() { return name_; }
 	StatementNode* body() { return body_.get(); }
 	const std::list<const char*>& params() { return params_->names(); }
-	const char* typeDecl() { return typeDecl_; }
+	TypeDecl* typeDecl() { return typeDecl_.get(); }
 
 	Scope* scope() { return scope_.get(); }
 
@@ -414,7 +422,7 @@ private:
 	const char* name_;
 	std::unique_ptr<StatementNode> body_;
 	std::unique_ptr<ParamListNode> params_;
-	const char* typeDecl_;
+	std::unique_ptr<TypeDecl> typeDecl_;
 
 	Symbol* symbol_;
 	std::unique_ptr<Scope> scope_;

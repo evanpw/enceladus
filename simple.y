@@ -27,6 +27,7 @@ void yyerror(const char* msg);
 	ExpressionNode* expression;
 	ParamListNode* params;
 	ArgList* arguments;
+	TypeDecl* typedecl;
 	const char* str;
 	long number;
 }
@@ -37,6 +38,7 @@ void yyerror(const char* msg);
 %type<block> statement_list
 %type<params> param_list parameters
 %type<arguments> arg_list
+%type<typedecl> typedecl;
 
 %token ERROR
 %token IF THEN ELSE
@@ -48,7 +50,7 @@ void yyerror(const char* msg);
 %token INDENT DEDENT
 %token EOL
 %token DEF
-%token DCOLON
+%token DCOLON RARROW
 %token TRUE FALSE
 %token NIL HEAD TAIL ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL
@@ -116,13 +118,24 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kDivide, $3));
 		}
-	| DEF IDENT parameters DCOLON TYPE '=' suite
+	| DEF IDENT parameters DCOLON typedecl '=' suite
 		{
 			$$ = new FunctionDefNode($2, $7, $3, $5);
 		}
 	| RETURN expression EOL
 		{
 			$$ = new ReturnNode($2);
+		}
+
+typedecl: TYPE
+		{
+			$$ = new TypeDecl();
+			$$->push_back($1);
+		}
+	| typedecl RARROW TYPE
+		{
+			$$ = $1;
+			$$->push_back($3);
 		}
 
 parameters: /* empty */

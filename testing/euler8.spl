@@ -1,12 +1,12 @@
 # Will eventually solve Project Euler 8
 
-def length xs :: Int =
+def length xs :: List -> Int =
     if null xs then
         return 0
     else
         return 1 + length $ tail xs
 
-def sum xs :: Int =
+def sum xs :: List -> Int =
     if null xs then
         return 0
     else return head xs + sum $ tail xs
