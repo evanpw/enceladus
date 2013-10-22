@@ -11,7 +11,7 @@ ifeq ($(shell uname -s),Linux)
     CC=g++
 endif
 
-all: simplec
+all: simplec tests
 
 .PHONY: clean
 
@@ -26,3 +26,6 @@ simple.tab.c simple.tab.h: simple.y
 
 simplec: $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) $(SOURCES) -o simplec
+
+tests: simplec
+	testing/all.sh

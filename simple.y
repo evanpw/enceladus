@@ -52,7 +52,7 @@ void yyerror(const char* msg);
 %token TRUE FALSE
 %token NIL HEAD TAIL ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL
-%token<str> IDENT
+%token<str> IDENT TYPE
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
@@ -96,7 +96,7 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| LET IDENT DCOLON IDENT '=' expression EOL
+	| LET IDENT DCOLON TYPE '=' expression EOL
 		{
 			$$ = new LetNode($2, $4, $6);
 		}
@@ -116,7 +116,7 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kDivide, $3));
 		}
-	| DEF IDENT parameters DCOLON IDENT '=' suite
+	| DEF IDENT parameters DCOLON TYPE '=' suite
 		{
 			$$ = new FunctionDefNode($2, $7, $3, $5);
 		}
