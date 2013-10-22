@@ -14,3 +14,11 @@ Todo
 * Types for variables
 * Move to a functional language?
 * Merge linux and osx libraries using macros
+* Attach function definition to each function call to avoid dynamic_cast in
+  type checking.
+* Modify visitor pattern to have preVisit and postVisit methods, and do all of
+  the traversal code elsewhere, so that implementers don't have to remember to
+  do the recursion
+* Fix bug that causes bad line numbers and columns in error messages
+* Why does "head xs + head xs" not parse correctly as the sum of two function
+  calls?

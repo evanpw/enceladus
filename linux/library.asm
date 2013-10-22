@@ -2,7 +2,7 @@ bits 64
 section .text
 extern printf, scanf, malloc
 extern __main
-global main, __read, __print
+global main, __read, __print, __cons
 
 main:
     ; The main function from the compiled program

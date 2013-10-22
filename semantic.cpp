@@ -56,7 +56,46 @@ void SemanticPass1::visit(FunctionDefNode* node)
 		return;
 	}
 
-	// Function declaration must specify a valid return type
+	// The function name cannot have already been used as something else
+	const char* name = node->name();
+	if (searchScopes(name) != nullptr)
+	{
+		std::stringstream msg;
+		msg << "symbol \"" << name << "\" is already defined.";
+		semanticError(node, msg.str());
+
+		return;
+	}
+
+	// Must have a type specified for each parameter + one for return type
+	if (node->typeDecl()->size() != node->params().size() + 1)
+	{
+		std::stringstream msg;
+		msg << "number of types does not match parameter list";
+		semanticError(node, msg.str());
+		return;
+	}
+
+	// Parameter types must be valid
+	std::vector<const Type*> paramTypes;
+	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
+	{
+		const char* typeName = node->typeDecl()->at(i);
+
+		const Type* type = Type::lookup(typeName);
+		if (type == nullptr)
+		{
+			std::stringstream msg;
+			msg << "unknown parameter type \"" << typeName << "\".";
+			semanticError(node, msg.str());
+			return;
+		}
+
+		paramTypes.push_back(type);
+	}
+	node->setParamTypes(paramTypes);
+
+	// Return type must be valid
 	const Type* returnType = Type::lookup(node->typeDecl()->back());
 	if (returnType == nullptr)
 	{
@@ -66,36 +105,25 @@ void SemanticPass1::visit(FunctionDefNode* node)
 		return;
 	}
 
-	// The function name cannot have already been used as something else
-	const char* name = node->name();
-	Symbol* symbol = searchScopes(name);
-	if (symbol != nullptr)
-	{
-		std::stringstream msg;
-		msg << "symbol \"" << name << "\" is already defined.";
-		semanticError(node, msg.str());
-
-		return;
-	}
-	else
-	{
-		Symbol* symbol = new Symbol(name, kFunction, node, _enclosingFunction);
-		symbol->type = returnType;
-		symbol->arity = node->params().size();
-		topScope()->insert(symbol);
-		node->attachSymbol(symbol);
-	}
+	Symbol* symbol = new Symbol(name, kFunction, node, _enclosingFunction);
+	symbol->type = returnType;
+	symbol->arity = node->params().size();
+	topScope()->insert(symbol);
+	node->attachSymbol(symbol);
 
 	enterScope(node->scope());
 	_enclosingFunction = node;
 
 	// Add symbols corresponding to the formal parameters to the
 	// function's scope
-	for (const char* param : node->params())
+	for (size_t i = 0; i < node->params().size(); ++i)
 	{
+		const char* param = node->params().at(i);
+		const Type* paramType = paramTypes[i];
+
 		Symbol* paramSymbol = new Symbol(param, kVariable, node, node);
 		paramSymbol->isParam = true;
-		paramSymbol->type = &Type::Int; // For now, all function parameters are integers
+		paramSymbol->type = paramType;
 		topScope()->insert(paramSymbol);
 	}
 
@@ -388,14 +416,19 @@ void TypeChecker::visit(NilNode* node)
 
 void TypeChecker::visit(FunctionCallNode* node)
 {
+	FunctionDefNode* function = dynamic_cast<FunctionDefNode*>(node->symbol()->node);
+
 	// The type of a function call is the return type of the function
 	node->setType(node->symbol()->type);
 
-	for (auto& argument : node->arguments())
+	assert(function->paramTypes().size() == node->arguments().size());
+	for (size_t i = 0; i < node->arguments().size(); ++i)
 	{
-		// FIXME: All function arguments must be integers
-		argument.get()->accept(this);
-		typeCheck(argument.get(), &Type::Int);
+		AstNode* argument = node->arguments().at(i).get();
+		const Type* type = function->paramTypes().at(i);
+
+		argument->accept(this);
+		typeCheck(argument, type);
 	}
 }
 

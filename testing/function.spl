@@ -1,7 +1,13 @@
-def diff x y :: Int =
+def diff x y :: Int -> Int -> Int =
     return x - y
 
-def half x :: Int =
+def half x :: Int -> Int =
     return x / 2
+
+def myhead xs :: List -> Int =
+    return head xs
+
+let xs :: List = 1 : 2 : 3 : []
+print (myhead xs)
 
 if diff (half 2) (half 3) == 0 then print -1

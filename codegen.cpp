@@ -27,7 +27,7 @@ std::string CodeGen::access(const Symbol* symbol)
 			// Symbols should not be assigned a place among the local variables.
 			assert(symbol->offset == 0);
 
-			std::list<const char*> paramList = enclosingFunction->params();
+			auto paramList = enclosingFunction->params();
 
 			size_t offset = 0;
 			for (const char* param : paramList)

@@ -1,12 +1,12 @@
 # Solve Project Euler 5
 
-def gcd a b :: Int =
+def gcd a b :: Int -> Int -> Int =
 	if b == 0 then
 		return a
 	else
 		return gcd b (a mod b)
 
-def lcm a b :: Int =
+def lcm a b :: Int -> Int -> Int =
     return a * b / gcd a b
 
 let n :: Int = 1

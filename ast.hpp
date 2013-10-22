@@ -35,7 +35,7 @@ class ExpressionNode : public AstNode {};
 
 
 ////// Utility classes other than AST nodes ////////////////////////////////////
-typedef std::list<std::unique_ptr<ExpressionNode>> ArgList;
+typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
 typedef std::vector<const char*> TypeDecl;
 
 
@@ -393,10 +393,10 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::list<const char*>& names() const { return names_; }
+	const std::vector<const char*>& names() const { return names_; }
 
 private:
-	std::list<const char*> names_;
+	std::vector<const char*> names_;
 };
 
 class FunctionDefNode : public StatementNode
@@ -410,13 +410,16 @@ public:
 
 	const char* name() { return name_; }
 	StatementNode* body() { return body_.get(); }
-	const std::list<const char*>& params() { return params_->names(); }
+	const std::vector<const char*>& params() { return params_->names(); }
 	TypeDecl* typeDecl() { return typeDecl_.get(); }
 
 	Scope* scope() { return scope_.get(); }
 
 	Symbol* symbol() { return symbol_; }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
+	std::vector<const Type*> paramTypes() const { return paramTypes_; }
+	void setParamTypes(const std::vector<const Type*>& paramTypes) { paramTypes_ = paramTypes; }
 
 private:
 	const char* name_;
@@ -426,6 +429,8 @@ private:
 
 	Symbol* symbol_;
 	std::unique_ptr<Scope> scope_;
+
+	std::vector<const Type*> paramTypes_;
 };
 
 class ReturnNode : public StatementNode

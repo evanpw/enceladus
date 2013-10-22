@@ -1,6 +1,6 @@
 # Solves Project Euler 7
 
-def is_prime x :: Bool =
+def is_prime x :: Int -> Bool =
     let i :: Int = 2
     while i * i <= x do
         if x mod i == 0 then return False

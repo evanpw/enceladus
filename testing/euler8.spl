@@ -1,4 +1,4 @@
-# Will eventually solve Project Euler 8
+-- Will eventually solve Project Euler 8
 
 def length xs :: List -> Int =
     if null xs then
@@ -9,8 +9,12 @@ def length xs :: List -> Int =
 def sum xs :: List -> Int =
     if null xs then
         return 0
-    else return head xs + sum $ tail xs
+    else
+        return (head xs) + (sum $ tail xs)
 
 let xs :: List = 1 : 2 : 3 : 4 : 5 : []
 print length xs
 print sum xs
+
+-- This fails to compile right now
+print (head xs + head xs)
