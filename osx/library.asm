@@ -1,6 +1,6 @@
 bits 64
 section .text
-extern _printf, _scanf, _malloc
+extern _printf, _scanf, _malloc, _puts
 extern __main
 global _main, __read, __print, __cons, __die
 
@@ -21,8 +21,7 @@ __die:
     push rbx
 
     mov rdi, [__error_messages + 8 * rax]
-    xor rax, rax
-    call _printf
+    call _puts
 
     ; Fix stack
     pop rbx
@@ -110,4 +109,4 @@ __read_result: dq 0
 
 ; Array of error messages for __die
 __error_messages: dq __error_head_empty
-__error_head_empty: db "*** Exception: Called head on empty list", 0xA, 0
+__error_head_empty: db "*** Exception: Called head on empty list", 0

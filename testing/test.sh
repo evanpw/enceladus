@@ -3,10 +3,10 @@ set -e
 set -o pipefail
 
 platform=$1
-index=$2
+program=$2
 correct=$3
 
-$platform/build.sh euler$index > /dev/null
-value=$(build/euler$index)
+$platform/build.sh $program > /dev/null
+value=$(build/$program)
 
 [ "x$value" == "x$correct" ]
