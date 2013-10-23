@@ -59,12 +59,13 @@ void yyerror(const char* msg);
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
 %right '$'
-%nonassoc NOT HEAD TAIL ISNULL
+%nonassoc NOT
 %left AND OR
 %nonassoc '>' '<' LE GE EQUALS NE
 %right ':'
 %left '+' '-'
 %left '*' '/' MOD
+%nonassoc HEAD TAIL ISNULL
 
 %%
 
