@@ -1,6 +1,6 @@
 bits 64
 section .text
-extern _printf, _scanf, _malloc, _puts
+extern _printf, _scanf, _malloc, _puts, _exit
 extern __main
 global _main, __read, __print, __cons, __die
 
@@ -29,9 +29,8 @@ __die:
     mov rsp, rbx
 
     ; Kill the process
-    mov rax, 0x2000001
     mov rdi, 1
-    syscall
+    call _exit
 
     ; Useless
     ret

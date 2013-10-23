@@ -22,3 +22,4 @@ Todo
 * Syntactic sugar for lists
 * Clean up the documentation
 * Add some support for strings (at least when printing)
+* Replace C library calls with direct system calls

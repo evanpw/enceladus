@@ -1,6 +1,6 @@
 bits 64
 section .text
-extern printf, scanf, malloc, puts
+extern printf, scanf, malloc, puts, exit
 extern __main
 global main, __read, __print, __cons, __die
 
@@ -18,9 +18,8 @@ __die:
     call puts
 
     ; Kill the process
-    mov rax, 60
     mov rdi, 1
-    syscall
+    call exit
 
     ; Useless
     ret
