@@ -1,0 +1,8 @@
+def take n xs :: Int -> List -> List =
+    if n == 0 then
+        return []
+    else
+        return head xs : take (n - 1) (tail xs)
+
+let xs :: List = 1 : 2 : 3 : 4 : []
+let ys :: List = take 5 xs

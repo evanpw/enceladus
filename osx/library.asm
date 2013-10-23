@@ -2,13 +2,38 @@ bits 64
 section .text
 extern _printf, _scanf, _malloc
 extern __main
-global _main, __read, __print, __cons
+global _main, __read, __print, __cons, __die
 
 _main:
     ; The main function from the compiled program
     call __main
 
-    xor eax, eax
+    xor rax, rax
+    ret
+
+__die:
+    ;; Print error message based on value of rax
+
+    ; Realign stack to 16 bytes
+    mov rbx, rsp
+    and rsp, -16
+    add rsp, -8
+    push rbx
+
+    mov rdi, [__error_messages + 8 * rax]
+    xor rax, rax
+    call _printf
+
+    ; Fix stack
+    pop rbx
+    mov rsp, rbx
+
+    ; Kill the process
+    mov  rax, 1     ; sys_exit = 1
+    xor  rbx, rbx
+    int  0x80
+
+    ; Useless
     ret
 
 __read:
@@ -78,8 +103,11 @@ __cons:
     pop rbp
     ret
 
-
 section .data
 __format: db "%ld", 0xA, 0
 __read_format: db "%ld", 0
 __read_result: dq 0
+
+; Array of error messages for __die
+__error_messages: dq __error_head_empty
+__error_head_empty: db "*** Exception: Called head on empty list", 0xA, 0

@@ -63,7 +63,7 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "bits 64" << std::endl;
 	out_ << "section .text" << std::endl;
 	out_ << "global __main" << std::endl;
-	out_ << "extern __read, __print, __cons" << std::endl;
+	out_ << "extern __read, __print, __cons, __die" << std::endl;
 	out_ << "__main:" << std::endl;
 	currentFunction_ = "_main";
 
@@ -136,6 +136,17 @@ void CodeGen::visit(ConsNode* node)
 void CodeGen::visit(HeadNode* node)
 {
 	node->child()->accept(this);
+
+	std::string good = uniqueLabel();
+
+	out_ << "cmp rax, 0" << std::endl;
+	out_ << "jne " << good << std::endl;
+
+	// If the list is null, then fail
+	out_ << "xor rax, rax" << std::endl; // Not necessary, but good to be explicit
+	out_ << "call __die" << std::endl;
+
+	out_ << good << ":" << std::endl;
 	out_ << "mov rax, qword [rax]" << std::endl;
 }
 
