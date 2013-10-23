@@ -1,17 +1,13 @@
 Todo
 ----
-* Better memory management
+* Better memory management (in the compiler)
 * Clean up Makefile
-* Add explicit variable declarations
-* Add some automatic regression tests
 * Ignore the result of a function call
 * Make semantic analysis more rigorous
 * Garbage collection, reference counting, or leak memory?
 * Functional-style singly-linked lists, or python-style lists?
 * Imports and a native-language standard library
 * Get rid of parentheses in function calls (need to handle null-ary functions vs variables carefully)
-* Types for functions parameters
-* Types for variables
 * Move to a functional language?
 * Merge linux and osx libraries using macros
 * Attach function definition to each function call to avoid dynamic_cast in
@@ -22,3 +18,7 @@ Todo
 * Fix bug that causes bad line numbers and columns in error messages
 * Why does "head xs + head xs" not parse correctly as the sum of two function
   calls?
+* Type inference for variables in simple cases (like a literal rhs)
+* Syntactic sugar for lists
+* Clean up the documentation
+* Add some support for strings (at least when printing)
