@@ -20,7 +20,8 @@ __die:
     add rsp, -8
     push rbx
 
-    mov rdi, [__error_messages + 8 * rax]
+    lea rdi, [rel __error_messages]
+    mov rdi, [rdi + 8 * rax]
     call _puts
 
     ; Fix stack
@@ -28,9 +29,9 @@ __die:
     mov rsp, rbx
 
     ; Kill the process
-    mov  rax, 1     ; sys_exit = 1
-    xor  rbx, rbx
-    int  0x80
+    mov rax, 0x2000001
+    mov rdi, 1
+    syscall
 
     ; Useless
     ret
