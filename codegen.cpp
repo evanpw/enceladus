@@ -123,12 +123,11 @@ void CodeGen::visit(NotNode* node)
 
 void CodeGen::visit(ConsNode* node)
 {
-	node->lhs()->accept(this);
-	out_ << "push rax" << std::endl;
-
 	node->rhs()->accept(this);
 	out_ << "mov rsi, rax" << std::endl;
-	out_ << "pop rdi" << std::endl;
+
+	node->lhs()->accept(this);
+	out_ << "mov rdi, rax" << std::endl;
 
 	out_ << "call __cons" << std::endl;
 }
@@ -153,6 +152,17 @@ void CodeGen::visit(HeadNode* node)
 void CodeGen::visit(TailNode* node)
 {
 	node->child()->accept(this);
+
+	std::string good = uniqueLabel();
+
+	out_ << "cmp rax, 0" << std::endl;
+	out_ << "jne " << good << std::endl;
+
+	// If the list is null, then fail
+	out_ << "mov rax, 1" << std::endl; // Not necessary, but good to be explicit
+	out_ << "call __die" << std::endl;
+
+	out_ << good << ":" << std::endl;
 	out_ << "mov rax, qword [rax + 8]" << std::endl;
 }
 

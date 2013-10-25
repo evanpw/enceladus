@@ -108,5 +108,6 @@ __read_format: db "%ld", 0
 __read_result: dq 0
 
 ; Array of error messages for __die
-__error_messages: dq __error_head_empty
+__error_messages: dq __error_head_empty, __error_tail_empty
 __error_head_empty: db "*** Exception: Called head on empty list", 0
+__error_tail_empty: db "*** Exception: Called tail on empty list", 0

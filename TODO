@@ -22,3 +22,4 @@ Todo
 * Replace C library calls with direct system calls
 * Handle the case where prelude does not end with a newline
 * Add concatenation operator ++
+* Support for infix functions
