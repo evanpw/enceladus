@@ -1,0 +1,10 @@
+-- Solves Project Euler 9
+
+for a in [1..1000] do
+    for b in [(a + 1)..1000] do
+        let c :: Int = 1000 - (a + b)
+
+        if c > b and a * a + b * b == c * c then
+            print a * b * c
+
+
