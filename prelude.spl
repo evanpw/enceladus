@@ -43,3 +43,15 @@ def maximum xs :: List -> Int =
         return head xs
     else
         return max (head xs) (maximum $ tail xs)
+
+def at n xs :: Int -> List -> Int =
+    if n == 0 then
+        return head xs
+    else
+        return at (n - 1) (tail xs)
+
+def concat xs ys :: List -> List -> List =
+    if null xs then
+        return ys
+    else
+        return head xs : concat (tail xs) ys
