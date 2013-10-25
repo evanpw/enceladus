@@ -147,7 +147,6 @@ void SemanticPass1::visit(LetNode* node)
 		return;
 	}
 
-	// Function declaration must specify a valid return type
 	const Type* type = Type::lookup(node->typeDecl());
 	if (type == nullptr)
 	{

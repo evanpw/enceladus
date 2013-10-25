@@ -339,6 +339,9 @@ private:
 	std::unique_ptr<StatementNode> body_;
 };
 
+// For loops are implemented as pure syntactic sugar
+BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode* body);
+
 class AssignNode : public StatementNode
 {
 public:
@@ -350,8 +353,8 @@ public:
 
 	const char* target() { return target_; }
 	ExpressionNode* value() { return value_.get(); }
-	Symbol* symbol() { return symbol_; }
 
+	Symbol* symbol() { return symbol_; }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:

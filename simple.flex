@@ -84,6 +84,8 @@ int yycolumn = 1;
 "print"		{ return PRINT; }
 "read"		{ return READ; }
 "while"		{ return WHILE; }
+"for"		{ return FOR; }
+"in"		{ return IN; }
 "do"		{ return DO; }
 "def"		{ return DEF; }
 "return"	{ return RETURN; }

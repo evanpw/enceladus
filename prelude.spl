@@ -1,0 +1,47 @@
+def range a b :: Int -> Int -> List =
+    let xs :: List = []
+
+    let i :: Int = b
+    while i >= a do
+        xs = i : xs
+        i -= 1
+
+    return xs
+
+def length xs :: List -> Int =
+    if null xs then
+        return 0
+    else
+        return 1 + length $ tail xs
+
+def product xs :: List -> Int =
+    if null xs then
+        return 1
+    else
+        return head xs * product $ tail xs
+
+def take n xs :: Int -> List -> List =
+    if n == 0 then
+        return []
+    else
+        return head xs : take (n - 1) (tail xs)
+
+def allProducts xs :: List -> List =
+    if length xs < 5 then
+        return []
+    else
+        let newHead :: Int = product $ take 5 xs
+        let newTail :: List = allProducts $ tail xs
+        return newHead : newTail
+
+def max a b :: Int -> Int -> Int =
+    if a > b then
+        return a
+    else
+        return b
+
+def maximum xs :: List -> Int =
+    if length xs == 1 then
+        return head xs
+    else
+        return max (head xs) (maximum $ tail xs)

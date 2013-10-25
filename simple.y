@@ -47,6 +47,7 @@ void yyerror(const char* msg);
 %token NOT AND OR MOD EQUALS
 %token RETURN
 %token WHILE DO
+%token FOR IN
 %token INDENT DEDENT
 %token EOL
 %token DEF
@@ -94,6 +95,10 @@ statement: IF expression THEN suite
 	| WHILE expression DO suite
 		{
 			$$ = new WhileNode($2, $4);
+		}
+	| FOR IDENT IN expression DO suite
+		{
+			$$ = makeForNode($2, $4, $6);
 		}
 	| IDENT '=' expression EOL
 		{
