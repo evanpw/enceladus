@@ -3,8 +3,8 @@
 let n :: Int = 1
 while n < 1000 do
     if n mod 3 == 0 or n mod 5 == 0 then
-        let sum :: Int = sum + n
+        let total :: Int = total + n
 
     n = n + 1
 
-print sum
+print total

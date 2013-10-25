@@ -1,15 +1,5 @@
 -- Solves Project Euler 9
 
-def range a b :: Int -> Int -> List =
-    let xs :: List = []
-
-    let i :: Int = b
-    while i >= a do
-        xs = i : xs
-        i -= 1
-
-    return xs
-
 for a in range 1 1000 do
     for b in range (a + 1) 1000 do
         let c :: Int = 1000 - (a + b)

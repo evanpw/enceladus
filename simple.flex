@@ -17,7 +17,6 @@ int yycolumn = 1;
 	yycolumn += yyleng;
 %}
 
-%option noyywrap
 %option yylineno
 
 %%

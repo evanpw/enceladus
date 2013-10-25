@@ -1,15 +1,15 @@
 # Solves Project Euler 2
 
-let sum :: Int = 0
+let total :: Int = 0
 let last :: Int = 1
 let current :: Int = 2
 
 while current < 4000000 do
 	if current mod 2 == 0 then
-		sum = sum + current
+		total = total + current
 
     let next :: Int = last + current
 	last = current
 	current = next
 
-print sum
+print total

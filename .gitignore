@@ -7,3 +7,4 @@ simple.tab.h
 lex.yy.c
 simplec
 simplec.dSYM
+simple.output
