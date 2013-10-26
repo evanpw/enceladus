@@ -2,7 +2,7 @@ bits 64
 section .text
 extern _printf, _scanf, _malloc, _puts, _exit
 extern __main
-global _main, __read, __print, __cons, __die
+global _main, __read, __print, __cons, __die, __incref, __decref
 
 _main:
     ; The main function from the compiled program
@@ -71,6 +71,27 @@ __print:
 
     ret
 
+; Increment the reference count of the cons cell at rdi
+__incref:
+    cmp rdi, 0
+    je __end_incref
+
+    add qword [rdi - 8], 1
+
+__end_incref:
+    ret
+
+; Decrement the reference count of the cons cell at rdi, and if it is zero,
+; then deallocate it (TODO)
+__decref:
+    cmp rdi, 0
+    je __end_decref
+
+    add qword [rdi - 8], -1
+
+__end_decref:
+    ret
+
 ; Create a list with head = rdi (an Int), tail = rsi (a pointer).
 ; returns the pointer to the new cons cell in rax
 __cons:
@@ -86,7 +107,7 @@ __cons:
     add rsp, -8
     push rbx
 
-    mov rdi, 16
+    mov rdi, 24
     call _malloc
 
     ; Unalign
@@ -95,8 +116,12 @@ __cons:
 
     pop rsi
     pop rdi
-    mov qword [rax], rdi
-    mov qword [rax + 8], rsi
+
+    mov qword [rax], 0
+    mov qword [rax + 8], rdi
+    mov qword [rax + 16], rsi
+
+    add rax, 8 ; Skip the reference count
 
     mov rsp, rbp
     pop rbp

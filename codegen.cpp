@@ -63,7 +63,7 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "bits 64" << std::endl;
 	out_ << "section .text" << std::endl;
 	out_ << "global __main" << std::endl;
-	out_ << "extern __read, __print, __cons, __die" << std::endl;
+	out_ << "extern __read, __print, __cons, __die, __incref, __decref" << std::endl;
 	out_ << "__main:" << std::endl;
 	currentFunction_ = "_main";
 
@@ -77,6 +77,7 @@ void CodeGen::visit(ProgramNode* node)
 	for (FunctionDefNode* function : functionDefs_)
 	{
 		currentFunction_ = function->name();
+		out_ << std::endl;
 		out_ << "_" << function->name() << ":" << std::endl;
 		out_ << "push rbp" << std::endl;
 		out_ << "mov rbp, rsp" << std::endl;
@@ -94,10 +95,29 @@ void CodeGen::visit(ProgramNode* node)
 		}
 		if (locals > 0) out_ << "add rsp, -" << (8 * locals) << std::endl;
 
+		// We have to zero out the local variables for the reference counting
+		// to work correctly
+		out_ << "mov rax, 0" << std::endl;
+		out_ << "mov rcx, " << locals << std::endl;
+		out_ << "mov rdi, rsp" << std::endl;
+		out_ << "rep stosq" << std::endl;
+
 		// Recurse to children
 		AstVisitor::visit(function);
 
 		out_ << "__end_" << function->name() << ":" << std::endl;
+
+		// Going out of scope loses a reference to all of the local variables
+		for (auto& i : function->scope()->symbols())
+		{
+			auto& symbol = i.second;
+			if (!symbol->isParam && symbol->type == &Type::List)
+			{
+				out_ << "mov rdi, " << access(symbol.get()) << std::endl;
+				out_ << "call __decref" << std::endl;
+			}
+		}
+
 		out_ << "mov rsp, rbp" << std::endl;
 		out_ << "pop rbp" << std::endl;
 		out_ << "ret" << std::endl;
@@ -377,12 +397,44 @@ void CodeGen::visit(WhileNode* node)
 void CodeGen::visit(AssignNode* node)
 {
 	node->value()->accept(this);
+
+	// We lose a reference to the original contents, and gain a reference to the
+	// new rhs
+	if (node->symbol()->type == &Type::List)
+	{
+		out_ << "push rax" << std::endl;
+
+		out_ << "mov rdi, rax" << std::endl;
+		out_ << "call __incref" << std::endl;
+
+		out_ << "mov rdi, " << access(node->symbol()) << std::endl;
+		out_ << "call __decref" << std::endl;
+
+		out_ << "pop rax" << std::endl;
+	}
+
 	out_ << "mov " << access(node->symbol()) << ", rax" << std::endl;
 }
 
 void CodeGen::visit(LetNode* node)
 {
 	node->value()->accept(this);
+
+	// We lose a reference to the original contents, and gain a reference to the
+	// new rhs
+	if (node->symbol()->type == &Type::List)
+	{
+		out_ << "push rax" << std::endl;
+
+		out_ << "mov rdi, rax" << std::endl;
+		out_ << "call __incref" << std::endl;
+
+		out_ << "mov rdi, " << access(node->symbol()) << std::endl;
+		out_ << "call __decref" << std::endl;
+
+		out_ << "pop rax" << std::endl;
+	}
+
 	out_ << "mov " << access(node->symbol()) << ", rax" << std::endl;
 }
 
