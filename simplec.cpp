@@ -4,7 +4,6 @@
 #include "codegen.hpp"
 #include "scope.hpp"
 #include "semantic.hpp"
-#include "string_table.hpp"
 
 using namespace std;
 
@@ -77,7 +76,6 @@ int main(int argc, char* argv[])
 	}
 
 	delete root;
-	StringTable::freeStrings();
 	fclose(yyin);
 
 	return return_value;

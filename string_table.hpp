@@ -13,11 +13,10 @@ class StringTable
 {
 public:
 	static const char* add(const char* str);
-	static void freeStrings();
 
 private:
 	StringTable();
-	static std::vector<const char*> strings_;
+	static std::vector<std::string> strings_;
 };
 
 #endif

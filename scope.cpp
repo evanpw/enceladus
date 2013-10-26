@@ -4,7 +4,7 @@
 
 using namespace std;
 
-Symbol* Scope::find(const char* name)
+Symbol* Scope::find(const std::string& name)
 {
 	auto i = symbols_.find(name);
 

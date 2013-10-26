@@ -64,7 +64,7 @@ public:
 
 protected:
 	Scope* topScope() { return scopes_.back(); }
-	Symbol* searchScopes(const char* name);
+	Symbol* searchScopes(const std::string& name);
 	void enterScope(Scope* scope) { scopes_.push_back(scope); }
 	void exitScope() { scopes_.pop_back(); }
 

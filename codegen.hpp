@@ -47,7 +47,7 @@ private:
 	std::ostream& out_;
 
 	// The name of the function currently being generated
-	const char* currentFunction_;
+	std::string currentFunction_;
 
 	// Keep track of the function definitions so that we can walk through them after the main function
 	std::vector<FunctionDefNode*> functionDefs_;

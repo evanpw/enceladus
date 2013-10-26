@@ -3,10 +3,10 @@
 
 #include <iostream>
 #include <list>
+#include <string>
 #include <memory>
 #include "ast_visitor.hpp"
 #include "scope.hpp"
-#include "string_table.hpp"
 #include "types.hpp"
 
 struct YYLTYPE;
@@ -36,7 +36,7 @@ class ExpressionNode : public AstNode {};
 
 ////// Utility classes other than AST nodes ////////////////////////////////////
 typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
-typedef std::vector<const char*> TypeDecl;
+typedef std::vector<std::string> TypeDecl;
 
 
 
@@ -194,13 +194,13 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const char* name() { return name_; }
+	const std::string& name() { return name_; }
 	const Symbol* symbol() { return symbol_; }
 
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	const char* name_;
+	std::string name_;
 	Symbol* symbol_;
 };
 
@@ -245,14 +245,14 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const char* target() { return target_; }
+	const std::string& target() { return target_; }
 	ArgList& arguments() { return *arguments_.get(); }
 
 	Symbol* symbol() { return symbol_; }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	const char* target_;
+	std::string target_;
 	std::unique_ptr<ArgList> arguments_;
 
 	Symbol* symbol_;
@@ -351,14 +351,14 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const char* target() { return target_; }
+	const std::string& target() { return target_; }
 	ExpressionNode* value() { return value_.get(); }
 
 	Symbol* symbol() { return symbol_; }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	const char* target_;
+	std::string target_;
 	std::unique_ptr<ExpressionNode> value_;
 
 	Symbol* symbol_;
@@ -373,8 +373,8 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const char* target() { return target_; }
-	const char* typeDecl() { return typeDecl_; }
+	const std::string& target() { return target_; }
+	const std::string& typeDecl() { return typeDecl_; }
 	ExpressionNode* value() { return value_.get(); }
 
 	Symbol* symbol() { return symbol_; }
@@ -382,8 +382,8 @@ public:
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
-	const char* target_;
-	const char* typeDecl_;
+	std::string target_;
+	std::string typeDecl_;
 	std::unique_ptr<ExpressionNode> value_;
 
 	Symbol* symbol_;
@@ -396,10 +396,10 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::vector<const char*>& names() const { return names_; }
+	const std::vector<std::string>& names() const { return names_; }
 
 private:
-	std::vector<const char*> names_;
+	std::vector<std::string> names_;
 };
 
 class FunctionDefNode : public StatementNode
@@ -411,9 +411,9 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const char* name() { return name_; }
+	const std::string& name() { return name_; }
 	StatementNode* body() { return body_.get(); }
-	const std::vector<const char*>& params() { return params_->names(); }
+	const std::vector<std::string>& params() { return params_->names(); }
 	TypeDecl* typeDecl() { return typeDecl_.get(); }
 
 	Scope* scope() { return scope_.get(); }
@@ -425,7 +425,7 @@ public:
 	void setParamTypes(const std::vector<const Type*>& paramTypes) { paramTypes_ = paramTypes; }
 
 private:
-	const char* name_;
+	std::string name_;
 	std::unique_ptr<StatementNode> body_;
 	std::unique_ptr<ParamListNode> params_;
 	std::unique_ptr<TypeDecl> typeDecl_;

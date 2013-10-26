@@ -30,9 +30,9 @@ std::string CodeGen::access(const Symbol* symbol)
 			auto paramList = enclosingFunction->params();
 
 			size_t offset = 0;
-			for (const char* param : paramList)
+			for (const std::string& param : paramList)
 			{
-				if (strcmp(param, symbol->name) == 0)
+				if (param == symbol->name)
 				{
 					std::stringstream result;
 					result << "[rbp + " << 8 * (offset + 2) << "]";

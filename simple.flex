@@ -2,8 +2,8 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 #include "ast.hpp"
-#include "string_table.hpp"
 #include "simple.tab.h"
+#include "string_table.hpp"
 
 extern YYSTYPE yylval;
 

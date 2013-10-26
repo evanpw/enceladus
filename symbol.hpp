@@ -10,13 +10,10 @@ enum Kind {kVariable = 0, kFunction = 1};
 
 struct Symbol
 {
-    Symbol(const char* name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction)
+    Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction)
     : name(name), kind(kind), node(node), enclosingFunction(enclosingFunction), isParam(false), offset(0), type(&Type::Void) {}
 
-    // This name MUST BE stored in the string table. The symbol table is indexed by pointer,
-    // not by string, so there cannot be multiple copies of the same string or bad things will
-    // happen.
-    const char* name;
+    std::string name;
 
     // Label, variable, function, ...?
     Kind kind;

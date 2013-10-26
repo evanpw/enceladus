@@ -2,7 +2,7 @@
 #include "ast.hpp"
 #include "ast_visitor.hpp"
 
-Symbol* AstVisitor::searchScopes(const char* name)
+Symbol* AstVisitor::searchScopes(const std::string& name)
 {
 	for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i)
 	{

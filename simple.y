@@ -1,7 +1,7 @@
 %{
 #include <iostream>
+#include <string>
 #include "ast.hpp"
-#include "string_table.hpp"
 
 using namespace std;
 
@@ -137,12 +137,12 @@ statement: IF expression THEN suite
 typedecl: TYPE
 		{
 			$$ = new TypeDecl();
-			$$->push_back($1);
+			$$->emplace_back($1);
 		}
 	| typedecl RARROW TYPE
 		{
 			$$ = $1;
-			$$->push_back($3);
+			$$->emplace_back($3);
 		}
 
 parameters: /* empty */
@@ -271,7 +271,7 @@ expression: NOT expression
 			argList->emplace_back($1);
 			argList->emplace_back($3);
 
-			$$ = new FunctionCallNode(StringTable::add("concat"), argList);
+			$$ = new FunctionCallNode("concat", argList);
 		}
 	| fexpression
 		{

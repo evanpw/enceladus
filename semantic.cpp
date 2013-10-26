@@ -57,7 +57,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// The function name cannot have already been used as something else
-	const char* name = node->name();
+	const std::string& name = node->name();
 	if (searchScopes(name) != nullptr)
 	{
 		std::stringstream msg;
@@ -80,7 +80,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	std::vector<const Type*> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
-		const char* typeName = node->typeDecl()->at(i);
+		const std::string& typeName = node->typeDecl()->at(i);
 
 		const Type* type = Type::lookup(typeName);
 		if (type == nullptr)
@@ -118,7 +118,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	// function's scope
 	for (size_t i = 0; i < node->params().size(); ++i)
 	{
-		const char* param = node->params().at(i);
+		const std::string& param = node->params().at(i);
 		const Type* paramType = paramTypes[i];
 
 		Symbol* paramSymbol = new Symbol(param, kVariable, node, node);
@@ -136,7 +136,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 
 void SemanticPass1::visit(LetNode* node)
 {
-	const char* target = node->target();
+	const std::string& target = node->target();
 
 	Symbol* symbol = topScope()->find(target);
 	if (symbol != nullptr)
@@ -167,7 +167,7 @@ void SemanticPass1::visit(LetNode* node)
 
 void SemanticPass2::visit(AssignNode* node)
 {
-	const char* target = node->target();
+	const std::string& target = node->target();
 
 	Symbol* symbol = searchScopes(target);
 	if (symbol == nullptr)
@@ -186,7 +186,7 @@ void SemanticPass2::visit(AssignNode* node)
 
 void SemanticPass2::visit(FunctionCallNode* node)
 {
-	const char* name = node->target();
+	const std::string& name = node->target();
 	Symbol* symbol = searchScopes(name);
 
 	if (symbol == nullptr)
@@ -221,7 +221,7 @@ void SemanticPass2::visit(FunctionCallNode* node)
 
 void SemanticPass2::visit(VariableNode* node)
 {
-	const char* name = node->name();
+	const std::string& name = node->name();
 
 	Symbol* symbol = searchScopes(name);
 	if (symbol != nullptr)

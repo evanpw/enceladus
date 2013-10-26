@@ -38,27 +38,26 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
     // we are iterating over
     static int uniqueId = 0;
 
-    std::string listVarStr = std::string("__for_list_") + boost::lexical_cast<std::string>(uniqueId++);
-    const char* listVar = StringTable::add(listVarStr.c_str());
+    std::string listVar = std::string("__for_list_") + boost::lexical_cast<std::string>(uniqueId++);
 
     BlockNode* newBody = new BlockNode;
     newBody->append(
         new LetNode(loopVar, "Int",          // FIXME: Lists of other types
             new HeadNode(
-                new VariableNode(listVar))));
+                new VariableNode(listVar.c_str()))));
     newBody->append(body);
     newBody->append(
-        new AssignNode(listVar,
+        new AssignNode(listVar.c_str(),
             new TailNode(
-                new VariableNode(listVar))));
+                new VariableNode(listVar.c_str()))));
 
     BlockNode* forNode = new BlockNode;
-    forNode->append(new LetNode(listVar, "List", list));
+    forNode->append(new LetNode(listVar.c_str(), "List", list));
     forNode->append(
         new WhileNode(
             new NotNode(
                 new NullNode(
-                    new VariableNode(listVar))),
+                    new VariableNode(listVar.c_str()))),
         newBody));
 
     return forNode;

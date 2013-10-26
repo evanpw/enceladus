@@ -1,35 +1,22 @@
 #include <iostream>
-#include <cstring>
+#include <utility>
 #include "string_table.hpp"
 
-using namespace std;
-
-vector<const char*> StringTable::strings_;
+std::vector<std::string> StringTable::strings_;
 
 const char* StringTable::add(const char* str)
 {
 	// Horribly inefficient
-	for (vector<const char*>::iterator i = strings_.begin(); i != strings_.end(); ++i)
+	std::string new_string = str;
+	for (auto& i : strings_)
 	{
-		if (strcmp(*i, str) == 0)
+		if (new_string == i)
 		{
-			return *i;
+			return i.c_str();
 		}
 	}
 
-	char* copy = new char[strlen(str) + 1];
-	strcpy(copy, str);
-	strings_.push_back(copy);
 
-	return copy;
-}
-
-void StringTable::freeStrings()
-{
-	for (vector<const char*>::iterator i = strings_.begin(); i != strings_.end(); ++i)
-	{
-		delete[] *i;
-	}
-
-	strings_.clear();
+	strings_.push_back(std::move(new_string));
+	return strings_.back().c_str();
 }

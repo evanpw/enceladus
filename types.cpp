@@ -6,17 +6,17 @@ const Type Type::Int("Int");
 const Type Type::Bool("Bool");
 const Type Type::List("List");
 
-const Type* Type::lookup(const char* name)
+const Type* Type::lookup(const std::string& name)
 {
-    if (strcmp(name, "Int") == 0)
+    if (name == std::string("Int"))
     {
         return &Type::Int;
     }
-    else if (strcmp(name, "Bool") == 0)
+    else if (name == std::string("Bool"))
     {
         return &Type::Bool;
     }
-    else if (strcmp(name, "List") == 0)
+    else if (name == std::string("List"))
     {
         return &Type::List;
     }
