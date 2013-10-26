@@ -120,8 +120,11 @@ __cons:
     mov qword [rax], 0
     mov qword [rax + 8], rdi
     mov qword [rax + 16], rsi
+    add rax, 8 ; Return a pointer to the actual cell, not the ref count
 
-    add rax, 8 ; Skip the reference count
+    ; This cons cell has a reference to the next one
+    mov rdi, rsi
+    call __incref
 
     mov rsp, rbp
     pop rbp
