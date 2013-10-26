@@ -38,7 +38,7 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
     // we are iterating over
     static int uniqueId = 0;
 
-    std::string listVar = std::string("__for_list_") + boost::lexical_cast<std::string>(uniqueId++);
+    std::string listVar = std::string("_for_list_") + boost::lexical_cast<std::string>(uniqueId++);
 
     BlockNode* newBody = new BlockNode;
     newBody->append(

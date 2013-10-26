@@ -50,8 +50,24 @@ def at n xs :: Int -> List -> Int =
     else
         return at (n - 1) (tail xs)
 
+def reverse xs :: List -> List =
+    let ys :: List = []
+    for x in xs do
+        ys = x : ys
+
+    return ys
+
 def concat xs ys :: List -> List -> List =
     if null xs then
         return ys
     else
         return head xs : concat (tail xs) ys
+
+-- Non stack-destroying version
+--def concat xs ys :: List -> List -> List =
+--    let zs :: List = ys
+
+--    for x in reverse xs do
+--        zs = x : zs
+
+--    return zs

@@ -21,4 +21,6 @@ Todo
 * Add some support for strings (at least when printing)
 * Replace C library calls with direct system calls
 * Handle the case where prelude does not end with a newline
+* Support for infix functions
 * If lexer finds an error, don't continue parsing
+* Find out why euler11 segfaults when run in valgrind
