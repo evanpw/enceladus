@@ -188,10 +188,11 @@ void CodeGen::visit(NotNode* node)
 void CodeGen::visit(ConsNode* node)
 {
 	node->rhs()->accept(this);
-	out_ << "mov rsi, rax" << std::endl;
+	out_ << "push rax" << std::endl;
 
 	node->lhs()->accept(this);
 	out_ << "mov rdi, rax" << std::endl;
+	out_ << "pop rsi" << std::endl;
 
 	out_ << "call __cons" << std::endl;
 }

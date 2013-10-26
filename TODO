@@ -24,3 +24,4 @@ Todo
 * Support for infix functions
 * If lexer finds an error, don't continue parsing
 * Find out why euler11 segfaults when run in valgrind
+* Tree and/or Set data structures

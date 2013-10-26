@@ -1,0 +1,60 @@
+-- Solves Project Euler 12
+
+def count_groups xs :: List -> List =
+    if null xs then return []
+
+    let result :: List = []
+    let last :: Int = head xs
+    let count :: Int = 1
+    xs = tail xs
+
+    while not null xs do
+        if head xs == last then
+            count += 1
+        else
+            result = count : result
+            last = head xs
+            count = 1
+
+        xs = tail xs
+
+    return reverse $ count : result
+
+def factor n :: Int -> List =
+    if n == 1 then return []
+
+    let factors :: List = []
+    let i :: Int = 2
+
+    while n > 1 do
+        while n mod i == 0 do
+            factors = i : factors
+            n /= i
+
+        i += 1
+
+    return reverse factors
+
+def count_divisors x :: Int -> Int =
+    if x == 1 then return 1
+
+    let prime_counts :: List = count_groups $ factor x
+    let count :: Int = 1
+
+    for n in prime_counts do
+        count *= (n + 1)
+
+    return count
+
+def first_number m :: Int -> Int =
+    let n :: Int = 0
+    let i :: Int = 1
+    while True do
+        n += i
+
+        if count_divisors n > m then
+            return n
+
+        i += 1
+
+print first_number 500
