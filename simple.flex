@@ -58,6 +58,8 @@ int yycolumn = 1;
 ","		{ return ','; }
 "="		{ return '='; }
 "$"		{ return '$'; }
+"["		{ return '['; }
+"]"	    { return ']'; }
 "mod"	{ return MOD; }
 "->"	{ return RARROW; }
 "<="	{ return LE; }
@@ -65,7 +67,6 @@ int yycolumn = 1;
 "=="	{ return EQUALS; }
 "!="	{ return NE; }
 "::"	{ return DCOLON; }
-"[]"	{ return NIL; }
 "not"	{ return NOT; }
 "and"	{ return AND; }
 "or"	{ return OR; }
@@ -75,6 +76,7 @@ int yycolumn = 1;
 "-="	{ return MINUS_EQUAL; }
 "*="	{ return TIMES_EQUAL; }
 "/="	{ return DIV_EQUAL; }
+"++"	{ return CONCAT; }
 
  /* Keywords */
 "if"		{ return IF; }

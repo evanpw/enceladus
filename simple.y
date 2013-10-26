@@ -53,8 +53,8 @@ void yyerror(const char* msg);
 %token DEF
 %token DCOLON RARROW
 %token TRUE FALSE
-%token NIL HEAD TAIL ISNULL
-%token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL
+%token HEAD TAIL ISNULL
+%token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL CONCAT
 %token<str> IDENT TYPE
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
@@ -66,6 +66,7 @@ void yyerror(const char* msg);
 %right ':'
 %left '+' '-'
 %left '*' '/' MOD
+%right CONCAT
 %nonassoc HEAD TAIL ISNULL
 
 %%
@@ -264,6 +265,14 @@ expression: NOT expression
 		{
 			$$ = new ConsNode($1, $3);
 		}
+	| expression CONCAT expression
+		{
+			ArgList* argList = new ArgList;
+			argList->emplace_back($1);
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode(StringTable::add("concat"), argList);
+		}
 	| fexpression
 		{
 			$$ = $1;
@@ -313,7 +322,7 @@ simple_expression: READ
 		{
 			$$ = new BoolNode(false);
 		}
-	| NIL
+	| '[' ']'
 		{
 			$$ = new NilNode();
 		}
