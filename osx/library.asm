@@ -1,8 +1,8 @@
 bits 64
 section .text
-extern _printf, _scanf, _malloc, _puts, _exit
+extern _printf, _scanf, _malloc, _puts, _exit, _free
 extern __main
-global _main, __read, __print, __cons, __die, __incref, __decref
+global _main, __read, __print, __cons, __die, __incref, __decref, __decref_no_free
 
 _main:
     ; The main function from the compiled program
@@ -87,9 +87,51 @@ __decref:
     cmp rdi, 0
     je __end_decref
 
-    add qword [rdi - 8], -1
+    ; Get to the reference count, and the actuall address returned by malloc
+    add rdi, -8
+
+    add qword [rdi], -1
+
+    cmp qword [rdi], 0
+    jl __negref
+    jne __end_decref
+
+    ; If we reach here, the ref count is zero. Deallocate this cons cell, and
+    ; then decrement the reference of the next (tail-recursively)
+    mov rsi, qword [rdi + 16]
+    push rsi
+    call _free
+    pop rdi
+    jmp __decref
+
+__negref:
+    ; Reference count should never be negative. We've screwed something up
+    mov rax, 2
+    call __die
 
 __end_decref:
+    ret
+
+; Decrement the reference count of the cons cell at rdi, but do not free it if
+; it reaches zero. This is used for temporary values (like return values of
+; functions, which will be assigned a reference later.)
+__decref_no_free:
+    cmp rdi, 0
+    je __end_decref_no_free
+
+    ; Get to the reference count, and the actuall address returned by malloc
+    add rdi, -8
+
+    add qword [rdi], -1
+
+    cmp qword [rdi], 0
+    jge __end_decref_no_free
+
+    ; Reference count should never be negative. We've screwed something up
+    mov rax, 2
+    call __die
+
+__end_decref_no_free:
     ret
 
 ; Create a list with head = rdi (an Int), tail = rsi (a pointer).

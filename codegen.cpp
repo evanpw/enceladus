@@ -63,7 +63,7 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "bits 64" << std::endl;
 	out_ << "section .text" << std::endl;
 	out_ << "global __main" << std::endl;
-	out_ << "extern __read, __print, __cons, __die, __incref, __decref" << std::endl;
+	out_ << "extern __read, __print, __cons, __die, __incref, __decref, __decref_no_free" << std::endl << std::endl;
 	out_ << "__main:" << std::endl;
 	currentFunction_ = "_main";
 
@@ -71,6 +71,19 @@ void CodeGen::visit(ProgramNode* node)
 	AstVisitor::visit(node);
 
 	out_ << "__end__main:" << std::endl;
+
+	// Clean up all global variables before exiting, just to make valgrind
+	// happy
+	for (auto& i : topScope()->symbols())
+	{
+		auto& symbol = i.second;
+		if (symbol->kind == kVariable && symbol->type == &Type::List)
+		{
+			out_ << "mov rdi, " << access(symbol.get()) << std::endl;
+			out_ << "call __decref" << std::endl;
+		}
+	}
+
 	out_ << "ret" << std::endl;
 
 	// All other functions
@@ -102,21 +115,52 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "mov rdi, rsp" << std::endl;
 		out_ << "rep stosq" << std::endl;
 
+		// We gain a reference to all of the parameters passed in
+		for (auto& i : function->scope()->symbols())
+		{
+			auto& symbol = i.second;
+			if (symbol->isParam && symbol->type == &Type::List)
+			{
+				out_ << "mov rdi, " << access(symbol.get()) << std::endl;
+				out_ << "call __incref" << std::endl;
+			}
+		}
+
 		// Recurse to children
 		AstVisitor::visit(function);
 
 		out_ << "__end_" << function->name() << ":" << std::endl;
+		out_ << "push rax" << std::endl;
+
+		// Preserve the return value from being freed if it happens to be the
+		// same as one of the local variables.
+		if (function->symbol()->type == &Type::List)
+		{
+			out_ << "mov rdi, rax" << std::endl;
+			out_ << "call __incref" << std::endl;
+		}
 
 		// Going out of scope loses a reference to all of the local variables
 		for (auto& i : function->scope()->symbols())
 		{
 			auto& symbol = i.second;
-			if (!symbol->isParam && symbol->type == &Type::List)
+			if (symbol->type == &Type::List)
 			{
 				out_ << "mov rdi, " << access(symbol.get()) << std::endl;
 				out_ << "call __decref" << std::endl;
 			}
 		}
+
+		// But after the function returns, we don't have a reference to the
+		// return value, it's just in a temporary. The caller will have to
+		// assign it a reference.
+		if (function->symbol()->type == &Type::List)
+		{
+			out_ << "mov rdi, rax" << std::endl;
+			out_ << "call __decref_no_free" << std::endl;
+		}
+
+		out_ << "pop rax" << std::endl;
 
 		out_ << "mov rsp, rbp" << std::endl;
 		out_ << "pop rbp" << std::endl;
@@ -124,7 +168,7 @@ void CodeGen::visit(ProgramNode* node)
 	}
 
 	// Declare global variables in the data segment
-	out_ << "section .data" << std::endl;
+	out_ << std::endl<< "section .data" << std::endl;
 	for (auto& i : topScope()->symbols())
 	{
 		if (i.second->kind == kVariable)
@@ -460,5 +504,6 @@ void CodeGen::visit(FunctionCallNode* node)
 void CodeGen::visit(ReturnNode* node)
 {
 	node->expression()->accept(this);
+
 	out_ << "jmp __end_" << currentFunction_ << std::endl;
 }
