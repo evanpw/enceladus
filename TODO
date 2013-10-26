@@ -21,4 +21,4 @@ Todo
 * Add some support for strings (at least when printing)
 * Replace C library calls with direct system calls
 * Handle the case where prelude does not end with a newline
-* Add concatenation operator ++
+* If lexer finds an error, don't continue parsing
