@@ -63,6 +63,14 @@ def concat xs ys :: List -> List -> List =
     else
         return head xs : concat (tail xs) ys
 
+def even x :: Int -> Bool =
+    if x mod 2 == 0 then return True
+    else return False
+
+def odd x :: Int -> Bool =
+    if x mod 2 == 0 then return False
+    else return True
+
 -- Non stack-destroying version
 --def concat xs ys :: List -> List -> List =
 --    let zs :: List = ys

@@ -8,13 +8,13 @@ while i <= 999 do
     while j <= 999 do
         let x :: Int = i * j
 
-        let copy_x :: Int = x
+        let copyX :: Int = x
         let y :: Int = 0
 
-        while copy_x != 0 do
+        while copyX != 0 do
             y = y * 10
-            y = y + (copy_x mod 10)
-            copy_x = copy_x / 10
+            y = y + (copyX mod 10)
+            copyX = copyX / 10
 
         if x == y and x > biggest then
             biggest = x

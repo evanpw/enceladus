@@ -1,6 +1,6 @@
 # Solves Project Euler 7
 
-def is_prime x :: Int -> Bool =
+def isPrime x :: Int -> Bool =
     let i :: Int = 2
     while i * i <= x do
         if x mod i == 0 then return False
@@ -11,7 +11,7 @@ def is_prime x :: Int -> Bool =
 let x :: Int = 2
 let count :: Int = 0
 while count < 10001 do
-    if is_prime x then count += 1
+    if isPrime x then count += 1
 
     if count == 10001 then
         print x
