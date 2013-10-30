@@ -31,6 +31,7 @@ public:
 	virtual void visit(NilNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
+	virtual void visit(ExternalFunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(ConsNode* node);
 	virtual void visit(HeadNode* node);
@@ -40,6 +41,9 @@ public:
 	// Generate a code fragment to access the symbol with the given name in the
 	// current scope.
 	std::string access(const Symbol* symbol);
+
+	// Gets the list of all external symbols which are referenced in this module
+	std::vector<std::string> getExterns(ProgramNode* node);
 
 private:
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }

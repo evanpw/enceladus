@@ -83,6 +83,14 @@ void AstVisitor::visit(FunctionCallNode* node)
 	}
 }
 
+void AstVisitor::visit(ExternalFunctionCallNode* node)
+{
+	for (auto& argument : node->arguments())
+	{
+		argument->accept(this);
+	}
+}
+
 void AstVisitor::visit(IfNode* node)
 {
 	node->condition()->accept(this);

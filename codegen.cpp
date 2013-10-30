@@ -58,12 +58,43 @@ std::string CodeGen::access(const Symbol* symbol)
 	}
 }
 
+std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
+{
+	std::vector<std::string> result;
+
+	for (auto& i : node->scope()->symbols())
+	{
+		const std::string& name = i.first;
+		auto& symbol = i.second;
+
+		if (symbol->isExternal)
+		{
+			result.push_back(name);
+		}
+	}
+
+	return result;
+}
+
 void CodeGen::visit(ProgramNode* node)
 {
 	out_ << "bits 64" << std::endl;
 	out_ << "section .text" << std::endl;
 	out_ << "global __main" << std::endl;
-	out_ << "extern __read, __print, __cons, __die, __incref, __decref, __decref_no_free" << std::endl << std::endl;
+
+	std::vector<std::string> externs = getExterns(node);
+	out_ << "extern __read, __print, __cons, __die, __incref, __decref, __decref_no_free" << std::endl;
+	if (!externs.empty())
+	{
+		out_ << "extern _" << externs[0];
+		for (size_t i = 1; i < externs.size(); ++i)
+		{
+			out_ << ", _" << externs[i];
+		}
+		out_ << std::endl;
+	}
+	out_ << std::endl;
+
 	out_ << "__main:" << std::endl;
 	currentFunction_ = "_main";
 
@@ -500,6 +531,38 @@ void CodeGen::visit(FunctionCallNode* node)
 
 	size_t args = node->arguments().size();
 	if (args > 0) out_ << "add rsp, " << 8 * args << std::endl;
+}
+
+void CodeGen::visit(ExternalFunctionCallNode* node)
+{
+	// Should really be handled in semantic analysis
+	assert(node->arguments().size() <= 6);
+
+	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
+	{
+		(*i)->accept(this);
+		out_ << "push rax" << std::endl;
+	}
+
+	// x86_64 calling convention for C puts the first 6 arguments in registers
+	if (node->arguments().size() >= 1) out_ << "pop rdi" << std::endl;
+	if (node->arguments().size() >= 2) out_ << "pop rsi" << std::endl;
+	if (node->arguments().size() >= 3) out_ << "pop rdx" << std::endl;
+	if (node->arguments().size() >= 4) out_ << "pop rcx" << std::endl;
+	if (node->arguments().size() >= 5) out_ << "pop r8" << std::endl;
+	if (node->arguments().size() >= 6) out_ << "pop r9" << std::endl;
+
+	// Realign the stack to 16 bytes (may not be necessary on all platforms)
+    out_ << "mov rbx, rsp" << std::endl;
+    out_ << "and rsp, -16" << std::endl;
+    out_ << "add rsp, -8" << std::endl;
+    out_ << "push rbx" << std::endl;
+
+    out_ << "call _" << node->target() << std::endl;
+
+    // Undo the stack alignment
+    out_ << "pop rbx" << std::endl;
+    out_ << "mov rsp, rbx" << std::endl;
 }
 
 void CodeGen::visit(ReturnNode* node)

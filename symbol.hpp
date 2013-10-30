@@ -11,7 +11,15 @@ enum Kind {kVariable = 0, kFunction = 1};
 struct Symbol
 {
     Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction)
-    : name(name), kind(kind), node(node), enclosingFunction(enclosingFunction), isParam(false), offset(0), type(&Type::Void) {}
+    : name(name)
+    , kind(kind)
+    , node(node)
+    , enclosingFunction(enclosingFunction)
+    , isParam(false)
+    , offset(0)
+    , type(&Type::Void)
+    , isExternal(false)
+    {}
 
     std::string name;
 
@@ -36,6 +44,9 @@ struct Symbol
 
     // Valid only for functions
     unsigned int arity;
+
+    // Is this in an external object file?
+    bool isExternal;
 };
 
 #endif

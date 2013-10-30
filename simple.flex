@@ -84,6 +84,7 @@ int yycolumn = 1;
 "else"		{ return ELSE; }
 "print"		{ return PRINT; }
 "read"		{ return READ; }
+"extern"	{ return EXTERN; }
 "while"		{ return WHILE; }
 "for"		{ return FOR; }
 "in"		{ return IN; }
@@ -97,8 +98,8 @@ int yycolumn = 1;
 "True"		{ return TRUE; }
 "False"		{ return FALSE; }
 
-[a-z][a-zA-Z0-9]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
-[A-Z][a-zA-Z0-9]*	 { yylval.str = StringTable::add(yytext); return TYPE; }
+[a-z][a-zA-Z0-9.]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
+[A-Z][a-zA-Z0-9.]*	 { yylval.str = StringTable::add(yytext); return TYPE; }
 \n						 { yycolumn = 1; return EOL; }
 [ \t]+				     { yylval.number = count_whitespace(yytext, yyleng); return WHITESPACE; }
 .						 {

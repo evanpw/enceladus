@@ -22,6 +22,7 @@ class IntNode;
 class BoolNode;
 class FunctionDefNode;
 class FunctionCallNode;
+class ExternalFunctionCallNode;
 class ReturnNode;
 class ParamListNode;
 class NilNode;
@@ -49,6 +50,7 @@ public:
 	virtual void visit(LetNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
+	virtual void visit(ExternalFunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(HeadNode* node);
 	virtual void visit(TailNode* node);

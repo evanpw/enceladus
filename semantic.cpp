@@ -219,6 +219,50 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	AstVisitor::visit(node);
 }
 
+void SemanticPass2::visit(ExternalFunctionCallNode* node)
+{
+	const std::string& name = node->target();
+	Symbol* symbol = searchScopes(name);
+
+	if (symbol == nullptr)
+	{
+		Symbol* symbol = new Symbol(name, kFunction, nullptr, nullptr);
+		symbol->type = &Type::Int;
+		symbol->arity = node->arguments().size();
+		symbol->isExternal = true;
+
+		topScope()->insert(symbol);
+		node->attachSymbol(symbol);
+	}
+	else
+	{
+		if (symbol->isExternal)
+		{
+			node->attachSymbol(symbol);
+		}
+		else
+		{
+			if (symbol->kind == kFunction)
+			{
+				std::stringstream msg;
+				msg << "target of external function call \"" << name << "\" is defined locally.";
+
+				semanticError(node, msg.str());
+			}
+			else
+			{
+				std::stringstream msg;
+				msg << "target of external function call \"" << symbol->name << "\" is not a function.";
+
+				semanticError(node, msg.str());
+			}
+		}
+	}
+
+	// Recurse to children
+	AstVisitor::visit(node);
+}
+
 void SemanticPass2::visit(VariableNode* node)
 {
 	const std::string& name = node->name();
@@ -428,6 +472,18 @@ void TypeChecker::visit(FunctionCallNode* node)
 
 		argument->accept(this);
 		typeCheck(argument, type);
+	}
+}
+
+void TypeChecker::visit(ExternalFunctionCallNode* node)
+{
+	// FIXME: External function calls always return an Int
+	node->setType(&Type::Int);
+
+	for (size_t i = 0; i < node->arguments().size(); ++i)
+	{
+		// FIXME: No type checking on the arguments
+		node->arguments().at(i)->accept(this);
 	}
 }
 

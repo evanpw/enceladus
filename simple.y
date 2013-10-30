@@ -42,7 +42,7 @@ void yyerror(const char* msg);
 
 %token ERROR
 %token IF THEN ELSE
-%token PRINT READ
+%token PRINT READ EXTERN
 %token LET
 %token NOT AND OR MOD EQUALS
 %token RETURN
@@ -285,6 +285,10 @@ fexpression: simple_expression
 	| IDENT arg_list
 		{
 			$$ = new FunctionCallNode($1, $2);
+		}
+	| EXTERN IDENT arg_list
+		{
+			$$ = new ExternalFunctionCallNode($2, $3);
 		}
 
 arg_list: simple_expression

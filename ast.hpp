@@ -258,6 +258,30 @@ private:
 	Symbol* symbol_;
 };
 
+class ExternalFunctionCallNode : public ExpressionNode
+{
+public:
+	ExternalFunctionCallNode(const char* target, ArgList* arguments)
+	: target_(target), symbol_(nullptr)
+	{
+		arguments_.reset(arguments);
+	}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& target() { return target_; }
+	ArgList& arguments() { return *arguments_.get(); }
+
+	Symbol* symbol() { return symbol_; }
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
+private:
+	std::string target_;
+	std::unique_ptr<ArgList> arguments_;
+
+	Symbol* symbol_;
+};
+
 class ReadNode : public ExpressionNode
 {
 public:
