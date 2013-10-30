@@ -1,0 +1,665 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "TODO",
+			"settings":
+			{
+				"buffer_size": 1143,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "linux/library.asm",
+			"settings":
+			{
+				"buffer_size": 3169,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "bits 64\nsection .text\nextern printf, scanf, malloc, puts, exit, free\nextern __main\nglobal main, __read, __print, __cons, __die, __incref, __decref, __decref_no_free\n\nmain:\n    ; The main function from the compiled program\n    call __main\n\n    xor rax, rax\n    ret\n\n__die:\n    ;; Print error message based on value of rax\n\n    mov rdi, [__error_messages + 8 * rax]\n    call puts\n\n    ; Kill the process\n    mov rdi, 1\n    call exit\n\n    ; Useless\n    ret\n\n__read:\n    lea rsi, [rel __read_result]\n    lea rdi, [rel __read_format]\n    xor rax, rax\n    call scanf\n\n    mov rax, [rel __read_result]\n    ret\n\n; Print the number stored in rax, followed by a newline\n__print:\n    mov rsi, rax\n    lea rdi, [rel __format]\n    xor rax, rax\n    call printf\n\n    ret\n\n; Increment the reference count of the cons cell at rdi\n__incref:\n    cmp rdi, 0\n    je __end_incref\n\n    add qword [rdi - 8], 1\n\n__end_incref:\n    ret\n\n; Decrement the reference count of the cons cell at rdi, and if it is zero,\n; then deallocate it\n__decref:\n    cmp rdi, 0\n    je __end_decref\n\n    ; Get to the reference count, and the actuall address returned by malloc\n    add rdi, -8\n\n    add qword [rdi], -1\n\n    cmp qword [rdi], 0\n    jl __negref\n    jne __end_decref\n\n    ; If we reach here, the ref count is zero. Deallocate this cons cell, and\n    ; then decrement the reference of the next (tail-recursively)\n    mov rsi, qword [rdi + 16]\n    push rsi\n    call free\n    pop rdi\n    jmp __decref\n\n__negref:\n    ; Reference count should never be negative. We've screwed something up\n    mov rax, 2\n    call __die\n\n__end_decref:\n    ret\n\n; Decrement the reference count of the cons cell at rdi, but do not free it if\n; it reaches zero. This is used for temporary values (like return values of\n; functions, which will be assigned a reference later.)\n__decref_no_free:\n    cmp rdi, 0\n    je __end_decref_no_free\n\n    ; Get to the reference count, and the actuall address returned by malloc\n    add rdi, -8\n\n    add qword [rdi], -1\n\n    cmp qword [rdi], 0\n    jge __end_decref_no_free\n\n    ; Reference count should never be negative. We've screwed something up\n    mov rax, 2\n    call __die\n\n__end_decref_no_free:\n    ret\n\n; Create a list with head = rdi (an Int), tail = rsi (a pointer).\n; returns the pointer to the new cons cell in rax\n__cons:\n    push rbp\n    mov rbp, rsp\n\n    push rdi\n    push rsi\n\n    mov rdi, 24\n    call malloc\n\n    pop rsi\n    pop rdi\n\n    mov qword [rax], 0\n    mov qword [rax + 8], rdi\n    mov qword [rax + 16], rsi\n    add rax, 8 ; Return a pointer to the actual cell, not the ref count\n\n    ; This cons cell has a reference to the next one\n    push rax\n    mov rdi, rsi\n    call __incref\n    pop rax\n\n    mov rsp, rbp\n    pop rbp\n    ret\n\nsection .data\n__format: db \"%ld\", 0xA, 0\n__read_format: db \"%ld\", 0\n__read_result: dq 0\n\n; Array of error messages for __die\n__error_messages:\n    dq __error_head_empty\n    dq __error_tail_empty\n    dq __error_negative_refs\n\n__error_head_empty: db \"*** Exception: Called head on empty list\", 0\n__error_tail_empty: db \"*** Exception: Called tail on empty list\", 0\n__error_negative_refs: db \"*** Exception: Reference count is negative\", 0\n",
+			"settings":
+			{
+				"buffer_size": 3169,
+				"line_ending": "Unix",
+				"name": "bits 64"
+			}
+		},
+		{
+			"file": "testing/euler12.spl",
+			"settings":
+			{
+				"buffer_size": 1123,
+				"line_ending": "Unix",
+				"name": "-- Solves Project Euler #12"
+			}
+		},
+		{
+			"file": "testing/euler13.spl",
+			"settings":
+			{
+				"buffer_size": 787,
+				"line_ending": "Unix",
+				"name": "let xs :: List = 3 : 7 : 1 : 0 : 7 : 2 : 8 : 7 :"
+			}
+		},
+		{
+			"file": "testing/euler14.spl",
+			"settings":
+			{
+				"buffer_size": 435,
+				"line_ending": "Unix",
+				"name": "-- Solves Project Euler 14"
+			}
+		},
+		{
+			"file": "prelude.spl",
+			"settings":
+			{
+				"buffer_size": 1596,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "codegen.cpp",
+			"settings":
+			{
+				"buffer_size": 11958,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 375.0,
+		"selected_items":
+		[
+			[
+				"Install",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Enable Package"
+			]
+		],
+		"width": 435.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/evanpw/Workspace/simple/testing/all.sh",
+		"/Users/evanpw/Workspace/simple/testing/euler13.txt",
+		"/Users/evanpw/Workspace/simple/testing/test.spl",
+		"/Users/evanpw/Dropbox/Progress/Reference/Kayla's Loan.csv",
+		"/Users/evanpw/Workspace/simple/Makefile",
+		"/Users/evanpw/Workspace/simple/ast.hpp",
+		"/Users/evanpw/Workspace/simple/simple.flex",
+		"/Users/evanpw/Workspace/simple/simple.y",
+		"/Users/evanpw/Workspace/simple/string_table.hpp",
+		"/Users/evanpw/Workspace/simple/string_table.cpp",
+		"/Users/evanpw/Workspace/simple/simple.output",
+		"/Users/evanpw/Workspace/simple/simple.tab.c",
+		"/Users/evanpw/Workspace/simple/ast.cpp",
+		"/Users/evanpw/Workspace/simple/TODO",
+		"/Users/evanpw/Workspace/simple/types.hpp",
+		"/Users/evanpw/Workspace/simple/types.cpp",
+		"/Users/evanpw/Workspace/simple/string_table.hpp.bak",
+		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler10-2.spl",
+		"/Users/evanpw/Workspace/simple/osx/build.sh",
+		"/Users/evanpw/Workspace/simple/build/euler10-2.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler10.spl",
+		"/Users/evanpw/Workspace/simple/semantic.cpp",
+		"/Users/evanpw/Workspace/simple/scope.hpp",
+		"/Users/evanpw/Workspace/simple/scope.cpp",
+		"/Users/evanpw/Workspace/simple/codegen.hpp",
+		"/Users/evanpw/Workspace/simple/codegen.cpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
+		"/Users/evanpw/Workspace/simple/symbol.hpp",
+		"/Users/evanpw/Workspace/simple/simplec.cpp",
+		"/Users/evanpw/Workspace/simple/osx/library.asm",
+		"/Users/evanpw/Workspace/simple/linux/library.asm",
+		"/Users/evanpw/Workspace/simple/testing/test.sh",
+		"/Users/evanpw/Workspace/simple/build/euler8.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler9.spl",
+		"/Users/evanpw/Workspace/simple/prelude.spl",
+		"/Users/evanpw/Workspace/simple/testing/function.spl",
+		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
+		"/Users/evanpw/Dropbox/Progress/Year28.tex",
+		"/Users/evanpw/Workspace/simple/semantic.hpp",
+		"/Users/evanpw/Workspace/simple/common.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler7.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler5.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
+		"/Users/evanpw/Workspace/simple/build/euler5.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler7.spl.py",
+		"/Users/evanpw/Workspace/simple/library.c",
+		"/Users/evanpw/Workspace/simple/build.sh",
+		"/Users/evanpw/Workspace/simple/test.spl",
+		"/Users/evanpw/Workspace/simple/symbol_table.cpp",
+		"/Users/evanpw/Workspace/simple/symbol_table.hpp",
+		"/Users/evanpw/Workspace/mycraft/Makefile",
+		"/Users/evanpw/Workspace/simple/parser.cpp",
+		"/Users/evanpw/Workspace/simple/testing/read.spl",
+		"/Users/evanpw/Workspace/simple/build/function.asm",
+		"/Users/evanpw/Workspace/simple/memory_manager.cpp",
+		"/Users/evanpw/Workspace/raytracer/Makefile",
+		"/Users/evanpw/Workspace/simple/library.asm",
+		"/Users/evanpw/Workspace/simple/build/euler3.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler4.spl.py",
+		"/Users/evanpw/Workspace/simple/hello.asm",
+		"/Users/evanpw/Workspace/simple/build/library-64.asm",
+		"/Users/evanpw/Workspace/simple/build/euler1-64.asm",
+		"/Users/evanpw/.inputrc",
+		"/Users/evanpw/.bash_profile",
+		"/Users/evanpw/Dropbox/Progress/Todo List.md",
+		"/Users/evanpw/Dropbox/Progress/Weight.csv",
+		"/Users/evanpw/Workspace/mycraft/mycraft.cpp",
+		"/Users/evanpw/Workspace/bigdata/generate.py",
+		"/Users/evanpw/Workspace/bigdata/regression-big.R",
+		"/Users/evanpw/Workspace/bigdata/regression-big.Rout",
+		"/Users/evanpw/Workspace/bigdata/regression.log",
+		"/Users/evanpw/Workspace/bigdata/regression-big.log",
+		"/Users/evanpw/Dropbox/Progress/Goals/One Month.tex",
+		"/Users/evanpw/Dropbox/Progress/Walking.csv",
+		"/Users/evanpw/Dropbox/Progress/Past/Accomplishments2012.tex",
+		"/Users/evanpw/Dropbox/Progress/Weight Lifting.md",
+		"/Users/evanpw/Dropbox/Progress/Waist.csv",
+		"/Users/evanpw/Dropbox/Progress/Calendar.md",
+		"/Users/evanpw/Dropbox/Progress/Abby.csv",
+		"/Users/evanpw/Dropbox/Progress/Abby-Weight.csv",
+		"/Users/evanpw/Workspace/evanpwright.com/templates/math.html",
+		"/Users/evanpw/Workspace/evanpwright.com/templates/main.html",
+		"/Users/evanpw/Workspace/evanpwright.com/templates/hugo.html",
+		"/Users/evanpw/Workspace/evanpwright.com/templates/index.html",
+		"/Users/evanpw/Dropbox/Progress/Visit.md",
+		"/Users/evanpw/Dropbox/Progress/Reference/Baby Schedule.tex",
+		"/Users/evanpw/Dropbox/Progress/Reference/Net Worth.md",
+		"/Users/evanpw/Dropbox/Progress/Reference/To Read.tex",
+		"/Users/evanpw/Dropbox/Progress/Reference/To Buy.md",
+		"/Users/evanpw/Dropbox/Progress/Reference/Notions.md",
+		"/Users/evanpw/Dropbox/Progress/Reference/System.md",
+		"/Users/evanpw/Dropbox/Progress/Reference/Library Books.md",
+		"/Users/evanpw/Dropbox/Progress/Reference/Great Ideas.md",
+		"/Applications/Sublime Text.app/Contents/MacOS/changelog.txt",
+		"/Users/evanpw/Dropbox/Progress/Reference/Hugo Winners.tex",
+		"/Users/evanpw/Workspace/evanpwright.com/app.py",
+		"/Users/evanpw/Workspace/evanpwright.com/template.html",
+		"/Users/evanpw/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/evanpw/Workspace/raytracer/surface.cpp",
+		"/Users/evanpw/Workspace/raytracer/raytracer.cpp",
+		"/Users/evanpw/Workspace/evanpwright.com/index.html",
+		"/Users/evanpw/Workspace/evanpwright.com/hugo.html",
+		"/Users/evanpw/Workspace/raytracer/surface.hpp",
+		"/Users/evanpw/Workspace/raytracer/color.cpp",
+		"/Users/evanpw/Workspace/raytracer/bitmap_file.cpp"
+	],
+	"find":
+	{
+		"height": 37.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"\\d",
+			"[]))",
+			"take 50",
+			"reverse $",
+			"reverse",
+			"long_sum",
+			"\\d",
+			"YYSTYPE",
+			"LetNode",
+			"TYPE",
+			"TypeDecl",
+			"const char*",
+			"virtual void accept",
+			"NIL",
+			"not defined",
+			"ArgList",
+			"':'",
+			"typeCheck",
+			"Type::Int",
+			"kBool",
+			"kInt",
+			"call",
+			"fexpression",
+			"expression",
+			"PRINT .",
+			"INT_LIT .",
+			"IDENT .",
+			"expression",
+			"state 30",
+			"simple_expression",
+			"PRINT .",
+			"PRINT",
+			"simple_expression",
+			"VariableNode",
+			"expression",
+			"symbol_",
+			"IntNode",
+			"add rsp",
+			"edx",
+			"ecx",
+			"ebx",
+			"rbx",
+			"eax",
+			"esp",
+			"add esp",
+			"prepend",
+			"NULL",
+			"ArgList",
+			"ArgListNode",
+			"SymbolTable",
+			"topScope->",
+			"type",
+			"Kind type",
+			"util",
+			"yy_get_next_buffer",
+			"yy_get_next_buffer()",
+			"MemoryManager",
+			"code()",
+			"ReadNode",
+			"cdq",
+			"int",
+			"[qword",
+			"dword",
+			"esp",
+			"ebx",
+			"eax",
+			"movq",
+			"mov",
+			"qword",
+			"dword",
+			"ebx",
+			"edx",
+			"esp",
+			"eax",
+			"<i class=\"icon-ok\"></i>",
+			"<tr>",
+			"</tr></tr>",
+			" - ",
+			"</tr>",
+			"<tr>",
+			"</li>",
+			"<li>",
+			"\\checkmark",
+			".."
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 2,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "TODO",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1143,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								31,
+								31
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "linux/library.asm",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 3169,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								3169
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3169,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2399,
+								2399
+							]
+						],
+						"settings":
+						{
+							"auto_name": "bits 64",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1662.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "testing/euler12.spl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1123,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								140,
+								140
+							]
+						],
+						"settings":
+						{
+							"auto_name": "-- Solves Project Euler #12",
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "testing/euler13.spl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 787,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								352,
+								352
+							]
+						],
+						"settings":
+						{
+							"auto_name": "let xs :: List = 3 : 7 : 1 : 0 : 7 : 2 : 8 : 7 :",
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "testing/euler14.spl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 435,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								228,
+								228
+							]
+						],
+						"settings":
+						{
+							"auto_name": "-- Solves Project Euler 14",
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "prelude.spl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1596,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1411,
+								1411
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 612.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "codegen.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 11958,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5132,
+								5132
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2522.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"project": "simple.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"makefile",
+				"Makefile"
+			],
+			[
+				"build.sh",
+				"build.sh"
+			],
+			[
+				"euler3.asm",
+				"build/euler3.asm"
+			],
+			[
+				"euler3.spl",
+				"testing/euler3.spl"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
