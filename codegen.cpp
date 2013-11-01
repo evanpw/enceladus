@@ -110,12 +110,12 @@ void CodeGen::visit(ProgramNode* node)
 		auto& symbol = i.second;
 		if (symbol->kind == kVariable && symbol->type == &Type::List)
 		{
-			out_ << "mov rdi, " << access(symbol.get()) << std::endl;
-			out_ << "call __decref" << std::endl;
+			out_ << "\t" << "mov rdi, " << access(symbol.get()) << std::endl;
+			out_ << "\t" << "call __decref" << std::endl;
 		}
 	}
 
-	out_ << "ret" << std::endl;
+	out_ << "\t" << "ret" << std::endl;
 
 	// All other functions
 	for (FunctionDefNode* function : functionDefs_)
@@ -123,8 +123,8 @@ void CodeGen::visit(ProgramNode* node)
 		currentFunction_ = function->name();
 		out_ << std::endl;
 		out_ << "_" << function->name() << ":" << std::endl;
-		out_ << "push rbp" << std::endl;
-		out_ << "mov rbp, rsp" << std::endl;
+		out_ << "\t" << "push rbp" << std::endl;
+		out_ << "\t" << "mov rbp, rsp" << std::endl;
 
 		// Assign a location for all of the local variables and parameters.
 		int locals = 0;
@@ -137,14 +137,14 @@ void CodeGen::visit(ProgramNode* node)
 				++locals;
 			}
 		}
-		if (locals > 0) out_ << "add rsp, -" << (8 * locals) << std::endl;
+		if (locals > 0) out_ << "\t" << "add rsp, -" << (8 * locals) << std::endl;
 
 		// We have to zero out the local variables for the reference counting
 		// to work correctly
-		out_ << "mov rax, 0" << std::endl;
-		out_ << "mov rcx, " << locals << std::endl;
-		out_ << "mov rdi, rsp" << std::endl;
-		out_ << "rep stosq" << std::endl;
+		out_ << "\t" << "mov rax, 0" << std::endl;
+		out_ << "\t" << "mov rcx, " << locals << std::endl;
+		out_ << "\t" << "mov rdi, rsp" << std::endl;
+		out_ << "\t" << "rep stosq" << std::endl;
 
 		// We gain a reference to all of the parameters passed in
 		for (auto& i : function->scope()->symbols())
@@ -152,8 +152,8 @@ void CodeGen::visit(ProgramNode* node)
 			auto& symbol = i.second;
 			if (symbol->isParam && symbol->type == &Type::List)
 			{
-				out_ << "mov rdi, " << access(symbol.get()) << std::endl;
-				out_ << "call __incref" << std::endl;
+				out_ << "\t" << "mov rdi, " << access(symbol.get()) << std::endl;
+				out_ << "\t" << "call __incref" << std::endl;
 			}
 		}
 
@@ -161,14 +161,14 @@ void CodeGen::visit(ProgramNode* node)
 		AstVisitor::visit(function);
 
 		out_ << "__end_" << function->name() << ":" << std::endl;
-		out_ << "push rax" << std::endl;
+		out_ << "\t" << "push rax" << std::endl;
 
 		// Preserve the return value from being freed if it happens to be the
 		// same as one of the local variables.
 		if (function->symbol()->type == &Type::List)
 		{
-			out_ << "mov rdi, rax" << std::endl;
-			out_ << "call __incref" << std::endl;
+			out_ << "\t" << "mov rdi, rax" << std::endl;
+			out_ << "\t" << "call __incref" << std::endl;
 		}
 
 		// Going out of scope loses a reference to all of the local variables
@@ -177,8 +177,8 @@ void CodeGen::visit(ProgramNode* node)
 			auto& symbol = i.second;
 			if (symbol->type == &Type::List)
 			{
-				out_ << "mov rdi, " << access(symbol.get()) << std::endl;
-				out_ << "call __decref" << std::endl;
+				out_ << "\t" << "mov rdi, " << access(symbol.get()) << std::endl;
+				out_ << "\t" << "call __decref" << std::endl;
 			}
 		}
 
@@ -187,15 +187,15 @@ void CodeGen::visit(ProgramNode* node)
 		// assign it a reference.
 		if (function->symbol()->type == &Type::List)
 		{
-			out_ << "mov rdi, rax" << std::endl;
-			out_ << "call __decref_no_free" << std::endl;
+			out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
+			out_ << "\t" << "call __decref_no_free" << std::endl;
 		}
 
-		out_ << "pop rax" << std::endl;
+		out_ << "\t" << "pop rax" << std::endl;
 
-		out_ << "mov rsp, rbp" << std::endl;
-		out_ << "pop rbp" << std::endl;
-		out_ << "ret" << std::endl;
+		out_ << "\t" << "mov rsp, rbp" << std::endl;
+		out_ << "\t" << "pop rbp" << std::endl;
+		out_ << "\t" << "ret" << std::endl;
 	}
 
 	// Declare global variables in the data segment
@@ -213,19 +213,19 @@ void CodeGen::visit(NotNode* node)
 {
 	// Load the value of the child expression in rax
 	node->child()->accept(this);
-	out_ << "xor rax, 1" << std::endl;
+	out_ << "\t" << "xor rax, 1" << std::endl;
 }
 
 void CodeGen::visit(ConsNode* node)
 {
 	node->rhs()->accept(this);
-	out_ << "push rax" << std::endl;
+	out_ << "\t" << "push rax" << std::endl;
 
 	node->lhs()->accept(this);
-	out_ << "mov rdi, rax" << std::endl;
-	out_ << "pop rsi" << std::endl;
+	out_ << "\t" << "mov rdi, rax" << std::endl;
+	out_ << "\t" << "pop rsi" << std::endl;
 
-	out_ << "call __cons" << std::endl;
+	out_ << "\t" << "call __cons" << std::endl;
 }
 
 void CodeGen::visit(HeadNode* node)
@@ -234,15 +234,15 @@ void CodeGen::visit(HeadNode* node)
 
 	std::string good = uniqueLabel();
 
-	out_ << "cmp rax, 0" << std::endl;
-	out_ << "jne " << good << std::endl;
+	out_ << "\t" << "cmp rax, 0" << std::endl;
+	out_ << "\t" << "jne " << good << std::endl;
 
 	// If the list is null, then fail
-	out_ << "xor rax, rax" << std::endl; // Not necessary, but good to be explicit
-	out_ << "call __die" << std::endl;
+	out_ << "\t" << "xor rax, rax" << std::endl; // Not necessary, but good to be explicit
+	out_ << "\t" << "call __die" << std::endl;
 
 	out_ << good << ":" << std::endl;
-	out_ << "mov rax, qword [rax]" << std::endl;
+	out_ << "\t" << "mov rax, qword [rax]" << std::endl;
 }
 
 void CodeGen::visit(TailNode* node)
@@ -251,15 +251,15 @@ void CodeGen::visit(TailNode* node)
 
 	std::string good = uniqueLabel();
 
-	out_ << "cmp rax, 0" << std::endl;
-	out_ << "jne " << good << std::endl;
+	out_ << "\t" << "cmp rax, 0" << std::endl;
+	out_ << "\t" << "jne " << good << std::endl;
 
 	// If the list is null, then fail
-	out_ << "mov rax, 1" << std::endl; // Not necessary, but good to be explicit
-	out_ << "call __die" << std::endl;
+	out_ << "\t" << "mov rax, 1" << std::endl; // Not necessary, but good to be explicit
+	out_ << "\t" << "call __die" << std::endl;
 
 	out_ << good << ":" << std::endl;
-	out_ << "mov rax, qword [rax + 8]" << std::endl;
+	out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;
 }
 
 void CodeGen::visit(NullNode* node)
@@ -267,19 +267,19 @@ void CodeGen::visit(NullNode* node)
 	std::string finish = uniqueLabel();
 
 	node->child()->accept(this);
-	out_ << "cmp rax, 0" << std::endl;
-	out_ << "je " << finish << std::endl;
-	out_ << "mov rax, 1" << std::endl;
+	out_ << "\t" << "cmp rax, 0" << std::endl;
+	out_ << "\t" << "je " << finish << std::endl;
+	out_ << "\t" << "mov rax, 1" << std::endl;
 	out_ << finish << ":" << std::endl;
-	out_ << "xor rax, 1" << std::endl;
+	out_ << "\t" << "xor rax, 1" << std::endl;
 }
 
 void CodeGen::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
-	out_ << "push rax" << std::endl;
+	out_ << "\t" << "push rax" << std::endl;
 	node->rhs()->accept(this);
-	out_ << "cmp qword [rsp], rax" << std::endl;
+	out_ << "\t" << "cmp qword [rsp], rax" << std::endl;
 
 	std::string trueBranch = uniqueLabel();
 	std::string endLabel = uniqueLabel();
@@ -287,123 +287,123 @@ void CodeGen::visit(ComparisonNode* node)
 	switch(node->op())
 	{
 		case ComparisonNode::kGreater:
-			out_ << "jg near " << trueBranch << std::endl;
+			out_ << "\t" << "jg near " << trueBranch << std::endl;
 			break;
 
 		case ComparisonNode::kLess:
-			out_ << "jl near " << trueBranch << std::endl;
+			out_ << "\t" << "jl near " << trueBranch << std::endl;
 			break;
 
 		case ComparisonNode::kEqual:
-			out_ << "je near " << trueBranch << std::endl;
+			out_ << "\t" << "je near " << trueBranch << std::endl;
 			break;
 
 		case ComparisonNode::kGreaterOrEqual:
-			out_ << "jge near " << trueBranch << std::endl;
+			out_ << "\t" << "jge near " << trueBranch << std::endl;
 			break;
 
 		case ComparisonNode::kLessOrEqual:
-			out_ << "jle near " << trueBranch << std::endl;
+			out_ << "\t" << "jle near " << trueBranch << std::endl;
 			break;
 
 		case ComparisonNode::kNotEqual:
-			out_ << "jne near " << trueBranch << std::endl;
+			out_ << "\t" << "jne near " << trueBranch << std::endl;
 			break;
 
 		default: assert(false);
 
 	}
 
-	out_ << "mov rax, 0" << std::endl;
-	out_ << "jmp " << endLabel << std::endl;
+	out_ << "\t" << "mov rax, 0" << std::endl;
+	out_ << "\t" << "jmp " << endLabel << std::endl;
 	out_ << trueBranch << ":" << std::endl;
-	out_ << "mov rax, 1" << std::endl;
+	out_ << "\t" << "mov rax, 1" << std::endl;
 	out_ << endLabel << ":" << std::endl;
-	out_ << "pop rbx" << std::endl;
+	out_ << "\t" << "pop rbx" << std::endl;
 }
 
 void CodeGen::visit(BinaryOperatorNode* node)
 {
 	node->lhs()->accept(this);
-	out_ << "push rax" << std::endl;
+	out_ << "\t" << "push rax" << std::endl;
 	node->rhs()->accept(this);
 
 	switch (node->op())
 	{
 	case BinaryOperatorNode::kPlus:
-		out_ << "add rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "add rax, qword [rsp]" << std::endl;
 		break;
 
 	case BinaryOperatorNode::kMinus:
-		out_ << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "sub rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "xchg rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "sub rax, qword [rsp]" << std::endl;
 		break;
 
 	case BinaryOperatorNode::kTimes:
-		out_ << "imul rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "imul rax, qword [rsp]" << std::endl;
 		break;
 
 	case BinaryOperatorNode::kDivide:
-		out_ << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "cqo" << std::endl;
-		out_ << "idiv qword [rsp]" << std::endl;
+		out_ << "\t" << "xchg rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "cqo" << std::endl;
+		out_ << "\t" << "idiv qword [rsp]" << std::endl;
 		break;
 
 	case BinaryOperatorNode::kMod:
-		out_ << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "cqo" << std::endl;
-		out_ << "idiv qword [rsp]" << std::endl;
-		out_ << "mov rax, rdx" << std::endl;
+		out_ << "\t" << "xchg rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "cqo" << std::endl;
+		out_ << "\t" << "idiv qword [rsp]" << std::endl;
+		out_ << "\t" << "mov rax, rdx" << std::endl;
 		break;
 	}
 
-	out_ << "pop rbx" << std::endl;
+	out_ << "\t" << "pop rbx" << std::endl;
 }
 
 void CodeGen::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);
-	out_ << "push rax" << std::endl;
+	out_ << "\t" << "push rax" << std::endl;
 	node->rhs()->accept(this);
 
 	switch (node->op())
 	{
 	case LogicalNode::kAnd:
-		out_ << "and rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "and rax, qword [rsp]" << std::endl;
 		break;
 
 	case LogicalNode::kOr:
-		out_ << "or rax, qword [rsp]" << std::endl;
+		out_ << "\t" << "or rax, qword [rsp]" << std::endl;
 		break;
 	}
 
-	out_ << "pop rbx" << std::endl;
+	out_ << "\t" << "pop rbx" << std::endl;
 }
 
 void CodeGen::visit(VariableNode* node)
 {
-	out_ << "mov rax, " << access(node->symbol()) << std::endl;
+	out_ << "\t" << "mov rax, " << access(node->symbol()) << std::endl;
 }
 
 void CodeGen::visit(IntNode* node)
 {
-	out_ << "mov rax, " << node->value() << std::endl;
+	out_ << "\t" << "mov rax, " << node->value() << std::endl;
 }
 
 void CodeGen::visit(NilNode* node)
 {
-	out_ << "mov rax, 0" << std::endl;
+	out_ << "\t" << "mov rax, 0" << std::endl;
 }
 
 void CodeGen::visit(BoolNode* node)
 {
 	if (node->value())
 	{
-		out_ << "mov rax, 1" << std::endl;
+		out_ << "\t" << "mov rax, 1" << std::endl;
 	}
 	else
 	{
-		out_ << "mov rax, 0" << std::endl;
+		out_ << "\t" << "mov rax, 0" << std::endl;
 	}
 }
 
@@ -421,8 +421,8 @@ void CodeGen::visit(IfNode* node)
 
 	std::string endLabel = uniqueLabel();
 
-	out_ << "cmp rax, 0" << std::endl;
-	out_ << "je near " << endLabel << std::endl;
+	out_ << "\t" << "cmp rax, 0" << std::endl;
+	out_ << "\t" << "je near " << endLabel << std::endl;
 	node->body()->accept(this);
 	out_ << endLabel << ":" << std::endl;
 }
@@ -434,10 +434,10 @@ void CodeGen::visit(IfElseNode* node)
 	std::string elseLabel = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 
-	out_ << "cmp rax, 0" << std::endl;
-	out_ << "je near " << elseLabel << std::endl;
+	out_ << "\t" << "cmp rax, 0" << std::endl;
+	out_ << "\t" << "je near " << elseLabel << std::endl;
 	node->body()->accept(this);
-	out_ << "jmp " << endLabel << std::endl;
+	out_ << "\t" << "jmp " << endLabel << std::endl;
 	out_ << elseLabel << ":" << std::endl;
 	node->else_body()->accept(this);
 	out_ << endLabel << ":" << std::endl;
@@ -446,12 +446,12 @@ void CodeGen::visit(IfElseNode* node)
 void CodeGen::visit(PrintNode* node)
 {
 	node->expression()->accept(this);
-	out_ << "call __print" << std::endl;
+	out_ << "\t" << "call __print" << std::endl;
 }
 
 void CodeGen::visit(ReadNode* node)
 {
-	out_ << "call __read" << std::endl;
+	out_ << "\t" << "call __read" << std::endl;
 }
 
 void CodeGen::visit(WhileNode* node)
@@ -462,11 +462,11 @@ void CodeGen::visit(WhileNode* node)
 	out_ << beginLabel << ":" << std::endl;
 	node->condition()->accept(this);
 
-	out_ << "cmp rax, 0" << std::endl;
-	out_ << "je near " << endLabel << std::endl;
+	out_ << "\t" << "cmp rax, 0" << std::endl;
+	out_ << "\t" << "je near " << endLabel << std::endl;
 	node->body()->accept(this);
 
-	out_ << "jmp " << beginLabel << std::endl;
+	out_ << "\t" << "jmp " << beginLabel << std::endl;
 	out_ << endLabel << ":" << std::endl;
 }
 
@@ -478,18 +478,18 @@ void CodeGen::visit(AssignNode* node)
 	// new rhs
 	if (node->symbol()->type == &Type::List)
 	{
-		out_ << "push rax" << std::endl;
+		out_ << "\t" << "push rax" << std::endl;
 
-		out_ << "mov rdi, rax" << std::endl;
-		out_ << "call __incref" << std::endl;
+		out_ << "\t" << "mov rdi, rax" << std::endl;
+		out_ << "\t" << "call __incref" << std::endl;
 
-		out_ << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "call __decref" << std::endl;
+		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
+		out_ << "\t" << "call __decref" << std::endl;
 
-		out_ << "pop rax" << std::endl;
+		out_ << "\t" << "pop rax" << std::endl;
 	}
 
-	out_ << "mov " << access(node->symbol()) << ", rax" << std::endl;
+	out_ << "\t" << "mov " << access(node->symbol()) << ", rax" << std::endl;
 }
 
 void CodeGen::visit(LetNode* node)
@@ -500,18 +500,18 @@ void CodeGen::visit(LetNode* node)
 	// new rhs
 	if (node->symbol()->type == &Type::List)
 	{
-		out_ << "push rax" << std::endl;
+		out_ << "\t" << "push rax" << std::endl;
 
-		out_ << "mov rdi, rax" << std::endl;
-		out_ << "call __incref" << std::endl;
+		out_ << "\t" << "mov rdi, rax" << std::endl;
+		out_ << "\t" << "call __incref" << std::endl;
 
-		out_ << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "call __decref" << std::endl;
+		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
+		out_ << "\t" << "call __decref" << std::endl;
 
-		out_ << "pop rax" << std::endl;
+		out_ << "\t" << "pop rax" << std::endl;
 	}
 
-	out_ << "mov " << access(node->symbol()) << ", rax" << std::endl;
+	out_ << "\t" << "mov " << access(node->symbol()) << ", rax" << std::endl;
 }
 
 void CodeGen::visit(FunctionDefNode* node)
@@ -524,13 +524,13 @@ void CodeGen::visit(FunctionCallNode* node)
 	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
 	{
 		(*i)->accept(this);
-		out_ << "push rax" << std::endl;
+		out_ << "\t" << "push rax" << std::endl;
 	}
 
-	out_ << "call _" << node->target() << std::endl;
+	out_ << "\t" << "call _" << node->target() << std::endl;
 
 	size_t args = node->arguments().size();
-	if (args > 0) out_ << "add rsp, " << 8 * args << std::endl;
+	if (args > 0) out_ << "\t" << "add rsp, " << 8 * args << std::endl;
 }
 
 void CodeGen::visit(ExternalFunctionCallNode* node)
@@ -541,33 +541,33 @@ void CodeGen::visit(ExternalFunctionCallNode* node)
 	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
 	{
 		(*i)->accept(this);
-		out_ << "push rax" << std::endl;
+		out_ << "\t" << "push rax" << std::endl;
 	}
 
 	// x86_64 calling convention for C puts the first 6 arguments in registers
-	if (node->arguments().size() >= 1) out_ << "pop rdi" << std::endl;
-	if (node->arguments().size() >= 2) out_ << "pop rsi" << std::endl;
-	if (node->arguments().size() >= 3) out_ << "pop rdx" << std::endl;
-	if (node->arguments().size() >= 4) out_ << "pop rcx" << std::endl;
-	if (node->arguments().size() >= 5) out_ << "pop r8" << std::endl;
-	if (node->arguments().size() >= 6) out_ << "pop r9" << std::endl;
+	if (node->arguments().size() >= 1) out_ << "\t" << "pop rdi" << std::endl;
+	if (node->arguments().size() >= 2) out_ << "\t" << "pop rsi" << std::endl;
+	if (node->arguments().size() >= 3) out_ << "\t" << "pop rdx" << std::endl;
+	if (node->arguments().size() >= 4) out_ << "\t" << "pop rcx" << std::endl;
+	if (node->arguments().size() >= 5) out_ << "\t" << "pop r8" << std::endl;
+	if (node->arguments().size() >= 6) out_ << "\t" << "pop r9" << std::endl;
 
 	// Realign the stack to 16 bytes (may not be necessary on all platforms)
-    out_ << "mov rbx, rsp" << std::endl;
-    out_ << "and rsp, -16" << std::endl;
-    out_ << "add rsp, -8" << std::endl;
-    out_ << "push rbx" << std::endl;
+    out_ << "\t" << "mov rbx, rsp" << std::endl;
+    out_ << "\t" << "and rsp, -16" << std::endl;
+    out_ << "\t" << "add rsp, -8" << std::endl;
+    out_ << "\t" << "push rbx" << std::endl;
 
-    out_ << "call _" << node->target() << std::endl;
+    out_ << "\t" << "call _" << node->target() << std::endl;
 
     // Undo the stack alignment
-    out_ << "pop rbx" << std::endl;
-    out_ << "mov rsp, rbx" << std::endl;
+    out_ << "\t" << "pop rbx" << std::endl;
+    out_ << "\t" << "mov rsp, rbx" << std::endl;
 }
 
 void CodeGen::visit(ReturnNode* node)
 {
 	node->expression()->accept(this);
 
-	out_ << "jmp __end_" << currentFunction_ << std::endl;
+	out_ << "\t" << "jmp __end_" << currentFunction_ << std::endl;
 }

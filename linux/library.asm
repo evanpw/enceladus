@@ -14,7 +14,8 @@ main:
 __die:
     ;; Print error message based on value of rax
 
-    mov rdi, [__error_messages + 8 * rax]
+    lea rdi, [rel __error_messages]
+    mov rdi, [rdi + 8 * rax]
     call puts
 
     ; Kill the process
@@ -71,7 +72,9 @@ __decref:
     ; then decrement the reference of the next (tail-recursively)
     mov rsi, qword [rdi + 16]
     push rsi
+
     call free
+
     pop rdi
     jmp __decref
 

@@ -24,13 +24,13 @@ __die:
     mov rdi, [rdi + 8 * rax]
     call _puts
 
-    ; Fix stack
-    pop rbx
-    mov rsp, rbx
-
     ; Kill the process
     mov rdi, 1
     call _exit
+
+    ; Fix stack
+    pop rbx
+    mov rsp, rbx
 
     ; Useless
     ret
@@ -82,7 +82,7 @@ __end_incref:
     ret
 
 ; Decrement the reference count of the cons cell at rdi, and if it is zero,
-; then deallocate it (TODO)
+; then deallocate it
 __decref:
     cmp rdi, 0
     je __end_decref
@@ -100,7 +100,18 @@ __decref:
     ; then decrement the reference of the next (tail-recursively)
     mov rsi, qword [rdi + 16]
     push rsi
+
+    ; Realign stack to 16 bytes
+    mov rbx, rsp
+    and rsp, -16
+    add rsp, -8
+    push rbx
+
     call _free
+
+    pop rbx
+    mov rsp, rbx
+
     pop rdi
     jmp __decref
 
@@ -165,8 +176,10 @@ __cons:
     add rax, 8 ; Return a pointer to the actual cell, not the ref count
 
     ; This cons cell has a reference to the next one
+    push rax
     mov rdi, rsi
     call __incref
+    pop rax
 
     mov rsp, rbp
     pop rbp
@@ -178,6 +191,11 @@ __read_format: db "%ld", 0
 __read_result: dq 0
 
 ; Array of error messages for __die
-__error_messages: dq __error_head_empty, __error_tail_empty
+__error_messages:
+    dq __error_head_empty
+    dq __error_tail_empty
+    dq __error_negative_refs
+
 __error_head_empty: db "*** Exception: Called head on empty list", 0
 __error_tail_empty: db "*** Exception: Called tail on empty list", 0
+__error_negative_refs: db "*** Exception: Reference count is negative", 0
