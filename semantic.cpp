@@ -93,7 +93,6 @@ void SemanticPass1::visit(FunctionDefNode* node)
 
 		paramTypes.push_back(type);
 	}
-	node->setParamTypes(paramTypes);
 
 	// Return type must be valid
 	const Type* returnType = Type::lookup(node->typeDecl()->back());
@@ -108,6 +107,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
 	symbol->type = returnType;
 	symbol->arity = node->params().size();
+	symbol->paramTypes = paramTypes;
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 
@@ -132,6 +132,85 @@ void SemanticPass1::visit(FunctionDefNode* node)
 
 	_enclosingFunction = nullptr;
 	exitScope();
+}
+
+void SemanticPass1::visit(ForeignDeclNode* node)
+{
+	// Functions cannot be declared inside of another function
+	if (_enclosingFunction != nullptr)
+	{
+		std::stringstream msg;
+		msg << "foreign function declarations must be at top level.";
+
+		semanticError(node, msg.str());
+		return;
+	}
+
+	// The function name cannot have already been used as something else
+	const std::string& name = node->name();
+	if (searchScopes(name) != nullptr)
+	{
+		std::stringstream msg;
+		msg << "symbol \"" << name << "\" is already defined.";
+		semanticError(node, msg.str());
+
+		return;
+	}
+
+	// Must have a type specified for each parameter + one for return type
+	if (node->typeDecl()->size() != node->params().size() + 1)
+	{
+		std::stringstream msg;
+		msg << "number of types does not match parameter list";
+		semanticError(node, msg.str());
+		return;
+	}
+
+	// We currently only support 6 function arguments for foreign functions
+	// (so that we only have to pass arguments in registers)
+	if (node->params().size() > 6)
+	{
+		std::stringstream msg;
+		msg << "a maximum of 6 arguments is supported for foreign functions.";
+		semanticError(node, msg.str());
+		return;
+	}
+
+	// Parameter types must be valid
+	std::vector<const Type*> paramTypes;
+	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
+	{
+		const std::string& typeName = node->typeDecl()->at(i);
+
+		const Type* type = Type::lookup(typeName);
+		if (type == nullptr)
+		{
+			std::stringstream msg;
+			msg << "unknown parameter type \"" << typeName << "\".";
+			semanticError(node, msg.str());
+			return;
+		}
+
+		paramTypes.push_back(type);
+	}
+
+	// Return type must be valid
+	const Type* returnType = Type::lookup(node->typeDecl()->back());
+	if (returnType == nullptr)
+	{
+		std::stringstream msg;
+		msg << "unknown return type \"" << node->typeDecl()->back() << "\".";
+		semanticError(node, msg.str());
+		return;
+	}
+
+	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
+	symbol->type = returnType;
+	symbol->arity = node->params().size();
+	symbol->isForeign = true;
+	symbol->paramTypes = paramTypes;
+	topScope()->insert(symbol);
+	node->attachSymbol(symbol);
 }
 
 void SemanticPass1::visit(LetNode* node)
@@ -218,51 +297,6 @@ void SemanticPass2::visit(FunctionCallNode* node)
 			std::stringstream msg;
 			msg << "call to \"" << symbol->name << "\" does not respect function arity.";
 			semanticError(node, msg.str());
-		}
-	}
-
-	// Recurse to children
-	AstVisitor::visit(node);
-}
-
-void SemanticPass2::visit(ExternalFunctionCallNode* node)
-{
-	const std::string& name = node->target();
-	Symbol* symbol = searchScopes(name);
-
-	if (symbol == nullptr)
-	{
-		FunctionSymbol* symbol = new FunctionSymbol(name, nullptr, nullptr);
-		symbol->type = &Type::Int;
-		symbol->arity = node->arguments().size();
-		symbol->isExternal = true;
-
-		topScope()->insert(symbol);
-		node->attachSymbol(symbol);
-	}
-	else
-	{
-		if (symbol->kind != kFunction)
-		{
-			std::stringstream msg;
-			msg << "target of external function call \"" << symbol->name << "\" is not a function.";
-
-			semanticError(node, msg.str());
-		}
-		else
-		{
-			FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
-			if (!functionSymbol->isExternal)
-			{
-				std::stringstream msg;
-				msg << "target of external function call \"" << name << "\" is defined locally.";
-
-				semanticError(node, msg.str());
-			}
-			else
-			{
-				node->attachSymbol(functionSymbol);
-			}
 		}
 	}
 
@@ -466,31 +500,17 @@ void TypeChecker::visit(NilNode* node)
 
 void TypeChecker::visit(FunctionCallNode* node)
 {
-	FunctionDefNode* function = static_cast<FunctionDefNode*>(node->symbol()->node);
-
 	// The type of a function call is the return type of the function
 	node->setType(node->symbol()->type);
 
-	assert(function->paramTypes().size() == node->arguments().size());
+	assert(node->symbol()->paramTypes.size() == node->arguments().size());
 	for (size_t i = 0; i < node->arguments().size(); ++i)
 	{
 		AstNode* argument = node->arguments().at(i).get();
-		const Type* type = function->paramTypes().at(i);
+		const Type* type = node->symbol()->paramTypes.at(i);
 
 		argument->accept(this);
 		typeCheck(argument, type);
-	}
-}
-
-void TypeChecker::visit(ExternalFunctionCallNode* node)
-{
-	// FIXME: External function calls always return an Int
-	node->setType(&Type::Int);
-
-	for (size_t i = 0; i < node->arguments().size(); ++i)
-	{
-		// FIXME: No type checking on the arguments
-		node->arguments().at(i)->accept(this);
 	}
 }
 

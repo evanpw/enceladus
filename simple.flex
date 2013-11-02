@@ -84,7 +84,7 @@ int yycolumn = 1;
 "else"		{ return ELSE; }
 "print"		{ return PRINT; }
 "read"		{ return READ; }
-"extern"	{ return EXTERN; }
+"foreign"	{ return FOREIGN; }
 "while"		{ return WHILE; }
 "for"		{ return FOR; }
 "in"		{ return IN; }

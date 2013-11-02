@@ -31,7 +31,6 @@ public:
 	virtual void visit(NilNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
-	virtual void visit(ExternalFunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(ConsNode* node);
 	virtual void visit(HeadNode* node);

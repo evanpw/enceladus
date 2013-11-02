@@ -1,6 +1,7 @@
 #ifndef SYMBOL_HPP
 #define SYMBOL_HPP
 
+#include <vector>
 #include "types.hpp"
 
 class AstNode;
@@ -54,16 +55,18 @@ struct FunctionSymbol : public Symbol
     : Symbol(name, kFunction, node, enclosingFunction)
     , type(&Type::Void)
     , arity(0)
-    , isExternal(false)
+    , isForeign(false)
     {}
 
-    // The return type
+    // Return type
     const Type* type;
+
+    std::vector<const Type*> paramTypes;
 
     unsigned int arity;
 
-    // Is this in an external object file?
-    bool isExternal;    
+    // Externally-linked C argument-passing style
+    bool isForeign;
 };
 
 #endif

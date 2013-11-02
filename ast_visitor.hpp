@@ -21,6 +21,7 @@ class VariableNode;
 class IntNode;
 class BoolNode;
 class FunctionDefNode;
+class ForeignDeclNode;
 class FunctionCallNode;
 class ExternalFunctionCallNode;
 class ReturnNode;
@@ -50,7 +51,6 @@ public:
 	virtual void visit(LetNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
-	virtual void visit(ExternalFunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(HeadNode* node);
 	virtual void visit(TailNode* node);
@@ -63,6 +63,7 @@ public:
 	virtual void visit(BoolNode* node) {}
 	virtual void visit(ParamListNode* node) {}
 	virtual void visit(NilNode* node) {}
+	virtual void visit(ForeignDeclNode* node) {}
 
 protected:
 	Scope* topScope() { return scopes_.back(); }

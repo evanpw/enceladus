@@ -258,30 +258,6 @@ private:
 	FunctionSymbol* symbol_;
 };
 
-class ExternalFunctionCallNode : public ExpressionNode
-{
-public:
-	ExternalFunctionCallNode(const char* target, ArgList* arguments)
-	: target_(target), symbol_(nullptr)
-	{
-		arguments_.reset(arguments);
-	}
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	const std::string& target() { return target_; }
-	ArgList& arguments() { return *arguments_.get(); }
-
-	FunctionSymbol* symbol() { return symbol_; }
-	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
-
-private:
-	std::string target_;
-	std::unique_ptr<ArgList> arguments_;
-
-	FunctionSymbol* symbol_;
-};
-
 class ReadNode : public ExpressionNode
 {
 public:
@@ -444,9 +420,6 @@ public:
 	FunctionSymbol* symbol() { return symbol_; }
 	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
 
-	std::vector<const Type*> paramTypes() const { return paramTypes_; }
-	void setParamTypes(const std::vector<const Type*>& paramTypes) { paramTypes_ = paramTypes; }
-
 private:
 	std::string name_;
 	std::unique_ptr<StatementNode> body_;
@@ -455,6 +428,33 @@ private:
 
 	FunctionSymbol* symbol_;
 	std::unique_ptr<Scope> scope_;
+};
+
+class ForeignDeclNode : public StatementNode
+{
+public:
+	ForeignDeclNode(const char* name, ParamListNode* params, TypeDecl* typeDecl)
+	: name_(name), params_(params), typeDecl_(typeDecl), symbol_(nullptr)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& name() { return name_; }
+	const std::vector<std::string>& params() { return params_->names(); }
+	TypeDecl* typeDecl() { return typeDecl_.get(); }
+
+	FunctionSymbol* symbol() { return symbol_; }
+	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
+
+	std::vector<const Type*> paramTypes() const { return paramTypes_; }
+	void setParamTypes(const std::vector<const Type*>& paramTypes) { paramTypes_ = paramTypes; }
+
+private:
+	std::string name_;
+	std::unique_ptr<ParamListNode> params_;
+	std::unique_ptr<TypeDecl> typeDecl_;
+
+	FunctionSymbol* symbol_;
 
 	std::vector<const Type*> paramTypes_;
 };

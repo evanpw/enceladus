@@ -68,7 +68,7 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 		if (symbol->kind != kFunction) continue;
 
 		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(symbol);
-		if (functionSymbol->isExternal)
+		if (functionSymbol->isForeign)
 		{
 			result.push_back(name);
 		}
@@ -539,42 +539,35 @@ void CodeGen::visit(FunctionCallNode* node)
 		out_ << "\t" << "push rax" << std::endl;
 	}
 
-	out_ << "\t" << "call _" << node->target() << std::endl;
-
-	size_t args = node->arguments().size();
-	if (args > 0) out_ << "\t" << "add rsp, " << 8 * args << std::endl;
-}
-
-void CodeGen::visit(ExternalFunctionCallNode* node)
-{
-	// Should really be handled in semantic analysis
-	assert(node->arguments().size() <= 6);
-
-	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
+	if (node->symbol()->isForeign)
 	{
-		(*i)->accept(this);
-		out_ << "\t" << "push rax" << std::endl;
+		// x86_64 calling convention for C puts the first 6 arguments in registers
+		if (node->arguments().size() >= 1) out_ << "\t" << "pop rdi" << std::endl;
+		if (node->arguments().size() >= 2) out_ << "\t" << "pop rsi" << std::endl;
+		if (node->arguments().size() >= 3) out_ << "\t" << "pop rdx" << std::endl;
+		if (node->arguments().size() >= 4) out_ << "\t" << "pop rcx" << std::endl;
+		if (node->arguments().size() >= 5) out_ << "\t" << "pop r8" << std::endl;
+		if (node->arguments().size() >= 6) out_ << "\t" << "pop r9" << std::endl;
+
+		// Realign the stack to 16 bytes (may not be necessary on all platforms)
+	    out_ << "\t" << "mov rbx, rsp" << std::endl;
+	    out_ << "\t" << "and rsp, -16" << std::endl;
+	    out_ << "\t" << "add rsp, -8" << std::endl;
+	    out_ << "\t" << "push rbx" << std::endl;
+
+	    out_ << "\t" << "call _" << node->target() << std::endl;
+
+	    // Undo the stack alignment
+	    out_ << "\t" << "pop rbx" << std::endl;
+	    out_ << "\t" << "mov rsp, rbx" << std::endl;
 	}
+	else
+	{
+		out_ << "\t" << "call _" << node->target() << std::endl;
 
-	// x86_64 calling convention for C puts the first 6 arguments in registers
-	if (node->arguments().size() >= 1) out_ << "\t" << "pop rdi" << std::endl;
-	if (node->arguments().size() >= 2) out_ << "\t" << "pop rsi" << std::endl;
-	if (node->arguments().size() >= 3) out_ << "\t" << "pop rdx" << std::endl;
-	if (node->arguments().size() >= 4) out_ << "\t" << "pop rcx" << std::endl;
-	if (node->arguments().size() >= 5) out_ << "\t" << "pop r8" << std::endl;
-	if (node->arguments().size() >= 6) out_ << "\t" << "pop r9" << std::endl;
-
-	// Realign the stack to 16 bytes (may not be necessary on all platforms)
-    out_ << "\t" << "mov rbx, rsp" << std::endl;
-    out_ << "\t" << "and rsp, -16" << std::endl;
-    out_ << "\t" << "add rsp, -8" << std::endl;
-    out_ << "\t" << "push rbx" << std::endl;
-
-    out_ << "\t" << "call _" << node->target() << std::endl;
-
-    // Undo the stack alignment
-    out_ << "\t" << "pop rbx" << std::endl;
-    out_ << "\t" << "mov rsp, rbx" << std::endl;
+		size_t args = node->arguments().size();
+		if (args > 0) out_ << "\t" << "add rsp, " << 8 * args << std::endl;
+	}
 }
 
 void CodeGen::visit(ReturnNode* node)

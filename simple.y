@@ -42,7 +42,7 @@ void yyerror(const char* msg);
 
 %token ERROR
 %token IF THEN ELSE
-%token PRINT READ EXTERN
+%token PRINT READ FOREIGN
 %token LET
 %token NOT AND OR MOD EQUALS
 %token RETURN
@@ -128,6 +128,10 @@ statement: IF expression THEN suite
 	| DEF IDENT parameters DCOLON typedecl '=' suite
 		{
 			$$ = new FunctionDefNode($2, $7, $3, $5);
+		}
+	| FOREIGN IDENT parameters DCOLON typedecl EOL
+		{
+			$$ = new ForeignDeclNode($2, $3, $5);
 		}
 	| RETURN expression EOL
 		{
@@ -285,10 +289,6 @@ fexpression: simple_expression
 	| IDENT arg_list
 		{
 			$$ = new FunctionCallNode($1, $2);
-		}
-	| EXTERN IDENT arg_list
-		{
-			$$ = new ExternalFunctionCallNode($2, $3);
 		}
 
 arg_list: simple_expression
