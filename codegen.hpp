@@ -40,7 +40,7 @@ public:
 
 	// Generate a code fragment to access the symbol with the given name in the
 	// current scope.
-	std::string access(const Symbol* symbol);
+	std::string access(const VariableSymbol* symbol);
 
 	// Gets the list of all external symbols which are referenced in this module
 	std::vector<std::string> getExterns(ProgramNode* node);

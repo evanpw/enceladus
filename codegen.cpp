@@ -6,10 +6,8 @@
 #include "scope.hpp"
 #include "simple.tab.h"
 
-std::string CodeGen::access(const Symbol* symbol)
+std::string CodeGen::access(const VariableSymbol* symbol)
 {
-	assert(symbol->kind == kVariable);
-
 	FunctionDefNode* enclosingFunction = symbol->enclosingFunction;
 
 	// Global symbol
@@ -24,7 +22,7 @@ std::string CodeGen::access(const Symbol* symbol)
 	{
 		if (symbol->isParam)
 		{
-			// Symbols should not be assigned a place among the local variables.
+			// Parameters should not be assigned a place among the local variables.
 			assert(symbol->offset == 0);
 
 			auto paramList = enclosingFunction->params();
@@ -65,9 +63,12 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 	for (auto& i : node->scope()->symbols())
 	{
 		const std::string& name = i.first;
-		auto& symbol = i.second;
+		const Symbol* symbol = i.second.get();
 
-		if (symbol->isExternal)
+		if (symbol->kind != kFunction) continue;
+
+		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(symbol);
+		if (functionSymbol->isExternal)
 		{
 			result.push_back(name);
 		}
@@ -107,10 +108,15 @@ void CodeGen::visit(ProgramNode* node)
 	// happy
 	for (auto& i : topScope()->symbols())
 	{
-		auto& symbol = i.second;
-		if (symbol->kind == kVariable && symbol->type == &Type::List)
+		const Symbol* symbol = i.second.get();
+
+		if (symbol->kind != kVariable) continue;
+
+		const VariableSymbol* variableSymbol = static_cast<const VariableSymbol*>(symbol);
+
+		if (variableSymbol->type == &Type::List)
 		{
-			out_ << "\t" << "mov rdi, " << access(symbol.get()) << std::endl;
+			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
 			out_ << "\t" << "call __decref" << std::endl;
 		}
 	}
@@ -130,7 +136,9 @@ void CodeGen::visit(ProgramNode* node)
 		int locals = 0;
 		for (auto& i : function->scope()->symbols())
 		{
-			auto& symbol = i.second;
+			assert(i.second->kind == kVariable); // No locally functions yet
+
+			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
 			if (!symbol->isParam)
 			{
 				symbol->offset = 8 * (locals + 1);
@@ -149,10 +157,12 @@ void CodeGen::visit(ProgramNode* node)
 		// We gain a reference to all of the parameters passed in
 		for (auto& i : function->scope()->symbols())
 		{
-			auto& symbol = i.second;
+			assert(i.second->kind == kVariable);
+
+			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
 			if (symbol->isParam && symbol->type == &Type::List)
 			{
-				out_ << "\t" << "mov rdi, " << access(symbol.get()) << std::endl;
+				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
 				out_ << "\t" << "call __incref" << std::endl;
 			}
 		}
@@ -174,10 +184,12 @@ void CodeGen::visit(ProgramNode* node)
 		// Going out of scope loses a reference to all of the local variables
 		for (auto& i : function->scope()->symbols())
 		{
-			auto& symbol = i.second;
+			assert(i.second->kind == kVariable);
+
+			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
 			if (symbol->type == &Type::List)
 			{
-				out_ << "\t" << "mov rdi, " << access(symbol.get()) << std::endl;
+				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
 				out_ << "\t" << "call __decref" << std::endl;
 			}
 		}

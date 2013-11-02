@@ -195,13 +195,13 @@ public:
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const std::string& name() { return name_; }
-	const Symbol* symbol() { return symbol_; }
+	const VariableSymbol* symbol() { return symbol_; }
 
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
 
 private:
 	std::string name_;
-	Symbol* symbol_;
+	VariableSymbol* symbol_;
 };
 
 class IntNode : public ExpressionNode
@@ -248,14 +248,14 @@ public:
 	const std::string& target() { return target_; }
 	ArgList& arguments() { return *arguments_.get(); }
 
-	Symbol* symbol() { return symbol_; }
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+	FunctionSymbol* symbol() { return symbol_; }
+	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
 
 private:
 	std::string target_;
 	std::unique_ptr<ArgList> arguments_;
 
-	Symbol* symbol_;
+	FunctionSymbol* symbol_;
 };
 
 class ExternalFunctionCallNode : public ExpressionNode
@@ -272,14 +272,14 @@ public:
 	const std::string& target() { return target_; }
 	ArgList& arguments() { return *arguments_.get(); }
 
-	Symbol* symbol() { return symbol_; }
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+	FunctionSymbol* symbol() { return symbol_; }
+	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
 
 private:
 	std::string target_;
 	std::unique_ptr<ArgList> arguments_;
 
-	Symbol* symbol_;
+	FunctionSymbol* symbol_;
 };
 
 class ReadNode : public ExpressionNode
@@ -378,14 +378,14 @@ public:
 	const std::string& target() { return target_; }
 	ExpressionNode* value() { return value_.get(); }
 
-	Symbol* symbol() { return symbol_; }
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+	VariableSymbol* symbol() { return symbol_; }
+	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
 
 private:
 	std::string target_;
 	std::unique_ptr<ExpressionNode> value_;
 
-	Symbol* symbol_;
+	VariableSymbol* symbol_;
 };
 
 class LetNode : public StatementNode
@@ -401,16 +401,15 @@ public:
 	const std::string& typeDecl() { return typeDecl_; }
 	ExpressionNode* value() { return value_.get(); }
 
-	Symbol* symbol() { return symbol_; }
-
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+	VariableSymbol* symbol() { return symbol_; }
+	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
 
 private:
 	std::string target_;
 	std::string typeDecl_;
 	std::unique_ptr<ExpressionNode> value_;
 
-	Symbol* symbol_;
+	VariableSymbol* symbol_;
 };
 
 class ParamListNode : public AstNode
@@ -442,8 +441,8 @@ public:
 
 	Scope* scope() { return scope_.get(); }
 
-	Symbol* symbol() { return symbol_; }
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+	FunctionSymbol* symbol() { return symbol_; }
+	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
 
 	std::vector<const Type*> paramTypes() const { return paramTypes_; }
 	void setParamTypes(const std::vector<const Type*>& paramTypes) { paramTypes_ = paramTypes; }
@@ -454,7 +453,7 @@ private:
 	std::unique_ptr<ParamListNode> params_;
 	std::unique_ptr<TypeDecl> typeDecl_;
 
-	Symbol* symbol_;
+	FunctionSymbol* symbol_;
 	std::unique_ptr<Scope> scope_;
 
 	std::vector<const Type*> paramTypes_;

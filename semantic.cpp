@@ -105,7 +105,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 		return;
 	}
 
-	Symbol* symbol = new Symbol(name, kFunction, node, _enclosingFunction);
+	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
 	symbol->type = returnType;
 	symbol->arity = node->params().size();
 	topScope()->insert(symbol);
@@ -121,7 +121,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 		const std::string& param = node->params().at(i);
 		const Type* paramType = paramTypes[i];
 
-		Symbol* paramSymbol = new Symbol(param, kVariable, node, node);
+		VariableSymbol* paramSymbol = new VariableSymbol(param, node, node);
 		paramSymbol->isParam = true;
 		paramSymbol->type = paramType;
 		topScope()->insert(paramSymbol);
@@ -138,11 +138,10 @@ void SemanticPass1::visit(LetNode* node)
 {
 	const std::string& target = node->target();
 
-	Symbol* symbol = topScope()->find(target);
-	if (symbol != nullptr)
+	if (topScope()->find(target) != nullptr)
 	{
 		std::stringstream msg;
-		msg << "symbol \"" << symbol->name << "\" already declared in this scope.";
+		msg << "symbol \"" << target << "\" already declared in this scope.";
 		semanticError(node, msg.str());
 		return;
 	}
@@ -156,7 +155,7 @@ void SemanticPass1::visit(LetNode* node)
 		return;
 	}
 
-	symbol = new Symbol(target, kVariable, node, _enclosingFunction);
+	VariableSymbol* symbol = new VariableSymbol(target, node, _enclosingFunction);
 	symbol->type = type;
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
@@ -177,8 +176,14 @@ void SemanticPass2::visit(AssignNode* node)
 		semanticError(node, msg.str());
 		return;
 	}
+	else if (symbol->kind != kVariable)
+	{
+		std::stringstream msg;
+		msg << "target of assignment \"" << target << "\" is not a variable.";
+		semanticError(node, msg.str());
+	}
 
-	node->attachSymbol(symbol);
+	node->attachSymbol(static_cast<VariableSymbol*>(symbol));
 
 	// Recurse to children
 	AstVisitor::visit(node);
@@ -205,9 +210,10 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	}
 	else
 	{
-		node->attachSymbol(symbol);
+		FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
+		node->attachSymbol(functionSymbol);
 
-		if (symbol->arity != node->arguments().size())
+		if (functionSymbol->arity != node->arguments().size())
 		{
 			std::stringstream msg;
 			msg << "call to \"" << symbol->name << "\" does not respect function arity.";
@@ -226,7 +232,7 @@ void SemanticPass2::visit(ExternalFunctionCallNode* node)
 
 	if (symbol == nullptr)
 	{
-		Symbol* symbol = new Symbol(name, kFunction, nullptr, nullptr);
+		FunctionSymbol* symbol = new FunctionSymbol(name, nullptr, nullptr);
 		symbol->type = &Type::Int;
 		symbol->arity = node->arguments().size();
 		symbol->isExternal = true;
@@ -236,13 +242,17 @@ void SemanticPass2::visit(ExternalFunctionCallNode* node)
 	}
 	else
 	{
-		if (symbol->isExternal)
+		if (symbol->kind != kFunction)
 		{
-			node->attachSymbol(symbol);
+			std::stringstream msg;
+			msg << "target of external function call \"" << symbol->name << "\" is not a function.";
+
+			semanticError(node, msg.str());
 		}
 		else
 		{
-			if (symbol->kind == kFunction)
+			FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
+			if (!functionSymbol->isExternal)
 			{
 				std::stringstream msg;
 				msg << "target of external function call \"" << name << "\" is defined locally.";
@@ -251,10 +261,7 @@ void SemanticPass2::visit(ExternalFunctionCallNode* node)
 			}
 			else
 			{
-				std::stringstream msg;
-				msg << "target of external function call \"" << symbol->name << "\" is not a function.";
-
-				semanticError(node, msg.str());
+				node->attachSymbol(functionSymbol);
 			}
 		}
 	}
@@ -278,7 +285,7 @@ void SemanticPass2::visit(VariableNode* node)
 			semanticError(node, msg.str());
 		}
 
-		node->attachSymbol(symbol);
+		node->attachSymbol(static_cast<VariableSymbol*>(symbol));
 	}
 	else
 	{
@@ -459,7 +466,7 @@ void TypeChecker::visit(NilNode* node)
 
 void TypeChecker::visit(FunctionCallNode* node)
 {
-	FunctionDefNode* function = dynamic_cast<FunctionDefNode*>(node->symbol()->node);
+	FunctionDefNode* function = static_cast<FunctionDefNode*>(node->symbol()->node);
 
 	// The type of a function call is the return type of the function
 	node->setType(node->symbol()->type);

@@ -15,15 +15,11 @@ struct Symbol
     , kind(kind)
     , node(node)
     , enclosingFunction(enclosingFunction)
-    , isParam(false)
-    , offset(0)
-    , type(&Type::Void)
-    , isExternal(false)
     {}
 
     std::string name;
 
-    // Label, variable, function, ...?
+    // Variable, function, ...?
     Kind kind;
 
     // The node at which this symbol is first declared.
@@ -31,6 +27,16 @@ struct Symbol
 
     // If a global symbol, then null
     FunctionDefNode* enclosingFunction;
+};
+
+struct VariableSymbol : public Symbol
+{
+    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
+    : Symbol(name, kVariable, node, enclosingFunction)
+    , isParam(false)
+    , offset(0)
+    , type(&Type::Void)
+    {}
 
     // Is this symbol a function parameter?
     bool isParam;
@@ -39,14 +45,25 @@ struct Symbol
     // the local variables.
     int offset;
 
-    // For variables, the type; for functions, the type of the return value
+    const Type* type;
+};
+
+struct FunctionSymbol : public Symbol
+{
+    FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
+    : Symbol(name, kFunction, node, enclosingFunction)
+    , type(&Type::Void)
+    , arity(0)
+    , isExternal(false)
+    {}
+
+    // The return type
     const Type* type;
 
-    // Valid only for functions
     unsigned int arity;
 
     // Is this in an external object file?
-    bool isExternal;
+    bool isExternal;    
 };
 
 #endif
