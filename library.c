@@ -67,7 +67,7 @@ void _decref(long* p)
 
     if (*refCount == 0)
     {
-        void* next = p + 1;
+        long* next = (long*)*(p + 1);
         free(refCount);
 
         _decref(next);
@@ -99,8 +99,23 @@ long* Cons(long value, long* next)
     *(newCell + 1) = value;
     *(newCell + 2) = (long)next;
 
-    _incref(newCell + 1);
+    _incref(next);
 
     return newCell + 1;
+}
+
+long* Tree(long value, long* left, long* right)
+{
+    long* newTree = (long*)malloc(32);
+
+    *newTree = 0;
+    *(newTree + 1) = value;
+    *(newTree + 2) = (long)left;
+    *(newTree + 3) = (long)right;
+
+    _incref(left);
+    _incref(right);
+
+    return newTree + 1;
 }
 
