@@ -60,6 +60,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	print->arity = 1;
 	print->paramTypes.push_back(&Type::Int);
 	print->isExternal = true;
+	print->isForeign = true;
 	scope->insert(print);
 
 	FunctionSymbol* cons = new FunctionSymbol("_cons", node, nullptr);

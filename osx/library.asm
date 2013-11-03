@@ -53,29 +53,6 @@ __read:
     mov rax, [rel __read_result]
     ret
 
-; Print the argument (an integer) followed by a newline
-_print:
-    push rbp
-    mov rbp, rsp
-
-    ; Realign stack to 16 bytes
-    mov rbx, rsp
-    and rsp, -16
-    add rsp, -8
-    push rbx
-
-    mov rsi, qword [rbp  + 16]
-    lea rdi, [rel __format]
-    xor rax, rax
-    call _printf
-
-    pop rbx
-    mov rsp, rbx
-
-    mov rsp, rbp
-    pop rbp
-    ret
-
 ; Increment the reference count of the cons cell at rdi
 __incref:
     cmp rdi, 0
