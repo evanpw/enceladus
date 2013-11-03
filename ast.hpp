@@ -171,21 +171,21 @@ protected:
 	std::unique_ptr<ExpressionNode> rhs_;
 };
 
-class VariableNode : public ExpressionNode
+class NullaryNode : public ExpressionNode
 {
 public:
-	VariableNode(const char* name) : name_(name), symbol_(nullptr) {}
+	NullaryNode(const char* name) : name_(name), symbol_(nullptr) {}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const std::string& name() { return name_; }
-	const VariableSymbol* symbol() { return symbol_; }
+	const Symbol* symbol() { return symbol_; }
 
-	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
 	std::string name_;
-	VariableSymbol* symbol_;
+	Symbol* symbol_;
 };
 
 class IntNode : public ExpressionNode
@@ -240,12 +240,6 @@ private:
 	std::unique_ptr<ArgList> arguments_;
 
 	FunctionSymbol* symbol_;
-};
-
-class ReadNode : public ExpressionNode
-{
-public:
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 };
 
 

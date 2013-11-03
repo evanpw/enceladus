@@ -37,15 +37,13 @@ void _die(long errorCode)
     exit(1);
 }
 
-/*
-long _read()
+long read()
 {
     long result;
     scanf("%ld", &result);
 
     return result;
 }
-*/
 
 void print(long value)
 {

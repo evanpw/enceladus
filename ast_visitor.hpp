@@ -12,10 +12,9 @@ class LogicalNode;
 class BlockNode;
 class IfNode;
 class IfElseNode;
-class ReadNode;
 class WhileNode;
 class AssignNode;
-class VariableNode;
+class NullaryNode;
 class IntNode;
 class BoolNode;
 class FunctionDefNode;
@@ -53,8 +52,7 @@ public:
 	virtual void visit(NullNode* node);
 
 	// Leaf nodes
-	virtual void visit(ReadNode* node) {}
-	virtual void visit(VariableNode* node) {}
+	virtual void visit(NullaryNode* node) {}
 	virtual void visit(IntNode* node) {}
 	virtual void visit(BoolNode* node) {}
 	virtual void visit(ParamListNode* node) {}

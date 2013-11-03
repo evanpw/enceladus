@@ -392,9 +392,19 @@ void CodeGen::visit(LogicalNode* node)
 	out_ << "\t" << "pop rbx" << std::endl;
 }
 
-void CodeGen::visit(VariableNode* node)
+void CodeGen::visit(NullaryNode* node)
 {
-	out_ << "\t" << "mov rax, " << access(node->symbol()) << std::endl;
+	assert(node->symbol()->kind == kVariable || node->symbol()->kind == kFunction);
+
+	if (node->symbol()->kind == kVariable)
+	{
+		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol());
+		out_ << "\t" << "mov rax, " << access(symbol) << std::endl;
+	}
+	else
+	{
+		out_ << "\t" << "call _" << node->name() << std::endl;
+	}
 }
 
 void CodeGen::visit(IntNode* node)
@@ -453,11 +463,6 @@ void CodeGen::visit(IfElseNode* node)
 	out_ << elseLabel << ":" << std::endl;
 	node->else_body()->accept(this);
 	out_ << endLabel << ":" << std::endl;
-}
-
-void CodeGen::visit(ReadNode* node)
-{
-	out_ << "\t" << "call __read" << std::endl;
 }
 
 void CodeGen::visit(WhileNode* node)

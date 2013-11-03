@@ -44,12 +44,12 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
     newBody->append(
         new LetNode(loopVar, "Int",          // FIXME: Lists of other types
             new HeadNode(
-                new VariableNode(listVar.c_str()))));
+                new NullaryNode(listVar.c_str()))));
     newBody->append(body);
     newBody->append(
         new AssignNode(listVar.c_str(),
             new TailNode(
-                new VariableNode(listVar.c_str()))));
+                new NullaryNode(listVar.c_str()))));
 
     BlockNode* forNode = new BlockNode;
     forNode->append(new LetNode(listVar.c_str(), "List", list));
@@ -57,7 +57,7 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
         new WhileNode(
             new NotNode(
                 new NullNode(
-                    new VariableNode(listVar.c_str()))),
+                    new NullaryNode(listVar.c_str()))),
         newBody));
 
     return forNode;

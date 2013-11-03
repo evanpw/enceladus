@@ -26,7 +26,6 @@ build/%.d: %.cpp
 		rm -f $@.$$$$
 
 simplec: build/simple.tab.o build/lex.yy.o $(OBJECTS)
-	echo $^
 	$(CC) $(LDFLAGS) $^ -o simplec
 
 -include $(patsubst %.cpp,build/%.d,$(SOURCES))

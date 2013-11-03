@@ -42,7 +42,7 @@ void yyerror(const char* msg);
 
 %token ERROR
 %token IF THEN ELSE
-%token READ FOREIGN
+%token FOREIGN
 %token LET
 %token NOT AND OR MOD EQUALS
 %token RETURN
@@ -107,19 +107,19 @@ statement: IF expression THEN suite
 		}
 	| IDENT PLUS_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kPlus, $3));
+			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kPlus, $3));
 		}
 	| IDENT MINUS_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kMinus, $3));
+			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kMinus, $3));
 		}
 	| IDENT TIMES_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kTimes, $3));
+			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kTimes, $3));
 		}
 	| IDENT DIV_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new VariableNode($1), BinaryOperatorNode::kDivide, $3));
+			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kDivide, $3));
 		}
 	| DEF IDENT parameters DCOLON typedecl '=' suite
 		{
@@ -306,17 +306,13 @@ arg_list: simple_expression
             $$ = $1;
         }
 
-simple_expression: READ
-		{
-			$$ = new ReadNode;
-		}
-	| '(' expression ')'
+simple_expression: '(' expression ')'
 		{
 			$$ = $2;
 		}
 	| IDENT
 		{
-			$$ = new VariableNode($1);
+			$$ = new NullaryNode($1);
 		}
 	| INT_LIT
 		{

@@ -49,10 +49,11 @@ void SemanticPass1::visit(ProgramNode* node)
 	Scope* scope = node->scope();
 
 	// Create symbols for built-in functions
-	FunctionSymbol* read = new FunctionSymbol("_read", node, nullptr);
+	FunctionSymbol* read = new FunctionSymbol("read", node, nullptr);
 	read->type = &Type::Int;
 	read->arity = 0;
 	read->isExternal = true;
+	read->isForeign = true;
 	scope->insert(read);
 
 	FunctionSymbol* print = new FunctionSymbol("print", node, nullptr);
@@ -367,22 +368,24 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	AstVisitor::visit(node);
 }
 
-void SemanticPass2::visit(VariableNode* node)
+void SemanticPass2::visit(NullaryNode* node)
 {
 	const std::string& name = node->name();
 
 	Symbol* symbol = searchScopes(name);
 	if (symbol != nullptr)
 	{
-		if (symbol->kind != kVariable)
+		if (symbol->kind == kVariable || symbol->kind == kFunction)
+		{
+			node->attachSymbol(symbol);
+		}
+		else
 		{
 			std::stringstream msg;
-			msg << "symbol \"" << name << "\" is not a variable.";
+			msg << "symbol \"" << name << "\" is not a variable or a function.";
 
 			semanticError(node, msg.str());
 		}
-
-		node->attachSymbol(static_cast<VariableSymbol*>(symbol));
 	}
 	else
 	{
@@ -506,11 +509,6 @@ void TypeChecker::visit(IfElseNode* node)
 	node->else_body()->accept(this);
 }
 
-void TypeChecker::visit(ReadNode* node)
-{
-	node->setType(&Type::Int);
-}
-
 void TypeChecker::visit(WhileNode* node)
 {
 	node->condition()->accept(this);
@@ -526,7 +524,7 @@ void TypeChecker::visit(AssignNode* node)
 }
 
 // Leaf nodes
-void TypeChecker::visit(VariableNode* node)
+void TypeChecker::visit(NullaryNode* node)
 {
 	node->setType(node->symbol()->type);
 }

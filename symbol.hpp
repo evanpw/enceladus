@@ -16,6 +16,7 @@ struct Symbol
     , kind(kind)
     , node(node)
     , enclosingFunction(enclosingFunction)
+    , type(&Type::Void)
     {}
 
     std::string name;
@@ -28,6 +29,9 @@ struct Symbol
 
     // If a global symbol, then null
     FunctionDefNode* enclosingFunction;
+
+    // Variable type or function return type
+    const Type* type;
 };
 
 struct VariableSymbol : public Symbol
@@ -36,7 +40,6 @@ struct VariableSymbol : public Symbol
     : Symbol(name, kVariable, node, enclosingFunction)
     , isParam(false)
     , offset(0)
-    , type(&Type::Void)
     {}
 
     // Is this symbol a function parameter?
@@ -45,21 +48,15 @@ struct VariableSymbol : public Symbol
     // Used by the code generator to assign a place on the stack (relative to rbp) for all of
     // the local variables.
     int offset;
-
-    const Type* type;
 };
 
 struct FunctionSymbol : public Symbol
 {
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
     : Symbol(name, kFunction, node, enclosingFunction)
-    , type(&Type::Void)
     , arity(0)
     , isForeign(false)
     {}
-
-    // Return type
-    const Type* type;
 
     std::vector<const Type*> paramTypes;
 
