@@ -177,7 +177,7 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->isParam && symbol->type == &Type::List)
+			if (symbol->isParam && !symbol->type->isSimple())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
 				out_ << "\t" << "call __incref" << std::endl;
@@ -192,7 +192,7 @@ void CodeGen::visit(ProgramNode* node)
 
 		// Preserve the return value from being freed if it happens to be the
 		// same as one of the local variables.
-		if (function->symbol()->type == &Type::List)
+		if (!function->symbol()->type->isSimple())
 		{
 			out_ << "\t" << "mov rdi, rax" << std::endl;
 			out_ << "\t" << "call __incref" << std::endl;
@@ -214,7 +214,7 @@ void CodeGen::visit(ProgramNode* node)
 		// But after the function returns, we don't have a reference to the
 		// return value, it's just in a temporary. The caller will have to
 		// assign it a reference.
-		if (function->symbol()->type == &Type::List)
+		if (!function->symbol()->type->isSimple())
 		{
 			out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
 			out_ << "\t" << "call __decrefNoFree" << std::endl;

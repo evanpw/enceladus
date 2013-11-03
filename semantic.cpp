@@ -460,7 +460,14 @@ void TypeChecker::visit(TailNode* node)
 void TypeChecker::visit(NullNode* node)
 {
 	node->child()->accept(this);
-	typeCheck(node->child(), &Type::List);
+
+	// FIXME: This should probably be done in a better way
+	if (node->child()->type()->isSimple())
+	{
+		std::stringstream msg;
+		msg << "cannot call null on simple type " << node->child()->type()->name();
+		semanticError(node, msg.str());
+	}
 
 	node->setType(&Type::Bool);
 }
