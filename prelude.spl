@@ -8,11 +8,157 @@ foreign print x :: Int -> Void
 -- Tree functions
 foreign Node x l r :: Int -> Tree -> Tree -> Tree
 foreign Empty :: Tree
-foreign top x :: Tree -> Int
-foreign left x :: Tree -> Tree
-foreign right x :: Tree -> Tree
+foreign top t :: Tree -> Int
+foreign left t :: Tree -> Tree
+foreign right t :: Tree -> Tree
+foreign count t :: Tree -> Int
 
 ---- Native-language standard library
+
+---- Set functions (see http://groups.csail.mit.edu/mac/users/adams/BB/92-10.ps)
+
+-- Rotations
+def Set.singleL a x r :: Int -> Tree -> Tree -> Tree =
+    let b :: Int = top r
+    let y :: Tree = left r
+    let z :: Tree = right r
+
+    return Node b (Node a x y) z
+
+def Set.singleR b l z :: Int -> Tree -> Tree -> Tree =
+    let a :: Int = top l
+    let x :: Tree = left l
+    let y :: Tree = right l
+
+    return Node a x (Node b y z)
+
+def Set.doubleL a x r :: Int -> Tree -> Tree -> Tree =
+    let c :: Int = top r
+    let lr :: Tree = left r
+    let b :: Int = top lr
+    let y1 :: Tree = left lr
+    let y2 :: Tree = right lr
+    let z :: Tree = right r
+
+    return Node b (Node a x y1) (Node c y2 z)
+
+def Set.doubleR c l z :: Int -> Tree -> Tree -> Tree =
+    let a :: Int = top l
+    let x :: Tree = left l
+    let rl :: Tree = right l
+    let b :: Int = top rl
+    let y1 :: Tree = left rl
+    let y2 :: Tree = right rl
+
+    return Node b (Node a x y1) (Node c y2 z)
+
+-- Special constructor for self-balancing trees
+def Set.balancedNode v l r :: Int -> Tree -> Tree -> Tree =
+    let ln :: Int = count l
+    let rn :: Int = count r
+
+    if ln + rn < 2 then
+        return Node v l r
+    else if rn > 4 * ln then
+        let rl :: Tree = left r
+        let rr :: Tree = right r
+        let rln :: Int = count rl
+        let rrn :: Int = count rr
+
+        if rln < rrn then
+            return Set.singleL v l r
+        else
+            return Set.doubleL v l r
+    else if ln > 4 * rn then
+        let ll :: Tree = left l
+        let lr :: Tree = right l
+        let lln :: Int = count ll
+        let lrn :: Int = count lr
+
+        if lrn < lln then
+            return Set.singleR v l r
+        else
+            return Set.doubleR v l r
+    else
+        return Node v l r
+
+-- Actual Set functions
+def Set.empty :: Tree =
+    return Empty
+
+def Set.insert x set :: Int -> Tree -> Tree =
+    if null set then
+        return Node x Empty Empty
+
+    let current :: Int = top set
+    if x == current then
+        return set
+    else if x < current then
+        return Set.balancedNode current (Set.insert x (left set)) (right set)
+    else -- x > head
+        return Set.balancedNode current (left set) (Set.insert x (right set))
+
+def Set.findMin set :: Tree -> Int =
+    -- TODO: Check for empty set and die
+    if null (left set) then
+        return top set
+    else
+        return Set.findMin $ left set
+
+def Set.deleteMin set :: Tree -> Tree =
+    -- TODO: Check for empty set and die
+    if null left set then
+        return right set
+    else
+        return Set.balancedNode (top set) (Set.deleteMin $ left set) (right set)
+
+def Set.findMax set :: Tree -> Int =
+    -- TODO: Check for empty set and die
+    if null right set then
+        return top set
+    else
+        return Set.findMax $ right set
+
+def Set.deleteMax set :: Tree -> Tree =
+    -- TODO: Check for empty set and die
+    if null right set then
+        return left set
+    else
+        return Set.balancedNode (top set) (left set) (Set.deleteMax $ right set)
+
+def Set.delete x set :: Int -> Tree -> Tree =
+    if null set then
+        return Empty
+
+    let value :: Int = top set
+    if x < value then
+        return Set.balancedNode value (Set.delete x (left set)) (right set)
+    else if x > value then
+        return Set.balancedNode value (left set) (Set.delete x (right set))
+    else -- x == value
+        if null right set then
+            return left
+        else if null left set then
+            return right
+        else
+            let newHead :: Int = Set.findMin $ right set
+            return Set.balancedNode newHead (left set) (Set.deleteMin $ right set)
+
+def Set.fromList xs :: List -> Tree =
+    let result :: Tree = Set.empty
+    while not null xs do
+        result = Set.insert (head xs) result
+        xs = tail xs
+
+    return result
+
+def Set.toList set :: Tree -> List =
+    if null set then
+        return []
+    else
+        return (Set.findMin set) : Set.toList $ Set.deleteMin set
+
+-- Miscellanous functions
 def range a b :: Int -> Int -> List =
     let xs :: List = []
 

@@ -113,26 +113,6 @@ long* Cons(long value, long* next)
     return newCell + 1;
 }
 
-long* Node(long value, long* left, long* right)
-{
-    long* newTree = (long*)malloc(32);
-
-    *newTree = 0;
-    *(newTree + 1) = value;
-    *(newTree + 2) = (long)left;
-    *(newTree + 3) = (long)right;
-
-    _incref(left);
-    _incref(right);
-
-    return newTree + 1;
-}
-
-long* Empty()
-{
-    return NULL;
-}
-
 long top(long* tree)
 {
     if (tree == NULL)
@@ -161,6 +141,39 @@ long* right(long* tree)
     }
 
     return (long*)*(tree + 2);
+}
+
+long count(long* tree)
+{
+    if (tree == NULL)
+    {
+        return 0;
+    }
+    else
+    {
+        return *(tree + 3);
+    }
+}
+
+long* Node(long value, long* left, long* right)
+{
+    long* newTree = (long*)malloc(40);
+
+    *newTree = 0;
+    *(newTree + 1) = value;
+    *(newTree + 2) = (long)left;
+    *(newTree + 3) = (long)right;
+    *(newTree + 4) = 1 + count(left) + count(right);
+
+    _incref(left);
+    _incref(right);
+
+    return newTree + 1;
+}
+
+long* Empty()
+{
+    return NULL;
 }
 
 void _Tree_decref(long* tree)

@@ -9,11 +9,11 @@ def isPrime x :: Int -> Bool =
     return True
 
 let x :: Int = 2
-let count :: Int = 0
-while count < 10001 do
-    if isPrime x then count += 1
+let n :: Int = 0
+while n < 10001 do
+    if isPrime x then n += 1
 
-    if count == 10001 then
+    if n == 10001 then
         print x
     else
         x += 1

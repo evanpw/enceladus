@@ -25,3 +25,6 @@ Todo
 * If lexer finds an error, don't continue parsing
 * Find out why euler11 segfaults when run in valgrind
 * Tree and/or Set data structures
+* Make null, head, tail into real functions
+* Make return at least act like a function (useable with $ for example)
+* Use pointers to the beginning of the allocated space instead of just past the ref count

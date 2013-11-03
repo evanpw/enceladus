@@ -1,22 +1,22 @@
 -- Solves Project Euler 10
 
-def cross_off p xs :: Int -> List -> List =
+def crossOff p xs :: Int -> List -> List =
     if null xs then
         return []
     else
         let x :: Int = head xs
         if x mod p != 0 then
-            return x : cross_off p (tail xs)
+            return x : crossOff p (tail xs)
         else
-            return cross_off p (tail xs)
+            return crossOff p (tail xs)
 
 def sieve ys :: List -> List =
     let p :: Int = head ys
     let xs :: List = tail ys
     print p
-    let zs :: List = cross_off p xs
+    let zs :: List = crossOff p xs
 
     return p : sieve zs
 
-print sum $ sieve $ range 2 2000000
+print $ sum $ sieve $ range 2 2000000
 
