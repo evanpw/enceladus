@@ -271,7 +271,7 @@ expression: NOT expression
 			argList->emplace_back($1);
 			argList->emplace_back($3);
 
-			$$ = new FunctionCallNode("cons", argList);
+			$$ = new FunctionCallNode("Cons", argList);
 		}
 	| expression CONCAT expression
 		{

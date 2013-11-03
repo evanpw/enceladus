@@ -91,7 +91,7 @@ void _decrefNoFree(long* p)
     }
 }
 
-long* cons(long value, long* next)
+long* Cons(long value, long* next)
 {
     long* newCell = (long*)malloc(24);
 
