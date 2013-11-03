@@ -1,3 +1,18 @@
+---- Declarations for built-in functions written in C
+
+-- List functions
+foreign Cons x ys :: Int -> List -> List
+foreign read :: Int
+foreign print x :: Int -> Void
+
+-- Tree functions
+foreign Node x l r :: Int -> Tree -> Tree -> Tree
+foreign Empty :: Tree
+foreign top x :: Tree -> Int
+foreign left x :: Tree -> Tree
+foreign right x :: Tree -> Tree
+
+---- Native-language standard library
 def range a b :: Int -> Int -> List =
     let xs :: List = []
 

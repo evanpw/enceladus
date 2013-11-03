@@ -55,7 +55,7 @@ void yyerror(const char* msg);
 %token TRUE FALSE
 %token HEAD TAIL ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL CONCAT
-%token<str> IDENT TYPE
+%token<str> IDENT
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
@@ -101,7 +101,7 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| LET IDENT DCOLON TYPE '=' expression EOL
+	| LET IDENT DCOLON IDENT '=' expression EOL
 		{
 			$$ = new LetNode($2, $4, $6);
 		}
@@ -138,12 +138,12 @@ statement: IF expression THEN suite
 			$$ = $1;
 		}
 
-typedecl: TYPE
+typedecl: IDENT
 		{
 			$$ = new TypeDecl();
 			$$->emplace_back($1);
 		}
-	| typedecl RARROW TYPE
+	| typedecl RARROW IDENT
 		{
 			$$ = $1;
 			$$->emplace_back($3);

@@ -41,6 +41,9 @@ public:
 	// Gets the list of all external symbols which are referenced in this module
 	std::vector<std::string> getExterns(ProgramNode* node);
 
+	// Converts periods to underscores to make interfacing with C programs easier
+	std::string mangle(const std::string& name);
+
 private:
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
 	int labels_;

@@ -49,30 +49,6 @@ void SemanticPass1::visit(ProgramNode* node)
 	Scope* scope = node->scope();
 
 	// Create symbols for built-in functions
-	FunctionSymbol* read = new FunctionSymbol("read", node, nullptr);
-	read->type = &Type::Int;
-	read->arity = 0;
-	read->isExternal = true;
-	read->isForeign = true;
-	scope->insert(read);
-
-	FunctionSymbol* print = new FunctionSymbol("print", node, nullptr);
-	print->type = &Type::Void;
-	print->arity = 1;
-	print->paramTypes.push_back(&Type::Int);
-	print->isExternal = true;
-	print->isForeign = true;
-	scope->insert(print);
-
-	FunctionSymbol* cons = new FunctionSymbol("Cons", node, nullptr);
-	cons->type = &Type::List;
-	cons->arity = 2;
-	cons->paramTypes.push_back(&Type::Int);
-	cons->paramTypes.push_back(&Type::List);
-	cons->isExternal = true;
-	cons->isForeign = true;
-	scope->insert(cons);
-
 	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
 	die->type = &Type::Void;
 	die->arity = 1;
@@ -90,18 +66,35 @@ void SemanticPass1::visit(ProgramNode* node)
 	scope->insert(incref);
 
 	FunctionSymbol* decref = new FunctionSymbol("_decref", node, nullptr);
-	decref->type = &Type::Void;
+	decref->type = &Type::Int;
 	decref->arity = 1;
 	decref->paramTypes.push_back(&Type::List);
 	decref->isExternal = true;
 	decref->isForeign = true;
 	scope->insert(decref);
 
+	FunctionSymbol* listDecref = new FunctionSymbol("_List_decref", node, nullptr);
+	listDecref->type = &Type::Void;
+	listDecref->arity = 1;
+	listDecref->paramTypes.push_back(&Type::List);
+	listDecref->isExternal = true;
+	listDecref->isForeign = true;
+	scope->insert(listDecref);
+
+	FunctionSymbol* treeDecref = new FunctionSymbol("_Tree_decref", node, nullptr);
+	treeDecref->type = &Type::Void;
+	treeDecref->arity = 1;
+	treeDecref->paramTypes.push_back(&Type::Tree);
+	treeDecref->isExternal = true;
+	treeDecref->isForeign = true;
+	scope->insert(treeDecref);
+
 	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
-	decref_no_free->type = &Type::Void;
+	decref_no_free->type = &Type::Int;
 	decref_no_free->arity = 1;
 	decref_no_free->paramTypes.push_back(&Type::List);
 	decref_no_free->isExternal = true;
+	decref_no_free->isForeign = true;
 	scope->insert(decref_no_free);
 
 	AstVisitor::visit(node);

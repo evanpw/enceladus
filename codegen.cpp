@@ -6,6 +6,24 @@
 #include "scope.hpp"
 #include "simple.tab.h"
 
+std::string CodeGen::mangle(const std::string& name)
+{
+	if (name.find(".") == std::string::npos)
+	{
+		return name;
+	}
+	else
+	{
+		std::string copy = name;
+		for (size_t i = 0; i < name.length(); ++i)
+		{
+			if (copy[i] == '.') copy[i] = '_';
+		}
+
+		return copy;
+	}
+}
+
 std::string CodeGen::access(const VariableSymbol* symbol)
 {
 	FunctionDefNode* enclosingFunction = symbol->enclosingFunction;
@@ -14,7 +32,7 @@ std::string CodeGen::access(const VariableSymbol* symbol)
 	if (symbol->enclosingFunction == nullptr)
 	{
 		std::stringstream result;
-		result << "[rel _" << symbol->name << "]";
+		result << "[rel _" << mangle(symbol->name) << "]";
 
 		return result.str();
 	}
@@ -84,13 +102,12 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "global __main" << std::endl;
 
 	std::vector<std::string> externs = getExterns(node);
-	//out_ << "extern __read, __print, __cons, __die, __incref, __decref, __decrefNoFree" << std::endl;
 	if (!externs.empty())
 	{
-		out_ << "extern _" << externs[0];
+		out_ << "extern _" << mangle(externs[0]);
 		for (size_t i = 1; i < externs.size(); ++i)
 		{
-			out_ << ", _" << externs[i];
+			out_ << ", _" << mangle(externs[i]);
 		}
 		out_ << std::endl;
 	}
@@ -114,10 +131,10 @@ void CodeGen::visit(ProgramNode* node)
 
 		const VariableSymbol* variableSymbol = static_cast<const VariableSymbol*>(symbol);
 
-		if (variableSymbol->type == &Type::List)
+		if (!variableSymbol->type->isSimple())
 		{
 			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
-			out_ << "\t" << "call __decref" << std::endl;
+			out_ << "\t" << "call __" << variableSymbol->type->name() << "_decref" << std::endl;
 		}
 	}
 
@@ -128,7 +145,7 @@ void CodeGen::visit(ProgramNode* node)
 	{
 		currentFunction_ = function->name();
 		out_ << std::endl;
-		out_ << "_" << function->name() << ":" << std::endl;
+		out_ << "_" << mangle(function->name()) << ":" << std::endl;
 		out_ << "\t" << "push rbp" << std::endl;
 		out_ << "\t" << "mov rbp, rsp" << std::endl;
 
@@ -187,10 +204,10 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->type == &Type::List)
+			if (!symbol->type->isSimple())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
-				out_ << "\t" << "call __decref" << std::endl;
+				out_ << "\t" << "call __" << symbol->type->name() << "_decref" << std::endl;
 			}
 		}
 
@@ -216,7 +233,7 @@ void CodeGen::visit(ProgramNode* node)
 	{
 		if (i.second->kind == kVariable)
 		{
-			out_ << "_" << i.second->name << ": dq 0" << std::endl;
+			out_ << "_" << mangle(i.second->name) << ": dq 0" << std::endl;
 		}
 	}
 }
@@ -403,7 +420,7 @@ void CodeGen::visit(NullaryNode* node)
 	}
 	else
 	{
-		out_ << "\t" << "call _" << node->name() << std::endl;
+		out_ << "\t" << "call _" << mangle(node->name()) << std::endl;
 	}
 }
 
@@ -487,7 +504,7 @@ void CodeGen::visit(AssignNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->symbol()->type == &Type::List)
+	if (!node->symbol()->type->isSimple())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
@@ -495,7 +512,7 @@ void CodeGen::visit(AssignNode* node)
 		out_ << "\t" << "call __incref" << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __decref" << std::endl;
+		out_ << "\t" << "call __" << node->symbol()->type->name() << "_decref" << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -509,7 +526,7 @@ void CodeGen::visit(LetNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->symbol()->type == &Type::List)
+	if (!node->symbol()->type->isSimple())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
@@ -517,7 +534,7 @@ void CodeGen::visit(LetNode* node)
 		out_ << "\t" << "call __incref" << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __decref" << std::endl;
+		out_ << "\t" << "call __" << node->symbol()->type->name() << "_decref" << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -554,7 +571,7 @@ void CodeGen::visit(FunctionCallNode* node)
 	    out_ << "\t" << "add rsp, -8" << std::endl;
 	    out_ << "\t" << "push rbx" << std::endl;
 
-	    out_ << "\t" << "call _" << node->target() << std::endl;
+	    out_ << "\t" << "call _" << mangle(node->target()) << std::endl;
 
 	    // Undo the stack alignment
 	    out_ << "\t" << "pop rbx" << std::endl;
@@ -562,7 +579,7 @@ void CodeGen::visit(FunctionCallNode* node)
 	}
 	else
 	{
-		out_ << "\t" << "call _" << node->target() << std::endl;
+		out_ << "\t" << "call _" << mangle(node->target()) << std::endl;
 
 		size_t args = node->arguments().size();
 		if (args > 0) out_ << "\t" << "add rsp, " << 8 * args << std::endl;
