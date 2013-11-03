@@ -84,7 +84,7 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "global __main" << std::endl;
 
 	std::vector<std::string> externs = getExterns(node);
-	out_ << "extern __read, __print, __cons, __die, __incref, __decref, __decref_no_free" << std::endl;
+	//out_ << "extern __read, __print, __cons, __die, __incref, __decref, __decrefNoFree" << std::endl;
 	if (!externs.empty())
 	{
 		out_ << "extern _" << externs[0];
@@ -200,7 +200,7 @@ void CodeGen::visit(ProgramNode* node)
 		if (function->symbol()->type == &Type::List)
 		{
 			out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
-			out_ << "\t" << "call __decref_no_free" << std::endl;
+			out_ << "\t" << "call __decrefNoFree" << std::endl;
 		}
 
 		out_ << "\t" << "pop rax" << std::endl;
@@ -228,18 +228,6 @@ void CodeGen::visit(NotNode* node)
 	out_ << "\t" << "xor rax, 1" << std::endl;
 }
 
-void CodeGen::visit(ConsNode* node)
-{
-	node->rhs()->accept(this);
-	out_ << "\t" << "push rax" << std::endl;
-
-	node->lhs()->accept(this);
-	out_ << "\t" << "mov rdi, rax" << std::endl;
-	out_ << "\t" << "pop rsi" << std::endl;
-
-	out_ << "\t" << "call __cons" << std::endl;
-}
-
 void CodeGen::visit(HeadNode* node)
 {
 	node->child()->accept(this);
@@ -250,8 +238,14 @@ void CodeGen::visit(HeadNode* node)
 	out_ << "\t" << "jne " << good << std::endl;
 
 	// If the list is null, then fail
-	out_ << "\t" << "xor rax, rax" << std::endl; // Not necessary, but good to be explicit
-	out_ << "\t" << "call __die" << std::endl;
+    out_ << "\t" << "mov rbx, rsp" << std::endl;
+    out_ << "\t" << "and rsp, -16" << std::endl;
+    out_ << "\t" << "add rsp, -8" << std::endl;
+    out_ << "\t" << "push rbx" << std::endl;
+    out_ << "\t" << "mov rdi, 0" << std::endl;
+    out_ << "\t" << "call __die" << std::endl;
+    out_ << "\t" << "pop rbx" << std::endl;
+    out_ << "\t" << "mov rsp, rbx" << std::endl;
 
 	out_ << good << ":" << std::endl;
 	out_ << "\t" << "mov rax, qword [rax]" << std::endl;
@@ -267,8 +261,14 @@ void CodeGen::visit(TailNode* node)
 	out_ << "\t" << "jne " << good << std::endl;
 
 	// If the list is null, then fail
-	out_ << "\t" << "mov rax, 1" << std::endl; // Not necessary, but good to be explicit
-	out_ << "\t" << "call __die" << std::endl;
+    out_ << "\t" << "mov rbx, rsp" << std::endl;
+    out_ << "\t" << "and rsp, -16" << std::endl;
+    out_ << "\t" << "add rsp, -8" << std::endl;
+    out_ << "\t" << "push rbx" << std::endl;
+    out_ << "\t" << "mov rdi, 1" << std::endl;
+    out_ << "\t" << "call __die" << std::endl;
+    out_ << "\t" << "pop rbx" << std::endl;
+    out_ << "\t" << "mov rsp, rbx" << std::endl;
 
 	out_ << good << ":" << std::endl;
 	out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;

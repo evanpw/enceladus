@@ -25,6 +25,10 @@ build/%.d: %.cpp
 		sed 's,\($*\)\.o[ :]*,build/\1.o $@ : ,g' < $@.$$$$ > $@; \
 		rm -f $@.$$$$
 
+simplec: build/simple.tab.o build/lex.yy.o $(OBJECTS)
+	echo $^
+	$(CC) $(LDFLAGS) $^ -o simplec
+
 -include $(patsubst %.cpp,build/%.d,$(SOURCES))
 
 lex.yy.c: simple.flex
@@ -41,10 +45,6 @@ build/simple.tab.o: simple.tab.c simple.tab.h
 
 build/%.o: %.cpp simple.tab.h
 	$(CC) $(CFLAGS) -c $< -o $@
-
-simplec: $(OBJECTS) build/lex.yy.o build/simple.tab.o
-	echo $^
-	$(CC) $(LDFLAGS) $^ -o simplec
 
 tests: simplec
 	testing/all.sh

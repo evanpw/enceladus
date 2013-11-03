@@ -55,12 +55,6 @@ void AstVisitor::visit(BinaryOperatorNode* node)
 	node->rhs()->accept(this);
 }
 
-void AstVisitor::visit(ConsNode* node)
-{
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
-}
-
 void AstVisitor::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);

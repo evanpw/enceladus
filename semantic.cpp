@@ -63,12 +63,13 @@ void SemanticPass1::visit(ProgramNode* node)
 	print->isForeign = true;
 	scope->insert(print);
 
-	FunctionSymbol* cons = new FunctionSymbol("_cons", node, nullptr);
+	FunctionSymbol* cons = new FunctionSymbol("cons", node, nullptr);
 	cons->type = &Type::List;
 	cons->arity = 2;
 	cons->paramTypes.push_back(&Type::Int);
 	cons->paramTypes.push_back(&Type::List);
 	cons->isExternal = true;
+	cons->isForeign = true;
 	scope->insert(cons);
 
 	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
@@ -76,6 +77,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	die->arity = 1;
 	die->paramTypes.push_back(&Type::Int);
 	die->isExternal = true;
+	die->isForeign = true;
 	scope->insert(die);
 
 	FunctionSymbol* incref = new FunctionSymbol("_incref", node, nullptr);
@@ -83,6 +85,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	incref->arity = 1;
 	incref->paramTypes.push_back(&Type::List);
 	incref->isExternal = true;
+	incref->isForeign = true;
 	scope->insert(incref);
 
 	FunctionSymbol* decref = new FunctionSymbol("_decref", node, nullptr);
@@ -90,9 +93,10 @@ void SemanticPass1::visit(ProgramNode* node)
 	decref->arity = 1;
 	decref->paramTypes.push_back(&Type::List);
 	decref->isExternal = true;
+	decref->isForeign = true;
 	scope->insert(decref);
 
-	FunctionSymbol* decref_no_free = new FunctionSymbol("_decref_no_free", node, nullptr);
+	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
 	decref_no_free->type = &Type::Void;
 	decref_no_free->arity = 1;
 	decref_no_free->paramTypes.push_back(&Type::List);
@@ -439,17 +443,6 @@ void TypeChecker::visit(BinaryOperatorNode* node)
 	typeCheck(node->rhs(), &Type::Int);
 
 	node->setType(&Type::Int);
-}
-
-void TypeChecker::visit(ConsNode* node)
-{
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), &Type::Int);
-
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), &Type::List);
-
-	node->setType(&Type::List);
 }
 
 void TypeChecker::visit(HeadNode* node)

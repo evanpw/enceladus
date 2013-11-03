@@ -267,7 +267,11 @@ expression: NOT expression
 		}
 	| expression ':' expression
 		{
-			$$ = new ConsNode($1, $3);
+			ArgList* argList = new ArgList;
+			argList->emplace_back($1);
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode("cons", argList);
 		}
 	| expression CONCAT expression
 		{

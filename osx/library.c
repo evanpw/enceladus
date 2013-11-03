@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
 void _main(void);
 
 int main(void)
@@ -38,6 +37,7 @@ void _die(long errorCode)
     exit(1);
 }
 
+/*
 long _read()
 {
     long result;
@@ -52,9 +52,10 @@ void print(long value)
     printf("%ld\n", value);
 }
 
-/*
 void _incref(long* p)
 {
+    if (p == NULL) return;
+
     long* refCount = p - 1;
     ++(*refCount);
 }
@@ -79,7 +80,7 @@ void _decref(long* p)
     }
 }
 
-void _decref_no_free(long* p)
+void _decrefNoFree(long* p)
 {
     if (p == NULL) return;
 
@@ -92,7 +93,7 @@ void _decref_no_free(long* p)
     }
 }
 
-long* _cons(long value, long* next)
+long* cons(long value, long* next)
 {
     long* newCell = (long*)malloc(24);
 
@@ -104,4 +105,4 @@ long* _cons(long value, long* next)
 
     return newCell + 1;
 }
-*/
+

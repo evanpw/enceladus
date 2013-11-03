@@ -8,7 +8,6 @@ class ProgramNode;
 class NotNode;
 class ComparisonNode;
 class BinaryOperatorNode;
-class ConsNode;
 class LogicalNode;
 class BlockNode;
 class IfNode;
@@ -39,7 +38,6 @@ public:
 	virtual void visit(NotNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(BinaryOperatorNode* node);
-	virtual void visit(ConsNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(IfNode* node);

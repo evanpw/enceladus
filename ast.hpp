@@ -129,22 +129,6 @@ protected:
 	std::unique_ptr<ExpressionNode> rhs_;
 };
 
-class ConsNode : public ExpressionNode
-{
-public:
-	ConsNode(ExpressionNode* lhs, ExpressionNode* rhs)
-	: lhs_(lhs), rhs_(rhs)
-	{}
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* lhs() { return lhs_.get(); }
-	ExpressionNode* rhs() { return rhs_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> lhs_, rhs_;
-};
-
 class LogicalNode : public ExpressionNode
 {
 public:
