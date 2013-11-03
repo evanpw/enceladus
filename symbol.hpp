@@ -65,8 +65,10 @@ struct FunctionSymbol : public Symbol
 
     unsigned int arity;
 
-    // Externally-linked C argument-passing style
+    // C argument-passing style
     bool isForeign;
+
+    bool isExternal;
 };
 
 #endif

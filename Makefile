@@ -17,7 +17,7 @@ all: simplec tests
 .PHONY: clean
 
 clean:
-	rm -f simplec build/*
+	rm -f simplec build/* lex.yy.c simple.tab.c simple.tab.h
 
 build/%.d: %.cpp
 	@set -e; rm -f $@; \
@@ -27,19 +27,19 @@ build/%.d: %.cpp
 
 -include $(patsubst %.cpp,build/%.d,$(SOURCES))
 
-build/lex.yy.c: simple.flex
-	flex -o build/lex.yy.c simple.flex
+lex.yy.c: simple.flex
+	flex -o lex.yy.c simple.flex
 
-build/simple.tab.c build/simple.tab.h: simple.y
-	bison -o build/simple.tab.c -d simple.y
+simple.tab.c simple.tab.h: simple.y
+	bison -d simple.y
 
-build/lex.yy.o: build/lex.yy.c simple.tab.h
+build/lex.yy.o: lex.yy.c simple.tab.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build/simple.tab.o: build/simple.tab.c build/simple.tab.h
+build/simple.tab.o: simple.tab.c simple.tab.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build/%.o: %.cpp build/simple.tab.h
+build/%.o: %.cpp simple.tab.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 simplec: $(OBJECTS) build/lex.yy.o build/simple.tab.o

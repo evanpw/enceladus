@@ -57,4 +57,4 @@ def firstNumber m :: Int -> Int =
 
         i += 1
 
-print firstNumber 500
+print $ firstNumber 500

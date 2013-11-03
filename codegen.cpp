@@ -68,7 +68,7 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 		if (symbol->kind != kFunction) continue;
 
 		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(symbol);
-		if (functionSymbol->isForeign)
+		if (functionSymbol->isExternal)
 		{
 			result.push_back(name);
 		}
@@ -453,12 +453,6 @@ void CodeGen::visit(IfElseNode* node)
 	out_ << elseLabel << ":" << std::endl;
 	node->else_body()->accept(this);
 	out_ << endLabel << ":" << std::endl;
-}
-
-void CodeGen::visit(PrintNode* node)
-{
-	node->expression()->accept(this);
-	out_ << "\t" << "call __print" << std::endl;
 }
 
 void CodeGen::visit(ReadNode* node)

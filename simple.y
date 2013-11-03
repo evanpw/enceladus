@@ -42,7 +42,7 @@ void yyerror(const char* msg);
 
 %token ERROR
 %token IF THEN ELSE
-%token PRINT READ FOREIGN
+%token READ FOREIGN
 %token LET
 %token NOT AND OR MOD EQUALS
 %token RETURN
@@ -89,10 +89,6 @@ statement: IF expression THEN suite
 		{
 			$$ = new IfElseNode($2, $4, $6);
 		}
-	| PRINT expression EOL
-		{
-			$$ = new PrintNode($2);
-		}
 	| WHILE expression DO suite
 		{
 			$$ = new WhileNode($2, $4);
@@ -136,6 +132,10 @@ statement: IF expression THEN suite
 	| RETURN expression EOL
 		{
 			$$ = new ReturnNode($2);
+		}
+	| expression EOL
+		{
+			$$ = $1;
 		}
 
 typedecl: TYPE

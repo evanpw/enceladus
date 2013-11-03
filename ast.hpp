@@ -30,7 +30,7 @@ protected:
 };
 
 class StatementNode : public AstNode {};
-class ExpressionNode : public AstNode {};
+class ExpressionNode : public StatementNode {};
 
 
 
@@ -311,18 +311,6 @@ private:
 	std::unique_ptr<ExpressionNode> condition_;
 	std::unique_ptr<StatementNode> body_;
 	std::unique_ptr<StatementNode> else_body_;
-};
-
-class PrintNode : public StatementNode
-{
-public:
-	PrintNode(ExpressionNode* expression) : expression_(expression) {}
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* expression() { return expression_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> expression_;
 };
 
 class WhileNode : public StatementNode

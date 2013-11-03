@@ -44,6 +44,63 @@ void SemanticBase::semanticError(AstNode* node, const std::string& msg)
 	success_ = false;
 }
 
+void SemanticPass1::visit(ProgramNode* node)
+{
+	Scope* scope = node->scope();
+
+	// Create symbols for built-in functions
+	FunctionSymbol* read = new FunctionSymbol("_read", node, nullptr);
+	read->type = &Type::Int;
+	read->arity = 0;
+	read->isExternal = true;
+	scope->insert(read);
+
+	FunctionSymbol* print = new FunctionSymbol("print", node, nullptr);
+	print->type = &Type::Void;
+	print->arity = 1;
+	print->paramTypes.push_back(&Type::Int);
+	print->isExternal = true;
+	scope->insert(print);
+
+	FunctionSymbol* cons = new FunctionSymbol("_cons", node, nullptr);
+	cons->type = &Type::List;
+	cons->arity = 2;
+	cons->paramTypes.push_back(&Type::Int);
+	cons->paramTypes.push_back(&Type::List);
+	cons->isExternal = true;
+	scope->insert(cons);
+
+	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
+	die->type = &Type::Void;
+	die->arity = 1;
+	die->paramTypes.push_back(&Type::Int);
+	die->isExternal = true;
+	scope->insert(die);
+
+	FunctionSymbol* incref = new FunctionSymbol("_incref", node, nullptr);
+	incref->type = &Type::Void;
+	incref->arity = 1;
+	incref->paramTypes.push_back(&Type::List);
+	incref->isExternal = true;
+	scope->insert(incref);
+
+	FunctionSymbol* decref = new FunctionSymbol("_decref", node, nullptr);
+	decref->type = &Type::Void;
+	decref->arity = 1;
+	decref->paramTypes.push_back(&Type::List);
+	decref->isExternal = true;
+	scope->insert(decref);
+
+	FunctionSymbol* decref_no_free = new FunctionSymbol("_decref_no_free", node, nullptr);
+	decref_no_free->type = &Type::Void;
+	decref_no_free->arity = 1;
+	decref_no_free->paramTypes.push_back(&Type::List);
+	decref_no_free->isExternal = true;
+	scope->insert(decref_no_free);
+
+	AstVisitor::visit(node);
+}
+
 void SemanticPass1::visit(FunctionDefNode* node)
 {
 	// Functions cannot be declared inside of another function
@@ -208,6 +265,7 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	symbol->type = returnType;
 	symbol->arity = node->params().size();
 	symbol->isForeign = true;
+	symbol->isExternal = true;
 	symbol->paramTypes = paramTypes;
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
@@ -347,6 +405,7 @@ void TypeChecker::visit(ProgramNode* node)
 	for (auto& child : node->children())
 	{
 		child->accept(this);
+		typeCheck(child.get(), &Type::Void);
 	}
 }
 
@@ -432,6 +491,7 @@ void TypeChecker::visit(BlockNode* node)
 	for (auto& child : node->children())
 	{
 		child->accept(this);
+		typeCheck(child.get(), &Type::Void);
 	}
 }
 
@@ -450,12 +510,6 @@ void TypeChecker::visit(IfElseNode* node)
 
 	node->body()->accept(this);
 	node->else_body()->accept(this);
-}
-
-void TypeChecker::visit(PrintNode* node)
-{
-	node->expression()->accept(this);
-	typeCheck(node->expression(), &Type::Int);
 }
 
 void TypeChecker::visit(ReadNode* node)

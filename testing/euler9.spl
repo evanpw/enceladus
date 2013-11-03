@@ -5,4 +5,4 @@ for a in range 1 1000 do
         let c :: Int = 1000 - (a + b)
 
         if c > b and a * a + b * b == c * c then
-            print a * b * c
+            print $ a * b * c

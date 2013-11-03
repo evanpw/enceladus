@@ -2,7 +2,7 @@ bits 64
 section .text
 extern _printf, _scanf, _malloc, _puts, _exit, _free
 extern __main
-global _main, __read, __print, __cons, __die, __incref, __decref, __decref_no_free
+global _main, __read, _print, __cons, __die, __incref, __decref, __decref_no_free
 
 _main:
     ; The main function from the compiled program
@@ -53,15 +53,18 @@ __read:
     mov rax, [rel __read_result]
     ret
 
-; Print the number stored in rax, followed by a newline
-__print:
+; Print the argument (an integer) followed by a newline
+_print:
+    push rbp
+    mov rbp, rsp
+
     ; Realign stack to 16 bytes
     mov rbx, rsp
     and rsp, -16
     add rsp, -8
     push rbx
 
-    mov rsi, rax
+    mov rsi, qword [rbp  + 16]
     lea rdi, [rel __format]
     xor rax, rax
     call _printf
@@ -69,6 +72,8 @@ __print:
     pop rbx
     mov rsp, rbx
 
+    mov rsp, rbp
+    pop rbp
     ret
 
 ; Increment the reference count of the cons cell at rdi

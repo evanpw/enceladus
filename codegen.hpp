@@ -20,7 +20,6 @@ public:
 	virtual void visit(BlockNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(IfElseNode* node);
-	virtual void visit(PrintNode* node);
 	virtual void visit(ReadNode* node);
 	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);

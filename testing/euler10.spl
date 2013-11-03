@@ -17,4 +17,4 @@ def primesBelow n :: Int -> List =
 
     return primes
 
-print sum $ primesBelow 2000000
+print $ sum $ primesBelow 2000000
