@@ -13,7 +13,6 @@ public:
 	CodeGen() : labels_(0), out_(std::cout) {}
 
 	virtual void visit(ProgramNode* node);
-	virtual void visit(NotNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(BinaryOperatorNode* node);
 	virtual void visit(LogicalNode* node);

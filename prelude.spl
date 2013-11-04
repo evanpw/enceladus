@@ -146,7 +146,7 @@ def Set.delete x set :: Int -> Tree -> Tree =
 
 def Set.fromList xs :: List -> Tree =
     let result :: Tree = Set.empty
-    while not null xs do
+    while not $ null xs do
         result = Set.insert (head xs) result
         xs = tail xs
 

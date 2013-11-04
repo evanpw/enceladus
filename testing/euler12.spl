@@ -8,7 +8,7 @@ def countGroups xs :: List -> List =
     let count :: Int = 1
     xs = tail xs
 
-    while not null xs do
+    while not $ null xs do
         if head xs == last then
             count += 1
         else

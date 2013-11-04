@@ -23,11 +23,6 @@ void AstVisitor::visit(ProgramNode* node)
 	}
 }
 
-void AstVisitor::visit(NotNode* node)
-{
-	node->child()->accept(this);
-}
-
 void AstVisitor::visit(HeadNode* node)
 {
 	node->child()->accept(this);

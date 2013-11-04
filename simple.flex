@@ -67,7 +67,6 @@ int yycolumn = 1;
 "=="	{ return EQUALS; }
 "!="	{ return NE; }
 "::"	{ return DCOLON; }
-"not"	{ return NOT; }
 "and"	{ return AND; }
 "or"	{ return OR; }
 

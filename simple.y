@@ -44,7 +44,7 @@ void yyerror(const char* msg);
 %token IF THEN ELSE
 %token FOREIGN
 %token LET
-%token NOT AND OR MOD EQUALS
+%token AND OR MOD EQUALS
 %token RETURN
 %token WHILE DO
 %token FOR IN
@@ -60,7 +60,6 @@ void yyerror(const char* msg);
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
 %right '$'
-%nonassoc NOT
 %left AND OR
 %nonassoc '>' '<' LE GE EQUALS NE
 %right ':'
@@ -190,11 +189,7 @@ statement_list: statement
 		}
 
 /* An expression that is not a function call */
-expression: NOT expression
-		{
-			$$ = new NotNode($2);
-		}
-	| HEAD expression
+expression: HEAD expression
 		{
 			$$ = new HeadNode($2);
 		}

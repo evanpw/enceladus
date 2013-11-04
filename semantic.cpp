@@ -49,6 +49,13 @@ void SemanticPass1::visit(ProgramNode* node)
 	Scope* scope = node->scope();
 
 	// Create symbols for built-in functions
+	FunctionSymbol* notFn = new FunctionSymbol("not", node, nullptr);
+	notFn->type = &Type::Bool;
+	notFn->arity = 1;
+	notFn->paramTypes.push_back(&Type::Bool);
+	notFn->isBuiltin = true;
+	scope->insert(notFn);
+
 	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
 	die->type = &Type::Void;
 	die->arity = 1;
@@ -415,15 +422,6 @@ void TypeChecker::visit(ProgramNode* node)
 		child->accept(this);
 		typeCheck(child.get(), &Type::Void);
 	}
-}
-
-void TypeChecker::visit(NotNode* node)
-{
-	node->child()->accept(this);
-
-	typeCheck(node->child(), &Type::Bool);
-
-	node->setType(&Type::Bool);
 }
 
 void TypeChecker::visit(ComparisonNode* node)

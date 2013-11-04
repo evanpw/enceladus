@@ -21,3 +21,4 @@ Todo
 * Make return at least act like a function (useable with $ for example)
 * Use pointers to the beginning of the allocated space instead of just past the ref count
 * Add more scopes (for loops, etc)
+* Allow function delcarations and definitions to be separate

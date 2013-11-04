@@ -56,6 +56,7 @@ struct FunctionSymbol : public Symbol
     : Symbol(name, kFunction, node, enclosingFunction)
     , arity(0)
     , isForeign(false)
+    , isBuiltin(false)
     {}
 
     std::vector<const Type*> paramTypes;
@@ -66,6 +67,8 @@ struct FunctionSymbol : public Symbol
     bool isForeign;
 
     bool isExternal;
+
+    bool isBuiltin;
 };
 
 #endif

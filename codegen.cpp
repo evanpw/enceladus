@@ -238,13 +238,6 @@ void CodeGen::visit(ProgramNode* node)
 	}
 }
 
-void CodeGen::visit(NotNode* node)
-{
-	// Load the value of the child expression in rax
-	node->child()->accept(this);
-	out_ << "\t" << "xor rax, 1" << std::endl;
-}
-
 void CodeGen::visit(HeadNode* node)
 {
 	node->child()->accept(this);
@@ -555,7 +548,19 @@ void CodeGen::visit(FunctionCallNode* node)
 		out_ << "\t" << "push rax" << std::endl;
 	}
 
-	if (node->symbol()->isForeign)
+	if (node->symbol()->isBuiltin)
+	{
+		if (node->target() == "not")
+		{
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "xor rax, 1" << std::endl;
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+	else if (node->symbol()->isForeign)
 	{
 		// x86_64 calling convention for C puts the first 6 arguments in registers
 		if (node->arguments().size() >= 1) out_ << "\t" << "pop rdi" << std::endl;
