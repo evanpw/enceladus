@@ -1,16 +1,10 @@
 Todo
 ----
 * Better memory management (in the compiler)
-* Clean up Makefile
 * Ignore the result of a function call
 * Make semantic analysis more rigorous
-* Add garbage collection or reference counting
 * Ability to import modules
-* Handle null-ary functions correctly
-* Move to a functional language?
 * Merge linux and osx libraries using macros
-* Attach function definition to each function call to avoid dynamic_cast in
-  type checking.
 * Modify visitor pattern to have preVisit and postVisit methods, and do all of
   the traversal code elsewhere, so that implementers don't have to remember to
   do the recursion
@@ -23,8 +17,7 @@ Todo
 * Handle the case where prelude does not end with a newline
 * Support for infix functions
 * If lexer finds an error, don't continue parsing
-* Find out why euler11 segfaults when run in valgrind
-* Tree and/or Set data structures
 * Make null, head, tail into real functions
 * Make return at least act like a function (useable with $ for example)
 * Use pointers to the beginning of the allocated space instead of just past the ref count
+* Add more scopes (for loops, etc)

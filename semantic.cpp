@@ -270,7 +270,14 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	node->attachSymbol(symbol);
 }
 
-void SemanticPass1::visit(LetNode* node)
+void SemanticPass2::visit(FunctionDefNode* node)
+{
+	_enclosingFunction = node;
+	AstVisitor::visit(node);
+	_enclosingFunction = nullptr;
+}
+
+void SemanticPass2::visit(LetNode* node)
 {
 	const std::string& target = node->target();
 

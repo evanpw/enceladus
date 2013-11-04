@@ -36,7 +36,6 @@ public:
 	virtual void visit(ProgramNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(ForeignDeclNode* node);
-	virtual void visit(LetNode* node);
 
 private:
 	FunctionDefNode* _enclosingFunction;
@@ -46,9 +45,14 @@ private:
 class SemanticPass2 : public SemanticBase
 {
 public:
+	virtual void visit(LetNode* node);
+	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(NullaryNode* node);
 	virtual void visit(AssignNode* node);
+
+private:
+	FunctionDefNode* _enclosingFunction;
 };
 
 // Pass 3
