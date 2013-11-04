@@ -56,6 +56,7 @@ struct FunctionSymbol : public Symbol
     : Symbol(name, kFunction, node, enclosingFunction)
     , arity(0)
     , isForeign(false)
+    , isExternal(false)
     , isBuiltin(false)
     {}
 

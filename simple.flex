@@ -89,8 +89,6 @@ int yycolumn = 1;
 "def"		{ return DEF; }
 "return"	{ return RETURN; }
 "let"		{ return LET; }
-"head"		{ return HEAD; }
-"tail"		{ return TAIL; }
 "null"		{ return ISNULL; }
 "True"		{ return TRUE; }
 "False"		{ return FALSE; }

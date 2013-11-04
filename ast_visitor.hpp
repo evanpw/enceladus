@@ -24,8 +24,6 @@ class ReturnNode;
 class ParamListNode;
 class NilNode;
 class LetNode;
-class HeadNode;
-class TailNode;
 class NullNode;
 
 class AstVisitor
@@ -45,8 +43,6 @@ public:
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(ReturnNode* node);
-	virtual void visit(HeadNode* node);
-	virtual void visit(TailNode* node);
 	virtual void visit(NullNode* node);
 
 	// Leaf nodes

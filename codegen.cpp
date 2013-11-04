@@ -238,52 +238,6 @@ void CodeGen::visit(ProgramNode* node)
 	}
 }
 
-void CodeGen::visit(HeadNode* node)
-{
-	node->child()->accept(this);
-
-	std::string good = uniqueLabel();
-
-	out_ << "\t" << "cmp rax, 0" << std::endl;
-	out_ << "\t" << "jne " << good << std::endl;
-
-	// If the list is null, then fail
-    out_ << "\t" << "mov rbx, rsp" << std::endl;
-    out_ << "\t" << "and rsp, -16" << std::endl;
-    out_ << "\t" << "add rsp, -8" << std::endl;
-    out_ << "\t" << "push rbx" << std::endl;
-    out_ << "\t" << "mov rdi, 0" << std::endl;
-    out_ << "\t" << "call __die" << std::endl;
-    out_ << "\t" << "pop rbx" << std::endl;
-    out_ << "\t" << "mov rsp, rbx" << std::endl;
-
-	out_ << good << ":" << std::endl;
-	out_ << "\t" << "mov rax, qword [rax]" << std::endl;
-}
-
-void CodeGen::visit(TailNode* node)
-{
-	node->child()->accept(this);
-
-	std::string good = uniqueLabel();
-
-	out_ << "\t" << "cmp rax, 0" << std::endl;
-	out_ << "\t" << "jne " << good << std::endl;
-
-	// If the list is null, then fail
-    out_ << "\t" << "mov rbx, rsp" << std::endl;
-    out_ << "\t" << "and rsp, -16" << std::endl;
-    out_ << "\t" << "add rsp, -8" << std::endl;
-    out_ << "\t" << "push rbx" << std::endl;
-    out_ << "\t" << "mov rdi, 1" << std::endl;
-    out_ << "\t" << "call __die" << std::endl;
-    out_ << "\t" << "pop rbx" << std::endl;
-    out_ << "\t" << "mov rsp, rbx" << std::endl;
-
-	out_ << good << ":" << std::endl;
-	out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;
-}
-
 void CodeGen::visit(NullNode* node)
 {
 	std::string finish = uniqueLabel();
@@ -554,6 +508,50 @@ void CodeGen::visit(FunctionCallNode* node)
 		{
 			out_ << "\t" << "pop rax" << std::endl;
 			out_ << "\t" << "xor rax, 1" << std::endl;
+		}
+		else if (node->target() == "head")
+		{
+			out_ << "\t" << "pop rax" << std::endl;
+
+			std::string good = uniqueLabel();
+
+			out_ << "\t" << "cmp rax, 0" << std::endl;
+			out_ << "\t" << "jne " << good << std::endl;
+
+			// If the list is null, then fail
+		    out_ << "\t" << "mov rbx, rsp" << std::endl;
+		    out_ << "\t" << "and rsp, -16" << std::endl;
+		    out_ << "\t" << "add rsp, -8" << std::endl;
+		    out_ << "\t" << "push rbx" << std::endl;
+		    out_ << "\t" << "mov rdi, 0" << std::endl;
+		    out_ << "\t" << "call __die" << std::endl;
+		    out_ << "\t" << "pop rbx" << std::endl;
+		    out_ << "\t" << "mov rsp, rbx" << std::endl;
+
+			out_ << good << ":" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax]" << std::endl;
+		}
+		else if (node->target() == "tail")
+		{
+			out_ << "\t" << "pop rax" << std::endl;
+
+			std::string good = uniqueLabel();
+
+			out_ << "\t" << "cmp rax, 0" << std::endl;
+			out_ << "\t" << "jne " << good << std::endl;
+
+			// If the list is null, then fail
+		    out_ << "\t" << "mov rbx, rsp" << std::endl;
+		    out_ << "\t" << "and rsp, -16" << std::endl;
+		    out_ << "\t" << "add rsp, -8" << std::endl;
+		    out_ << "\t" << "push rbx" << std::endl;
+		    out_ << "\t" << "mov rdi, 1" << std::endl;
+		    out_ << "\t" << "call __die" << std::endl;
+		    out_ << "\t" << "pop rbx" << std::endl;
+		    out_ << "\t" << "mov rsp, rbx" << std::endl;
+
+			out_ << good << ":" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;
 		}
 		else
 		{

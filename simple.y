@@ -53,7 +53,7 @@ void yyerror(const char* msg);
 %token DEF
 %token DCOLON RARROW
 %token TRUE FALSE
-%token HEAD TAIL ISNULL
+%token ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL CONCAT
 %token<str> IDENT
 %token<number> INT_LIT
@@ -66,7 +66,7 @@ void yyerror(const char* msg);
 %left '+' '-'
 %left '*' '/' MOD
 %right CONCAT
-%nonassoc HEAD TAIL ISNULL
+%nonassoc ISNULL
 
 %%
 
@@ -189,15 +189,7 @@ statement_list: statement
 		}
 
 /* An expression that is not a function call */
-expression: HEAD expression
-		{
-			$$ = new HeadNode($2);
-		}
-	| TAIL expression
-		{
-			$$ = new TailNode($2);
-		}
-	| ISNULL expression
+expression: ISNULL expression
 		{
 			$$ = new NullNode($2);
 		}

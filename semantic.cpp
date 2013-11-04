@@ -56,6 +56,20 @@ void SemanticPass1::visit(ProgramNode* node)
 	notFn->isBuiltin = true;
 	scope->insert(notFn);
 
+	FunctionSymbol* head = new FunctionSymbol("head", node, nullptr);
+	head->type = &Type::Int;
+	head->arity = 1;
+	head->paramTypes.push_back(&Type::List);
+	head->isBuiltin = true;
+	scope->insert(head);
+
+	FunctionSymbol* tail = new FunctionSymbol("tail", node, nullptr);
+	tail->type = &Type::List;
+	tail->arity = 1;
+	tail->paramTypes.push_back(&Type::List);
+	tail->isBuiltin = true;
+	scope->insert(tail);
+
 	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
 	die->type = &Type::Void;
 	die->arity = 1;
@@ -444,22 +458,6 @@ void TypeChecker::visit(BinaryOperatorNode* node)
 	typeCheck(node->rhs(), &Type::Int);
 
 	node->setType(&Type::Int);
-}
-
-void TypeChecker::visit(HeadNode* node)
-{
-	node->child()->accept(this);
-	typeCheck(node->child(), &Type::List);
-
-	node->setType(&Type::Int);
-}
-
-void TypeChecker::visit(TailNode* node)
-{
-	node->child()->accept(this);
-	typeCheck(node->child(), &Type::List);
-
-	node->setType(&Type::List);
 }
 
 void TypeChecker::visit(NullNode* node)

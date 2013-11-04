@@ -40,16 +40,20 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
 
     std::string listVar = std::string("_for_list_") + boost::lexical_cast<std::string>(uniqueId++);
 
+    ArgList* headArgList = new ArgList;
+    headArgList->emplace_back(new NullaryNode(listVar.c_str()));
+
     BlockNode* newBody = new BlockNode;
     newBody->append(
         new LetNode(loopVar, "Int",          // FIXME: Lists of other types
-            new HeadNode(
-                new NullaryNode(listVar.c_str()))));
+            new FunctionCallNode("head", headArgList)));
     newBody->append(body);
+
+    ArgList* tailArgList = new ArgList;
+    tailArgList->emplace_back(new NullaryNode(listVar.c_str()));
     newBody->append(
         new AssignNode(listVar.c_str(),
-            new TailNode(
-                new NullaryNode(listVar.c_str()))));
+            new FunctionCallNode("tail", tailArgList)));
 
     BlockNode* forNode = new BlockNode;
     forNode->append(new LetNode(listVar.c_str(), "List", list));

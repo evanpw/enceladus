@@ -60,30 +60,6 @@ private:
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
-class HeadNode : public ExpressionNode
-{
-public:
-	HeadNode(ExpressionNode* expression) : expression_(expression) {}
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* child() { return expression_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> expression_;
-};
-
-class TailNode : public ExpressionNode
-{
-public:
-	TailNode(ExpressionNode* expression) : expression_(expression) {}
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* child() { return expression_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> expression_;
-};
-
 class NullNode : public ExpressionNode
 {
 public:
