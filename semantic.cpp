@@ -363,17 +363,22 @@ void SemanticPass2::visit(LetNode* node)
 		return;
 	}
 
-	const Type* type = typeTable_->lookup(node->typeDecl());
-	if (type == nullptr)
+	VariableSymbol* symbol = new VariableSymbol(target, node, _enclosingFunction);
+
+	if (node->typeDecl().length() > 0)
 	{
-		std::stringstream msg;
-		msg << "unknown type \"" << node->typeDecl() << "\".";
-		semanticError(node, msg.str());
-		return;
+		const Type* type = typeTable_->lookup(node->typeDecl());
+		if (type == nullptr)
+		{
+			std::stringstream msg;
+			msg << "unknown type \"" << node->typeDecl() << "\".";
+			semanticError(node, msg.str());
+			return;
+		}
+
+		symbol->type = type;
 	}
 
-	VariableSymbol* symbol = new VariableSymbol(target, node, _enclosingFunction);
-	symbol->type = type;
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 
@@ -667,7 +672,16 @@ void TypeChecker::visit(FunctionDefNode* node)
 void TypeChecker::visit(LetNode* node)
 {
 	node->value()->accept(this);
-	typeCheck(node->value(), node->symbol()->type);
+
+	// Baby type inference
+	if (node->typeDecl().length() == 0)
+	{
+		node->symbol()->type = node->value()->type();
+	}
+	else
+	{
+		typeCheck(node->value(), node->symbol()->type);
+	}
 
 	node->setType(typeTable_->lookup("Void"));
 }

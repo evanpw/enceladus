@@ -3,9 +3,9 @@
 def countGroups xs :: List -> List =
     if null xs then return []
 
-    let result :: List = []
-    let last :: Int = head xs
-    let count :: Int = 1
+    let result = []
+    let last = head xs
+    let count = 1
     xs = tail xs
 
     while not $ null xs do
@@ -23,8 +23,8 @@ def countGroups xs :: List -> List =
 def factor n :: Int -> List =
     if n == 1 then return []
 
-    let factors :: List = []
-    let i :: Int = 2
+    let factors = []
+    let i = 2
 
     while n > 1 do
         while n mod i == 0 do
@@ -38,8 +38,8 @@ def factor n :: Int -> List =
 def countDivisors x :: Int -> Int =
     if x == 1 then return 1
 
-    let primeCounts :: List = countGroups $ factor x
-    let count :: Int = 1
+    let primeCounts = countGroups $ factor x
+    let count = 1
 
     for n in primeCounts do
         count *= (n + 1)
@@ -47,8 +47,8 @@ def countDivisors x :: Int -> Int =
     return count
 
 def firstNumber m :: Int -> Int =
-    let n :: Int = 0
-    let i :: Int = 1
+    let n = 0
+    let i = 1
     while True do
         n += i
 

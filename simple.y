@@ -105,6 +105,10 @@ statement: IF expression THEN suite
 		{
 			$$ = new LetNode($2, $4, $6);
 		}
+	| LET LIDENT '=' expression EOL
+		{
+			$$ = new LetNode($2, nullptr, $4);
+		}
 	| DATA UIDENT '=' constructor_spec EOL
 		{
 			$$ = new DataDeclaration($2, $4);

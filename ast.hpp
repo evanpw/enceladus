@@ -331,8 +331,17 @@ class LetNode : public StatementNode
 {
 public:
 	LetNode(const char* target, const char* typeDecl, ExpressionNode* value)
-	: target_(target), typeDecl_(typeDecl), value_(value), symbol_(nullptr)
-	{}
+	: target_(target), value_(value), symbol_(nullptr)
+	{
+		if (typeDecl == nullptr)
+		{
+			typeDecl_ = "";
+		}
+		else
+		{
+			typeDecl_ = std::string(typeDecl);
+		}
+	}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
