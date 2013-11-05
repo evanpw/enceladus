@@ -38,24 +38,23 @@ void yyerror(const char* msg);
 %type<block> statement_list
 %type<params> param_list parameters
 %type<arguments> arg_list
-%type<typedecl> typedecl;
+%type<typedecl> typedecl
+%type<str> ident
 
 %token ERROR
 %token IF THEN ELSE
-%token FOREIGN
-%token LET
+%token LET DEF FOREIGN DATA
 %token AND OR MOD EQUALS
 %token RETURN
 %token WHILE DO
 %token FOR IN
 %token INDENT DEDENT
 %token EOL
-%token DEF
 %token DCOLON RARROW
 %token TRUE FALSE
 %token ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL CONCAT
-%token<str> IDENT
+%token<str> LIDENT UIDENT
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
 
@@ -92,39 +91,45 @@ statement: IF expression THEN suite
 		{
 			$$ = new WhileNode($2, $4);
 		}
-	| FOR IDENT IN expression DO suite
+	| FOR LIDENT IN expression DO suite
 		{
 			$$ = makeForNode($2, $4, $6);
 		}
-	| IDENT '=' expression EOL
+	| LIDENT '=' expression EOL
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| LET IDENT DCOLON IDENT '=' expression EOL
+	| LET LIDENT DCOLON UIDENT '=' expression EOL
 		{
 			$$ = new LetNode($2, $4, $6);
 		}
-	| IDENT PLUS_EQUAL expression EOL
+	/*
+	| DATA UIDENT '=' constructor_decl
+		{
+			$$ = new DataDeclaration($2, $4);
+		}
+	*/
+	| LIDENT PLUS_EQUAL expression EOL
 		{
 			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kPlus, $3));
 		}
-	| IDENT MINUS_EQUAL expression EOL
+	| LIDENT MINUS_EQUAL expression EOL
 		{
 			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kMinus, $3));
 		}
-	| IDENT TIMES_EQUAL expression EOL
+	| LIDENT TIMES_EQUAL expression EOL
 		{
 			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kTimes, $3));
 		}
-	| IDENT DIV_EQUAL expression EOL
+	| LIDENT DIV_EQUAL expression EOL
 		{
 			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kDivide, $3));
 		}
-	| DEF IDENT parameters DCOLON typedecl '=' suite
+	| DEF ident parameters DCOLON typedecl '=' suite
 		{
 			$$ = new FunctionDefNode($2, $7, $3, $5);
 		}
-	| FOREIGN IDENT parameters DCOLON typedecl EOL
+	| FOREIGN ident parameters DCOLON typedecl EOL
 		{
 			$$ = new ForeignDeclNode($2, $3, $5);
 		}
@@ -137,12 +142,12 @@ statement: IF expression THEN suite
 			$$ = $1;
 		}
 
-typedecl: IDENT
+typedecl: UIDENT
 		{
 			$$ = new TypeDecl();
 			$$->emplace_back($1);
 		}
-	| typedecl RARROW IDENT
+	| typedecl RARROW UIDENT
 		{
 			$$ = $1;
 			$$->emplace_back($3);
@@ -157,12 +162,12 @@ parameters: /* empty */
 			$$ = $1;
 		}
 
-param_list: IDENT
+param_list: LIDENT
 		{
 			$$ = new ParamListNode();
 			$$->append($1);
 		}
-	| param_list IDENT
+	| param_list LIDENT
 		{
 			$1->append($2);
 			$$ = $1;
@@ -193,7 +198,7 @@ expression: ISNULL expression
 		{
 			$$ = new NullNode($2);
 		}
-	| IDENT '$' expression
+	| ident '$' expression
 		{
 			ArgList* argList = new ArgList();
 			argList->emplace_back($3);
@@ -277,7 +282,7 @@ fexpression: simple_expression
 		{
 			$$ = $1;
 		}
-	| IDENT arg_list
+	| ident arg_list
 		{
 			$$ = new FunctionCallNode($1, $2);
 		}
@@ -297,7 +302,7 @@ simple_expression: '(' expression ')'
 		{
 			$$ = $2;
 		}
-	| IDENT
+	| ident
 		{
 			$$ = new NullaryNode($1);
 		}
@@ -316,6 +321,15 @@ simple_expression: '(' expression ')'
 	| '[' ']'
 		{
 			$$ = new NilNode();
+		}
+
+ident: LIDENT
+		{
+			$$ = $1;
+		}
+	| UIDENT
+		{
+			$$ = $1;
 		}
 
 %%

@@ -78,22 +78,24 @@ int yycolumn = 1;
 "++"	{ return CONCAT; }
 
  /* Keywords */
-"if"		{ return IF; }
-"then"		{ return THEN; }
-"else"		{ return ELSE; }
-"foreign"	{ return FOREIGN; }
-"while"		{ return WHILE; }
-"for"		{ return FOR; }
-"in"		{ return IN; }
-"do"		{ return DO; }
 "def"		{ return DEF; }
-"return"	{ return RETURN; }
+"data"		{ return DATA; }
+"do"		{ return DO; }
+"else"		{ return ELSE; }
+"for"		{ return FOR; }
+"foreign"	{ return FOREIGN; }
+"if"		{ return IF; }
+"in"		{ return IN; }
 "let"		{ return LET; }
 "null"		{ return ISNULL; }
+"return"	{ return RETURN; }
+"then"		{ return THEN; }
+"while"		{ return WHILE; }
 "True"		{ return TRUE; }
 "False"		{ return FALSE; }
 
-[a-zA-Z][a-zA-Z0-9.]*	 { yylval.str = StringTable::add(yytext); return IDENT; }
+[a-z][a-zA-Z0-9.]*	 	{ yylval.str = StringTable::add(yytext); return LIDENT; }
+[A-Z][a-zA-Z0-9.]*	 	{ yylval.str = StringTable::add(yytext); return UIDENT; }
 \n						 { yycolumn = 1; return EOL; }
 [ \t]+				     { yylval.number = count_whitespace(yytext, yyleng); return WHITESPACE; }
 .						 {
