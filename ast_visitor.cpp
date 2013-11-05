@@ -15,6 +15,8 @@ Symbol* AstVisitor::searchScopes(const std::string& name)
 
 void AstVisitor::visit(ProgramNode* node)
 {
+	typeTable_ = node->typeTable();
+
 	scopes_.push_back(node->scope());
 
 	for (auto& child : node->children())

@@ -36,6 +36,7 @@ public:
 	virtual void visit(ProgramNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(ForeignDeclNode* node);
+	virtual void visit(DataDeclaration* node);
 
 private:
 	FunctionDefNode* _enclosingFunction;
@@ -62,25 +63,30 @@ public:
 	TypeChecker() : _enclosingFunction(nullptr) {}
 
 	// Internal nodes
-	virtual void visit(ProgramNode* node);
-	virtual void visit(ComparisonNode* node);
-	virtual void visit(BinaryOperatorNode* node);
-	virtual void visit(LogicalNode* node);
-	virtual void visit(BlockNode* node);
-	virtual void visit(IfNode* node);
-	virtual void visit(IfElseNode* node);
-	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
+	virtual void visit(BinaryOperatorNode* node);
+	virtual void visit(BlockNode* node);
+	virtual void visit(ComparisonNode* node);
 	virtual void visit(FunctionDefNode* node);
+	virtual void visit(IfElseNode* node);
+	virtual void visit(IfNode* node);
+	virtual void visit(LetNode* node);
+	virtual void visit(LogicalNode* node);
 	virtual void visit(NullNode* node);
+	virtual void visit(ProgramNode* node);
+	virtual void visit(WhileNode* node);
 
 	// Leaf nodes
-	virtual void visit(NullaryNode* node);
-	virtual void visit(IntNode* node);
 	virtual void visit(BoolNode* node);
-	virtual void visit(NilNode* node);
 	virtual void visit(FunctionCallNode* node);
+	virtual void visit(IntNode* node);
+	virtual void visit(NilNode* node);
+	virtual void visit(NullaryNode* node);
 	virtual void visit(ReturnNode* node);
+
+	// Declaration nodes with void type
+	virtual void visit(DataDeclaration* node) { node->setType(typeTable_->lookup("Void")); }
+	virtual void visit(ForeignDeclNode* node) { node->setType(typeTable_->lookup("Void")); }
 
 private:
 	void typeCheck(AstNode* node, const Type* type);

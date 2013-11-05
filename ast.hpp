@@ -1,10 +1,12 @@
 #ifndef AST_HPP
 #define AST_HPP
 
+#include <cassert>
 #include <iostream>
 #include <list>
-#include <string>
 #include <memory>
+#include <string>
+
 #include "ast_visitor.hpp"
 #include "scope.hpp"
 #include "types.hpp"
@@ -38,6 +40,32 @@ class ExpressionNode : public StatementNode {};
 typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
 typedef std::vector<std::string> TypeDecl;
 
+class ConstructorSpec
+{
+public:
+	ConstructorSpec(const char* name)
+	: name_(name)
+	{}
+
+	void append(const char* member) { members_.emplace_back(member); }
+
+	const std::string& name() { return name_; }
+	const std::vector<std::string>& members() { return members_; }
+
+	void setMemberTypes(const std::vector<const Type*> types)
+	{
+		assert(types.size() == members_.size());
+		types_ = types;
+	}
+	const std::vector<const Type*>& memberTypes() { return types_; }
+
+private:
+	std::string name_;
+
+	std::vector<std::string> members_;
+	std::vector<const Type*> types_;
+};
+
 
 
 ////// Top-level nodes /////////////////////////////////////////////////////////
@@ -45,7 +73,10 @@ typedef std::vector<std::string> TypeDecl;
 class ProgramNode : public AstNode
 {
 public:
-	ProgramNode() : scope_(new Scope) {}
+	ProgramNode()
+	: scope_(new Scope)
+	, typeTable_(new TypeTable)
+	{}
 
 	void append(AstNode* child);
 
@@ -53,10 +84,12 @@ public:
 
 	const std::list<std::unique_ptr<AstNode>>& children() const { return children_; }
 	Scope* scope() { return scope_.get(); }
+	TypeTable* typeTable() { return typeTable_.get(); }
 
 private:
 	std::list<std::unique_ptr<AstNode>> children_;
 	std::unique_ptr<Scope> scope_;
+	std::unique_ptr<TypeTable> typeTable_;
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
@@ -358,6 +391,23 @@ private:
 
 	FunctionSymbol* symbol_;
 	std::unique_ptr<Scope> scope_;
+};
+
+class DataDeclaration : public StatementNode
+{
+public:
+	DataDeclaration(const char* name, ConstructorSpec* constructor)
+	: name_(name), constructor_(constructor)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& name() { return name_; }
+	ConstructorSpec* constructor() { return constructor_.get(); }
+
+private:
+	std::string name_;
+	std::unique_ptr<ConstructorSpec> constructor_;
 };
 
 class ForeignDeclNode : public StatementNode

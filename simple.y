@@ -27,7 +27,8 @@ void yyerror(const char* msg);
 	ExpressionNode* expression;
 	ParamListNode* params;
 	ArgList* arguments;
-	TypeDecl* typedecl;
+	TypeDecl* typeDecl;
+	ConstructorSpec* constructorSpec;
 	const char* str;
 	long number;
 }
@@ -38,8 +39,9 @@ void yyerror(const char* msg);
 %type<block> statement_list
 %type<params> param_list parameters
 %type<arguments> arg_list
-%type<typedecl> typedecl
+%type<typeDecl> typedecl
 %type<str> ident
+%type<constructorSpec> constructor_spec
 
 %token ERROR
 %token IF THEN ELSE
@@ -103,12 +105,10 @@ statement: IF expression THEN suite
 		{
 			$$ = new LetNode($2, $4, $6);
 		}
-	/*
-	| DATA UIDENT '=' constructor_decl
+	| DATA UIDENT '=' constructor_spec EOL
 		{
 			$$ = new DataDeclaration($2, $4);
 		}
-	*/
 	| LIDENT PLUS_EQUAL expression EOL
 		{
 			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kPlus, $3));
@@ -139,6 +139,16 @@ statement: IF expression THEN suite
 		}
 	| expression EOL
 		{
+			$$ = $1;
+		}
+
+constructor_spec: UIDENT
+		{
+			$$ = new ConstructorSpec($1);
+		}
+	| constructor_spec UIDENT
+		{
+			$1->append($2);
 			$$ = $1;
 		}
 

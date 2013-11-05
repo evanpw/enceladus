@@ -1,24 +1,19 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include <memory>
 #include <string>
+#include <unordered_map>
 
 class Type
 {
 public:
+    Type(const char* name, bool isSimple) : name_(name), isSimple_(isSimple) {}
+
     const std::string& name() const { return name_; }
     bool isSimple() const { return isSimple_; }
 
-    static const Type Void;
-    static const Type Int;
-    static const Type Bool;
-    static const Type List;
-    static const Type Tree;
-
-    static const Type* lookup(const std::string& name);
-
 private:
-    Type(const char* name, bool isSimple) : name_(name), isSimple_(isSimple) {}
     Type(const Type& rhs) = delete;
     Type& operator=(const Type& rhs) = delete;
 
@@ -26,6 +21,18 @@ private:
 
     // True if the type fits into one 8-byte long, and is not heap-allocated
     bool isSimple_;
+};
+
+class TypeTable
+{
+public:
+    TypeTable();
+
+    const Type* lookup(const std::string& name);
+    void insert(const std::string& name, Type* type);
+
+private:
+    std::unordered_map<std::string, std::unique_ptr<Type>> table_;
 };
 
 #endif

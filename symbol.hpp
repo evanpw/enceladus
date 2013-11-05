@@ -16,7 +16,7 @@ struct Symbol
     , kind(kind)
     , node(node)
     , enclosingFunction(enclosingFunction)
-    , type(&Type::Void)
+    , type(nullptr)
     {}
 
     std::string name;
