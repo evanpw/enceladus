@@ -69,23 +69,21 @@ void _incref(long* p)
 {
     if (p == NULL) return;
 
-    long* refCount = p - 1;
-    ++(*refCount);
+    ++(*p);
 }
 
 long _decrefNoFree(long* p)
 {
     if (p == NULL) return 1;
 
-    long* refCount = p - 1;
-    --(*refCount);
+    --(*p);
 
-    if (*refCount < 0)
+    if (*p < 0)
     {
         _die(ERR_REF_NEG);
     }
 
-    return *refCount;
+    return *p;
 }
 
 void _List_decref(long* list)
@@ -94,8 +92,8 @@ void _List_decref(long* list)
 
     while (_decrefNoFree(list) == 0)
     {
-        long* next = (long*)*(list + 1);
-        free(list - 1);
+        long* next = (long*)*(list + 2);
+        free(list);
         list = next;
     }
 }
@@ -110,7 +108,7 @@ long* Cons(long value, long* next)
 
     _incref(next);
 
-    return newCell + 1;
+    return newCell;
 }
 
 long top(long* tree)
@@ -130,7 +128,7 @@ long* left(long* tree)
         _die(ERR_LEFT_EMPTY);
     }
 
-    return (long*)*(tree + 1);
+    return (long*)*(tree + 2);
 }
 
 long* right(long* tree)
@@ -140,7 +138,7 @@ long* right(long* tree)
         _die(ERR_RIGHT_EMPTY);
     }
 
-    return (long*)*(tree + 2);
+    return (long*)*(tree + 3);
 }
 
 long count(long* tree)
@@ -151,7 +149,7 @@ long count(long* tree)
     }
     else
     {
-        return *(tree + 3);
+        return *(tree + 4);
     }
 }
 
@@ -168,7 +166,7 @@ long* Node(long value, long* left, long* right)
     _incref(left);
     _incref(right);
 
-    return newTree + 1;
+    return newTree;
 }
 
 long* Empty()
@@ -186,7 +184,7 @@ startOver:
         long* leftChild = left(tree);
         long* rightChild = right(tree);
 
-        free(tree - 1);
+        free(tree);
 
         // This hacked-in tail recursion is necessary to avoid a stack overflow
         // when the tree is very large and lopsided

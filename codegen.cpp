@@ -529,7 +529,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		    out_ << "\t" << "mov rsp, rbx" << std::endl;
 
 			out_ << good << ":" << std::endl;
-			out_ << "\t" << "mov rax, qword [rax]" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;
 		}
 		else if (node->target() == "tail")
 		{
@@ -551,7 +551,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		    out_ << "\t" << "mov rsp, rbx" << std::endl;
 
 			out_ << good << ":" << std::endl;
-			out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
 		}
 		else
 		{
