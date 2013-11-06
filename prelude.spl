@@ -1,17 +1,19 @@
 ---- Declarations for built-in functions written in C
 
--- List functions
-foreign Cons x ys :: Int -> List -> List
+-- Basic functions
 foreign read :: Int
-foreign print x :: Int -> Void
+foreign print :: Int -> Void
+
+-- List functions
+foreign Cons :: Int -> List -> List
 
 -- Tree functions
-foreign Node x l r :: Int -> Tree -> Tree -> Tree
+foreign Node :: Int -> Tree -> Tree -> Tree
 foreign Empty :: Tree
-foreign top t :: Tree -> Int
-foreign left t :: Tree -> Tree
-foreign right t :: Tree -> Tree
-foreign count t :: Tree -> Int
+foreign top :: Tree -> Int
+foreign left :: Tree -> Tree
+foreign right :: Tree -> Tree
+foreign count :: Tree -> Int
 
 ---- Native-language standard library
 

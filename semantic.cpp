@@ -287,8 +287,10 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 		return;
 	}
 
-	// Must have a type specified for each parameter + one for return type
-	if (node->typeDecl()->size() != node->params().size() + 1)
+	// If parameters names are given, must have a type specified for
+	// each parameter + one for return type
+	if (node->params().size() != 0 &&
+		node->typeDecl()->size() != node->params().size() + 1)
 	{
 		std::stringstream msg;
 		msg << "number of types does not match parameter list";
@@ -336,7 +338,7 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
 	symbol->type = returnType;
-	symbol->arity = node->params().size();
+	symbol->arity = node->typeDecl()->size() - 1;
 	symbol->isForeign = true;
 	symbol->isExternal = true;
 	symbol->paramTypes = paramTypes;
