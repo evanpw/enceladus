@@ -12,24 +12,25 @@ class CodeGen : public AstVisitor
 public:
 	CodeGen() : labels_(0), out_(std::cout) {}
 
-	virtual void visit(ProgramNode* node);
-	virtual void visit(ComparisonNode* node);
-	virtual void visit(BinaryOperatorNode* node);
-	virtual void visit(LogicalNode* node);
-	virtual void visit(BlockNode* node);
-	virtual void visit(IfNode* node);
-	virtual void visit(IfElseNode* node);
-	virtual void visit(WhileNode* node);
 	virtual void visit(AssignNode* node);
-	virtual void visit(LetNode* node);
-	virtual void visit(NullaryNode* node);
-	virtual void visit(IntNode* node);
+	virtual void visit(BinaryOperatorNode* node);
+	virtual void visit(BlockNode* node);
 	virtual void visit(BoolNode* node);
-	virtual void visit(NilNode* node);
-	virtual void visit(FunctionDefNode* node);
+	virtual void visit(ComparisonNode* node);
+	virtual void visit(DataDeclaration* node);
 	virtual void visit(FunctionCallNode* node);
-	virtual void visit(ReturnNode* node);
+	virtual void visit(FunctionDefNode* node);
+	virtual void visit(IfElseNode* node);
+	virtual void visit(IfNode* node);
+	virtual void visit(IntNode* node);
+	virtual void visit(LetNode* node);
+	virtual void visit(LogicalNode* node);
+	virtual void visit(NilNode* node);
+	virtual void visit(NullaryNode* node);
 	virtual void visit(NullNode* node);
+	virtual void visit(ProgramNode* node);
+	virtual void visit(ReturnNode* node);
+	virtual void visit(WhileNode* node);
 
 	// Generate a code fragment to access the symbol with the given name in the
 	// current scope.
@@ -41,6 +42,10 @@ public:
 	// Converts periods to underscores to make interfacing with C programs easier
 	std::string mangle(const std::string& name);
 
+	// Create the functions corresponding to a data type declaration
+	void createConstructors(DataDeclaration* dataDecl);
+	void createDestructors(DataDeclaration* dataDecl);
+
 private:
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
 	int labels_;
@@ -51,6 +56,9 @@ private:
 
 	// Keep track of the function definitions so that we can walk through them after the main function
 	std::vector<FunctionDefNode*> functionDefs_;
+
+	// Same for data declarations - we need to create constructors
+	std::vector<DataDeclaration*> dataDeclarations_;
 };
 
 #endif

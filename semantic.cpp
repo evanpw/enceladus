@@ -171,7 +171,15 @@ void SemanticPass1::visit(DataDeclaration* node)
 	node->constructor()->setMemberTypes(memberTypes);
 
 	// Actually create the type
-	typeTable_->insert(node->name(), new Type(node->name().c_str(), false));
+	Type* newType = new Type(node->name().c_str(), false);
+	typeTable_->insert(node->name(), newType);
+
+	// Create a symbol for the constructor
+	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
+	symbol->type = newType;
+	symbol->arity = memberTypes.size();
+	symbol->paramTypes = memberTypes;
+	topScope()->insert(symbol);
 }
 
 void SemanticPass1::visit(FunctionDefNode* node)
