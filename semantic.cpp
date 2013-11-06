@@ -363,8 +363,10 @@ void SemanticPass2::visit(FunctionDefNode* node)
 
 void SemanticPass2::visit(LetNode* node)
 {
-	const std::string& target = node->target();
+	// Visit children. Do this first so that we can't have recursive definitions.
+	AstVisitor::visit(node);
 
+	const std::string& target = node->target();
 	if (topScope()->find(target) != nullptr)
 	{
 		std::stringstream msg;
@@ -391,9 +393,6 @@ void SemanticPass2::visit(LetNode* node)
 
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
-
-	// Recurse to children
-	AstVisitor::visit(node);
 }
 
 void SemanticPass2::visit(AssignNode* node)
