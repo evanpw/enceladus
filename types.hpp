@@ -8,10 +8,11 @@
 class Type
 {
 public:
-    Type(const char* name, bool isSimple) : name_(name), isSimple_(isSimple) {}
+    Type(const char* name, bool isSimple) : name_(name), isSimple_(isSimple), constructorCount_(1) {}
 
     const std::string& name() const { return name_; }
     bool isSimple() const { return isSimple_; }
+    int constructorCount() const { return constructorCount_; }
 
 private:
     Type(const Type& rhs) = delete;
@@ -21,6 +22,8 @@ private:
 
     // True if the type fits into one 8-byte long, and is not heap-allocated
     bool isSimple_;
+
+    int constructorCount_;
 };
 
 class TypeTable

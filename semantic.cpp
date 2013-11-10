@@ -415,6 +415,14 @@ void SemanticPass2::visit(MatchNode* node)
 
 	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
 	assert(!constructorSymbol->type->isSimple());
+
+	if (constructorSymbol->type->constructorCount() > 1)
+	{
+		std::stringstream msg;
+		msg << "let statement pattern matching only applies to types with a single constructor.";
+		semanticError(node, msg.str());
+	}
+
 	if (constructorSymbol->arity != node->params()->names().size())
 	{
 		std::stringstream msg;
