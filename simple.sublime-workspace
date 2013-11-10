@@ -3,67 +3,59 @@
 	{
 		"selected_items":
 		[
+			[
+				"right",
+				"__insert_right"
+			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "TODO",
+			"file": "simple.flex",
 			"settings":
 			{
-				"buffer_size": 1143,
+				"buffer_size": 2872,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "linux/library.asm",
+			"file": "simple.y",
 			"settings":
 			{
-				"buffer_size": 3169,
+				"buffer_size": 6673,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"contents": "bits 64\nsection .text\nextern printf, scanf, malloc, puts, exit, free\nextern __main\nglobal main, __read, __print, __cons, __die, __incref, __decref, __decref_no_free\n\nmain:\n    ; The main function from the compiled program\n    call __main\n\n    xor rax, rax\n    ret\n\n__die:\n    ;; Print error message based on value of rax\n\n    mov rdi, [__error_messages + 8 * rax]\n    call puts\n\n    ; Kill the process\n    mov rdi, 1\n    call exit\n\n    ; Useless\n    ret\n\n__read:\n    lea rsi, [rel __read_result]\n    lea rdi, [rel __read_format]\n    xor rax, rax\n    call scanf\n\n    mov rax, [rel __read_result]\n    ret\n\n; Print the number stored in rax, followed by a newline\n__print:\n    mov rsi, rax\n    lea rdi, [rel __format]\n    xor rax, rax\n    call printf\n\n    ret\n\n; Increment the reference count of the cons cell at rdi\n__incref:\n    cmp rdi, 0\n    je __end_incref\n\n    add qword [rdi - 8], 1\n\n__end_incref:\n    ret\n\n; Decrement the reference count of the cons cell at rdi, and if it is zero,\n; then deallocate it\n__decref:\n    cmp rdi, 0\n    je __end_decref\n\n    ; Get to the reference count, and the actuall address returned by malloc\n    add rdi, -8\n\n    add qword [rdi], -1\n\n    cmp qword [rdi], 0\n    jl __negref\n    jne __end_decref\n\n    ; If we reach here, the ref count is zero. Deallocate this cons cell, and\n    ; then decrement the reference of the next (tail-recursively)\n    mov rsi, qword [rdi + 16]\n    push rsi\n    call free\n    pop rdi\n    jmp __decref\n\n__negref:\n    ; Reference count should never be negative. We've screwed something up\n    mov rax, 2\n    call __die\n\n__end_decref:\n    ret\n\n; Decrement the reference count of the cons cell at rdi, but do not free it if\n; it reaches zero. This is used for temporary values (like return values of\n; functions, which will be assigned a reference later.)\n__decref_no_free:\n    cmp rdi, 0\n    je __end_decref_no_free\n\n    ; Get to the reference count, and the actuall address returned by malloc\n    add rdi, -8\n\n    add qword [rdi], -1\n\n    cmp qword [rdi], 0\n    jge __end_decref_no_free\n\n    ; Reference count should never be negative. We've screwed something up\n    mov rax, 2\n    call __die\n\n__end_decref_no_free:\n    ret\n\n; Create a list with head = rdi (an Int), tail = rsi (a pointer).\n; returns the pointer to the new cons cell in rax\n__cons:\n    push rbp\n    mov rbp, rsp\n\n    push rdi\n    push rsi\n\n    mov rdi, 24\n    call malloc\n\n    pop rsi\n    pop rdi\n\n    mov qword [rax], 0\n    mov qword [rax + 8], rdi\n    mov qword [rax + 16], rsi\n    add rax, 8 ; Return a pointer to the actual cell, not the ref count\n\n    ; This cons cell has a reference to the next one\n    push rax\n    mov rdi, rsi\n    call __incref\n    pop rax\n\n    mov rsp, rbp\n    pop rbp\n    ret\n\nsection .data\n__format: db \"%ld\", 0xA, 0\n__read_format: db \"%ld\", 0\n__read_result: dq 0\n\n; Array of error messages for __die\n__error_messages:\n    dq __error_head_empty\n    dq __error_tail_empty\n    dq __error_negative_refs\n\n__error_head_empty: db \"*** Exception: Called head on empty list\", 0\n__error_tail_empty: db \"*** Exception: Called tail on empty list\", 0\n__error_negative_refs: db \"*** Exception: Reference count is negative\", 0\n",
+			"file": "ast.hpp",
 			"settings":
 			{
-				"buffer_size": 3169,
-				"line_ending": "Unix",
-				"name": "bits 64"
+				"buffer_size": 12513,
+				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "testing/euler12.spl",
+			"file": "ast_visitor.hpp",
 			"settings":
 			{
-				"buffer_size": 1123,
-				"line_ending": "Unix",
-				"name": "-- Solves Project Euler #12"
+				"buffer_size": 1847,
+				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "testing/euler13.spl",
+			"file": "ast_visitor.cpp",
 			"settings":
 			{
-				"buffer_size": 787,
-				"line_ending": "Unix",
-				"name": "let xs :: List = 3 : 7 : 1 : 0 : 7 : 2 : 8 : 7 :"
+				"buffer_size": 1882,
+				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "testing/euler14.spl",
+			"file": "testing/euler15.spl",
 			"settings":
 			{
-				"buffer_size": 435,
-				"line_ending": "Unix",
-				"name": "-- Solves Project Euler 14"
-			}
-		},
-		{
-			"file": "prelude.spl",
-			"settings":
-			{
-				"buffer_size": 1596,
+				"buffer_size": 959,
 				"line_ending": "Unix"
 			}
 		},
@@ -71,15 +63,67 @@
 			"file": "codegen.cpp",
 			"settings":
 			{
-				"buffer_size": 11958,
+				"buffer_size": 21088,
 				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "semantic.hpp",
+			"settings":
+			{
+				"buffer_size": 2446,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "semantic.cpp",
+			"settings":
+			{
+				"buffer_size": 19048,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "codegen.hpp",
+			"settings":
+			{
+				"buffer_size": 2130,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "symbol.hpp",
+			"settings":
+			{
+				"buffer_size": 1589,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "types.hpp",
+			"settings":
+			{
+				"buffer_size": 870,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "#include <sstream>\n#include \"symbol.hpp\"\n\nint Symbol::nextUnique = 0;\n\nstd::string Symbol::uniqueName()\n{\n    int n = nextUnique++;\n\n    std::stringstream stringBuilder;\n    stringBuilder << \"__hidden\" << n;\n\n    return stringBuilder.str();\n}\n",
+			"file": "symbol.cpp",
+			"file_size": 243,
+			"file_write_time": 130285060610000000,
+			"settings":
+			{
+				"buffer_size": 243,
+				"line_ending": "Unix",
+				"name": "#include \"symbol.hpp\""
 			}
 		}
 	],
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 375.0,
+		"height": 49.0,
 		"selected_items":
 		[
 			[
@@ -111,61 +155,85 @@
 	},
 	"file_history":
 	[
+		"/Users/evanpw/Workspace/simple/codegen.cpp",
+		"/Users/evanpw/Workspace/simple/codegen.hpp",
+		"/Users/evanpw/Workspace/simple/semantic.cpp",
+		"/Users/evanpw/Dropbox/Progress/Reference/To Buy.md",
+		"/Users/evanpw/Workspace/simple/TODO",
+		"/Users/evanpw/Workspace/simple/build/cycle.asm",
+		"/Users/evanpw/Workspace/simple/build/test.asm",
+		"/Users/evanpw/Workspace/simple/testing/test.spl",
+		"/Users/evanpw/Workspace/simple/testing/cycle.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
+		"/Users/evanpw/Workspace/simple/simple.y",
+		"/Users/evanpw/Workspace/simple/testing/euler12.spl",
+		"/Users/evanpw/Workspace/simple/prelude.spl",
+		"/Users/evanpw/Workspace/simple/ast.hpp",
+		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
+		"/Users/evanpw/Workspace/simple/testing/test.cpp",
+		"/Users/evanpw/Workspace/simple/library.c",
+		"/Users/evanpw/Workspace/simple/symbol.hpp",
+		"/Users/evanpw/Workspace/simple/ast.cpp",
+		"/Users/evanpw/Workspace/simple/simple.flex",
+		"/Users/evanpw/Workspace/simple/semantic.hpp",
+		"/Users/evanpw/Workspace/simple/types.hpp",
+		"/Users/evanpw/Workspace/simple/types.cpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
+		"/Users/evanpw/Workspace/simple/testing/set.spl",
+		"/Users/evanpw/Workspace/simple/testing/preref.spl",
+		"/Users/evanpw/Workspace/simple/build/euler1.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler7.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler10-2.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler10-3.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler10.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler10.py",
+		"/Users/evanpw/Workspace/simple/testing/euler10.hs",
+		"/Users/evanpw/Workspace/simple/Set.c",
+		"/Users/evanpw/Workspace/simple/library.s",
+		"/Users/evanpw/Workspace/simple/test.spl",
+		"/Users/evanpw/Workspace/simple/osx/library.c",
+		"/Users/evanpw/Workspace/simple/osx/library.asm",
+		"/Users/evanpw/Workspace/simple/osx/build.sh",
+		"/Users/evanpw/Workspace/simple/Makefile",
+		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler9.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
+		"/Users/evanpw/Workspace/simple/test.c",
+		"/Users/evanpw/Dropbox/Progress/Abby.csv",
+		"/Users/evanpw/Dropbox/Progress/Reference/Net Worth.md",
+		"/Users/evanpw/Dropbox/Archive/logins",
+		"/Users/evanpw/Dropbox/Progress/Reference/Periodicity.md",
+		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler13.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler14.spl",
+		"/Users/evanpw/Workspace/simple/linux/Set.asm",
+		"/Users/evanpw/Workspace/simple/linux/test.c",
 		"/Users/evanpw/Workspace/simple/testing/all.sh",
 		"/Users/evanpw/Workspace/simple/testing/euler13.txt",
-		"/Users/evanpw/Workspace/simple/testing/test.spl",
 		"/Users/evanpw/Dropbox/Progress/Reference/Kayla's Loan.csv",
-		"/Users/evanpw/Workspace/simple/Makefile",
-		"/Users/evanpw/Workspace/simple/ast.hpp",
-		"/Users/evanpw/Workspace/simple/simple.flex",
-		"/Users/evanpw/Workspace/simple/simple.y",
 		"/Users/evanpw/Workspace/simple/string_table.hpp",
 		"/Users/evanpw/Workspace/simple/string_table.cpp",
 		"/Users/evanpw/Workspace/simple/simple.output",
 		"/Users/evanpw/Workspace/simple/simple.tab.c",
-		"/Users/evanpw/Workspace/simple/ast.cpp",
-		"/Users/evanpw/Workspace/simple/TODO",
-		"/Users/evanpw/Workspace/simple/types.hpp",
-		"/Users/evanpw/Workspace/simple/types.cpp",
 		"/Users/evanpw/Workspace/simple/string_table.hpp.bak",
-		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler10-2.spl",
-		"/Users/evanpw/Workspace/simple/osx/build.sh",
 		"/Users/evanpw/Workspace/simple/build/euler10-2.asm",
-		"/Users/evanpw/Workspace/simple/testing/euler10.spl",
-		"/Users/evanpw/Workspace/simple/semantic.cpp",
 		"/Users/evanpw/Workspace/simple/scope.hpp",
 		"/Users/evanpw/Workspace/simple/scope.cpp",
-		"/Users/evanpw/Workspace/simple/codegen.hpp",
-		"/Users/evanpw/Workspace/simple/codegen.cpp",
-		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
-		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
-		"/Users/evanpw/Workspace/simple/symbol.hpp",
 		"/Users/evanpw/Workspace/simple/simplec.cpp",
-		"/Users/evanpw/Workspace/simple/osx/library.asm",
 		"/Users/evanpw/Workspace/simple/linux/library.asm",
 		"/Users/evanpw/Workspace/simple/testing/test.sh",
 		"/Users/evanpw/Workspace/simple/build/euler8.asm",
-		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler9.spl",
-		"/Users/evanpw/Workspace/simple/prelude.spl",
 		"/Users/evanpw/Workspace/simple/testing/function.spl",
 		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
 		"/Users/evanpw/Dropbox/Progress/Year28.tex",
-		"/Users/evanpw/Workspace/simple/semantic.hpp",
 		"/Users/evanpw/Workspace/simple/common.asm",
-		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler7.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler5.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
 		"/Users/evanpw/Workspace/simple/build/euler5.asm",
 		"/Users/evanpw/Workspace/simple/testing/euler7.spl.py",
-		"/Users/evanpw/Workspace/simple/library.c",
 		"/Users/evanpw/Workspace/simple/build.sh",
-		"/Users/evanpw/Workspace/simple/test.spl",
 		"/Users/evanpw/Workspace/simple/symbol_table.cpp",
 		"/Users/evanpw/Workspace/simple/symbol_table.hpp",
 		"/Users/evanpw/Workspace/mycraft/Makefile",
@@ -196,7 +264,6 @@
 		"/Users/evanpw/Dropbox/Progress/Weight Lifting.md",
 		"/Users/evanpw/Dropbox/Progress/Waist.csv",
 		"/Users/evanpw/Dropbox/Progress/Calendar.md",
-		"/Users/evanpw/Dropbox/Progress/Abby.csv",
 		"/Users/evanpw/Dropbox/Progress/Abby-Weight.csv",
 		"/Users/evanpw/Workspace/evanpwright.com/templates/math.html",
 		"/Users/evanpw/Workspace/evanpwright.com/templates/main.html",
@@ -204,9 +271,7 @@
 		"/Users/evanpw/Workspace/evanpwright.com/templates/index.html",
 		"/Users/evanpw/Dropbox/Progress/Visit.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/Baby Schedule.tex",
-		"/Users/evanpw/Dropbox/Progress/Reference/Net Worth.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/To Read.tex",
-		"/Users/evanpw/Dropbox/Progress/Reference/To Buy.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/Notions.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/System.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/Library Books.md",
@@ -217,12 +282,7 @@
 		"/Users/evanpw/Workspace/evanpwright.com/template.html",
 		"/Users/evanpw/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
 		"/Users/evanpw/Workspace/raytracer/surface.cpp",
-		"/Users/evanpw/Workspace/raytracer/raytracer.cpp",
-		"/Users/evanpw/Workspace/evanpwright.com/index.html",
-		"/Users/evanpw/Workspace/evanpwright.com/hugo.html",
-		"/Users/evanpw/Workspace/raytracer/surface.hpp",
-		"/Users/evanpw/Workspace/raytracer/color.cpp",
-		"/Users/evanpw/Workspace/raytracer/bitmap_file.cpp"
+		"/Users/evanpw/Workspace/raytracer/raytracer.cpp"
 	],
 	"find":
 	{
@@ -240,6 +300,81 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"Pair",
+			"Match",
+			"ParamListNode",
+			"LetNode",
+			"die",
+			"__decref",
+			"incref",
+			"ConstructorSpec",
+			"ConstructorSpec*",
+			"let",
+			"LetNode",
+			"':'",
+			"DO",
+			"Constructor",
+			"BlockNode",
+			"assert",
+			"semanticError",
+			"typeTable",
+			"LetNode",
+			"type_",
+			"Type",
+			"Type::",
+			"&Type::",
+			"&Type::List",
+			"&Type::Bool",
+			"&Type::Int",
+			"&Type::Void",
+			"Type::lookup",
+			"Type::",
+			"_Set_empty",
+			"head",
+			"Head",
+			"HEAD",
+			"NullNode",
+			"ISNULL",
+			"NotNode",
+			"NotNod",
+			"NotNode",
+			"NOT",
+			"_enclosingFunction",
+			"FunctionCall",
+			"count",
+			"reference",
+			"List",
+			"typeCheck",
+			"Tree.",
+			"isSimple",
+			"List_",
+			"decref",
+			"_decref",
+			"__decref",
+			"decref",
+			"mangle",
+			"TYPE",
+			"cons",
+			"Read",
+			"read",
+			"READ",
+			"VariableNode",
+			"_decref",
+			"Cons",
+			"die",
+			"__die",
+			"Print",
+			"PRINT",
+			"isForeign",
+			"isExternal",
+			"External",
+			"EXTERN",
+			"extern",
+			"prime_counts",
+			"first_number",
+			"count_divisors",
+			"count_groups",
+			"die",
 			"\\d",
 			"[]))",
 			"take 50",
@@ -292,43 +427,12 @@
 			"SymbolTable",
 			"topScope->",
 			"type",
-			"Kind type",
-			"util",
-			"yy_get_next_buffer",
-			"yy_get_next_buffer()",
-			"MemoryManager",
-			"code()",
-			"ReadNode",
-			"cdq",
-			"int",
-			"[qword",
-			"dword",
-			"esp",
-			"ebx",
-			"eax",
-			"movq",
-			"mov",
-			"qword",
-			"dword",
-			"ebx",
-			"edx",
-			"esp",
-			"eax",
-			"<i class=\"icon-ok\"></i>",
-			"<tr>",
-			"</tr></tr>",
-			" - ",
-			"</tr>",
-			"<tr>",
-			"</li>",
-			"<li>",
-			"\\checkmark",
-			".."
+			"Kind type"
 		],
 		"highlight": true,
 		"in_selection": false,
 		"preserve_case": false,
-		"regex": true,
+		"regex": false,
 		"replace_history":
 		[
 		],
@@ -341,171 +445,169 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 5,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "TODO",
+					"file": "simple.flex",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1143,
+						"buffer_size": 2872,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								31,
-								31
+								2263,
+								2263
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1212.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "linux/library.asm",
-					"semi_transient": true,
+					"file": "simple.y",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3169,
+						"buffer_size": 6673,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								3169
+								2134,
+								2134
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1442.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 2,
+					"file": "ast.hpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3169,
+						"buffer_size": 12513,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2399,
-								2399
+								10549,
+								10549
 							]
 						],
 						"settings":
 						{
-							"auto_name": "bits 64",
-							"syntax": "Packages/Text/Plain text.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 1662.0,
+						"translation.y": 5908.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 3,
-					"file": "testing/euler12.spl",
+					"file": "ast_visitor.hpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1123,
+						"buffer_size": 1847,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								140,
-								140
+								1067,
+								1067
 							]
 						],
 						"settings":
 						{
-							"auto_name": "-- Solves Project Euler #12",
-							"syntax": "Packages/Python/Python.tmLanguage"
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 492.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 4,
-					"file": "testing/euler13.spl",
+					"file": "ast_visitor.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 787,
+						"buffer_size": 1882,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								352,
-								352
+								1879,
+								1879
 							]
 						],
 						"settings":
 						{
-							"auto_name": "let xs :: List = 3 : 7 : 1 : 0 : 7 : 2 : 8 : 7 :",
-							"syntax": "Packages/Python/Python.tmLanguage"
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1047.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 5,
-					"file": "testing/euler14.spl",
+					"file": "testing/euler15.spl",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 435,
+						"buffer_size": 959,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								228,
-								228
+								104,
+								104
 							]
 						],
 						"settings":
 						{
-							"auto_name": "-- Solves Project Euler 14",
-							"syntax": "Packages/Python/Python.tmLanguage"
+							"syntax": "Packages/Haskell/Haskell.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -515,48 +617,19 @@
 				},
 				{
 					"buffer": 6,
-					"file": "prelude.spl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1596,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1411,
-								1411
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 612.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 7,
 					"file": "codegen.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 11958,
+						"buffer_size": 21088,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5132,
-								5132
+								17458,
+								17458
 							]
 						],
 						"settings":
@@ -565,7 +638,177 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 2522.0,
+						"translation.y": 9147.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "semantic.hpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2446,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1007,
+								1007
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "semantic.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 19048,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								11420,
+								11420
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 5886.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "codegen.hpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2130,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								769,
+								769
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 44.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "symbol.hpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1589,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								919,
+								919
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 522.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "types.hpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 870,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								217,
+								217
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "symbol.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 243,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								243,
+								243
+							]
+						],
+						"settings":
+						{
+							"auto_name": "#include \"symbol.hpp\"",
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"

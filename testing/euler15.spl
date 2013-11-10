@@ -1,0 +1,45 @@
+data Pair = Pair Int Int
+
+let xs = []
+let ys = []
+let counts = []
+
+def searchMemo p :: Pair -> Int =
+    let Pair x y = p
+
+    let xs' = xs
+    let ys' = ys
+    let counts' = counts
+    while not $ null xs' do
+        if x == head xs' and y == head ys' then
+            return head counts'
+
+        xs' = tail xs'
+        ys' = tail ys'
+        counts' = tail counts'
+
+    return -1
+
+def insertMemo p count :: Pair -> Int -> Void =
+    let Pair x y = p
+    xs = x : xs
+    ys = y : ys
+    counts = count : counts
+
+def countPaths p :: Pair -> Int =
+    let Pair x y = p
+
+    if x == 20 and y == 20 then return 1
+    if x > 20 or y > 20 then return 0
+
+    let memoCount = searchMemo p
+    if memoCount >= 0 then return memoCount
+
+    let count = 0
+    count += countPaths $ Pair (x + 1) y
+    count += countPaths $ Pair x (y + 1)
+
+    insertMemo p count
+    return count
+
+print $ countPaths $ Pair 0 0
