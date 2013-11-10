@@ -22,3 +22,4 @@ Todo
 * Use pointers to the beginning of the allocated space instead of just past the ref count
 * Add more scopes (for loops, etc)
 * Allow function delcarations and definitions to be separate
+* Use a freeing list to avoid recursive deallocations in the reference counting

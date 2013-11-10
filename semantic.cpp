@@ -395,6 +395,55 @@ void SemanticPass2::visit(LetNode* node)
 	node->attachSymbol(symbol);
 }
 
+void SemanticPass2::visit(MatchNode* node)
+{
+	AstVisitor::visit(node);
+
+	const std::string& constructor = node->constructor();
+	Symbol* symbol = searchScopes(constructor);
+
+	if (symbol == nullptr)
+	{
+		std::stringstream msg;
+		msg << "constructor \"" << constructor << "\" is not defined.";
+
+		semanticError(node, msg.str());
+	}
+
+	// A symbol with a capital letter should always be a constructor
+	assert(symbol->kind == kFunction);
+
+	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
+	assert(!constructorSymbol->type->isSimple());
+	if (constructorSymbol->arity != node->params()->names().size())
+	{
+		std::stringstream msg;
+		msg << "constructor pattern \"" << symbol->name << "\" does not have the correct number of arguments.";
+		semanticError(node, msg.str());
+	}
+
+	node->attachConstructorSymbol(constructorSymbol);
+
+	// And create new variables for each of the members of the constructor
+	for (size_t i = 0; i < node->params()->names().size(); ++i)
+	{
+		const std::string& name = node->params()->names().at(i);
+		const Type* memberType = constructorSymbol->paramTypes[i];
+
+		if (topScope()->find(name) != nullptr)
+		{
+			std::stringstream msg;
+			msg << "symbol \"" << name << "\" has already been defined.";
+			semanticError(node, msg.str());
+		}
+
+		VariableSymbol* member = new VariableSymbol(name, node, _enclosingFunction);
+		member->type = memberType;
+		topScope()->insert(member);
+		node->attachSymbol(member);
+	}
+}
+
 void SemanticPass2::visit(AssignNode* node)
 {
 	const std::string& target = node->target();
@@ -555,6 +604,14 @@ void TypeChecker::visit(LogicalNode* node)
 	typeCheck(node->rhs(), typeTable_->lookup("Bool"));
 
 	node->setType(typeTable_->lookup("Bool"));
+}
+
+void TypeChecker::visit(MatchNode* node)
+{
+	node->body()->accept(this);
+	typeCheck(node->body(), node->constructorSymbol()->type);
+
+	node->setType(typeTable_->lookup("Void"));
 }
 
 void TypeChecker::visit(BlockNode* node)

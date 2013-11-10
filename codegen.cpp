@@ -608,6 +608,47 @@ void CodeGen::visit(LetNode* node)
 	out_ << "\t" << "mov " << access(node->symbol()) << ", rax" << std::endl;
 }
 
+void CodeGen::visit(MatchNode* node)
+{
+	node->body()->accept(this);
+	out_ << "\t" << "push rax" << std::endl;
+
+	// Decrement references to the existing variables
+	for (size_t i = 0; i < node->symbols().size(); ++i)
+	{
+		VariableSymbol* member = node->symbols().at(i);
+
+		if (!member->type->isSimple())
+		{
+			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
+			out_ << "\t" << "call __" << member->type->name() << "_decref" << std::endl;
+		}
+	}
+
+	out_ << "\t" << "pop rax" << std::endl;
+
+	// Move over each of the members of the constructor pattern
+	for (size_t i = 0; i < node->symbols().size(); ++i)
+	{
+		VariableSymbol* member = node->symbols().at(i);
+
+		out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
+		out_ << "\t" << "mov " << access(member) << ", rdi" << std::endl;
+	}
+
+	// Increment references to the new variables
+	for (size_t i = 0; i < node->symbols().size(); ++i)
+	{
+		VariableSymbol* member = node->symbols().at(i);
+
+		if (!member->type->isSimple())
+		{
+			out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
+			out_ << "\t" << "call __incref" << std::endl;
+		}
+	}
+}
+
 void CodeGen::visit(FunctionDefNode* node)
 {
 	functionDefs_.push_back(node);

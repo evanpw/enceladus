@@ -19,6 +19,7 @@ class IfNode;
 class IntNode;
 class LetNode;
 class LogicalNode;
+class MatchNode;
 class NilNode;
 class NullaryNode;
 class NullNode;
@@ -42,6 +43,7 @@ public:
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(LetNode* node);
+	virtual void visit(MatchNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(NullNode* node);
 	virtual void visit(ProgramNode* node);

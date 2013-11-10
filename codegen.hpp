@@ -24,6 +24,7 @@ public:
 	virtual void visit(IfNode* node);
 	virtual void visit(IntNode* node);
 	virtual void visit(LetNode* node);
+	virtual void visit(MatchNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(NilNode* node);
 	virtual void visit(NullaryNode* node);

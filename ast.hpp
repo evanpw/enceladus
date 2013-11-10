@@ -402,6 +402,35 @@ private:
 	std::unique_ptr<Scope> scope_;
 };
 
+class MatchNode : public StatementNode
+{
+public:
+	MatchNode(const char* constructor, ParamListNode* params, ExpressionNode* body)
+	: constructor_(constructor), params_(params), body_(body), constructorSymbol_(nullptr)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& constructor() { return constructor_; }
+	ParamListNode* params() { return params_.get(); }
+	ExpressionNode* body() { return body_.get(); }
+
+	const std::vector<VariableSymbol*>& symbols() { return symbols_; }
+	void attachSymbol(VariableSymbol* symbol) { symbols_.push_back(symbol); }
+
+	FunctionSymbol* constructorSymbol() { return constructorSymbol_; }
+	void attachConstructorSymbol(FunctionSymbol* symbol) { constructorSymbol_ = symbol; }
+
+private:
+	std::string constructor_;
+	std::unique_ptr<ParamListNode> params_;
+	std::unique_ptr<ExpressionNode> body_;
+
+	std::vector<VariableSymbol*> symbols_;
+	FunctionSymbol* constructorSymbol_;
+
+};
+
 class DataDeclaration : public StatementNode
 {
 public:
