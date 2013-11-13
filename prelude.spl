@@ -5,7 +5,7 @@ foreign read :: Int
 foreign print :: Int -> Void
 
 -- List functions
-foreign Cons :: Int -> List -> List
+foreign Cons :: Int -> [Int] -> [Int]
 
 -- Tree functions
 foreign Node :: Int -> Tree -> Tree -> Tree
@@ -146,7 +146,7 @@ def Set.delete x set :: Int -> Tree -> Tree =
             let newHead :: Int = Set.findMin $ right set
             return Set.balancedNode newHead (left set) (Set.deleteMin $ right set)
 
-def Set.fromList xs :: List -> Tree =
+def Set.fromList xs :: [Int] -> Tree =
     let result :: Tree = Set.empty
     while not $ null xs do
         result = Set.insert (head xs) result
@@ -154,15 +154,15 @@ def Set.fromList xs :: List -> Tree =
 
     return result
 
-def Set.toList set :: Tree -> List =
+def Set.toList set :: Tree -> [Int] =
     if null set then
         return []
     else
         return (Set.findMin set) : Set.toList $ Set.deleteMin set
 
 -- Miscellanous functions
-def range a b :: Int -> Int -> List =
-    let xs :: List = []
+def range a b :: Int -> Int -> [Int] =
+    let xs :: [Int] = []
 
     let i :: Int = b
     while i >= a do
@@ -171,25 +171,25 @@ def range a b :: Int -> Int -> List =
 
     return xs
 
-def length xs :: List -> Int =
+def length xs :: [Int] -> Int =
     if null xs then
         return 0
     else
         return 1 + length $ tail xs
 
-def sum xs :: List -> Int =
+def sum xs :: [Int] -> Int =
     if null xs then
         return 0
     else
         return head xs + sum $ tail xs
 
-def product xs :: List -> Int =
+def product xs :: [Int] -> Int =
     if null xs then
         return 1
     else
         return head xs * product $ tail xs
 
-def take n xs :: Int -> List -> List =
+def take n xs :: Int -> [Int] -> [Int] =
     if n == 0 then
         return []
     else
@@ -201,26 +201,26 @@ def max a b :: Int -> Int -> Int =
     else
         return b
 
-def maximum xs :: List -> Int =
+def maximum xs :: [Int] -> Int =
     if length xs == 1 then
         return head xs
     else
         return max (head xs) (maximum $ tail xs)
 
-def at n xs :: Int -> List -> Int =
+def at n xs :: Int -> [Int] -> Int =
     if n == 0 then
         return head xs
     else
         return at (n - 1) (tail xs)
 
-def reverse xs :: List -> List =
-    let ys :: List = []
+def reverse xs :: [Int] -> [Int] =
+    let ys :: [Int] = []
     for x in xs do
         ys = x : ys
 
     return ys
 
-def concat xs ys :: List -> List -> List =
+def concat xs ys :: [Int] -> [Int] -> [Int] =
     if null xs then
         return ys
     else
@@ -235,8 +235,8 @@ def odd x :: Int -> Bool =
     else return True
 
 -- Non stack-destroying version
---def concat xs ys :: List -> List -> List =
---    let zs :: List = ys
+--def concat xs ys :: [Int] -> [Int] -> [Int] =
+--    let zs :: [Int] = ys
 
 --    for x in reverse xs do
 --        zs = x : zs

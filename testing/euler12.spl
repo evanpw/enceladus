@@ -1,6 +1,6 @@
 -- Solves Project Euler 12
 
-def countGroups xs :: List -> List =
+def countGroups xs :: [Int] -> [Int] =
     if null xs then return []
 
     let result = []
@@ -20,7 +20,7 @@ def countGroups xs :: List -> List =
 
     return reverse $ count : result
 
-def factor n :: Int -> List =
+def factor n :: Int -> [Int] =
     if n == 1 then return []
 
     let factors = []

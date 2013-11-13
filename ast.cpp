@@ -45,7 +45,7 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
 
     BlockNode* newBody = new BlockNode;
     newBody->append(
-        new LetNode(loopVar, "Int",          // FIXME: Lists of other types
+        new LetNode(loopVar, new TypeName("Int"),          // FIXME: Lists of other types
             new FunctionCallNode("head", headArgList)));
     newBody->append(body);
 
@@ -55,8 +55,11 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
         new AssignNode(listVar.c_str(),
             new FunctionCallNode("tail", tailArgList)));
 
+    TypeName* listOfInts = new TypeName("List");
+    listOfInts->append(new TypeName("Int"));
+
     BlockNode* forNode = new BlockNode;
-    forNode->append(new LetNode(listVar.c_str(), "List", list));
+    forNode->append(new LetNode(listVar.c_str(), listOfInts, list));
 
     ArgList* argList = new ArgList;
     argList->emplace_back(new NullNode(new NullaryNode(listVar.c_str())));

@@ -1,7 +1,7 @@
 Todo
 ----
 * Better memory management (in the compiler)
-* Ignore the result of a function call
+* Ability to ignore the result of a function call
 * Make semantic analysis more rigorous
 * Ability to import modules
 * Merge linux and osx libraries using macros
@@ -9,7 +9,6 @@ Todo
   the traversal code elsewhere, so that implementers don't have to remember to
   do the recursion
 * Fix bug that causes bad line numbers and columns in error messages
-* Type inference for variables in simple cases (like a literal rhs)
 * Syntactic sugar for lists
 * Clean up the documentation
 * Add some support for strings (at least when printing)
@@ -17,9 +16,8 @@ Todo
 * Handle the case where prelude does not end with a newline
 * Support for infix functions
 * If lexer finds an error, don't continue parsing
-* Make null, head, tail into real functions
 * Make return at least act like a function (useable with $ for example)
-* Use pointers to the beginning of the allocated space instead of just past the ref count
 * Add more scopes (for loops, etc)
-* Allow function delcarations and definitions to be separate
+* Allow function declarations and definitions to be separate
 * Use a freeing list to avoid recursive deallocations in the reference counting
+* Fix all of the const correctness

@@ -99,7 +99,7 @@ void CodeGen::createConstructors(DataDeclaration* dataDecl)
 {
 	ConstructorSpec* constructor = dataDecl->constructor();
 
-	const std::vector<std::string>& memberNames = constructor->members();
+	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
 	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
 	assert(memberNames.size() == memberTypes.size());
 
@@ -150,7 +150,7 @@ void CodeGen::createDestructors(DataDeclaration* dataDecl)
 {
 	ConstructorSpec* constructor = dataDecl->constructor();
 
-	const std::vector<std::string>& memberNames = constructor->members();
+	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
 	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
 	assert(memberNames.size() == memberTypes.size());
 

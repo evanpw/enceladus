@@ -49,6 +49,9 @@ void SemanticPass1::visit(ProgramNode* node)
 	Scope* scope = node->scope();
 	TypeTable* typeTable = node->typeTable();
 
+	TypeName listOfInts("List");
+	listOfInts.append(new TypeName("Int"));
+
 	// Create symbols for built-in functions
 	FunctionSymbol* notFn = new FunctionSymbol("not", node, nullptr);
 	notFn->type = typeTable->lookup("Bool");
@@ -60,14 +63,14 @@ void SemanticPass1::visit(ProgramNode* node)
 	FunctionSymbol* head = new FunctionSymbol("head", node, nullptr);
 	head->type = typeTable->lookup("Int");
 	head->arity = 1;
-	head->paramTypes.push_back(typeTable->lookup("List"));
+	head->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	head->isBuiltin = true;
 	scope->insert(head);
 
 	FunctionSymbol* tail = new FunctionSymbol("tail", node, nullptr);
-	tail->type = typeTable->lookup("List");
+	tail->type = typeTable->lookup(&listOfInts);
 	tail->arity = 1;
-	tail->paramTypes.push_back(typeTable->lookup("List"));
+	tail->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	tail->isBuiltin = true;
 	scope->insert(tail);
 
@@ -82,7 +85,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	FunctionSymbol* incref = new FunctionSymbol("_incref", node, nullptr);
 	incref->type = typeTable->lookup("Void");
 	incref->arity = 1;
-	incref->paramTypes.push_back(typeTable->lookup("List"));
+	incref->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	incref->isExternal = true;
 	incref->isForeign = true;
 	scope->insert(incref);
@@ -90,7 +93,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	FunctionSymbol* decref = new FunctionSymbol("_decref", node, nullptr);
 	decref->type = typeTable->lookup("Int");
 	decref->arity = 1;
-	decref->paramTypes.push_back(typeTable->lookup("List"));
+	decref->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	decref->isExternal = true;
 	decref->isForeign = true;
 	scope->insert(decref);
@@ -98,7 +101,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	FunctionSymbol* listDecref = new FunctionSymbol("_List_decref", node, nullptr);
 	listDecref->type = typeTable->lookup("Void");
 	listDecref->arity = 1;
-	listDecref->paramTypes.push_back(typeTable->lookup("List"));
+	listDecref->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	listDecref->isExternal = true;
 	listDecref->isForeign = true;
 	scope->insert(listDecref);
@@ -114,7 +117,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
 	decref_no_free->type = typeTable->lookup("Int");
 	decref_no_free->arity = 1;
-	decref_no_free->paramTypes.push_back(typeTable->lookup("List"));
+	decref_no_free->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	decref_no_free->isExternal = true;
 	decref_no_free->isForeign = true;
 	scope->insert(decref_no_free);
@@ -155,9 +158,9 @@ void SemanticPass1::visit(DataDeclaration* node)
 
 	// All of the constructor members must refer to already-declared types
 	std::vector<const Type*> memberTypes;
-	for (const std::string& memberTypeName : node->constructor()->members())
+	for (auto& memberTypeName : node->constructor()->members())
 	{
-		const Type* memberType = typeTable_->lookup(memberTypeName);
+		const Type* memberType = typeTable_->lookup(memberTypeName.get());
 		if (memberType == nullptr)
 		{
 			std::stringstream msg;
@@ -171,8 +174,9 @@ void SemanticPass1::visit(DataDeclaration* node)
 	node->constructor()->setMemberTypes(memberTypes);
 
 	// Actually create the type
-	Type* newType = new Type(node->name().c_str(), false);
-	typeTable_->insert(node->name(), newType);
+	TypeConstructor* typeConstructor = new TypeConstructor(node->name().c_str(), false);
+	typeTable_->insert(node->name(), typeConstructor);
+	const Type* newType = typeConstructor->instantiate();
 
 	// Create a symbol for the constructor
 	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
@@ -218,7 +222,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	std::vector<const Type*> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
-		const std::string& typeName = node->typeDecl()->at(i);
+		TypeName* typeName = node->typeDecl()->at(i).get();
 
 		const Type* type = typeTable_->lookup(typeName);
 		if (type == nullptr)
@@ -233,11 +237,11 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Return type must be valid
-	const Type* returnType = typeTable_->lookup(node->typeDecl()->back());
+	const Type* returnType = typeTable_->lookup(node->typeDecl()->back().get());
 	if (returnType == nullptr)
 	{
 		std::stringstream msg;
-		msg << "unknown return type \"" << node->typeDecl()->back() << "\".";
+		msg << "unknown return type \"" << node->typeDecl()->back()->name() << "\".";
 		semanticError(node, msg.str());
 		return;
 	}
@@ -320,7 +324,7 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	std::vector<const Type*> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
-		const std::string& typeName = node->typeDecl()->at(i);
+		TypeName* typeName = node->typeDecl()->at(i).get();
 
 		const Type* type = typeTable_->lookup(typeName);
 		if (type == nullptr)
@@ -335,11 +339,11 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	// Return type must be valid
-	const Type* returnType = typeTable_->lookup(node->typeDecl()->back());
+	const Type* returnType = typeTable_->lookup(node->typeDecl()->back().get());
 	if (returnType == nullptr)
 	{
 		std::stringstream msg;
-		msg << "unknown return type \"" << node->typeDecl()->back() << "\".";
+		msg << "unknown return type \"" << node->typeDecl()->back()->name() << "\".";
 		semanticError(node, msg.str());
 		return;
 	}
@@ -377,13 +381,13 @@ void SemanticPass2::visit(LetNode* node)
 
 	VariableSymbol* symbol = new VariableSymbol(target, node, _enclosingFunction);
 
-	if (node->typeDecl().length() > 0)
+	if (node->typeName())
 	{
-		const Type* type = typeTable_->lookup(node->typeDecl());
+		const Type* type = typeTable_->lookup(node->typeName());
 		if (type == nullptr)
 		{
 			std::stringstream msg;
-			msg << "unknown type \"" << node->typeDecl() << "\".";
+			msg << "unknown type \"" << node->typeName()->name() << "\".";
 			semanticError(node, msg.str());
 			return;
 		}
@@ -543,7 +547,7 @@ void SemanticPass2::visit(NullaryNode* node)
 
 void TypeChecker::typeCheck(AstNode* node, const Type* type)
 {
-	if (node->type() != type)
+	if (!node->type()->is(type))
 	{
 		std::stringstream msg;
 		msg << "expected type " << type->name() << ", but got " << node->type()->name();
@@ -690,7 +694,10 @@ void TypeChecker::visit(BoolNode* node)
 
 void TypeChecker::visit(NilNode* node)
 {
-	node->setType(typeTable_->lookup("List"));
+	TypeName listOfInts("List");
+	listOfInts.append(new TypeName("Int"));
+
+	node->setType(typeTable_->lookup(&listOfInts));
 }
 
 void TypeChecker::visit(FunctionCallNode* node)
@@ -748,7 +755,7 @@ void TypeChecker::visit(LetNode* node)
 	node->value()->accept(this);
 
 	// Baby type inference
-	if (node->typeDecl().length() == 0)
+	if (!node->typeName())
 	{
 		node->symbol()->type = node->value()->type();
 	}

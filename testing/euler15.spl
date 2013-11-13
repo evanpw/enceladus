@@ -1,5 +1,8 @@
 data Pair = Pair Int Int
 
+data Memo = Entry Pair Int
+let memo :: [Memo] = []
+
 let xs = []
 let ys = []
 let counts = []

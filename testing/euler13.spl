@@ -1,8 +1,8 @@
 -- Solves Project Euler 13
 
-def longSum xs ys :: List -> List -> List =
+def longSum xs ys :: [Int] -> [Int] -> [Int] =
     let carry :: Int = 0
-    let result :: List = []
+    let result :: [Int] = []
 
     let x :: Int = 0
     let y :: Int = 0
@@ -26,10 +26,10 @@ def longSum xs ys :: List -> List -> List =
 
     return reverse result
 
-let xs :: List = []
+let xs :: [Int] = []
 
 for i in range 1 100 do
-    let ys :: List = []
+    let ys :: [Int] = []
     for j in range 1 50 do
         ys = read : ys
 
