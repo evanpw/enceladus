@@ -25,7 +25,6 @@ const std::string& Type::name() const
     return typeConstructor_->name();
 }
 
-/*
 std::string Type::longName() const
 {
     if (typeParameters_.size() == 0)
@@ -36,12 +35,18 @@ std::string Type::longName() const
     {
         std::stringstream ss;
         ss << "(";
-        ss << typeConstrcutor_->name();
+        ss << typeConstructor_->name();
 
-        for ()
+        for (size_t i = 0; i < typeParameters_.size(); ++i)
+        {
+            ss << " " << typeParameters_[i]->longName();
+        }
+
+        ss << ")";
+
+        return ss.str();
     }
 }
-*/
 
 size_t Type::constructorCount() const
 {

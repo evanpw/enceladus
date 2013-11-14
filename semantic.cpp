@@ -550,7 +550,7 @@ void TypeChecker::typeCheck(AstNode* node, const Type* type)
 	if (!node->type()->is(type))
 	{
 		std::stringstream msg;
-		msg << "expected type " << type->name() << ", but got " << node->type()->name();
+		msg << "expected type " << type->longName() << ", but got " << node->type()->longName();
 
 		semanticError(node, msg.str());
 	}

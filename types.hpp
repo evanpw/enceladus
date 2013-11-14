@@ -41,7 +41,7 @@ public:
     // For convenience
     bool isSimple() const;
     const std::string& name() const;
-    //std::string longName() const;
+    std::string longName() const;
     size_t constructorCount() const;
 
 private:
