@@ -95,17 +95,21 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 	return result;
 }
 
-void CodeGen::createConstructors(DataDeclaration* dataDecl)
+void CodeGen::createConstructors(const Type* type)
 {
-	ConstructorSpec* constructor = dataDecl->constructor();
+	if (type->valueConstructors().size() == 0)
+	{
+		std::cerr << "createConstructors: No value constructors for " << type->longName() << std::endl;
+		return;
+	}
 
-	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
-	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
-	assert(memberNames.size() == memberTypes.size());
+	ValueConstructor* constructor = type->valueConstructors().back().get();
+
+	const std::vector<const Type*>& memberTypes = constructor->members();
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
 	// There is one extra qword for the reference count
-	size_t size = 8 * (memberNames.size() + 1);
+	size_t size = 8 * (memberTypes.size() + 1);
 
 	out_ << std::endl;
 	out_ << "_" << mangle(constructor->name()) << ":" << std::endl;
@@ -124,7 +128,7 @@ void CodeGen::createConstructors(DataDeclaration* dataDecl)
 
 	// Fill in the members with the constructor arguments
 	out_ << "\t" << "mov qword [rax], 0" << std::endl; 	// Reference count
-    for (size_t i = 0; i < memberNames.size(); ++i)
+    for (size_t i = 0; i < memberTypes.size(); ++i)
     {
     	out_ << "\t" << "mov rdi, qword [rbp + " << 8 * (i + 2) << "]" << std::endl;
     	out_ << "\t" << "mov qword [rax + " << 8 * (i + 1) << "], rdi" << std::endl;
@@ -146,16 +150,19 @@ void CodeGen::createConstructors(DataDeclaration* dataDecl)
 	out_ << "\t" << "ret" << std::endl;
 }
 
-void CodeGen::createDestructors(DataDeclaration* dataDecl)
+void CodeGen::createDestructors(const Type* type)
 {
-	ConstructorSpec* constructor = dataDecl->constructor();
+	if (type->valueConstructors().size() == 0)
+	{
+		std::cerr << "createDestructors: No value constructors for " << type->longName() << std::endl;
+		return;
+	}
 
-	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
-	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
-	assert(memberNames.size() == memberTypes.size());
+	ValueConstructor* constructor = type->valueConstructors().back().get();
+	const std::vector<const Type*>& memberTypes = constructor->members();
 
 	out_ << std::endl;
-	out_ << "__" << dataDecl->name() << "_decref:" << std::endl;
+	out_ << "__" << type->name() << "_decref:" << std::endl;
 
 	std::string endLabel = uniqueLabel();
 
@@ -174,13 +181,13 @@ void CodeGen::createDestructors(DataDeclaration* dataDecl)
 
 	// If we reach this point, the ref count is zero, so we decrement
 	// the reference count of each non-simple member, and then deallocate
-	for (size_t i = 0; i < memberNames.size(); ++i)
+	for (size_t i = 0; i < memberTypes.size(); ++i)
     {
     	if (!memberTypes[i]->isSimple())
     	{
     		out_ << "\t" << "push rdi" << std::endl;
     		out_ << "\t" << "mov qword rdi, [rdi + " << 8 * (i + 1) << "]" << std::endl;
-			out_ << "\t" << "call __" << memberTypes[i]->name() << "_decref" << std::endl;
+			out_ << "\t" << "call __" << memberTypes[i]->mangledName() << "_decref" << std::endl;
 			out_ << "\t" << "pop rdi" << std::endl;
 		}
     }
@@ -246,7 +253,7 @@ void CodeGen::visit(ProgramNode* node)
 		if (!variableSymbol->type->isSimple())
 		{
 			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
-			out_ << "\t" << "call __" << variableSymbol->type->name() << "_decref" << std::endl;
+			out_ << "\t" << "call __" << variableSymbol->type->mangledName() << "_decref" << std::endl;
 		}
 	}
 
@@ -319,7 +326,7 @@ void CodeGen::visit(ProgramNode* node)
 			if (!symbol->type->isSimple())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
-				out_ << "\t" << "call __" << symbol->type->name() << "_decref" << std::endl;
+				out_ << "\t" << "call __" << symbol->type->mangledName() << "_decref" << std::endl;
 			}
 		}
 
@@ -339,11 +346,10 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "\t" << "ret" << std::endl;
 	}
 
-	// Create constructors for each data declaration
-	for (DataDeclaration* dataDecl : dataDeclarations_)
+	for (const Type* type : node->typeTable()->allTypes())
 	{
-		createConstructors(dataDecl);
-		createDestructors(dataDecl);
+		createConstructors(type);
+		createDestructors(type);
 	}
 
 	// Declare global variables in the data segment
@@ -578,7 +584,7 @@ void CodeGen::visit(AssignNode* node)
 		out_ << "\t" << "call __incref" << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __" << node->symbol()->type->name() << "_decref" << std::endl;
+		out_ << "\t" << "call __" << node->symbol()->type->mangledName() << "_decref" << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -600,7 +606,7 @@ void CodeGen::visit(LetNode* node)
 		out_ << "\t" << "call __incref" << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __" << node->symbol()->type->name() << "_decref" << std::endl;
+		out_ << "\t" << "call __" << node->symbol()->type->mangledName() << "_decref" << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -621,7 +627,7 @@ void CodeGen::visit(MatchNode* node)
 		if (!member->type->isSimple())
 		{
 			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
-			out_ << "\t" << "call __" << member->type->name() << "_decref" << std::endl;
+			out_ << "\t" << "call __" << member->type->mangledName() << "_decref" << std::endl;
 		}
 	}
 

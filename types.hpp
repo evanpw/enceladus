@@ -24,6 +24,22 @@ private:
     std::vector<std::unique_ptr<TypeName>> parameters_;
 };
 
+// Represents a fully-instantiated value constructor, with no free type variables
+class Type;
+class ValueConstructor
+{
+public:
+    ValueConstructor(const std::string& name, const std::vector<const Type*>& members)
+    : name_(name), members_(members) {}
+
+    const std::string& name() const { return name_; }
+    const std::vector<const Type*>& members() const { return members_; }
+
+private:
+    std::string name_;
+    std::vector<const Type*> members_;
+};
+
 class TypeConstructor;
 class Type
 {
@@ -35,6 +51,9 @@ public:
     const TypeConstructor* typeConstructor() const { return typeConstructor_; }
     const std::vector<const Type*>& typeParameters() const { return typeParameters_; }
 
+    void addValueConstructor(ValueConstructor* valueConstructor) { valueConstructors_.emplace_back(valueConstructor); }
+    const std::vector<std::unique_ptr<ValueConstructor>>& valueConstructors() const { return valueConstructors_; }
+
     // Determines whether this type is a subtype of the rhs. Not symmetric
     bool is(const Type* rhs) const;
 
@@ -42,7 +61,7 @@ public:
     bool isSimple() const;
     const std::string& name() const;
     std::string longName() const;
-    size_t constructorCount() const;
+    std::string mangledName() const;
 
 private:
     Type(const Type& rhs) = delete;
@@ -50,35 +69,74 @@ private:
 
     const TypeConstructor* typeConstructor_;
     std::vector<const Type*> typeParameters_;
+    std::vector<std::unique_ptr<ValueConstructor>> valueConstructors_;
 };
 
 class TypeName;
 
+// Represents a value constructor associated with a type constructor. In particular,
+// some of its parameters may have types which are determined by the type parameters
+// of the type constructor
+class GenericValueConstructor
+{
+public:
+    GenericValueConstructor(const std::string& name)
+    : name_(name) {}
+
+    void append(TypeName* typeName) { members_.emplace_back(typeName); }
+
+    const std::string& name() const { return name_; }
+    const std::vector<std::unique_ptr<TypeName>>& members() const { return members_; }
+
+private:
+    std::string name_;
+    std::vector<std::unique_ptr<TypeName>> members_;
+};
+
 // Represents a type constructor (e.g. List) which when given type parameters (possibly
 // zero of them), produces a concrete type (e.g., [Int]). This class owns all concrete
 // types instantiated from this type constructor
+class TypeTable;
 class TypeConstructor
 {
 public:
-    TypeConstructor(const std::string& name, bool isSimple, size_t parameterCount = 0)
-    : name_(name), isSimple_(isSimple), parameterCount_(parameterCount)
+    TypeConstructor(const std::string& name, bool isSimple)
+    : table_(nullptr), name_(name), isSimple_(isSimple)
     {}
+
+    TypeConstructor(const std::string& name, bool isSimple, const std::vector<std::string> parameters)
+    : table_(nullptr), name_(name), isSimple_(isSimple), parameters_(parameters)
+    {}
+
+    void setTable(TypeTable* table) { table_ = table; }
+
+    void addValueConstructor(GenericValueConstructor* valueConstructor) { valueConstructors_.emplace_back(valueConstructor); }
+    const std::vector<std::unique_ptr<GenericValueConstructor>>& valueConstructors() { return valueConstructors_; }
+
+    const Type* lookup();
+    const Type* lookup(const std::vector<const Type*>& parameters);
 
     const Type* instantiate();
     const Type* instantiate(const std::vector<const Type*>& parameters);
 
     // Properties of the type constructor
     const std::string& name() const { return name_; }
-    size_t parameterCount() const { return parameterCount_; }
+    const std::vector<std::string>& parameters() const { return parameters_; }
 
     // Properties of the instantiated types
-    size_t valueConstructorCount() const { return 1; }  // TODO: Allow multiple value constructors
     bool isSimple() const { return isSimple_; }
 
 private:
+    // Keep a back-reference to the type table so that we can do lookups of value constructor
+    // parameters
+    TypeTable* table_;
+
     std::string name_;
     bool isSimple_;
-    size_t parameterCount_;
+
+    std::vector<std::string> parameters_;
+
+    std::vector<std::unique_ptr<GenericValueConstructor>> valueConstructors_;
 
     // Maps type parameters to the concrete instantiated type (which is owned by this
     // object)
@@ -96,11 +154,15 @@ public:
 
     const Type* lookup(const std::string& name);
     const Type* lookup(const TypeName* name);
+    const Type* lookup(const TypeName* name, const std::unordered_map<std::string, const Type*>& context);
 
     void insert(const std::string& name, TypeConstructor* typeConstructor);
 
+    const std::vector<const Type*> allTypes() const { return concreteTypes_; }
+
 private:
-    std::unordered_map<std::string, std::unique_ptr<TypeConstructor>> table_;
+    std::unordered_map<std::string, std::unique_ptr<TypeConstructor>> typeConstructors_;
+    std::vector<const Type*> concreteTypes_;
 };
 
 #endif

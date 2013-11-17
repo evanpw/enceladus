@@ -86,7 +86,7 @@ long _decrefNoFree(long* p)
     return *p;
 }
 
-void _List_decref(long* list)
+void _List_sInt_e_decref(long* list)
 {
     if (list == NULL) return;
 

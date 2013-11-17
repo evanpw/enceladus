@@ -21,3 +21,5 @@ Todo
 * Allow function declarations and definitions to be separate
 * Use a freeing list to avoid recursive deallocations in the reference counting
 * Fix all of the const correctness
+* Create a constructor for each concrete type, rather than just each
+  type constructor

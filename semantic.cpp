@@ -98,7 +98,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	decref->isForeign = true;
 	scope->insert(decref);
 
-	FunctionSymbol* listDecref = new FunctionSymbol("_List_decref", node, nullptr);
+	FunctionSymbol* listDecref = new FunctionSymbol("_List_sInt_e_decref", node, nullptr);
 	listDecref->type = typeTable->lookup("Void");
 	listDecref->arity = 1;
 	listDecref->paramTypes.push_back(typeTable->lookup(&listOfInts));
@@ -420,7 +420,7 @@ void SemanticPass2::visit(MatchNode* node)
 	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
 	assert(!constructorSymbol->type->isSimple());
 
-	if (constructorSymbol->type->constructorCount() > 1)
+	if (constructorSymbol->type->valueConstructors().size() > 1)
 	{
 		std::stringstream msg;
 		msg << "let statement pattern matching only applies to types with a single constructor.";

@@ -44,8 +44,8 @@ public:
 	std::string mangle(const std::string& name);
 
 	// Create the functions corresponding to a data type declaration
-	void createConstructors(DataDeclaration* dataDecl);
-	void createDestructors(DataDeclaration* dataDecl);
+	void createConstructors(const Type* type);
+	void createDestructors(const Type* type);
 
 private:
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
