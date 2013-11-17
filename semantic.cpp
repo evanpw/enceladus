@@ -175,8 +175,11 @@ void SemanticPass1::visit(DataDeclaration* node)
 
 	// Actually create the type
 	TypeConstructor* typeConstructor = new TypeConstructor(node->name().c_str(), false);
+	typeConstructor->addValueConstructor(node->constructor());
 	typeTable_->insert(node->name(), typeConstructor);
-	const Type* newType = typeConstructor->instantiate();
+
+	// TODO: Parametrized types
+	const Type* newType = typeTable_->lookup(node->name());
 
 	// Create a symbol for the constructor
 	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);

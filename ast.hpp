@@ -49,8 +49,8 @@ public:
 
 	void append(TypeName* typeName) { members_.emplace_back(typeName); }
 
-	const std::string& name() { return name_; }
-	const std::vector<std::unique_ptr<TypeName>>& members() { return members_; }
+	const std::string& name() const { return name_; }
+	const std::vector<std::unique_ptr<TypeName>>& members() const { return members_; }
 
 	void setMemberTypes(const std::vector<const Type*> types)
 	{

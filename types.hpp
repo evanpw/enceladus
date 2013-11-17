@@ -74,28 +74,10 @@ private:
 
 class TypeName;
 
-// Represents a value constructor associated with a type constructor. In particular,
-// some of its parameters may have types which are determined by the type parameters
-// of the type constructor
-class GenericValueConstructor
-{
-public:
-    GenericValueConstructor(const std::string& name)
-    : name_(name) {}
-
-    void append(TypeName* typeName) { members_.emplace_back(typeName); }
-
-    const std::string& name() const { return name_; }
-    const std::vector<std::unique_ptr<TypeName>>& members() const { return members_; }
-
-private:
-    std::string name_;
-    std::vector<std::unique_ptr<TypeName>> members_;
-};
-
 // Represents a type constructor (e.g. List) which when given type parameters (possibly
 // zero of them), produces a concrete type (e.g., [Int]). This class owns all concrete
 // types instantiated from this type constructor
+class ConstructorSpec;
 class TypeTable;
 class TypeConstructor
 {
@@ -110,14 +92,8 @@ public:
 
     void setTable(TypeTable* table) { table_ = table; }
 
-    void addValueConstructor(GenericValueConstructor* valueConstructor) { valueConstructors_.emplace_back(valueConstructor); }
-    const std::vector<std::unique_ptr<GenericValueConstructor>>& valueConstructors() { return valueConstructors_; }
-
-    const Type* lookup();
-    const Type* lookup(const std::vector<const Type*>& parameters);
-
-    const Type* instantiate();
-    const Type* instantiate(const std::vector<const Type*>& parameters);
+    void addValueConstructor(const ConstructorSpec* valueConstructor) { valueConstructors_.push_back(valueConstructor); }
+    const std::vector<const ConstructorSpec*>& valueConstructors() { return valueConstructors_; }
 
     // Properties of the type constructor
     const std::string& name() const { return name_; }
@@ -127,6 +103,13 @@ public:
     bool isSimple() const { return isSimple_; }
 
 private:
+    friend class TypeTable;
+    const Type* lookup();
+    const Type* lookup(const std::vector<const Type*>& parameters);
+
+    const Type* instantiate();
+    const Type* instantiate(const std::vector<const Type*>& parameters);
+
     // Keep a back-reference to the type table so that we can do lookups of value constructor
     // parameters
     TypeTable* table_;
@@ -136,7 +119,7 @@ private:
 
     std::vector<std::string> parameters_;
 
-    std::vector<std::unique_ptr<GenericValueConstructor>> valueConstructors_;
+    std::vector<const ConstructorSpec*> valueConstructors_;
 
     // Maps type parameters to the concrete instantiated type (which is owned by this
     // object)
