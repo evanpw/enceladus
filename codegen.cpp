@@ -99,7 +99,7 @@ void CodeGen::createConstructors(const Type* type)
 {
 	if (type->valueConstructors().size() == 0)
 	{
-		std::cerr << "createConstructors: No value constructors for " << type->longName() << std::endl;
+		//std::cerr << "createConstructors: No value constructors for " << type->longName() << std::endl;
 		return;
 	}
 
@@ -154,7 +154,7 @@ void CodeGen::createDestructors(const Type* type)
 {
 	if (type->valueConstructors().size() == 0)
 	{
-		std::cerr << "createDestructors: No value constructors for " << type->longName() << std::endl;
+		//std::cerr << "createDestructors: No value constructors for " << type->longName() << std::endl;
 		return;
 	}
 
@@ -662,7 +662,6 @@ void CodeGen::visit(FunctionDefNode* node)
 
 void CodeGen::visit(DataDeclaration* node)
 {
-	dataDeclarations_.push_back(node);
 }
 
 void CodeGen::visit(FunctionCallNode* node)

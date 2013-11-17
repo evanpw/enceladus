@@ -57,9 +57,6 @@ private:
 
 	// Keep track of the function definitions so that we can walk through them after the main function
 	std::vector<FunctionDefNode*> functionDefs_;
-
-	// Same for data declarations - we need to create constructors
-	std::vector<DataDeclaration*> dataDeclarations_;
 };
 
 #endif
