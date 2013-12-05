@@ -95,11 +95,123 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 	return result;
 }
 
+void CodeGen::createConstructors(DataDeclaration* dataDecl)
+{
+	ConstructorSpec* constructor = dataDecl->constructor();
+
+	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
+	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
+	assert(memberNames.size() == memberTypes.size());
+
+	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
+	// There is one extra qword for the reference count
+	size_t size = 8 * (memberNames.size() + 1);
+
+	out_ << std::endl;
+	out_ << "_" << mangle(constructor->name()) << ":" << std::endl;
+	out_ << "\t" << "push rbp" << std::endl;
+	out_ << "\t" << "mov rbp, rsp" << std::endl;
+
+	// Align stack, allocate, unalign
+    out_ << "\t" << "mov rbx, rsp" << std::endl;
+    out_ << "\t" << "and rsp, -16" << std::endl;
+    out_ << "\t" << "add rsp, -8" << std::endl;
+    out_ << "\t" << "push rbx" << std::endl;
+    out_ << "\t" << "mov rdi, " << size << std::endl;
+	out_ << "\t" << "call _malloc" << std::endl;
+    out_ << "\t" << "pop rbx" << std::endl;
+    out_ << "\t" << "mov rsp, rbx" << std::endl;
+
+	// Fill in the members with the constructor arguments
+	out_ << "\t" << "mov qword [rax], 0" << std::endl; 	// Reference count
+    for (size_t i = 0; i < memberNames.size(); ++i)
+    {
+    	out_ << "\t" << "mov rdi, qword [rbp + " << 8 * (i + 2) << "]" << std::endl;
+    	out_ << "\t" << "mov qword [rax + " << 8 * (i + 1) << "], rdi" << std::endl;
+
+    	// Increment reference count of non-simple, non-null members
+    	if (!memberTypes[i]->isSimple())
+    	{
+    		std::string skipInc = uniqueLabel();
+
+    		out_ << "\t" << "cmp rdi, 0" << std::endl;
+    		out_ << "\t" << "je " << skipInc << std::endl;
+    		out_ << "\t" << "add qword [rdi], 1" << std::endl;
+    		out_ << skipInc << ":" << std::endl;
+    	}
+    }
+
+	out_ << "\t" << "mov rsp, rbp" << std::endl;
+	out_ << "\t" << "pop rbp" << std::endl;
+	out_ << "\t" << "ret" << std::endl;
+}
+
+void CodeGen::createDestructors(DataDeclaration* dataDecl)
+{
+	ConstructorSpec* constructor = dataDecl->constructor();
+
+	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
+	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
+	assert(memberNames.size() == memberTypes.size());
+
+	out_ << std::endl;
+	out_ << "__" << dataDecl->name() << "_decref:" << std::endl;
+
+	std::string endLabel = uniqueLabel();
+
+	// Don't do anything if the pointer is null
+	out_ << "\t" << "cmp rdi, 0" << std::endl;
+	out_ << "\t" << "je " << endLabel << std::endl;
+
+	// Do the reference decrement
+	out_ << "\t" << "add qword [rdi], -1" << std::endl;
+
+	// If negative, error. If positive, we're finished
+	std::string negRef = uniqueLabel();
+	out_ << "\t" << "cmp qword [rdi], 0" << std::endl;
+	out_ << "jl " << negRef << std::endl;
+	out_ << "jne " << endLabel << std::endl;
+
+	// If we reach this point, the ref count is zero, so we decrement
+	// the reference count of each non-simple member, and then deallocate
+	for (size_t i = 0; i < memberNames.size(); ++i)
+    {
+    	if (!memberTypes[i]->isSimple())
+    	{
+    		out_ << "\t" << "push rdi" << std::endl;
+    		out_ << "\t" << "mov qword rdi, [rdi + " << 8 * (i + 1) << "]" << std::endl;
+			out_ << "\t" << "call __" << memberTypes[i]->name() << "_decref" << std::endl;
+			out_ << "\t" << "pop rdi" << std::endl;
+		}
+    }
+
+    // Align stack, free, unalign
+    out_ << "\t" << "mov rbx, rsp" << std::endl;
+    out_ << "\t" << "and rsp, -16" << std::endl;
+    out_ << "\t" << "add rsp, -8" << std::endl;
+    out_ << "\t" << "push rbx" << std::endl;
+	out_ << "\t" << "call _free" << std::endl;
+    out_ << "\t" << "pop rbx" << std::endl;
+    out_ << "\t" << "mov rsp, rbx" << std::endl;
+
+	out_ << "\t" << "jmp " << endLabel << std::endl;
+
+
+	out_ << negRef << ":" << std::endl;
+	out_ << "\t" << "mov rdi, 2" << std::endl;
+	out_ << "\t" << "call __die" << std::endl;
+
+
+	out_ << endLabel << ":" << std::endl;
+	out_ << "\t" << "ret" << std::endl;
+}
+
 void CodeGen::visit(ProgramNode* node)
 {
 	out_ << "bits 64" << std::endl;
 	out_ << "section .text" << std::endl;
 	out_ << "global __main" << std::endl;
+	out_ << "extern _malloc, _free" << std::endl;
 
 	std::vector<std::string> externs = getExterns(node);
 	if (!externs.empty())
@@ -225,6 +337,13 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "\t" << "mov rsp, rbp" << std::endl;
 		out_ << "\t" << "pop rbp" << std::endl;
 		out_ << "\t" << "ret" << std::endl;
+	}
+
+	// Create constructors for each data declaration
+	for (DataDeclaration* dataDecl : dataDeclarations_)
+	{
+		createConstructors(dataDecl);
+		createDestructors(dataDecl);
 	}
 
 	// Declare global variables in the data segment
@@ -489,9 +608,55 @@ void CodeGen::visit(LetNode* node)
 	out_ << "\t" << "mov " << access(node->symbol()) << ", rax" << std::endl;
 }
 
+void CodeGen::visit(MatchNode* node)
+{
+	node->body()->accept(this);
+	out_ << "\t" << "push rax" << std::endl;
+
+	// Decrement references to the existing variables
+	for (size_t i = 0; i < node->symbols().size(); ++i)
+	{
+		VariableSymbol* member = node->symbols().at(i);
+
+		if (!member->type->isSimple())
+		{
+			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
+			out_ << "\t" << "call __" << member->type->name() << "_decref" << std::endl;
+		}
+	}
+
+	out_ << "\t" << "pop rax" << std::endl;
+
+	// Move over each of the members of the constructor pattern
+	for (size_t i = 0; i < node->symbols().size(); ++i)
+	{
+		VariableSymbol* member = node->symbols().at(i);
+
+		out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
+		out_ << "\t" << "mov " << access(member) << ", rdi" << std::endl;
+	}
+
+	// Increment references to the new variables
+	for (size_t i = 0; i < node->symbols().size(); ++i)
+	{
+		VariableSymbol* member = node->symbols().at(i);
+
+		if (!member->type->isSimple())
+		{
+			out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
+			out_ << "\t" << "call __incref" << std::endl;
+		}
+	}
+}
+
 void CodeGen::visit(FunctionDefNode* node)
 {
 	functionDefs_.push_back(node);
+}
+
+void CodeGen::visit(DataDeclaration* node)
+{
+	dataDeclarations_.push_back(node);
 }
 
 void CodeGen::visit(FunctionCallNode* node)

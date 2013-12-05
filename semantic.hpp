@@ -46,7 +46,10 @@ private:
 class SemanticPass2 : public SemanticBase
 {
 public:
+	SemanticPass2() : _enclosingFunction(nullptr) {}
+
 	virtual void visit(LetNode* node);
+	virtual void visit(MatchNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(NullaryNode* node);
@@ -72,6 +75,7 @@ public:
 	virtual void visit(IfNode* node);
 	virtual void visit(LetNode* node);
 	virtual void visit(LogicalNode* node);
+	virtual void visit(MatchNode* node);
 	virtual void visit(NullNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(WhileNode* node);

@@ -105,3 +105,7 @@ void AstVisitor::visit(ReturnNode* node)
 	node->expression()->accept(this);
 }
 
+void AstVisitor::visit(MatchNode* node)
+{
+	node->body()->accept(this);
+}

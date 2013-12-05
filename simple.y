@@ -29,6 +29,7 @@ void yyerror(const char* msg);
 	ArgList* arguments;
 	TypeDecl* typeDecl;
 	ConstructorSpec* constructorSpec;
+	TypeName* typeName;
 	const char* str;
 	long number;
 }
@@ -41,6 +42,7 @@ void yyerror(const char* msg);
 %type<arguments> arg_list
 %type<typeDecl> typedecl
 %type<str> ident
+%type<typeName> type
 %type<constructorSpec> constructor_spec
 
 %token ERROR
@@ -101,13 +103,17 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| LET LIDENT DCOLON UIDENT '=' expression EOL
+	| LET LIDENT DCOLON type '=' expression EOL
 		{
 			$$ = new LetNode($2, $4, $6);
 		}
 	| LET LIDENT '=' expression EOL
 		{
 			$$ = new LetNode($2, nullptr, $4);
+		}
+	| LET UIDENT param_list '=' expression EOL
+		{
+			$$ = new MatchNode($2, $3, $5);
 		}
 	| DATA UIDENT '=' constructor_spec EOL
 		{
@@ -150,18 +156,18 @@ constructor_spec: UIDENT
 		{
 			$$ = new ConstructorSpec($1);
 		}
-	| constructor_spec UIDENT
+	| constructor_spec type
 		{
 			$1->append($2);
 			$$ = $1;
 		}
 
-typedecl: UIDENT
+typedecl: type
 		{
 			$$ = new TypeDecl();
 			$$->emplace_back($1);
 		}
-	| typedecl RARROW UIDENT
+	| typedecl RARROW type
 		{
 			$$ = $1;
 			$$->emplace_back($3);
@@ -344,6 +350,16 @@ ident: LIDENT
 	| UIDENT
 		{
 			$$ = $1;
+		}
+
+type: UIDENT
+		{
+			$$ = new TypeName($1);
+		}
+	| '[' type ']'
+		{
+			$$ = new TypeName("List");
+			$$->append($2);
 		}
 
 %%
