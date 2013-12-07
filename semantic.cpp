@@ -98,22 +98,6 @@ void SemanticPass1::visit(ProgramNode* node)
 	decref->isForeign = true;
 	scope->insert(decref);
 
-	FunctionSymbol* listDecref = new FunctionSymbol("_List_sInt_e_decref", node, nullptr);
-	listDecref->type = typeTable->lookup("Void");
-	listDecref->arity = 1;
-	listDecref->paramTypes.push_back(typeTable->lookup(&listOfInts));
-	listDecref->isExternal = true;
-	listDecref->isForeign = true;
-	scope->insert(listDecref);
-
-	FunctionSymbol* treeDecref = new FunctionSymbol("_Tree_decref", node, nullptr);
-	treeDecref->type = typeTable->lookup("Void");
-	treeDecref->arity = 1;
-	treeDecref->paramTypes.push_back(typeTable->lookup("Tree"));
-	treeDecref->isExternal = true;
-	treeDecref->isForeign = true;
-	scope->insert(treeDecref);
-
 	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
 	decref_no_free->type = typeTable->lookup("Int");
 	decref_no_free->arity = 1;

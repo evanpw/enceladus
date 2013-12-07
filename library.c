@@ -65,6 +65,8 @@ void print(long value)
     printf("%ld\n", value);
 }
 
+//// Reference counting ////////////////////////////////////////////////////////
+
 void _incref(long* p)
 {
     if (p == NULL) return;
@@ -86,29 +88,65 @@ long _decrefNoFree(long* p)
     return *p;
 }
 
-void _List_sInt_e_decref(long* list)
+void _decref(long* object)
 {
-    if (list == NULL) return;
+    if (object == NULL) return;
 
-    while (_decrefNoFree(list) == 0)
+    if (_decrefNoFree(object) == 0)
     {
-        long* next = (long*)*(list + 2);
-        free(list);
-        list = next;
+        long pointerCount = *(object + 1) >> 32;
+
+        long* child = object + 2;
+        for (int i = 0; i < pointerCount; ++i)
+        {
+            _decref((long*)*child);
+            ++child;
+        }
+
+        free(object);
     }
 }
 
+//// Lists /////////////////////////////////////////////////////////////////////
+
 long* Cons(long value, long* next)
 {
-    long* newCell = (long*)malloc(24);
+    long* newCell = (long*)malloc(32);
 
-    *newCell = 0;
-    *(newCell + 1) = value;
+    *(newCell + 0) = 0;               // Reference count
+    *(newCell + 1) = (1L << 32) + 1;   // Number of pointers; non-pointers
     *(newCell + 2) = (long)next;
+    *(newCell + 3) = value;
 
     _incref(next);
 
     return newCell;
+}
+
+//// Trees /////////////////////////////////////////////////////////////////////
+
+long count(long*);
+
+long* Node(long value, long* left, long* right)
+{
+    long* newTree = (long*)malloc(48);
+
+    *(newTree + 0) = 0;              // Reference count
+    *(newTree + 1) = (2L << 32) + 2; // Number of pointsers; non-pointers
+    *(newTree + 2) = (long)left;     // Left child
+    *(newTree + 3) = (long)right;    // Right child
+    *(newTree + 4) = value;          // Value of this node
+    *(newTree + 5) = 1 + count(left) + count(right); // Nodes in this subtree
+
+    _incref(left);
+    _incref(right);
+
+    return newTree;
+}
+
+long* Empty()
+{
+    return NULL;
 }
 
 long top(long* tree)
@@ -118,7 +156,7 @@ long top(long* tree)
         _die(ERR_TOP_EMPTY);
     }
 
-    return *tree;
+    return *(tree + 4);
 }
 
 long* left(long* tree)
@@ -149,59 +187,7 @@ long count(long* tree)
     }
     else
     {
-        return *(tree + 4);
+        return *(tree + 5);
     }
 }
 
-long* Node(long value, long* left, long* right)
-{
-    long* newTree = (long*)malloc(40);
-
-    *newTree = 0;
-    *(newTree + 1) = value;
-    *(newTree + 2) = (long)left;
-    *(newTree + 3) = (long)right;
-    *(newTree + 4) = 1 + count(left) + count(right);
-
-    _incref(left);
-    _incref(right);
-
-    return newTree;
-}
-
-long* Empty()
-{
-    return NULL;
-}
-
-void _Tree_decref(long* tree)
-{
-startOver:
-    if (tree == NULL) return;
-
-    if (_decrefNoFree(tree) == 0)
-    {
-        long* leftChild = left(tree);
-        long* rightChild = right(tree);
-
-        free(tree);
-
-        // This hacked-in tail recursion is necessary to avoid a stack overflow
-        // when the tree is very large and lopsided
-        if (leftChild == NULL)
-        {
-            tree = rightChild;
-            goto startOver;
-        }
-        else if (rightChild == NULL)
-        {
-            tree = leftChild;
-            goto startOver;
-        }
-        else
-        {
-            _Tree_decref(leftChild);
-            _Tree_decref(rightChild);
-        }
-    }
-}

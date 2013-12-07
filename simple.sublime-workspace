@@ -11,46 +11,6 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "simplec.cpp",
-			"settings":
-			{
-				"buffer_size": 1186,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "semantic.cpp",
-			"settings":
-			{
-				"buffer_size": 19333,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "TODO",
-			"settings":
-			{
-				"buffer_size": 1138,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "types.hpp",
-			"settings":
-			{
-				"buffer_size": 3297,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "types.cpp",
-			"settings":
-			{
-				"buffer_size": 3835,
-				"line_ending": "Unix"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -87,6 +47,21 @@
 	},
 	"file_history":
 	[
+		"/Users/evanpw/Workspace/simple/simplec.cpp",
+		"/Users/evanpw/Workspace/simple/semantic.cpp",
+		"/Users/evanpw/Workspace/simple/ast.hpp",
+		"/Users/evanpw/Workspace/simple/codegen.cpp",
+		"/Users/evanpw/Workspace/simple/codegen.hpp",
+		"/Users/evanpw/Workspace/simple/library.c",
+		"/Users/evanpw/Workspace/simple/TODO",
+		"/Users/evanpw/Workspace/simple/testing/euler15.spl",
+		"/Users/evanpw/Workspace/simple/build/euler15.asm",
+		"/Users/evanpw/Workspace/simple/types.hpp",
+		"/Users/evanpw/Workspace/simple/types.cpp",
+		"/Users/evanpw/Dropbox/Progress/Reference/Kayla's Loan.csv",
+		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
+		"/Users/evanpw/Dropbox/Progress/Abby.csv",
+		"/Users/evanpw/Workspace/simple/log",
 		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler12.spl",
@@ -97,22 +72,13 @@
 		"/Users/evanpw/Workspace/simple/prelude.spl",
 		"/Users/evanpw/Workspace/simple/simple.flex",
 		"/Users/evanpw/Workspace/simple/simple.y",
-		"/Users/evanpw/Workspace/simple/semantic.cpp",
 		"/Users/evanpw/Workspace/simple/semantic.hpp",
 		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
 		"/Users/evanpw/Workspace/simple/testing/test.spl",
-		"/Users/evanpw/Workspace/simple/types.hpp",
-		"/Users/evanpw/Workspace/simple/types.cpp",
-		"/Users/evanpw/Workspace/simple/simplec.cpp",
-		"/Users/evanpw/Workspace/simple/TODO",
-		"/Users/evanpw/Workspace/simple/ast.hpp",
-		"/Users/evanpw/Workspace/simple/codegen.cpp",
-		"/Users/evanpw/Workspace/simple/testing/euler15.spl",
 		"/Users/evanpw/Dropbox/Archive/logins",
 		"/Users/evanpw/Dropbox/Progress/Reference/Periodicity.md",
 		"/Users/evanpw/Workspace/simple/symbol.cpp",
 		"/Users/evanpw/Workspace/simple/symbol.hpp",
-		"/Users/evanpw/Workspace/simple/codegen.hpp",
 		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
 		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
 		"/Users/evanpw/Dropbox/Progress/Reference/To Buy.md",
@@ -122,7 +88,6 @@
 		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
 		"/Users/evanpw/Workspace/simple/testing/test.cpp",
-		"/Users/evanpw/Workspace/simple/library.c",
 		"/Users/evanpw/Workspace/simple/testing/set.spl",
 		"/Users/evanpw/Workspace/simple/testing/preref.spl",
 		"/Users/evanpw/Workspace/simple/build/euler1.asm",
@@ -142,14 +107,12 @@
 		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler9.spl",
 		"/Users/evanpw/Workspace/simple/test.c",
-		"/Users/evanpw/Dropbox/Progress/Abby.csv",
 		"/Users/evanpw/Dropbox/Progress/Reference/Net Worth.md",
 		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler14.spl",
 		"/Users/evanpw/Workspace/simple/linux/Set.asm",
 		"/Users/evanpw/Workspace/simple/linux/test.c",
 		"/Users/evanpw/Workspace/simple/testing/euler13.txt",
-		"/Users/evanpw/Dropbox/Progress/Reference/Kayla's Loan.csv",
 		"/Users/evanpw/Workspace/simple/string_table.hpp",
 		"/Users/evanpw/Workspace/simple/string_table.cpp",
 		"/Users/evanpw/Workspace/simple/simple.output",
@@ -162,7 +125,6 @@
 		"/Users/evanpw/Workspace/simple/testing/test.sh",
 		"/Users/evanpw/Workspace/simple/build/euler8.asm",
 		"/Users/evanpw/Workspace/simple/testing/function.spl",
-		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
 		"/Users/evanpw/Dropbox/Progress/Year28.tex",
 		"/Users/evanpw/Workspace/simple/common.asm",
 		"/Users/evanpw/Workspace/simple/testing/euler5.spl",
@@ -212,9 +174,7 @@
 		"/Users/evanpw/Dropbox/Progress/Reference/Library Books.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/Great Ideas.md",
 		"/Applications/Sublime Text.app/Contents/MacOS/changelog.txt",
-		"/Users/evanpw/Dropbox/Progress/Reference/Hugo Winners.tex",
-		"/Users/evanpw/Workspace/evanpwright.com/app.py",
-		"/Users/evanpw/Workspace/evanpwright.com/template.html"
+		"/Users/evanpw/Dropbox/Progress/Reference/Hugo Winners.tex"
 	],
 	"find":
 	{
@@ -232,6 +192,18 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"std::cerr",
+			"Generic",
+			"ConstructorSpec",
+			"GenericValueConstructor",
+			"ConstructorSpec",
+			"Pair",
+			"concreteTypes_",
+			"Pair",
+			"_Pair",
+			"std::cerr",
+			"dataDecl",
+			"decref",
 			"table_",
 			"List",
 			"cerr",
@@ -347,19 +319,7 @@
 			"expression",
 			"PRINT .",
 			"INT_LIT .",
-			"IDENT .",
-			"expression",
-			"state 30",
-			"simple_expression",
-			"PRINT .",
-			"PRINT",
-			"simple_expression",
-			"VariableNode",
-			"expression",
-			"symbol_",
-			"IntNode",
-			"add rsp",
-			"edx"
+			"IDENT ."
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -377,150 +337,8 @@
 	"groups":
 	[
 		{
-			"selected": 3,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "simplec.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1186,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								818,
-								818
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 627.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "semantic.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 19333,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								18287,
-								18287
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 10536.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "TODO",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1138,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1138,
-								1138
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "types.hpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3297,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1090,
-								1090
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 262.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "types.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3835,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3047,
-								3047
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 917.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],

@@ -9,10 +9,12 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+const Type Type::any_(nullptr, std::vector<const Type*>());
+
 bool Type::is(const Type* rhs) const
 {
     // TODO: Do a better job of this
-    return (this == rhs);
+    return (rhs == any() || this == rhs);
 }
 
 bool Type::isSimple() const
@@ -198,4 +200,35 @@ const Type* TypeConstructor::instantiate(const std::vector<const Type*>& paramet
     instantiations_.emplace(std::make_pair(parameters, std::unique_ptr<Type>(newType)));
 
     return newType;
+}
+
+ValueConstructor::ValueConstructor(const std::string& name, const std::vector<const Type*>& members)
+: name_(name), members_(members)
+{
+    // First pass -> just count the number of boxed / unboxed members
+    for (size_t i = 0; i < members.size(); ++i)
+    {
+        if (members[i]->isSimple())
+        {
+            ++unboxedMembers_;
+        }
+        else
+        {
+            ++boxedMembers_;
+        }
+    }
+
+    // Second pass -> determine the actual layout
+    size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
+    for (size_t i = 0; i < members.size(); ++i)
+    {
+        if (members[i]->isSimple())
+        {
+            memberLocations_.push_back(nextUnboxed++);
+        }
+        else
+        {
+            memberLocations_.push_back(nextBoxed++);
+        }
+    }
 }

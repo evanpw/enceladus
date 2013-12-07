@@ -108,8 +108,9 @@ void CodeGen::createConstructors(const Type* type)
 	const std::vector<const Type*>& memberTypes = constructor->members();
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
-	// There is one extra qword for the reference count
-	size_t size = 8 * (memberTypes.size() + 1);
+	// There is one extra qword for the reference count and one for the member
+	// counts (pointers and non-pointers)
+	size_t size = 8 * (memberTypes.size() + 2);
 
 	out_ << std::endl;
 	out_ << "_" << mangle(constructor->name()) << ":" << std::endl;
@@ -126,12 +127,21 @@ void CodeGen::createConstructors(const Type* type)
     out_ << "\t" << "pop rbx" << std::endl;
     out_ << "\t" << "mov rsp, rbx" << std::endl;
 
-	// Fill in the members with the constructor arguments
-	out_ << "\t" << "mov qword [rax], 0" << std::endl; 	// Reference count
+	//// Fill in the members with the constructor arguments
+
+    // Reference count
+	out_ << "\t" << "mov qword [rax], 0" << std::endl;
+
+	// Boxed & unboxed member counts
+	long memberCount = (constructor->boxedMembers() << 32) + constructor->boxedMembers();
+	out_ << "\t" << "mov qword [rax + 8], " << memberCount << std::endl;
+
     for (size_t i = 0; i < memberTypes.size(); ++i)
     {
+    	size_t location = constructor->memberLocations().at(i);
+
     	out_ << "\t" << "mov rdi, qword [rbp + " << 8 * (i + 2) << "]" << std::endl;
-    	out_ << "\t" << "mov qword [rax + " << 8 * (i + 1) << "], rdi" << std::endl;
+    	out_ << "\t" << "mov qword [rax + " << 8 * (location + 2) << "], rdi" << std::endl;
 
     	// Increment reference count of non-simple, non-null members
     	if (!memberTypes[i]->isSimple())
@@ -147,69 +157,6 @@ void CodeGen::createConstructors(const Type* type)
 
 	out_ << "\t" << "mov rsp, rbp" << std::endl;
 	out_ << "\t" << "pop rbp" << std::endl;
-	out_ << "\t" << "ret" << std::endl;
-}
-
-void CodeGen::createDestructors(const Type* type)
-{
-	if (type->valueConstructors().size() == 0)
-	{
-		//std::cerr << "createDestructors: No value constructors for " << type->longName() << std::endl;
-		return;
-	}
-
-	ValueConstructor* constructor = type->valueConstructors().back().get();
-	const std::vector<const Type*>& memberTypes = constructor->members();
-
-	out_ << std::endl;
-	out_ << "__" << type->name() << "_decref:" << std::endl;
-
-	std::string endLabel = uniqueLabel();
-
-	// Don't do anything if the pointer is null
-	out_ << "\t" << "cmp rdi, 0" << std::endl;
-	out_ << "\t" << "je " << endLabel << std::endl;
-
-	// Do the reference decrement
-	out_ << "\t" << "add qword [rdi], -1" << std::endl;
-
-	// If negative, error. If positive, we're finished
-	std::string negRef = uniqueLabel();
-	out_ << "\t" << "cmp qword [rdi], 0" << std::endl;
-	out_ << "jl " << negRef << std::endl;
-	out_ << "jne " << endLabel << std::endl;
-
-	// If we reach this point, the ref count is zero, so we decrement
-	// the reference count of each non-simple member, and then deallocate
-	for (size_t i = 0; i < memberTypes.size(); ++i)
-    {
-    	if (!memberTypes[i]->isSimple())
-    	{
-    		out_ << "\t" << "push rdi" << std::endl;
-    		out_ << "\t" << "mov qword rdi, [rdi + " << 8 * (i + 1) << "]" << std::endl;
-			out_ << "\t" << "call __" << memberTypes[i]->mangledName() << "_decref" << std::endl;
-			out_ << "\t" << "pop rdi" << std::endl;
-		}
-    }
-
-    // Align stack, free, unalign
-    out_ << "\t" << "mov rbx, rsp" << std::endl;
-    out_ << "\t" << "and rsp, -16" << std::endl;
-    out_ << "\t" << "add rsp, -8" << std::endl;
-    out_ << "\t" << "push rbx" << std::endl;
-	out_ << "\t" << "call _free" << std::endl;
-    out_ << "\t" << "pop rbx" << std::endl;
-    out_ << "\t" << "mov rsp, rbx" << std::endl;
-
-	out_ << "\t" << "jmp " << endLabel << std::endl;
-
-
-	out_ << negRef << ":" << std::endl;
-	out_ << "\t" << "mov rdi, 2" << std::endl;
-	out_ << "\t" << "call __die" << std::endl;
-
-
-	out_ << endLabel << ":" << std::endl;
 	out_ << "\t" << "ret" << std::endl;
 }
 
@@ -253,7 +200,7 @@ void CodeGen::visit(ProgramNode* node)
 		if (!variableSymbol->type->isSimple())
 		{
 			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
-			out_ << "\t" << "call __" << variableSymbol->type->mangledName() << "_decref" << std::endl;
+			out_ << "\t" << "call __decref" << std::endl;
 		}
 	}
 
@@ -326,7 +273,7 @@ void CodeGen::visit(ProgramNode* node)
 			if (!symbol->type->isSimple())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
-				out_ << "\t" << "call __" << symbol->type->mangledName() << "_decref" << std::endl;
+				out_ << "\t" << "call __decref" << std::endl;
 			}
 		}
 
@@ -349,7 +296,6 @@ void CodeGen::visit(ProgramNode* node)
 	for (const Type* type : node->typeTable()->allTypes())
 	{
 		createConstructors(type);
-		createDestructors(type);
 	}
 
 	// Declare global variables in the data segment
@@ -584,7 +530,7 @@ void CodeGen::visit(AssignNode* node)
 		out_ << "\t" << "call __incref" << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __" << node->symbol()->type->mangledName() << "_decref" << std::endl;
+		out_ << "\t" << "call __decref" << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -606,7 +552,7 @@ void CodeGen::visit(LetNode* node)
 		out_ << "\t" << "call __incref" << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __" << node->symbol()->type->mangledName() << "_decref" << std::endl;
+		out_ << "\t" << "call __decref" << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -627,31 +573,29 @@ void CodeGen::visit(MatchNode* node)
 		if (!member->type->isSimple())
 		{
 			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
-			out_ << "\t" << "call __" << member->type->mangledName() << "_decref" << std::endl;
+			out_ << "\t" << "call __decref" << std::endl;
 		}
 	}
 
 	out_ << "\t" << "pop rax" << std::endl;
 
-	// Move over each of the members of the constructor pattern
+	auto& constructor = node->constructorSymbol()->type->valueConstructors().front();
+
+	// Copy over each of the members of the constructor pattern
 	for (size_t i = 0; i < node->symbols().size(); ++i)
 	{
 		VariableSymbol* member = node->symbols().at(i);
+		size_t location = constructor->memberLocations().at(i);
 
-		out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
+		out_ << "\t" << "mov rdi, [rax + " << 8 * (location + 2) << "]" << std::endl;
 		out_ << "\t" << "mov " << access(member) << ", rdi" << std::endl;
 	}
 
 	// Increment references to the new variables
-	for (size_t i = 0; i < node->symbols().size(); ++i)
+	for (size_t i = 0; i < constructor->boxedMembers(); ++i)
 	{
-		VariableSymbol* member = node->symbols().at(i);
-
-		if (!member->type->isSimple())
-		{
-			out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
-			out_ << "\t" << "call __incref" << std::endl;
-		}
+		out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 2) << "]" << std::endl;
+		out_ << "\t" << "call __incref" << std::endl;
 	}
 }
 
@@ -699,7 +643,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		    out_ << "\t" << "mov rsp, rbx" << std::endl;
 
 			out_ << good << ":" << std::endl;
-			out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 24]" << std::endl;
 		}
 		else if (node->target() == "tail")
 		{

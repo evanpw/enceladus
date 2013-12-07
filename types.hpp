@@ -29,15 +29,19 @@ class Type;
 class ValueConstructor
 {
 public:
-    ValueConstructor(const std::string& name, const std::vector<const Type*>& members)
-    : name_(name), members_(members) {}
+    ValueConstructor(const std::string& name, const std::vector<const Type*>& members);
 
     const std::string& name() const { return name_; }
     const std::vector<const Type*>& members() const { return members_; }
+    const std::vector<size_t>& memberLocations() const { return memberLocations_; }
+    size_t boxedMembers() const { return boxedMembers_; }
+    size_t unboxedMembers() const { return unboxedMembers_; }
 
 private:
     std::string name_;
     std::vector<const Type*> members_;
+    std::vector<size_t> memberLocations_;
+    size_t boxedMembers_, unboxedMembers_;
 };
 
 class TypeConstructor;
@@ -63,6 +67,8 @@ public:
     std::string longName() const;
     std::string mangledName() const;
 
+    static const Type* any() { return &any_; }
+
 private:
     Type(const Type& rhs) = delete;
     Type& operator=(const Type& rhs) = delete;
@@ -70,6 +76,8 @@ private:
     const TypeConstructor* typeConstructor_;
     std::vector<const Type*> typeParameters_;
     std::vector<std::unique_ptr<ValueConstructor>> valueConstructors_;
+
+    static const Type any_;
 };
 
 class TypeName;
