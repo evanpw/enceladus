@@ -144,7 +144,7 @@ void CodeGen::createConstructors(const Type* type)
     	out_ << "\t" << "mov qword [rax + " << 8 * (location + 2) << "], rdi" << std::endl;
 
     	// Increment reference count of non-simple, non-null members
-    	if (!memberTypes[i]->isSimple())
+    	if (memberTypes[i]->isBoxed())
     	{
     		std::string skipInc = uniqueLabel();
 
@@ -197,7 +197,7 @@ void CodeGen::visit(ProgramNode* node)
 
 		const VariableSymbol* variableSymbol = static_cast<const VariableSymbol*>(symbol);
 
-		if (!variableSymbol->type->isSimple())
+		if (variableSymbol->type->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
 			out_ << "\t" << "call __decref" << std::endl;
@@ -243,7 +243,7 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->isParam && !symbol->type->isSimple())
+			if (symbol->isParam && symbol->type->isBoxed())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
 				out_ << "\t" << "call __incref" << std::endl;
@@ -258,7 +258,7 @@ void CodeGen::visit(ProgramNode* node)
 
 		// Preserve the return value from being freed if it happens to be the
 		// same as one of the local variables.
-		if (!function->symbol()->type->isSimple())
+		if (function->symbol()->type->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, rax" << std::endl;
 			out_ << "\t" << "call __incref" << std::endl;
@@ -270,7 +270,7 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (!symbol->type->isSimple())
+			if (symbol->type->isBoxed())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
 				out_ << "\t" << "call __decref" << std::endl;
@@ -280,7 +280,7 @@ void CodeGen::visit(ProgramNode* node)
 		// But after the function returns, we don't have a reference to the
 		// return value, it's just in a temporary. The caller will have to
 		// assign it a reference.
-		if (!function->symbol()->type->isSimple())
+		if (function->symbol()->type->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
 			out_ << "\t" << "call __decrefNoFree" << std::endl;
@@ -522,7 +522,7 @@ void CodeGen::visit(AssignNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (!node->symbol()->type->isSimple())
+	if (node->symbol()->type->isBoxed())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
@@ -544,7 +544,7 @@ void CodeGen::visit(LetNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (!node->symbol()->type->isSimple())
+	if (node->symbol()->type->isBoxed())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
@@ -570,7 +570,7 @@ void CodeGen::visit(MatchNode* node)
 	{
 		VariableSymbol* member = node->symbols().at(i);
 
-		if (!member->type->isSimple())
+		if (member->type->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
 			out_ << "\t" << "call __decref" << std::endl;

@@ -62,7 +62,7 @@ public:
     bool is(const Type* rhs) const;
 
     // For convenience
-    bool isSimple() const;
+    bool isBoxed() const;
     const std::string& name() const;
     std::string longName() const;
     std::string mangledName() const;
@@ -90,12 +90,12 @@ class TypeTable;
 class TypeConstructor
 {
 public:
-    TypeConstructor(const std::string& name, bool isSimple)
-    : table_(nullptr), name_(name), isSimple_(isSimple)
+    TypeConstructor(const std::string& name, bool isBoxed)
+    : table_(nullptr), name_(name), isBoxed_(isBoxed)
     {}
 
-    TypeConstructor(const std::string& name, bool isSimple, const std::vector<std::string> parameters)
-    : table_(nullptr), name_(name), isSimple_(isSimple), parameters_(parameters)
+    TypeConstructor(const std::string& name, bool isBoxed, const std::vector<std::string> parameters)
+    : table_(nullptr), name_(name), isBoxed_(isBoxed), parameters_(parameters)
     {}
 
     void setTable(TypeTable* table) { table_ = table; }
@@ -108,7 +108,7 @@ public:
     const std::vector<std::string>& parameters() const { return parameters_; }
 
     // Properties of the instantiated types
-    bool isSimple() const { return isSimple_; }
+    bool isBoxed() const { return isBoxed_; }
 
 private:
     friend class TypeTable;
@@ -123,7 +123,7 @@ private:
     TypeTable* table_;
 
     std::string name_;
-    bool isSimple_;
+    bool isBoxed_;
 
     std::vector<std::string> parameters_;
 

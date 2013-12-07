@@ -17,9 +17,9 @@ bool Type::is(const Type* rhs) const
     return (rhs == any() || this == rhs);
 }
 
-bool Type::isSimple() const
+bool Type::isBoxed() const
 {
-    return typeConstructor_->isSimple();
+    return typeConstructor_->isBoxed();
 }
 
 const std::string& Type::name() const
@@ -77,13 +77,13 @@ std::string Type::mangledName() const
 TypeTable::TypeTable()
 {
     // Built-in types
-    typeConstructors_.emplace(std::make_pair("Void", make_unique<TypeConstructor>("Void", true)));
-    typeConstructors_.emplace(std::make_pair("Int", make_unique<TypeConstructor>("Int", true)));
-    typeConstructors_.emplace(std::make_pair("Bool", make_unique<TypeConstructor>("Bool", true)));
-    typeConstructors_.emplace(std::make_pair("Tree", make_unique<TypeConstructor>("Tree", false)));
+    typeConstructors_.emplace(std::make_pair("Void", make_unique<TypeConstructor>("Void", false)));
+    typeConstructors_.emplace(std::make_pair("Int", make_unique<TypeConstructor>("Int", false)));
+    typeConstructors_.emplace(std::make_pair("Bool", make_unique<TypeConstructor>("Bool", false)));
+    typeConstructors_.emplace(std::make_pair("Tree", make_unique<TypeConstructor>("Tree", true)));
 
     std::vector<std::string> listParams = {"a"};
-    typeConstructors_.emplace(std::make_pair("List", make_unique<TypeConstructor>("List", false, listParams)));
+    typeConstructors_.emplace(std::make_pair("List", make_unique<TypeConstructor>("List", true, listParams)));
 }
 
 void TypeTable::insert(const std::string& name, TypeConstructor* typeConstructor)
@@ -208,13 +208,13 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<co
     // First pass -> just count the number of boxed / unboxed members
     for (size_t i = 0; i < members.size(); ++i)
     {
-        if (members[i]->isSimple())
+        if (members[i]->isBoxed())
         {
-            ++unboxedMembers_;
+            ++boxedMembers_;
         }
         else
         {
-            ++boxedMembers_;
+            ++unboxedMembers_;
         }
     }
 
@@ -222,13 +222,13 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<co
     size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
     for (size_t i = 0; i < members.size(); ++i)
     {
-        if (members[i]->isSimple())
+        if (members[i]->isBoxed())
         {
-            memberLocations_.push_back(nextUnboxed++);
+            memberLocations_.push_back(nextBoxed++);
         }
         else
         {
-            memberLocations_.push_back(nextBoxed++);
+            memberLocations_.push_back(nextUnboxed++);
         }
     }
 }

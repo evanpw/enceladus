@@ -158,7 +158,7 @@ void SemanticPass1::visit(DataDeclaration* node)
 	node->constructor()->setMemberTypes(memberTypes);
 
 	// Actually create the type
-	TypeConstructor* typeConstructor = new TypeConstructor(node->name().c_str(), false);
+	TypeConstructor* typeConstructor = new TypeConstructor(node->name().c_str(), true);
 	typeConstructor->addValueConstructor(node->constructor());
 	typeTable_->insert(node->name(), typeConstructor);
 
@@ -405,7 +405,7 @@ void SemanticPass2::visit(MatchNode* node)
 	assert(symbol->kind == kFunction);
 
 	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
-	assert(!constructorSymbol->type->isSimple());
+	assert(constructorSymbol->type->isBoxed());
 
 	if (constructorSymbol->type->valueConstructors().size() > 1)
 	{
@@ -584,10 +584,10 @@ void TypeChecker::visit(NullNode* node)
 	node->child()->accept(this);
 
 	// FIXME: This should probably be done in a better way
-	if (node->child()->type()->isSimple())
+	if (!node->child()->type()->isBoxed())
 	{
 		std::stringstream msg;
-		msg << "cannot call null on simple type " << node->child()->type()->name();
+		msg << "cannot call null on unboxed type " << node->child()->type()->name();
 		semanticError(node, msg.str());
 	}
 
