@@ -141,7 +141,18 @@ public:
         }
     }
 
+    static std::shared_ptr<TypeScheme> trivial(const std::shared_ptr<Type>& type)
+    {
+        return std::shared_ptr<TypeScheme>(new TypeScheme(type, {}));
+    }
+
     std::string name() const;
+
+    // Convenience redirections to the underlying type
+    virtual TypeTag tag() const { return _type->tag(); }
+    virtual bool isBoxed() const { return _type->isBoxed(); }
+    const std::vector<std::unique_ptr<ValueConstructor>>& valueConstructors() const { return _type->valueConstructors(); }
+
     const std::shared_ptr<Type>& type() const { return _type; }
     std::set<TypeVariable*> freeVars() const;
     const std::set<TypeVariable*>& quantified() const { return _quantified; }

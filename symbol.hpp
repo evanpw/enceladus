@@ -31,7 +31,7 @@ struct Symbol
     FunctionDefNode* enclosingFunction;
 
     // Variable type or function return type
-    std::shared_ptr<Type> type;
+    std::shared_ptr<TypeScheme> type;
 };
 
 struct VariableSymbol : public Symbol
@@ -60,7 +60,7 @@ struct FunctionSymbol : public Symbol
     , isBuiltin(false)
     {}
 
-    std::vector<std::shared_ptr<Type>> paramTypes;
+    std::vector<std::shared_ptr<TypeScheme>> paramTypes;
 
     unsigned int arity;
 
