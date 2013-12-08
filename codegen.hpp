@@ -44,8 +44,7 @@ public:
 	std::string mangle(const std::string& name);
 
 	// Create the functions corresponding to a data type declaration
-	void createConstructors(const Type* type);
-	void createDestructors(const Type* type);
+	void createConstructor(ValueConstructor* constructor);
 
 private:
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
@@ -55,8 +54,10 @@ private:
 	// The name of the function currently being generated
 	std::string currentFunction_;
 
-	// Keep track of the function definitions so that we can walk through them after the main function
+	// Keep track of the function & data type definitions so that we can walk
+	// through them after the main function
 	std::vector<FunctionDefNode*> functionDefs_;
+	std::vector<DataDeclaration*> dataDeclarations_;
 };
 
 #endif

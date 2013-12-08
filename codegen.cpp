@@ -95,17 +95,9 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 	return result;
 }
 
-void CodeGen::createConstructors(const Type* type)
+void CodeGen::createConstructor(ValueConstructor* constructor)
 {
-	if (type->valueConstructors().size() == 0)
-	{
-		//std::cerr << "createConstructors: No value constructors for " << type->longName() << std::endl;
-		return;
-	}
-
-	ValueConstructor* constructor = type->valueConstructors().back().get();
-
-	const std::vector<const Type*>& memberTypes = constructor->members();
+	const std::vector<std::shared_ptr<Type>>& memberTypes = constructor->members();
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
 	// There is one extra qword for the reference count and one for the member
@@ -293,9 +285,9 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "\t" << "ret" << std::endl;
 	}
 
-	for (const Type* type : node->typeTable()->allTypes())
+	for (DataDeclaration* dataDeclaration : dataDeclarations_)
 	{
-		createConstructors(type);
+		createConstructor(dataDeclaration->valueConstructor());
 	}
 
 	// Declare global variables in the data segment
@@ -606,6 +598,7 @@ void CodeGen::visit(FunctionDefNode* node)
 
 void CodeGen::visit(DataDeclaration* node)
 {
+	dataDeclarations_.push_back(node);
 }
 
 void CodeGen::visit(FunctionCallNode* node)

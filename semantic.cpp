@@ -49,59 +49,58 @@ void SemanticPass1::visit(ProgramNode* node)
 	Scope* scope = node->scope();
 	TypeTable* typeTable = node->typeTable();
 
-	TypeName listOfInts("List");
-	listOfInts.append(new TypeName("Int"));
+	std::shared_ptr<Type> listOfInts = ConstructedType::create(typeTable->getTypeConstructor("List"), {typeTable->getBaseType("Int")});
 
 	// Create symbols for built-in functions
 	FunctionSymbol* notFn = new FunctionSymbol("not", node, nullptr);
-	notFn->type = typeTable->lookup("Bool");
+	notFn->type = typeTable->getBaseType("Bool");
 	notFn->arity = 1;
-	notFn->paramTypes.push_back(typeTable->lookup("Bool"));
+	notFn->paramTypes.push_back(typeTable->getBaseType("Bool"));
 	notFn->isBuiltin = true;
 	scope->insert(notFn);
 
 	FunctionSymbol* head = new FunctionSymbol("head", node, nullptr);
-	head->type = typeTable->lookup("Int");
+	head->type = typeTable->getBaseType("Int");
 	head->arity = 1;
-	head->paramTypes.push_back(typeTable->lookup(&listOfInts));
+	head->paramTypes.push_back(listOfInts);
 	head->isBuiltin = true;
 	scope->insert(head);
 
 	FunctionSymbol* tail = new FunctionSymbol("tail", node, nullptr);
-	tail->type = typeTable->lookup(&listOfInts);
+	tail->type = listOfInts;
 	tail->arity = 1;
-	tail->paramTypes.push_back(typeTable->lookup(&listOfInts));
+	tail->paramTypes.push_back(listOfInts);
 	tail->isBuiltin = true;
 	scope->insert(tail);
 
 	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
-	die->type = typeTable->lookup("Void");
+	die->type = typeTable->getBaseType("Unit");
 	die->arity = 1;
-	die->paramTypes.push_back(typeTable->lookup("Void"));
+	die->paramTypes.push_back(typeTable->getBaseType("Unit"));
 	die->isExternal = true;
 	die->isForeign = true;
 	scope->insert(die);
 
 	FunctionSymbol* incref = new FunctionSymbol("_incref", node, nullptr);
-	incref->type = typeTable->lookup("Void");
+	incref->type = typeTable->getBaseType("Unit");
 	incref->arity = 1;
-	incref->paramTypes.push_back(typeTable->lookup(&listOfInts));
+	incref->paramTypes.push_back(listOfInts);
 	incref->isExternal = true;
 	incref->isForeign = true;
 	scope->insert(incref);
 
 	FunctionSymbol* decref = new FunctionSymbol("_decref", node, nullptr);
-	decref->type = typeTable->lookup("Int");
+	decref->type = typeTable->getBaseType("Int");
 	decref->arity = 1;
-	decref->paramTypes.push_back(typeTable->lookup(&listOfInts));
+	decref->paramTypes.push_back(listOfInts);
 	decref->isExternal = true;
 	decref->isForeign = true;
 	scope->insert(decref);
 
 	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
-	decref_no_free->type = typeTable->lookup("Int");
+	decref_no_free->type = typeTable->getBaseType("Int");
 	decref_no_free->arity = 1;
-	decref_no_free->paramTypes.push_back(typeTable->lookup(&listOfInts));
+	decref_no_free->paramTypes.push_back(listOfInts);
 	decref_no_free->isExternal = true;
 	decref_no_free->isForeign = true;
 	scope->insert(decref_no_free);
@@ -141,11 +140,11 @@ void SemanticPass1::visit(DataDeclaration* node)
 	}
 
 	// All of the constructor members must refer to already-declared types
-	std::vector<const Type*> memberTypes;
+	std::vector<std::shared_ptr<Type>> memberTypes;
 	for (auto& memberTypeName : node->constructor()->members())
 	{
-		const Type* memberType = typeTable_->lookup(memberTypeName.get());
-		if (memberType == nullptr)
+		std::shared_ptr<Type> memberType = typeTable_->nameToType(memberTypeName.get());
+		if (!memberType)
 		{
 			std::stringstream msg;
 			msg << "unknown member type \"" << memberType << "\".";
@@ -158,12 +157,12 @@ void SemanticPass1::visit(DataDeclaration* node)
 	node->constructor()->setMemberTypes(memberTypes);
 
 	// Actually create the type
-	TypeConstructor* typeConstructor = new TypeConstructor(node->name().c_str(), true);
-	typeConstructor->addValueConstructor(node->constructor());
-	typeTable_->insert(node->name(), typeConstructor);
+	std::shared_ptr<Type> newType = BaseType::create(node->name());
+	typeTable_->insert(typeName, newType);
 
-	// TODO: Parametrized types
-	const Type* newType = typeTable_->lookup(node->name());
+	ValueConstructor* valueConstructor = new ValueConstructor(node->constructor()->name(), memberTypes);
+	node->attachConstructor(valueConstructor);
+	newType->addValueConstructor(valueConstructor);
 
 	// Create a symbol for the constructor
 	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
@@ -206,13 +205,13 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Parameter types must be valid
-	std::vector<const Type*> paramTypes;
+	std::vector<std::shared_ptr<Type>> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
 		TypeName* typeName = node->typeDecl()->at(i).get();
 
-		const Type* type = typeTable_->lookup(typeName);
-		if (type == nullptr)
+		std::shared_ptr<Type> type = typeTable_->nameToType(typeName);
+		if (!type)
 		{
 			std::stringstream msg;
 			msg << "unknown parameter type \"" << typeName << "\".";
@@ -224,8 +223,8 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Return type must be valid
-	const Type* returnType = typeTable_->lookup(node->typeDecl()->back().get());
-	if (returnType == nullptr)
+	std::shared_ptr<Type> returnType = typeTable_->nameToType(node->typeDecl()->back().get());
+	if (!returnType)
 	{
 		std::stringstream msg;
 		msg << "unknown return type \"" << node->typeDecl()->back()->name() << "\".";
@@ -248,11 +247,10 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	for (size_t i = 0; i < node->params().size(); ++i)
 	{
 		const std::string& param = node->params().at(i);
-		const Type* paramType = paramTypes[i];
 
 		VariableSymbol* paramSymbol = new VariableSymbol(param, node, node);
 		paramSymbol->isParam = true;
-		paramSymbol->type = paramType;
+		paramSymbol->type = paramTypes[i];
 		topScope()->insert(paramSymbol);
 	}
 
@@ -308,13 +306,13 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	// Parameter types must be valid
-	std::vector<const Type*> paramTypes;
+	std::vector<std::shared_ptr<Type>> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
 		TypeName* typeName = node->typeDecl()->at(i).get();
 
-		const Type* type = typeTable_->lookup(typeName);
-		if (type == nullptr)
+		std::shared_ptr<Type> type = typeTable_->nameToType(typeName);
+		if (!type)
 		{
 			std::stringstream msg;
 			msg << "unknown parameter type \"" << typeName << "\".";
@@ -326,8 +324,8 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	// Return type must be valid
-	const Type* returnType = typeTable_->lookup(node->typeDecl()->back().get());
-	if (returnType == nullptr)
+	std::shared_ptr<Type> returnType = typeTable_->nameToType(node->typeDecl()->back().get());
+	if (!returnType)
 	{
 		std::stringstream msg;
 		msg << "unknown return type \"" << node->typeDecl()->back()->name() << "\".";
@@ -370,8 +368,8 @@ void SemanticPass2::visit(LetNode* node)
 
 	if (node->typeName())
 	{
-		const Type* type = typeTable_->lookup(node->typeName());
-		if (type == nullptr)
+		std::shared_ptr<Type> type = typeTable_->nameToType(node->typeName());
+		if (!type)
 		{
 			std::stringstream msg;
 			msg << "unknown type \"" << node->typeName()->name() << "\".";
@@ -407,7 +405,7 @@ void SemanticPass2::visit(MatchNode* node)
 	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
 	assert(constructorSymbol->type->isBoxed());
 
-	if (constructorSymbol->type->valueConstructors().size() > 1)
+	if (constructorSymbol->type->valueConstructors().size() != 1)
 	{
 		std::stringstream msg;
 		msg << "let statement pattern matching only applies to types with a single constructor.";
@@ -427,7 +425,6 @@ void SemanticPass2::visit(MatchNode* node)
 	for (size_t i = 0; i < node->params()->names().size(); ++i)
 	{
 		const std::string& name = node->params()->names().at(i);
-		const Type* memberType = constructorSymbol->paramTypes[i];
 
 		if (topScope()->find(name) != nullptr)
 		{
@@ -437,7 +434,7 @@ void SemanticPass2::visit(MatchNode* node)
 		}
 
 		VariableSymbol* member = new VariableSymbol(name, node, _enclosingFunction);
-		member->type = memberType;
+		member->type = constructorSymbol->paramTypes[i];
 		topScope()->insert(member);
 		node->attachSymbol(member);
 	}
@@ -532,12 +529,12 @@ void SemanticPass2::visit(NullaryNode* node)
 	}
 }
 
-void TypeChecker::typeCheck(AstNode* node, const Type* type)
+void TypeChecker::typeCheck(AstNode* node, const std::shared_ptr<Type>& type)
 {
-	if (!node->type()->is(type))
+	if (!equals(node->type(), type))
 	{
 		std::stringstream msg;
-		msg << "expected type " << type->longName() << ", but got " << node->type()->longName();
+		msg << "expected type " << type->name() << ", but got " << node->type()->name();
 
 		semanticError(node, msg.str());
 	}
@@ -551,32 +548,32 @@ void TypeChecker::visit(ProgramNode* node)
 	for (auto& child : node->children())
 	{
 		child->accept(this);
-		typeCheck(child.get(), typeTable_->lookup("Void"));
+		typeCheck(child.get(), typeTable_->getBaseType("Unit"));
 	}
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
-	typeCheck(node->lhs(), typeTable_->lookup("Int"));
+	typeCheck(node->lhs(), typeTable_->getBaseType("Int"));
 
 	node->rhs()->accept(this);
-	typeCheck(node->rhs(), typeTable_->lookup("Int"));
+	typeCheck(node->rhs(), typeTable_->getBaseType("Int"));
 
-	node->setType(typeTable_->lookup("Bool"));
+	node->setType(typeTable_->getBaseType("Bool"));
 }
 
 void TypeChecker::visit(BinaryOperatorNode* node)
 {
 	node->lhs()->accept(this);
-	typeCheck(node->lhs(), typeTable_->lookup("Int"));
+	typeCheck(node->lhs(), typeTable_->getBaseType("Int"));
 
 	node->rhs()->accept(this);
-	typeCheck(node->rhs(), typeTable_->lookup("Int"));
+	typeCheck(node->rhs(), typeTable_->getBaseType("Int"));
 
-	node->setType(typeTable_->lookup("Int"));
+	node->setType(typeTable_->getBaseType("Int"));
 }
 
 void TypeChecker::visit(NullNode* node)
@@ -591,18 +588,18 @@ void TypeChecker::visit(NullNode* node)
 		semanticError(node, msg.str());
 	}
 
-	node->setType(typeTable_->lookup("Bool"));
+	node->setType(typeTable_->getBaseType("Bool"));
 }
 
 void TypeChecker::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);
-	typeCheck(node->lhs(), typeTable_->lookup("Bool"));
+	typeCheck(node->lhs(), typeTable_->getBaseType("Bool"));
 
 	node->rhs()->accept(this);
-	typeCheck(node->rhs(), typeTable_->lookup("Bool"));
+	typeCheck(node->rhs(), typeTable_->getBaseType("Bool"));
 
-	node->setType(typeTable_->lookup("Bool"));
+	node->setType(typeTable_->getBaseType("Bool"));
 }
 
 void TypeChecker::visit(MatchNode* node)
@@ -610,7 +607,7 @@ void TypeChecker::visit(MatchNode* node)
 	node->body()->accept(this);
 	typeCheck(node->body(), node->constructorSymbol()->type);
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(BlockNode* node)
@@ -618,41 +615,41 @@ void TypeChecker::visit(BlockNode* node)
 	for (auto& child : node->children())
 	{
 		child->accept(this);
-		typeCheck(child.get(), typeTable_->lookup("Void"));
+		typeCheck(child.get(), typeTable_->getBaseType("Unit"));
 	}
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(IfNode* node)
 {
 	node->condition()->accept(this);
-	typeCheck(node->condition(), typeTable_->lookup("Bool"));
+	typeCheck(node->condition(), typeTable_->getBaseType("Bool"));
 
 	node->body()->accept(this);
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(IfElseNode* node)
 {
 	node->condition()->accept(this);
-	typeCheck(node->condition(), typeTable_->lookup("Bool"));
+	typeCheck(node->condition(), typeTable_->getBaseType("Bool"));
 
 	node->body()->accept(this);
 	node->else_body()->accept(this);
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(WhileNode* node)
 {
 	node->condition()->accept(this);
-	typeCheck(node->condition(), typeTable_->lookup("Bool"));
+	typeCheck(node->condition(), typeTable_->getBaseType("Bool"));
 
 	node->body()->accept(this);
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(AssignNode* node)
@@ -660,7 +657,7 @@ void TypeChecker::visit(AssignNode* node)
 	node->value()->accept(this);
 	typeCheck(node->value(), node->symbol()->type);
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 // Leaf nodes
@@ -671,20 +668,21 @@ void TypeChecker::visit(NullaryNode* node)
 
 void TypeChecker::visit(IntNode* node)
 {
-	node->setType(typeTable_->lookup("Int"));
+	node->setType(typeTable_->getBaseType("Int"));
 }
 
 void TypeChecker::visit(BoolNode* node)
 {
-	node->setType(typeTable_->lookup("Bool"));
+	node->setType(typeTable_->getBaseType("Bool"));
 }
 
 void TypeChecker::visit(NilNode* node)
 {
-	TypeName listOfInts("List");
-	listOfInts.append(new TypeName("Int"));
+	std::shared_ptr<Type> listOfInts = ConstructedType::create(
+		typeTable_->getTypeConstructor("List"),
+		{typeTable_->getBaseType("Int")});
 
-	node->setType(typeTable_->lookup(&listOfInts));
+	node->setType(listOfInts);
 }
 
 void TypeChecker::visit(FunctionCallNode* node)
@@ -696,7 +694,7 @@ void TypeChecker::visit(FunctionCallNode* node)
 	for (size_t i = 0; i < node->arguments().size(); ++i)
 	{
 		AstNode* argument = node->arguments().at(i).get();
-		const Type* type = node->symbol()->paramTypes.at(i);
+		std::shared_ptr<Type> type = node->symbol()->paramTypes.at(i);
 
 		argument->accept(this);
 		typeCheck(argument, type);
@@ -720,7 +718,7 @@ void TypeChecker::visit(ReturnNode* node)
 	// Value of expression must equal the return type of the enclosing function.
 	typeCheck(node->expression(), _enclosingFunction->symbol()->type);
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(FunctionDefNode* node)
@@ -734,7 +732,7 @@ void TypeChecker::visit(FunctionDefNode* node)
 	_enclosingFunction = nullptr;
 	exitScope();
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }
 
 void TypeChecker::visit(LetNode* node)
@@ -751,5 +749,5 @@ void TypeChecker::visit(LetNode* node)
 		typeCheck(node->value(), node->symbol()->type);
 	}
 
-	node->setType(typeTable_->lookup("Void"));
+	node->setType(typeTable_->getBaseType("Unit"));
 }

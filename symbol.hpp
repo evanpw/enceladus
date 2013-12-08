@@ -31,7 +31,7 @@ struct Symbol
     FunctionDefNode* enclosingFunction;
 
     // Variable type or function return type
-    const Type* type;
+    std::shared_ptr<Type> type;
 };
 
 struct VariableSymbol : public Symbol
@@ -60,7 +60,7 @@ struct FunctionSymbol : public Symbol
     , isBuiltin(false)
     {}
 
-    std::vector<const Type*> paramTypes;
+    std::vector<std::shared_ptr<Type>> paramTypes;
 
     unsigned int arity;
 

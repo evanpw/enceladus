@@ -2,7 +2,7 @@
 
 -- Basic functions
 foreign read :: Int
-foreign print :: Int -> Void
+foreign print :: Int -> Unit
 
 -- List functions
 foreign Cons :: Int -> [Int] -> [Int]

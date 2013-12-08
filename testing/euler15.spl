@@ -23,7 +23,7 @@ def searchMemo p :: Pair -> Int =
 
     return -1
 
-def insertMemo p count :: Pair -> Int -> Void =
+def insertMemo p count :: Pair -> Int -> Unit =
     let Pair x y = p
     xs = x : xs
     ys = y : ys

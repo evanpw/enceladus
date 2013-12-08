@@ -89,11 +89,11 @@ public:
 	virtual void visit(ReturnNode* node);
 
 	// Declaration nodes with void type
-	virtual void visit(DataDeclaration* node) { node->setType(typeTable_->lookup("Void")); }
-	virtual void visit(ForeignDeclNode* node) { node->setType(typeTable_->lookup("Void")); }
+	virtual void visit(DataDeclaration* node) { node->setType(typeTable_->getBaseType("Unit")); }
+	virtual void visit(ForeignDeclNode* node) { node->setType(typeTable_->getBaseType("Unit")); }
 
 private:
-	void typeCheck(AstNode* node, const Type* type);
+	void typeCheck(AstNode* node, const std::shared_ptr<Type>& type);
 	FunctionDefNode* _enclosingFunction;
 };
 

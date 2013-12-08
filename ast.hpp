@@ -22,13 +22,13 @@ public:
 	virtual void accept(AstVisitor* visitor) = 0;
 
 	YYLTYPE* location() { return location_; }
-	const Type* type() { return type_; }
+	const std::shared_ptr<Type>& type() { return type_; }
 
-	void setType(const Type* type) { type_ = type; }
+	void setType(const std::shared_ptr<Type>& type) { type_ = type; }
 
 protected:
 	YYLTYPE* location_;
-	const Type* type_;
+	std::shared_ptr<Type> type_;
 };
 
 class StatementNode : public AstNode {};
@@ -52,18 +52,18 @@ public:
 	const std::string& name() const { return name_; }
 	const std::vector<std::unique_ptr<TypeName>>& members() const { return members_; }
 
-	void setMemberTypes(const std::vector<const Type*> types)
+	void setMemberTypes(const std::vector<std::shared_ptr<Type>> types)
 	{
 		assert(types.size() == members_.size());
 		types_ = types;
 	}
-	const std::vector<const Type*>& memberTypes() { return types_; }
+	const std::vector<std::shared_ptr<Type>>& memberTypes() { return types_; }
 
 private:
 	std::string name_;
 
 	std::vector<std::unique_ptr<TypeName>> members_;
-	std::vector<const Type*> types_;
+	std::vector<std::shared_ptr<Type>> types_;
 };
 
 
@@ -433,9 +433,13 @@ public:
 	const std::string& name() { return name_; }
 	ConstructorSpec* constructor() { return constructor_.get(); }
 
+	void attachConstructor(ValueConstructor* valueConstructor) { valueConstructor_ = valueConstructor; }
+	ValueConstructor* valueConstructor() { return valueConstructor_; }
+
 private:
 	std::string name_;
 	std::unique_ptr<ConstructorSpec> constructor_;
+	ValueConstructor* valueConstructor_;
 };
 
 class ForeignDeclNode : public StatementNode
