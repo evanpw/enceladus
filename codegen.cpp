@@ -305,18 +305,6 @@ void CodeGen::visit(ProgramNode* node)
 	}
 }
 
-void CodeGen::visit(NullNode* node)
-{
-	std::string finish = uniqueLabel();
-
-	node->child()->accept(this);
-	out_ << "\t" << "cmp rax, 0" << std::endl;
-	out_ << "\t" << "je " << finish << std::endl;
-	out_ << "\t" << "mov rax, 1" << std::endl;
-	out_ << finish << ":" << std::endl;
-	out_ << "\t" << "xor rax, 1" << std::endl;
-}
-
 void CodeGen::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
@@ -441,11 +429,6 @@ void CodeGen::visit(NullaryNode* node)
 void CodeGen::visit(IntNode* node)
 {
 	out_ << "\t" << "mov rax, " << node->value() << std::endl;
-}
-
-void CodeGen::visit(NilNode* node)
-{
-	out_ << "\t" << "mov rax, 0" << std::endl;
 }
 
 void CodeGen::visit(BoolNode* node)
@@ -664,6 +647,20 @@ void CodeGen::visit(FunctionCallNode* node)
 
 			out_ << good << ":" << std::endl;
 			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+		}
+		else if (node->target() == "Nil")
+		{
+			out_ << "\t" << "mov rax, 0" << std::endl;
+		}
+		else if (node->target() == "null")
+		{
+			std::string finish = uniqueLabel();
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "cmp rax, 0" << std::endl;
+			out_ << "\t" << "je " << finish << std::endl;
+			out_ << "\t" << "mov rax, 1" << std::endl;
+			out_ << finish << ":" << std::endl;
+			out_ << "\t" << "xor rax, 1" << std::endl;
 		}
 		else
 		{

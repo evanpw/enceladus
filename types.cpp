@@ -6,11 +6,15 @@
 #include <cassert>
 #include <sstream>
 
+std::shared_ptr<Type> TypeTable::Int = BaseType::create("Int", true);
+std::shared_ptr<Type> TypeTable::Bool = BaseType::create("Bool", true);
+std::shared_ptr<Type> TypeTable::Unit = BaseType::create("Unit", true);
+
 TypeTable::TypeTable()
 {
-    baseTypes_["Int"] = BaseType::create("Int", true);
-    baseTypes_["Bool"] = BaseType::create("Bool", true);
-    baseTypes_["Unit"] = BaseType::create("Unit", true);
+    baseTypes_["Int"] = Int;
+    baseTypes_["Bool"] = Bool;
+    baseTypes_["Unit"] = Unit;
     baseTypes_["Tree"] = BaseType::create("Tree", false);
 
     typeConstructors_["List"] = std::unique_ptr<TypeConstructor>(new TypeConstructor("List", 1));

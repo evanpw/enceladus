@@ -41,9 +41,6 @@ std::set<TypeVariable*> TypeChecker::getFreeVars(Symbol* symbol)
 
 std::unique_ptr<TypeScheme> TypeChecker::generalize(const std::shared_ptr<Type>& type)
 {
-    if (_verbose)
-        std::cerr << "\tGeneralizing " << type->name() << std::endl;
-
     std::set<TypeVariable*> typeFreeVars = type->freeVars();
 
     std::set<TypeVariable*> envFreeVars;
@@ -121,12 +118,7 @@ std::shared_ptr<Type> TypeChecker::instantiate(TypeScheme* scheme)
         replacements[boundVar] = TypeVariable::create(true);
     }
 
-    std::shared_ptr<Type> resultType = instantiate(scheme->type(), replacements);
-
-    if (_verbose)
-        std::cerr << "\tInstantiating " << scheme->name() << " => " << resultType->name() << std::endl;
-
-    return resultType;
+    return instantiate(scheme->type(), replacements);
 }
 
 bool TypeChecker::occurs(TypeVariable* variable, const std::shared_ptr<Type>& value)
@@ -197,35 +189,27 @@ void TypeChecker::bindVariable(const std::shared_ptr<Type>& variable, const std:
         //inferenceError(node, ss.str());
     }
 
-    if (_verbose)
-        std::cerr << "\tBinding " << variable->name() << " = " << value->name() << std::endl;
-
     // And if these check out, make the substitution
     *variable = *value;
 }
 
 void TypeChecker::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node)
 {
-    if (_verbose)
-        std::cerr << "\tUnifying " << lhs->name() << " and " << rhs->name() << std::endl;
-
-    // Two base types can be unified only if equal (we don't have inheritance)
     if (lhs->tag() == ttBase && rhs->tag() == ttBase)
     {
-        if (lhs->name() != rhs->name())
-        {
-            std::stringstream ss;
-            ss << "cannot unify base types " << lhs->name() << " and " << rhs->name();
-            inferenceError(node, ss.str());
-        }
+        // Two base types can be unified only if equal (we don't have inheritance)
+        if (lhs->name() == rhs->name())
+            return;
     }
     else if (lhs->tag() == ttVariable)
     {
         bindVariable(lhs, rhs, node);
+        return;
     }
     else if (rhs->tag() == ttVariable)
     {
         bindVariable(rhs, lhs, node);
+        return;
     }
     else if (lhs->tag() == ttFunction && rhs->tag() == ttFunction)
     {
@@ -243,37 +227,29 @@ void TypeChecker::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<
 
             return;
         }
-
-        std::stringstream ss;
-        ss << "Cannot unify function types " << lhs->name() << " and " << rhs->name();
-        inferenceError(node, ss.str());
     }
     else if (lhs->tag() == ttConstructed && rhs->tag() == ttConstructed)
     {
         ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
         ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
 
-        if (lhsConstructed->typeConstructor() != rhsConstructed->typeConstructor())
+        if (lhsConstructed->typeConstructor() == rhsConstructed->typeConstructor())
         {
-            std::stringstream ss;
-            ss << "cannot unify constructed types " << lhs->name() << " and " << rhs->name();
-            inferenceError(node, ss.str());
-        }
+            assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
 
-        assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
+            for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
+            {
+                unify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node);
+            }
 
-        for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
-        {
-            unify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node);
+            return;
         }
     }
-    else
-    {
-        // Can't be unified
-        std::stringstream ss;
-        ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
-        inferenceError(node, ss.str());
-    }
+
+    // Can't be unified
+    std::stringstream ss;
+    ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
+    inferenceError(node, ss.str());
 }
 
 // Internal nodes
@@ -284,60 +260,43 @@ void TypeChecker::visit(ProgramNode* node)
     for (auto& child : node->children())
     {
         child->accept(this);
-        unify(child->type(), typeTable_->getBaseType("Unit"), node);
+        unify(child->type(), TypeTable::Unit, node);
     }
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 void TypeChecker::visit(ComparisonNode* node)
 {
     node->lhs()->accept(this);
-    unify(node->lhs()->type(), typeTable_->getBaseType("Int"), node);
+    unify(node->lhs()->type(), TypeTable::Int, node);
 
     node->rhs()->accept(this);
-    unify(node->rhs()->type(), typeTable_->getBaseType("Int"), node);
+    unify(node->rhs()->type(), TypeTable::Int, node);
 
-    node->setType(typeTable_->getBaseType("Bool"));
+    node->setType(TypeTable::Bool);
 }
 
 void TypeChecker::visit(BinaryOperatorNode* node)
 {
     node->lhs()->accept(this);
-    unify(node->lhs()->type(), typeTable_->getBaseType("Int"), node);
+    unify(node->lhs()->type(), TypeTable::Int, node);
 
     node->rhs()->accept(this);
-    unify(node->rhs()->type(), typeTable_->getBaseType("Int"), node);
+    unify(node->rhs()->type(), TypeTable::Int, node);
 
-    node->setType(typeTable_->getBaseType("Int"));
-}
-
-void TypeChecker::visit(NullNode* node)
-{
-    node->child()->accept(this);
-
-    // TODO: If this was a real function call, we wouldn't need this special
-    // check here. It would happen when we bound the type variable to the type
-    // of the argument.
-    if (!node->child()->type()->isBoxed())
-    {
-        std::stringstream msg;
-        msg << "cannot call null on unboxed type " << node->child()->type()->name();
-        semanticError(node, msg.str());
-    }
-
-    node->setType(typeTable_->getBaseType("Bool"));
+    node->setType(TypeTable::Int);
 }
 
 void TypeChecker::visit(LogicalNode* node)
 {
     node->lhs()->accept(this);
-    unify(node->lhs()->type(), typeTable_->getBaseType("Bool"), node);
+    unify(node->lhs()->type(), TypeTable::Bool, node);
 
     node->rhs()->accept(this);
-    unify(node->rhs()->type(), typeTable_->getBaseType("Bool"), node);
+    unify(node->rhs()->type(), TypeTable::Bool, node);
 
-    node->setType(typeTable_->getBaseType("Bool"));
+    node->setType(TypeTable::Bool);
 }
 
 void TypeChecker::visit(MatchNode* node)
@@ -350,7 +309,7 @@ void TypeChecker::visit(MatchNode* node)
     FunctionType* functionType = node->constructorSymbol()->type->type()->get<FunctionType>();
     unify(node->body()->type(), functionType->output(), node);
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 void TypeChecker::visit(BlockNode* node)
@@ -358,46 +317,46 @@ void TypeChecker::visit(BlockNode* node)
     for (auto& child : node->children())
     {
         child->accept(this);
-        unify(child->type(), typeTable_->getBaseType("Unit"), node);
+        unify(child->type(), TypeTable::Unit, node);
     }
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 void TypeChecker::visit(IfNode* node)
 {
     node->condition()->accept(this);
-    unify(node->condition()->type(), typeTable_->getBaseType("Bool"), node);
+    unify(node->condition()->type(), TypeTable::Bool, node);
 
     node->body()->accept(this);
-    unify(node->body()->type(), typeTable_->getBaseType("Unit"), node);
+    unify(node->body()->type(), TypeTable::Unit, node);
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 void TypeChecker::visit(IfElseNode* node)
 {
     node->condition()->accept(this);
-    unify(node->condition()->type(), typeTable_->getBaseType("Bool"), node);
+    unify(node->condition()->type(), TypeTable::Bool, node);
 
     node->body()->accept(this);
-    unify(node->body()->type(), typeTable_->getBaseType("Unit"), node);
+    unify(node->body()->type(), TypeTable::Unit, node);
 
     node->else_body()->accept(this);
-    unify(node->else_body()->type(), typeTable_->getBaseType("Unit"), node);
+    unify(node->else_body()->type(), TypeTable::Unit, node);
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 void TypeChecker::visit(WhileNode* node)
 {
     node->condition()->accept(this);
-    unify(node->condition()->type(), typeTable_->getBaseType("Bool"), node);
+    unify(node->condition()->type(), TypeTable::Bool, node);
 
     node->body()->accept(this);
-    unify(node->body()->type(), typeTable_->getBaseType("Unit"), node);
+    unify(node->body()->type(), TypeTable::Unit, node);
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 // TODO: Look at this more closely
@@ -408,7 +367,7 @@ void TypeChecker::visit(AssignNode* node)
     assert(node->symbol()->type->quantified().empty());
     unify(node->value()->type(), node->symbol()->type->type(), node);
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 // Leaf nodes
@@ -433,23 +392,12 @@ void TypeChecker::visit(NullaryNode* node)
 
 void TypeChecker::visit(IntNode* node)
 {
-    node->setType(typeTable_->getBaseType("Int"));
+    node->setType(TypeTable::Int);
 }
 
 void TypeChecker::visit(BoolNode* node)
 {
-    node->setType(typeTable_->getBaseType("Bool"));
-}
-
-void TypeChecker::visit(NilNode* node)
-{
-    // TODO: Turn this into a real function call
-
-    std::shared_ptr<Type> polyList = ConstructedType::create(
-        typeTable_->getTypeConstructor("List"),
-        {TypeVariable::create()});
-
-    node->setType(polyList);
+    node->setType(TypeTable::Bool);
 }
 
 void TypeChecker::visit(FunctionCallNode* node)
@@ -492,7 +440,7 @@ void TypeChecker::visit(ReturnNode* node)
     FunctionType* functionType = _enclosingFunction->symbol()->type->type()->get<FunctionType>();
     unify(node->expression()->type(), functionType->output(), node);
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 void TypeChecker::visit(FunctionDefNode* node)
@@ -506,7 +454,7 @@ void TypeChecker::visit(FunctionDefNode* node)
     _enclosingFunction = nullptr;
     exitScope();
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }
 
 void TypeChecker::visit(LetNode* node)
@@ -516,5 +464,5 @@ void TypeChecker::visit(LetNode* node)
     assert(node->symbol()->type->quantified().empty());
     unify(node->value()->type(), node->symbol()->type->type(), node);
 
-    node->setType(typeTable_->getBaseType("Unit"));
+    node->setType(TypeTable::Unit);
 }

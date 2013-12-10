@@ -61,6 +61,11 @@ public:
 
     std::shared_ptr<Type> nameToType(const TypeName* typeName);
 
+    // Convenient access to frequently-referenced types
+    static std::shared_ptr<Type> Int;
+    static std::shared_ptr<Type> Bool;
+    static std::shared_ptr<Type> Unit;
+
 private:
     std::unordered_map<std::string, std::unique_ptr<TypeConstructor>> typeConstructors_;
     std::unordered_map<std::string, std::shared_ptr<Type>> baseTypes_;

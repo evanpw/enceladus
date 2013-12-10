@@ -56,7 +56,6 @@ void yyerror(const char* msg);
 %token EOL
 %token DCOLON RARROW
 %token TRUE FALSE
-%token ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL CONCAT
 %token<str> LIDENT UIDENT
 %token<number> INT_LIT
@@ -69,7 +68,6 @@ void yyerror(const char* msg);
 %left '+' '-'
 %left '*' '/' MOD
 %right CONCAT
-%nonassoc ISNULL
 
 %%
 
@@ -214,11 +212,7 @@ statement_list: statement
 		}
 
 /* An expression that is not a function call */
-expression: ISNULL expression
-		{
-			$$ = new NullNode($2);
-		}
-	| ident '$' expression
+expression: ident '$' expression
 		{
 			ArgList* argList = new ArgList();
 			argList->emplace_back($3);
@@ -340,7 +334,7 @@ simple_expression: '(' expression ')'
 		}
 	| '[' ']'
 		{
-			$$ = new NilNode();
+			$$ = new FunctionCallNode("Nil", new ArgList);
 		}
 
 ident: LIDENT

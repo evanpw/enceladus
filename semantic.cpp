@@ -51,9 +51,11 @@ void SemanticPass1::visit(ProgramNode* node)
 	Scope* scope = node->scope();
 	TypeTable* typeTable = node->typeTable();
 
+	const TypeConstructor* List = typeTable->getTypeConstructor("List");
+
 	//// Create symbols for built-in functions
 	FunctionSymbol* notFn = new FunctionSymbol("not", node, nullptr);
-	notFn->type = TypeScheme::trivial(FunctionType::create({typeTable->getBaseType("Bool")}, typeTable->getBaseType("Bool")));
+	notFn->type = TypeScheme::trivial(FunctionType::create({TypeTable::Bool}, TypeTable::Bool));
 	notFn->isBuiltin = true;
 	scope->insert(notFn);
 
@@ -61,7 +63,7 @@ void SemanticPass1::visit(ProgramNode* node)
 	std::shared_ptr<Type> a1 = TypeVariable::create();
 	std::shared_ptr<Type> headType =
 		FunctionType::create(
-			{ConstructedType::create(typeTable->getTypeConstructor("List"), {a1})},
+			{ConstructedType::create(List, {a1})},
 			a1);
 	head->type = std::shared_ptr<TypeScheme>(new TypeScheme(headType, {a1->get<TypeVariable>()}));
 	head->isBuiltin = true;
@@ -71,8 +73,8 @@ void SemanticPass1::visit(ProgramNode* node)
 	std::shared_ptr<Type> a2 = TypeVariable::create();
 	std::shared_ptr<Type> tailType =
 		FunctionType::create(
-			{ConstructedType::create(typeTable->getTypeConstructor("List"), {a2})},
-			ConstructedType::create(typeTable->getTypeConstructor("List"), {a2}));
+			{ConstructedType::create(List, {a2})},
+			ConstructedType::create(List, {a2}));
 	tail->type = std::shared_ptr<TypeScheme>(new TypeScheme(tailType, {a2->get<TypeVariable>()}));
 	tail->isBuiltin = true;
 	scope->insert(tail);
@@ -81,12 +83,28 @@ void SemanticPass1::visit(ProgramNode* node)
 	std::shared_ptr<Type> a3 = TypeVariable::create();
 	std::shared_ptr<Type> consType =
 		FunctionType::create(
-			{a3, ConstructedType::create(typeTable->getTypeConstructor("List"), {a3})},
-			ConstructedType::create(typeTable->getTypeConstructor("List"), {a3}));
+			{a3, ConstructedType::create(List, {a3})},
+			ConstructedType::create(List, {a3}));
 	cons->type = std::shared_ptr<TypeScheme>(new TypeScheme(consType, {a3->get<TypeVariable>()}));
 	cons->isExternal = true;
 	cons->isForeign = true;
 	scope->insert(cons);
+
+	FunctionSymbol* nil = new FunctionSymbol("Nil", node, nullptr);
+	std::shared_ptr<Type> a4 = TypeVariable::create();
+	std::shared_ptr<Type> nilType =
+		FunctionType::create({}, ConstructedType::create(List, {a4}));
+	nil->type = std::shared_ptr<TypeScheme>(new TypeScheme(nilType, {a4->get<TypeVariable>()}));
+	nil->isBuiltin = true;
+	scope->insert(nil);
+
+	FunctionSymbol* nullFn = new FunctionSymbol("null", node, nullptr);
+	std::shared_ptr<Type> a5 = TypeVariable::create();
+	std::shared_ptr<Type> nullType =
+		FunctionType::create({a5}, TypeTable::Bool);
+	nullFn->type = std::shared_ptr<TypeScheme>(new TypeScheme(nullType, {a5->get<TypeVariable>()}));
+	nullFn->isBuiltin = true;
+	scope->insert(nullFn);
 
 
 	//// These definitions are only needed so that we list them as external

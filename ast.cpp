@@ -62,10 +62,13 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
     forNode->append(new LetNode(listVar.c_str(), listOfInts, list));
 
     ArgList* argList = new ArgList;
-    argList->emplace_back(new NullNode(new NullaryNode(listVar.c_str())));
+    argList->emplace_back(new NullaryNode(listVar.c_str()));
+
+    ArgList* argList2 = new ArgList;
+    argList2->emplace_back(new FunctionCallNode("null", argList));
     forNode->append(
         new WhileNode(
-            new FunctionCallNode("not", argList),
+            new FunctionCallNode("not", argList2),
             newBody));
 
     return forNode;

@@ -92,18 +92,6 @@ private:
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
-class NullNode : public ExpressionNode
-{
-public:
-	NullNode(ExpressionNode* expression) : expression_(expression) {}
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* child() { return expression_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> expression_;
-};
-
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
@@ -206,12 +194,6 @@ public:
 
 private:
 	bool value_;
-};
-
-class NilNode : public ExpressionNode
-{
-public:
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 };
 
 class FunctionCallNode : public ExpressionNode
