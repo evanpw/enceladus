@@ -126,7 +126,8 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 
 	// Boxed & unboxed member counts
 	long memberCount = (constructor->boxedMembers() << 32) + constructor->boxedMembers();
-	out_ << "\t" << "mov qword [rax + 8], " << memberCount << std::endl;
+	out_ << "\t" << "mov rbx, qword " << memberCount << std::endl;
+	out_ << "\t" << "mov qword [rax + 8], rbx" << std::endl;
 
     for (size_t i = 0; i < memberTypes.size(); ++i)
     {
@@ -248,9 +249,12 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "__end_" << function->name() << ":" << std::endl;
 		out_ << "\t" << "push rax" << std::endl;
 
+		assert(function->symbol()->type->tag() == ttFunction);
+		FunctionType* functionType = function->symbol()->type->type()->get<FunctionType>();
+
 		// Preserve the return value from being freed if it happens to be the
 		// same as one of the local variables.
-		if (function->symbol()->type->isBoxed())
+		if (functionType->output()->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, rax" << std::endl;
 			out_ << "\t" << "call __incref" << std::endl;
@@ -272,7 +276,7 @@ void CodeGen::visit(ProgramNode* node)
 		// But after the function returns, we don't have a reference to the
 		// return value, it's just in a temporary. The caller will have to
 		// assign it a reference.
-		if (function->symbol()->type->isBoxed())
+		if (functionType->output()->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
 			out_ << "\t" << "call __decrefNoFree" << std::endl;
@@ -571,7 +575,8 @@ void CodeGen::visit(MatchNode* node)
 
 	out_ << "\t" << "pop rax" << std::endl;
 
-	auto& constructor = node->constructorSymbol()->type->valueConstructors().front();
+	FunctionType* functionType = node->constructorSymbol()->type->type()->get<FunctionType>();
+	auto& constructor = functionType->output()->valueConstructors().front();
 
 	// Copy over each of the members of the constructor pattern
 	for (size_t i = 0; i < node->symbols().size(); ++i)

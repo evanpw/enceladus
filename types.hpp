@@ -97,8 +97,6 @@ private:
     std::shared_ptr<TypeImpl> _impl;
 };
 
-bool equals(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs);
-
 // Represents a fully-instantiated value constructor, with no free type variables
 class ValueConstructor
 {
@@ -217,24 +215,24 @@ private:
 class FunctionType : public TypeImpl
 {
 public:
-    static std::shared_ptr<Type> create(const std::shared_ptr<Type>& domain, const std::shared_ptr<Type>& range)
+    static std::shared_ptr<Type> create(const std::vector<std::shared_ptr<Type>>& inputs, const std::shared_ptr<Type>& output)
     {
-        return std::make_shared<Type>(new FunctionType(domain, range));
+        return std::make_shared<Type>(new FunctionType(inputs, output));
     }
 
     virtual std::string name() const;
     virtual bool isBoxed() const { return true; }
 
-    const std::shared_ptr<Type>& domain() const { return _domain; }
-    const std::shared_ptr<Type>& range() const { return _range; }
+    const std::vector<std::shared_ptr<Type>>& inputs() const { return _inputs; }
+    const std::shared_ptr<Type>& output() const { return _output; }
 
 private:
-    FunctionType(const std::shared_ptr<Type>& domain, const std::shared_ptr<Type>& range)
-    : TypeImpl(ttFunction), _domain(domain), _range(range)
+    FunctionType(const std::vector<std::shared_ptr<Type>>& inputs, const std::shared_ptr<Type>& output)
+    : TypeImpl(ttFunction), _inputs(inputs), _output(output)
     {}
 
-    std::shared_ptr<Type> _domain;
-    std::shared_ptr<Type> _range;
+    std::vector<std::shared_ptr<Type>> _inputs;
+    std::shared_ptr<Type> _output;
 };
 
 // The type of any type constructed from other types
@@ -287,20 +285,25 @@ private:
 class TypeVariable : public TypeImpl
 {
 public:
-    static std::shared_ptr<Type> create()
+    static std::shared_ptr<Type> create(bool polymorphic = false)
     {
-        return std::make_shared<Type>(new TypeVariable);
+        return std::make_shared<Type>(new TypeVariable(polymorphic));
     }
 
     virtual bool isBoxed() const { return true; }
     virtual std::string name() const;
 
+    // Was this type variable introduced by instantiating a quantified type
+    // variable? If so, it can be bound only to a lifted type
+    bool isPolymorphic () const { return _polymorphic; }
+
 private:
-    TypeVariable()
-    : TypeImpl(ttVariable), _index(_count++)
+    TypeVariable(bool polymorphic)
+    : TypeImpl(ttVariable), _index(_count++), _polymorphic(polymorphic)
     {}
 
     int _index;
+    bool _polymorphic;
     static int _count;
 };
 

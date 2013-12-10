@@ -97,51 +97,6 @@ const std::vector<std::unique_ptr<ValueConstructor>>& Type::valueConstructors() 
     return _impl->valueConstructors();
 }
 
-bool equals(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs)
-{
-    // Two base types can be unified only if equal (we don't have inheritance)
-    if (lhs->tag() == ttBase && rhs->tag() == ttBase)
-    {
-        return lhs->name() == rhs->name();
-    }
-    else if (lhs->tag() == ttVariable && rhs->tag() == ttVariable)
-    {
-        return lhs->get<TypeVariable>() == rhs->get<TypeVariable>();
-    }
-    else if (lhs->tag() == ttFunction && rhs->tag() == ttFunction)
-    {
-        FunctionType* lhsFunction = lhs->get<FunctionType>();
-        FunctionType* rhsFunction = rhs->get<FunctionType>();
-
-        return equals(lhsFunction->domain(), rhsFunction->domain()) &&
-               equals(lhsFunction->range(), rhsFunction->range());
-    }
-    else if (lhs->tag() == ttConstructed && rhs->tag() == ttConstructed)
-    {
-        ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
-        ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
-
-        if (lhsConstructed->typeConstructor() != rhsConstructed->typeConstructor())
-        {
-            return false;
-        }
-
-        assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
-
-        for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
-        {
-            if (!equals(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i)))
-                return false;
-        }
-
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
 void Type::addValueConstructor(ValueConstructor* valueConstructor)
 {
     _impl->addValueConstructor(valueConstructor);
@@ -165,8 +120,12 @@ std::set<TypeVariable*> Type::freeVars() const
         case ttFunction:
         {
             FunctionType* functionType = get<FunctionType>();
-            result += functionType->domain()->freeVars();
-            result += functionType->range()->freeVars();
+
+            for (auto& input : functionType->inputs())
+            {
+                result += input->freeVars();
+            }
+            result += functionType->output()->freeVars();
             break;
         }
 
@@ -217,16 +176,23 @@ std::set<TypeVariable*> TypeScheme::freeVars() const
 std::string FunctionType::name() const
 {
     std::stringstream ss;
-    if (_domain->tag() == ttFunction)
+
+    for (auto& input : _inputs)
     {
-        ss << "(" << _domain->name() << ")";
-    }
-    else
-    {
-        ss << _domain->name();
+        if (input->tag() == ttFunction)
+        {
+            ss << "(" << input->name() << ")";
+        }
+        else
+        {
+            ss << input->name();
+        }
+
+        ss << " -> ";
     }
 
-    ss << " -> " << _range->name();
+    ss << _output->name();
+
     return ss.str();
 }
 

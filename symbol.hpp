@@ -54,15 +54,10 @@ struct FunctionSymbol : public Symbol
 {
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
     : Symbol(name, kFunction, node, enclosingFunction)
-    , arity(0)
     , isForeign(false)
     , isExternal(false)
     , isBuiltin(false)
     {}
-
-    std::vector<std::shared_ptr<TypeScheme>> paramTypes;
-
-    unsigned int arity;
 
     // C argument-passing style
     bool isForeign;

@@ -15,33 +15,35 @@ SemanticAnalyzer::SemanticAnalyzer(ProgramNode* root)
 
 bool SemanticAnalyzer::analyze()
 {
-	SemanticPass1 pass1;
-	root_->accept(&pass1);
-
-	if (pass1.success())
+	try
 	{
+		SemanticPass1 pass1;
+		root_->accept(&pass1);
+
 		SemanticPass2 pass2;
 		root_->accept(&pass2);
 
-		if (pass2.success())
-		{
-			TypeChecker typeChecker;
-			root_->accept(&typeChecker);
-
-			return typeChecker.success();
-		}
+		TypeChecker typeChecker;
+		root_->accept(&typeChecker);
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Error: " << e.what() << std::endl;
+		return false;
 	}
 
-	return false;
+	return true;
 }
 
-void SemanticBase::semanticError(AstNode* node, const std::string& msg)
+void semanticError(AstNode* node, const std::string& msg)
 {
-	std::cerr << "Near line " << node->location()->first_line << ", "
-	  	      << "column " << node->location()->first_column << ": "
-	  	      << "error: " << msg << std::endl;
+	std::stringstream ss;
 
-	success_ = false;
+	ss << "Near line " << node->location()->first_line << ", "
+	   << "column " << node->location()->first_column << ": "
+	   << "error: " << msg;
+
+	throw SemanticError(ss.str());
 }
 
 void SemanticPass1::visit(ProgramNode* node)
@@ -49,60 +51,61 @@ void SemanticPass1::visit(ProgramNode* node)
 	Scope* scope = node->scope();
 	TypeTable* typeTable = node->typeTable();
 
-	std::shared_ptr<Type> listOfInts = ConstructedType::create(typeTable->getTypeConstructor("List"), {typeTable->getBaseType("Int")});
-
-	// Create symbols for built-in functions
+	//// Create symbols for built-in functions
 	FunctionSymbol* notFn = new FunctionSymbol("not", node, nullptr);
-	notFn->type = TypeScheme::trivial(typeTable->getBaseType("Bool"));
-	notFn->arity = 1;
-	notFn->paramTypes.push_back(TypeScheme::trivial(typeTable->getBaseType("Bool")));
+	notFn->type = TypeScheme::trivial(FunctionType::create({typeTable->getBaseType("Bool")}, typeTable->getBaseType("Bool")));
 	notFn->isBuiltin = true;
 	scope->insert(notFn);
 
 	FunctionSymbol* head = new FunctionSymbol("head", node, nullptr);
-	head->type = TypeScheme::trivial(typeTable->getBaseType("Int"));
-	head->arity = 1;
-	head->paramTypes.push_back(TypeScheme::trivial(listOfInts));
+	std::shared_ptr<Type> a1 = TypeVariable::create();
+	std::shared_ptr<Type> headType =
+		FunctionType::create(
+			{ConstructedType::create(typeTable->getTypeConstructor("List"), {a1})},
+			a1);
+	head->type = std::shared_ptr<TypeScheme>(new TypeScheme(headType, {a1->get<TypeVariable>()}));
 	head->isBuiltin = true;
 	scope->insert(head);
 
 	FunctionSymbol* tail = new FunctionSymbol("tail", node, nullptr);
-	tail->type = TypeScheme::trivial(listOfInts);
-	tail->arity = 1;
-	tail->paramTypes.push_back(TypeScheme::trivial(listOfInts));
+	std::shared_ptr<Type> a2 = TypeVariable::create();
+	std::shared_ptr<Type> tailType =
+		FunctionType::create(
+			{ConstructedType::create(typeTable->getTypeConstructor("List"), {a2})},
+			ConstructedType::create(typeTable->getTypeConstructor("List"), {a2}));
+	tail->type = std::shared_ptr<TypeScheme>(new TypeScheme(tailType, {a2->get<TypeVariable>()}));
 	tail->isBuiltin = true;
 	scope->insert(tail);
 
+	FunctionSymbol* cons = new FunctionSymbol("Cons", node, nullptr);
+	std::shared_ptr<Type> a3 = TypeVariable::create();
+	std::shared_ptr<Type> consType =
+		FunctionType::create(
+			{a3, ConstructedType::create(typeTable->getTypeConstructor("List"), {a3})},
+			ConstructedType::create(typeTable->getTypeConstructor("List"), {a3}));
+	cons->type = std::shared_ptr<TypeScheme>(new TypeScheme(consType, {a3->get<TypeVariable>()}));
+	cons->isExternal = true;
+	cons->isForeign = true;
+	scope->insert(cons);
+
+
+	//// These definitions are only needed so that we list them as external
+	//// symbols in the output assembly file. They can't be called from
+	//// language.
 	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
-	die->type = TypeScheme::trivial(typeTable->getBaseType("Unit"));
-	die->arity = 1;
-	die->paramTypes.push_back(TypeScheme::trivial(typeTable->getBaseType("Unit")));
 	die->isExternal = true;
-	die->isForeign = true;
 	scope->insert(die);
 
 	FunctionSymbol* incref = new FunctionSymbol("_incref", node, nullptr);
-	incref->type = TypeScheme::trivial(typeTable->getBaseType("Unit"));
-	incref->arity = 1;
-	incref->paramTypes.push_back(TypeScheme::trivial(listOfInts));
 	incref->isExternal = true;
-	incref->isForeign = true;
 	scope->insert(incref);
 
 	FunctionSymbol* decref = new FunctionSymbol("_decref", node, nullptr);
-	decref->type = TypeScheme::trivial(typeTable->getBaseType("Int"));
-	decref->arity = 1;
-	decref->paramTypes.push_back(TypeScheme::trivial(listOfInts));
 	decref->isExternal = true;
-	decref->isForeign = true;
 	scope->insert(decref);
 
 	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
-	decref_no_free->type = TypeScheme::trivial(typeTable->getBaseType("Int"));
-	decref_no_free->arity = 1;
-	decref_no_free->paramTypes.push_back(TypeScheme::trivial(listOfInts));
 	decref_no_free->isExternal = true;
-	decref_no_free->isForeign = true;
 	scope->insert(decref_no_free);
 
 	AstVisitor::visit(node);
@@ -156,12 +159,6 @@ void SemanticPass1::visit(DataDeclaration* node)
 	}
 	node->constructor()->setMemberTypes(memberTypes);
 
-	std::vector<std::shared_ptr<TypeScheme>> memberSchemes;
-	for (auto& memberType : memberTypes)
-	{
-		memberSchemes.push_back(TypeScheme::trivial(memberType));
-	}
-
 	// Actually create the type
 	std::shared_ptr<Type> newType = BaseType::create(node->name());
 	typeTable_->insert(typeName, newType);
@@ -172,9 +169,7 @@ void SemanticPass1::visit(DataDeclaration* node)
 
 	// Create a symbol for the constructor
 	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
-	symbol->type = TypeScheme::trivial(newType);
-	symbol->arity = memberTypes.size();
-	symbol->paramTypes = memberSchemes;
+	symbol->type = TypeScheme::trivial(FunctionType::create(memberTypes, newType));
 	topScope()->insert(symbol);
 }
 
@@ -211,7 +206,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Parameter types must be valid
-	std::vector<std::shared_ptr<TypeScheme>> paramTypes;
+	std::vector<std::shared_ptr<Type>> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
 		TypeName* typeName = node->typeDecl()->at(i).get();
@@ -225,7 +220,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 			return;
 		}
 
-		paramTypes.push_back(TypeScheme::trivial(type));
+		paramTypes.push_back(type);
 	}
 
 	// Return type must be valid
@@ -241,9 +236,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	// TODO: Generic functions
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
-	symbol->type = TypeScheme::trivial(returnType);
-	symbol->arity = node->params().size();
-	symbol->paramTypes = paramTypes;
+	symbol->type = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 
@@ -258,7 +251,7 @@ void SemanticPass1::visit(FunctionDefNode* node)
 
 		VariableSymbol* paramSymbol = new VariableSymbol(param, node, node);
 		paramSymbol->isParam = true;
-		paramSymbol->type = paramTypes[i];
+		paramSymbol->type = TypeScheme::trivial(paramTypes[i]);
 		topScope()->insert(paramSymbol);
 	}
 
@@ -314,7 +307,7 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	// Parameter types must be valid
-	std::vector<std::shared_ptr<TypeScheme>> paramTypes;
+	std::vector<std::shared_ptr<Type>> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
 		TypeName* typeName = node->typeDecl()->at(i).get();
@@ -328,7 +321,7 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 			return;
 		}
 
-		paramTypes.push_back(TypeScheme::trivial(type));
+		paramTypes.push_back(type);
 	}
 
 	// Return type must be valid
@@ -342,11 +335,9 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
-	symbol->type = TypeScheme::trivial(returnType);
-	symbol->arity = node->typeDecl()->size() - 1;
+	symbol->type = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	symbol->isForeign = true;
 	symbol->isExternal = true;
-	symbol->paramTypes = paramTypes;
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 }
@@ -387,6 +378,10 @@ void SemanticPass2::visit(LetNode* node)
 
 		symbol->type = TypeScheme::trivial(type);
 	}
+	else
+	{
+		symbol->type = TypeScheme::trivial(TypeVariable::create());
+	}
 
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
@@ -413,14 +408,18 @@ void SemanticPass2::visit(MatchNode* node)
 	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
 	assert(constructorSymbol->type->isBoxed());
 
-	if (constructorSymbol->type->valueConstructors().size() != 1)
+	assert(constructorSymbol->type->tag() == ttFunction);
+	FunctionType* functionType = constructorSymbol->type->type()->get<FunctionType>();
+	const std::shared_ptr<Type> constructedType = functionType->output();
+
+	if (constructedType->valueConstructors().size() != 1)
 	{
 		std::stringstream msg;
-		msg << "let statement pattern matching only applies to types with a single constructor.";
+		msg << "let statement pattern matching only applies to types with a single constructor ";
 		semanticError(node, msg.str());
 	}
 
-	if (constructorSymbol->arity != node->params()->names().size())
+	if (functionType->inputs().size() != node->params()->names().size())
 	{
 		std::stringstream msg;
 		msg << "constructor pattern \"" << symbol->name << "\" does not have the correct number of arguments.";
@@ -442,7 +441,7 @@ void SemanticPass2::visit(MatchNode* node)
 		}
 
 		VariableSymbol* member = new VariableSymbol(name, node, _enclosingFunction);
-		member->type = constructorSymbol->paramTypes[i];
+		member->type = TypeScheme::trivial(functionType->inputs().at(i));
 		topScope()->insert(member);
 		node->attachSymbol(member);
 	}
@@ -494,10 +493,14 @@ void SemanticPass2::visit(FunctionCallNode* node)
 	}
 	else
 	{
+		// TODO: Shouldn't this check be done in type checking?
+
 		FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
 		node->attachSymbol(functionSymbol);
 
-		if (functionSymbol->arity != node->arguments().size())
+		assert(functionSymbol->type->tag() == ttFunction);
+		FunctionType* functionType = functionSymbol->type->type()->get<FunctionType>();
+		if (functionType->inputs().size() != node->arguments().size())
 		{
 			std::stringstream msg;
 			msg << "call to \"" << symbol->name << "\" does not respect function arity.";

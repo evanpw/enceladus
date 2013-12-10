@@ -5,6 +5,25 @@
 #include <vector>
 #include "ast.hpp"
 
+class SemanticError : public std::exception
+{
+public:
+    SemanticError(const std::string& description)
+    : _description(description)
+    {}
+
+    virtual ~SemanticError() throw() {}
+
+    const std::string& description() const { return _description; }
+    virtual const char* what() const throw() { return _description.c_str(); }
+
+
+private:
+    std::string _description;
+};
+
+void semanticError(AstNode* node, const std::string& msg);
+
 class SemanticAnalyzer
 {
 public:
@@ -15,21 +34,8 @@ private:
 	ProgramNode* root_;
 };
 
-class SemanticBase : public AstVisitor
-{
-public:
-	SemanticBase() : success_(true) {}
-
-	void semanticError(AstNode* node, const std::string& msg);
-
-	bool success() const { return success_; }
-
-private:
-	bool success_;
-};
-
 // Semantic analysis pass 1 - handle declarations and build the symbol tables
-class SemanticPass1 : public SemanticBase
+class SemanticPass1 : public AstVisitor
 {
 public:
 	SemanticPass1() : _enclosingFunction(nullptr) {}
@@ -44,7 +50,7 @@ private:
 };
 
 // Semantic analysis pass 2 - gotos / function calls
-class SemanticPass2 : public SemanticBase
+class SemanticPass2 : public AstVisitor
 {
 public:
 	SemanticPass2() : _enclosingFunction(nullptr) {}
@@ -78,7 +84,7 @@ private:
 };
 
 // Pass 3
-class TypeChecker : public SemanticBase
+class TypeChecker : public AstVisitor
 {
 public:
     TypeChecker(bool verbose = false)
@@ -113,9 +119,11 @@ public:
     virtual void visit(ForeignDeclNode* node) { node->setType(typeTable_->getBaseType("Unit")); }
 
 private:
+    void inferenceError(AstNode* node, const std::string& msg);
+
     bool occurs(TypeVariable* variable, const std::shared_ptr<Type>& value);
-    void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs);
-    void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value);
+    void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
+    void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
 
     std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type);
     std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);

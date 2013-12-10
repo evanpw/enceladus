@@ -5,7 +5,7 @@ foreign read :: Int
 foreign print :: Int -> Unit
 
 -- List functions
-foreign Cons :: Int -> [Int] -> [Int]
+-- foreign Cons :: Int -> [Int] -> [Int]
 
 -- Tree functions
 foreign Node :: Int -> Tree -> Tree -> Tree
@@ -139,9 +139,9 @@ def Set.delete x set :: Int -> Tree -> Tree =
         return Set.balancedNode value (left set) (Set.delete x (right set))
     else -- x == value
         if null right set then
-            return left
+            return left set
         else if null left set then
-            return right
+            return right set
         else
             let newHead :: Int = Set.findMin $ right set
             return Set.balancedNode newHead (left set) (Set.deleteMin $ right set)

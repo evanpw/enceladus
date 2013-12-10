@@ -1,10 +1,22 @@
 #include "semantic.hpp"
+#include "simple.tab.h"
 #include "utility.hpp"
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <memory>
 #include <sstream>
+
+void TypeChecker::inferenceError(AstNode* node, const std::string& msg)
+{
+    std::stringstream ss;
+
+    ss << "Near line " << node->location()->first_line << ", "
+       << "column " << node->location()->first_column << ": "
+       << "error: " << msg;
+
+    throw TypeInferenceError(ss.str());
+}
 
 std::set<TypeVariable*> TypeChecker::getFreeVars(Symbol* symbol)
 {
@@ -14,10 +26,14 @@ std::set<TypeVariable*> TypeChecker::getFreeVars(Symbol* symbol)
     if (symbol->kind == kFunction)
     {
         FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
-        for (auto& type : functionSymbol->paramTypes)
+
+        assert(functionSymbol->type->tag() == ttFunction);
+        FunctionType* functionType = functionSymbol->type->type()->get<FunctionType>();
+        for (auto& type : functionType->inputs())
         {
             freeVars += type->freeVars();
         }
+        freeVars += functionType->output()->freeVars();
     }
 
     return freeVars;
@@ -70,8 +86,13 @@ std::shared_ptr<Type> TypeChecker::instantiate(const std::shared_ptr<Type>& type
         {
             FunctionType* functionType = type->get<FunctionType>();
 
-            return FunctionType::create(instantiate(functionType->domain(), replacements),
-                                        instantiate(functionType->range(), replacements));
+            std::vector<std::shared_ptr<Type>> newInputs;
+            for (const std::shared_ptr<Type> input : functionType->inputs())
+            {
+                newInputs.push_back(instantiate(input, replacements));
+            }
+
+            return FunctionType::create(newInputs, instantiate(functionType->output(), replacements));
         }
 
         case ttConstructed:
@@ -97,7 +118,7 @@ std::shared_ptr<Type> TypeChecker::instantiate(TypeScheme* scheme)
     std::map<TypeVariable*, std::shared_ptr<Type>> replacements;
     for (TypeVariable* boundVar : scheme->quantified())
     {
-        replacements[boundVar] = TypeVariable::create();
+        replacements[boundVar] = TypeVariable::create(true);
     }
 
     std::shared_ptr<Type> resultType = instantiate(scheme->type(), replacements);
@@ -124,8 +145,13 @@ bool TypeChecker::occurs(TypeVariable* variable, const std::shared_ptr<Type>& va
         case ttFunction:
         {
             FunctionType* functionType = value->get<FunctionType>();
-            return occurs(variable, functionType->domain()) ||
-                   occurs(variable, functionType->range());
+
+            for (auto& input : functionType->inputs())
+            {
+                if (occurs(variable, input)) return true;
+            }
+
+            return occurs(variable, functionType->output());
         }
 
         case ttConstructed:
@@ -143,7 +169,7 @@ bool TypeChecker::occurs(TypeVariable* variable, const std::shared_ptr<Type>& va
     assert(false);
 }
 
-void TypeChecker::bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value)
+void TypeChecker::bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node)
 {
     assert(variable->tag() == ttVariable);
 
@@ -159,7 +185,16 @@ void TypeChecker::bindVariable(const std::shared_ptr<Type>& variable, const std:
     {
         std::stringstream ss;
         ss << "variable " << variable->name() << " already occurs in " << value->name();
-        throw TypeInferenceError(ss.str());
+        inferenceError(node, ss.str());
+    }
+
+    // Polymorphic type variables can be bound only to lifted (i.e., boxed) types
+    TypeVariable* typeVariable = variable->get<TypeVariable>();
+    if (typeVariable->isPolymorphic() && !value->isBoxed())
+    {
+        std::stringstream ss;
+        ss << "type variable " << variable->name() << " cannot be bound to unboxed type " << value->name();
+        //inferenceError(node, ss.str());
     }
 
     if (_verbose)
@@ -169,7 +204,7 @@ void TypeChecker::bindVariable(const std::shared_ptr<Type>& variable, const std:
     *variable = *value;
 }
 
-void TypeChecker::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs)
+void TypeChecker::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node)
 {
     if (_verbose)
         std::cerr << "\tUnifying " << lhs->name() << " and " << rhs->name() << std::endl;
@@ -181,24 +216,37 @@ void TypeChecker::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<
         {
             std::stringstream ss;
             ss << "cannot unify base types " << lhs->name() << " and " << rhs->name();
-            throw TypeInferenceError(ss.str());
+            inferenceError(node, ss.str());
         }
     }
     else if (lhs->tag() == ttVariable)
     {
-        bindVariable(lhs, rhs);
+        bindVariable(lhs, rhs, node);
     }
     else if (rhs->tag() == ttVariable)
     {
-        bindVariable(rhs, lhs);
+        bindVariable(rhs, lhs, node);
     }
     else if (lhs->tag() == ttFunction && rhs->tag() == ttFunction)
     {
         FunctionType* lhsFunction = lhs->get<FunctionType>();
         FunctionType* rhsFunction = rhs->get<FunctionType>();
 
-        unify(lhsFunction->domain(), rhsFunction->domain());
-        unify(lhsFunction->range(), rhsFunction->range());
+        if (lhsFunction->inputs().size() == rhsFunction->inputs().size())
+        {
+            for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
+            {
+                unify(lhsFunction->inputs().at(i), rhsFunction->inputs().at(i), node);
+            }
+
+            unify(lhsFunction->output(), rhsFunction->output(), node);
+
+            return;
+        }
+
+        std::stringstream ss;
+        ss << "Cannot unify function types " << lhs->name() << " and " << rhs->name();
+        inferenceError(node, ss.str());
     }
     else if (lhs->tag() == ttConstructed && rhs->tag() == ttConstructed)
     {
@@ -209,14 +257,14 @@ void TypeChecker::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<
         {
             std::stringstream ss;
             ss << "cannot unify constructed types " << lhs->name() << " and " << rhs->name();
-            throw TypeInferenceError(ss.str());
+            inferenceError(node, ss.str());
         }
 
         assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
 
         for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
         {
-            unify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i));
+            unify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node);
         }
     }
     else
@@ -224,7 +272,7 @@ void TypeChecker::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<
         // Can't be unified
         std::stringstream ss;
         ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
-        throw TypeInferenceError(ss.str());
+        inferenceError(node, ss.str());
     }
 }
 
@@ -236,7 +284,7 @@ void TypeChecker::visit(ProgramNode* node)
     for (auto& child : node->children())
     {
         child->accept(this);
-        unify(child->type(), typeTable_->getBaseType("Unit"));
+        unify(child->type(), typeTable_->getBaseType("Unit"), node);
     }
 
     node->setType(typeTable_->getBaseType("Unit"));
@@ -245,10 +293,10 @@ void TypeChecker::visit(ProgramNode* node)
 void TypeChecker::visit(ComparisonNode* node)
 {
     node->lhs()->accept(this);
-    unify(node->lhs()->type(), typeTable_->getBaseType("Int"));
+    unify(node->lhs()->type(), typeTable_->getBaseType("Int"), node);
 
     node->rhs()->accept(this);
-    unify(node->rhs()->type(), typeTable_->getBaseType("Int"));
+    unify(node->rhs()->type(), typeTable_->getBaseType("Int"), node);
 
     node->setType(typeTable_->getBaseType("Bool"));
 }
@@ -256,10 +304,10 @@ void TypeChecker::visit(ComparisonNode* node)
 void TypeChecker::visit(BinaryOperatorNode* node)
 {
     node->lhs()->accept(this);
-    unify(node->lhs()->type(), typeTable_->getBaseType("Int"));
+    unify(node->lhs()->type(), typeTable_->getBaseType("Int"), node);
 
     node->rhs()->accept(this);
-    unify(node->rhs()->type(), typeTable_->getBaseType("Int"));
+    unify(node->rhs()->type(), typeTable_->getBaseType("Int"), node);
 
     node->setType(typeTable_->getBaseType("Int"));
 }
@@ -268,7 +316,9 @@ void TypeChecker::visit(NullNode* node)
 {
     node->child()->accept(this);
 
-    // FIXME: This should probably be done in a better way
+    // TODO: If this was a real function call, we wouldn't need this special
+    // check here. It would happen when we bound the type variable to the type
+    // of the argument.
     if (!node->child()->type()->isBoxed())
     {
         std::stringstream msg;
@@ -282,10 +332,10 @@ void TypeChecker::visit(NullNode* node)
 void TypeChecker::visit(LogicalNode* node)
 {
     node->lhs()->accept(this);
-    unify(node->lhs()->type(), typeTable_->getBaseType("Bool"));
+    unify(node->lhs()->type(), typeTable_->getBaseType("Bool"), node);
 
     node->rhs()->accept(this);
-    unify(node->rhs()->type(), typeTable_->getBaseType("Bool"));
+    unify(node->rhs()->type(), typeTable_->getBaseType("Bool"), node);
 
     node->setType(typeTable_->getBaseType("Bool"));
 }
@@ -295,7 +345,10 @@ void TypeChecker::visit(MatchNode* node)
     node->body()->accept(this);
 
     assert(node->constructorSymbol()->type->quantified().empty());
-    unify(node->body()->type(), node->constructorSymbol()->type->type());
+    assert(node->constructorSymbol()->type->tag() == ttFunction);
+
+    FunctionType* functionType = node->constructorSymbol()->type->type()->get<FunctionType>();
+    unify(node->body()->type(), functionType->output(), node);
 
     node->setType(typeTable_->getBaseType("Unit"));
 }
@@ -305,7 +358,7 @@ void TypeChecker::visit(BlockNode* node)
     for (auto& child : node->children())
     {
         child->accept(this);
-        unify(child->type(), typeTable_->getBaseType("Unit"));
+        unify(child->type(), typeTable_->getBaseType("Unit"), node);
     }
 
     node->setType(typeTable_->getBaseType("Unit"));
@@ -314,9 +367,10 @@ void TypeChecker::visit(BlockNode* node)
 void TypeChecker::visit(IfNode* node)
 {
     node->condition()->accept(this);
-    unify(node->condition()->type(), typeTable_->getBaseType("Bool"));
+    unify(node->condition()->type(), typeTable_->getBaseType("Bool"), node);
 
     node->body()->accept(this);
+    unify(node->body()->type(), typeTable_->getBaseType("Unit"), node);
 
     node->setType(typeTable_->getBaseType("Unit"));
 }
@@ -324,10 +378,13 @@ void TypeChecker::visit(IfNode* node)
 void TypeChecker::visit(IfElseNode* node)
 {
     node->condition()->accept(this);
-    unify(node->condition()->type(), typeTable_->getBaseType("Bool"));
+    unify(node->condition()->type(), typeTable_->getBaseType("Bool"), node);
 
     node->body()->accept(this);
+    unify(node->body()->type(), typeTable_->getBaseType("Unit"), node);
+
     node->else_body()->accept(this);
+    unify(node->else_body()->type(), typeTable_->getBaseType("Unit"), node);
 
     node->setType(typeTable_->getBaseType("Unit"));
 }
@@ -335,19 +392,21 @@ void TypeChecker::visit(IfElseNode* node)
 void TypeChecker::visit(WhileNode* node)
 {
     node->condition()->accept(this);
-    unify(node->condition()->type(), typeTable_->getBaseType("Bool"));
+    unify(node->condition()->type(), typeTable_->getBaseType("Bool"), node);
 
     node->body()->accept(this);
+    unify(node->body()->type(), typeTable_->getBaseType("Unit"), node);
 
     node->setType(typeTable_->getBaseType("Unit"));
 }
 
+// TODO: Look at this more closely
 void TypeChecker::visit(AssignNode* node)
 {
     node->value()->accept(this);
 
     assert(node->symbol()->type->quantified().empty());
-    unify(node->value()->type(), node->symbol()->type->type());
+    unify(node->value()->type(), node->symbol()->type->type(), node);
 
     node->setType(typeTable_->getBaseType("Unit"));
 }
@@ -355,8 +414,21 @@ void TypeChecker::visit(AssignNode* node)
 // Leaf nodes
 void TypeChecker::visit(NullaryNode* node)
 {
-    assert(node->symbol()->type->quantified().empty());
-    node->setType(node->symbol()->type->type());
+    if (node->symbol()->kind == kVariable)
+    {
+        assert(node->symbol()->type->quantified().empty());
+        node->setType(node->symbol()->type->type());
+    }
+    else
+    {
+        assert(node->symbol()->kind == kFunction);
+
+        std::shared_ptr<Type> returnType = TypeVariable::create();
+        std::shared_ptr<Type> functionType = instantiate(node->symbol()->type.get());
+        unify(functionType, FunctionType::create({}, returnType), node);
+
+        node->setType(returnType);
+    }
 }
 
 void TypeChecker::visit(IntNode* node)
@@ -371,30 +443,32 @@ void TypeChecker::visit(BoolNode* node)
 
 void TypeChecker::visit(NilNode* node)
 {
-    std::shared_ptr<Type> listOfInts = ConstructedType::create(
-        typeTable_->getTypeConstructor("List"),
-        {typeTable_->getBaseType("Int")});
+    // TODO: Turn this into a real function call
 
-    node->setType(listOfInts);
+    std::shared_ptr<Type> polyList = ConstructedType::create(
+        typeTable_->getTypeConstructor("List"),
+        {TypeVariable::create()});
+
+    node->setType(polyList);
 }
 
 void TypeChecker::visit(FunctionCallNode* node)
 {
-    // The type of a function call is the return type of the function
-    assert(node->symbol()->type->quantified().empty());
-    node->setType(node->symbol()->type->type());
-
-    assert(node->symbol()->paramTypes.size() == node->arguments().size());
+    std::vector<std::shared_ptr<Type>> paramTypes;
     for (size_t i = 0; i < node->arguments().size(); ++i)
     {
         AstNode* argument = node->arguments().at(i).get();
-        std::shared_ptr<TypeScheme> typeScheme = node->symbol()->paramTypes.at(i);
-
         argument->accept(this);
 
-        assert(typeScheme->quantified().empty());
-        unify(argument->type(), typeScheme->type());
+        paramTypes.push_back(argument->type());
     }
+
+    std::shared_ptr<Type> returnType = TypeVariable::create();
+    std::shared_ptr<Type> functionType = instantiate(node->symbol()->type.get());
+
+    unify(functionType, FunctionType::create(paramTypes, returnType), node);
+
+    node->setType(returnType);
 }
 
 void TypeChecker::visit(ReturnNode* node)
@@ -411,9 +485,12 @@ void TypeChecker::visit(ReturnNode* node)
 
     node->expression()->accept(this);
 
-    // Value of expression must equal the return type of the enclosing function.
     assert(_enclosingFunction->symbol()->type->quantified().empty());
-    unify(node->expression()->type(), _enclosingFunction->symbol()->type->type());
+    assert(_enclosingFunction->symbol()->type->tag() == ttFunction);
+
+    // Value of expression must equal the return type of the enclosing function.
+    FunctionType* functionType = _enclosingFunction->symbol()->type->type()->get<FunctionType>();
+    unify(node->expression()->type(), functionType->output(), node);
 
     node->setType(typeTable_->getBaseType("Unit"));
 }
@@ -436,16 +513,8 @@ void TypeChecker::visit(LetNode* node)
 {
     node->value()->accept(this);
 
-    // Baby type inference
-    if (!node->typeName())
-    {
-        node->symbol()->type = TypeScheme::trivial(node->value()->type());
-    }
-    else
-    {
-        assert(node->symbol()->type->quantified().empty());
-        unify(node->value()->type(), node->symbol()->type->type());
-    }
+    assert(node->symbol()->type->quantified().empty());
+    unify(node->value()->type(), node->symbol()->type->type(), node);
 
     node->setType(typeTable_->getBaseType("Unit"));
 }
