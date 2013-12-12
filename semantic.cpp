@@ -49,7 +49,7 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 
 	//// Create symbols for built-in functions
 	FunctionSymbol* notFn = new FunctionSymbol("not", node, nullptr);
-	notFn->type = TypeScheme::trivial(FunctionType::create({TypeTable::Bool}, TypeTable::Bool));
+	notFn->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Bool}, TypeTable::Bool));
 	notFn->isBuiltin = true;
 	scope->insert(notFn);
 
@@ -59,7 +59,7 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 		FunctionType::create(
 			{ConstructedType::create(List, {a1})},
 			a1);
-	head->type = std::shared_ptr<TypeScheme>(new TypeScheme(headType, {a1->get<TypeVariable>()}));
+	head->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(headType, {a1->get<TypeVariable>()}));
 	head->isBuiltin = true;
 	scope->insert(head);
 
@@ -69,7 +69,7 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 		FunctionType::create(
 			{ConstructedType::create(List, {a2})},
 			ConstructedType::create(List, {a2}));
-	tail->type = std::shared_ptr<TypeScheme>(new TypeScheme(tailType, {a2->get<TypeVariable>()}));
+	tail->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(tailType, {a2->get<TypeVariable>()}));
 	tail->isBuiltin = true;
 	scope->insert(tail);
 
@@ -79,7 +79,7 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 		FunctionType::create(
 			{a3, ConstructedType::create(List, {a3})},
 			ConstructedType::create(List, {a3}));
-	cons->type = std::shared_ptr<TypeScheme>(new TypeScheme(consType, {a3->get<TypeVariable>()}));
+	cons->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(consType, {a3->get<TypeVariable>()}));
 	cons->isExternal = true;
 	cons->isForeign = true;
 	scope->insert(cons);
@@ -88,7 +88,7 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 	std::shared_ptr<Type> a4 = TypeVariable::create();
 	std::shared_ptr<Type> nilType =
 		FunctionType::create({}, ConstructedType::create(List, {a4}));
-	nil->type = std::shared_ptr<TypeScheme>(new TypeScheme(nilType, {a4->get<TypeVariable>()}));
+	nil->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(nilType, {a4->get<TypeVariable>()}));
 	nil->isBuiltin = true;
 	scope->insert(nil);
 
@@ -96,7 +96,7 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 	std::shared_ptr<Type> a5 = TypeVariable::create();
 	std::shared_ptr<Type> nullType =
 		FunctionType::create({a5}, TypeTable::Bool);
-	nullFn->type = std::shared_ptr<TypeScheme>(new TypeScheme(nullType, {a5->get<TypeVariable>()}));
+	nullFn->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(nullType, {a5->get<TypeVariable>()}));
 	nullFn->isBuiltin = true;
 	scope->insert(nullFn);
 
@@ -194,7 +194,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 
 	// Create a symbol for the constructor
 	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
-	symbol->type = TypeScheme::trivial(FunctionType::create(memberTypes, newType));
+	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(memberTypes, newType));
 	topScope()->insert(symbol);
 
 	node->setType(TypeTable::Unit);
@@ -263,7 +263,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	// TODO: Generic functions
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
-	symbol->type = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
+	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 
@@ -277,7 +277,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 		VariableSymbol* paramSymbol = new VariableSymbol(param, node, node);
 		paramSymbol->isParam = true;
-		paramSymbol->type = TypeScheme::trivial(paramTypes[i]);
+		paramSymbol->typeScheme = TypeScheme::trivial(paramTypes[i]);
 		topScope()->insert(paramSymbol);
 	}
 
@@ -364,7 +364,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 	}
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
-	symbol->type = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
+	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	symbol->isForeign = true;
 	symbol->isExternal = true;
 	topScope()->insert(symbol);
@@ -400,17 +400,17 @@ void SemanticAnalyzer::visit(LetNode* node)
 			return;
 		}
 
-		symbol->type = TypeScheme::trivial(type);
+		symbol->typeScheme = TypeScheme::trivial(type);
 	}
 	else
 	{
-		symbol->type = TypeScheme::trivial(TypeVariable::create());
+		symbol->typeScheme = TypeScheme::trivial(TypeVariable::create());
 	}
 
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 
-	TypeInference::unify(node->value()->type(), symbol->type->type(), node);
+	TypeInference::unify(node->value()->type(), symbol->typeScheme->type(), node);
     node->setType(TypeTable::Unit);
 }
 
@@ -433,10 +433,10 @@ void SemanticAnalyzer::visit(MatchNode* node)
 	assert(symbol->kind == kFunction);
 
 	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
-	assert(constructorSymbol->type->isBoxed());
+	assert(constructorSymbol->typeScheme->isBoxed());
 
-	assert(constructorSymbol->type->tag() == ttFunction);
-	FunctionType* functionType = constructorSymbol->type->type()->get<FunctionType>();
+	assert(constructorSymbol->typeScheme->tag() == ttFunction);
+	FunctionType* functionType = constructorSymbol->typeScheme->type()->get<FunctionType>();
 	const std::shared_ptr<Type> constructedType = functionType->output();
 
 	if (constructedType->valueConstructors().size() != 1)
@@ -468,7 +468,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 		}
 
 		VariableSymbol* member = new VariableSymbol(name, node, _enclosingFunction);
-		member->type = TypeScheme::trivial(functionType->inputs().at(i));
+		member->typeScheme = TypeScheme::trivial(functionType->inputs().at(i));
 		topScope()->insert(member);
 		node->attachSymbol(member);
 	}
@@ -500,8 +500,8 @@ void SemanticAnalyzer::visit(AssignNode* node)
 
 	node->value()->accept(this);
 
-    assert(node->symbol()->type->quantified().empty());
-    TypeInference::unify(node->value()->type(), node->symbol()->type->type(), node);
+    assert(node->symbol()->typeScheme->quantified().empty());
+    TypeInference::unify(node->value()->type(), node->symbol()->typeScheme->type(), node);
 
     node->setType(TypeTable::Unit);
 }
@@ -539,7 +539,7 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 	node->attachSymbol(functionSymbol);
 
     std::shared_ptr<Type> returnType = TypeVariable::create();
-    std::shared_ptr<Type> functionType = TypeInference::instantiate(functionSymbol->type.get());
+    std::shared_ptr<Type> functionType = TypeInference::instantiate(functionSymbol->typeScheme.get());
 
     TypeInference::unify(functionType, FunctionType::create(paramTypes, returnType), node);
 
@@ -557,15 +557,15 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 		{
 			node->attachSymbol(symbol);
 
-			assert(symbol->type->quantified().empty());
-        	node->setType(symbol->type->type());
+			assert(symbol->typeScheme->quantified().empty());
+        	node->setType(symbol->typeScheme->type());
 		}
 		else if (symbol->kind == kFunction)
 		{
 			node->attachSymbol(symbol);
 
 	        std::shared_ptr<Type> returnType = TypeVariable::create();
-	        std::shared_ptr<Type> functionType = TypeInference::instantiate(symbol->type.get());
+	        std::shared_ptr<Type> functionType = TypeInference::instantiate(symbol->typeScheme.get());
 	        TypeInference::unify(functionType, FunctionType::create({}, returnType), node);
 
 	        node->setType(returnType);
@@ -679,7 +679,6 @@ void SemanticAnalyzer::visit(BoolNode* node)
 
 void SemanticAnalyzer::visit(ReturnNode* node)
 {
-    // This isn't really type checking, but this is the easiest place to put this check.
     if (_enclosingFunction == nullptr)
     {
         std::stringstream msg;
@@ -691,11 +690,11 @@ void SemanticAnalyzer::visit(ReturnNode* node)
 
     node->expression()->accept(this);
 
-    assert(_enclosingFunction->symbol()->type->quantified().empty());
-    assert(_enclosingFunction->symbol()->type->tag() == ttFunction);
+    assert(_enclosingFunction->symbol()->typeScheme->quantified().empty());
+    assert(_enclosingFunction->symbol()->typeScheme->tag() == ttFunction);
 
     // Value of expression must equal the return type of the enclosing function.
-    FunctionType* functionType = _enclosingFunction->symbol()->type->type()->get<FunctionType>();
+    FunctionType* functionType = _enclosingFunction->symbol()->typeScheme->type()->get<FunctionType>();
     TypeInference::unify(node->expression()->type(), functionType->output(), node);
 
     node->setType(TypeTable::Unit);

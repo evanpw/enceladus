@@ -16,7 +16,7 @@ struct Symbol
     , kind(kind)
     , node(node)
     , enclosingFunction(enclosingFunction)
-    , type(nullptr)
+    , typeScheme(nullptr)
     {}
 
     std::string name;
@@ -30,8 +30,8 @@ struct Symbol
     // If a global symbol, then null
     FunctionDefNode* enclosingFunction;
 
-    // Variable type or function return type
-    std::shared_ptr<TypeScheme> type;
+    // Type (possibly polymorphic) of this variable or function
+    std::shared_ptr<TypeScheme> typeScheme;
 };
 
 struct VariableSymbol : public Symbol

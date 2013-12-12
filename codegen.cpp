@@ -190,7 +190,7 @@ void CodeGen::visit(ProgramNode* node)
 
 		const VariableSymbol* variableSymbol = static_cast<const VariableSymbol*>(symbol);
 
-		if (variableSymbol->type->isBoxed())
+		if (variableSymbol->typeScheme->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
 			out_ << "\t" << "call __decref" << std::endl;
@@ -236,7 +236,7 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->isParam && symbol->type->isBoxed())
+			if (symbol->isParam && symbol->typeScheme->isBoxed())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
 				out_ << "\t" << "call __incref" << std::endl;
@@ -249,8 +249,8 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "__end_" << function->name() << ":" << std::endl;
 		out_ << "\t" << "push rax" << std::endl;
 
-		assert(function->symbol()->type->tag() == ttFunction);
-		FunctionType* functionType = function->symbol()->type->type()->get<FunctionType>();
+		assert(function->symbol()->typeScheme->tag() == ttFunction);
+		FunctionType* functionType = function->symbol()->typeScheme->type()->get<FunctionType>();
 
 		// Preserve the return value from being freed if it happens to be the
 		// same as one of the local variables.
@@ -266,7 +266,7 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->type->isBoxed())
+			if (symbol->typeScheme->isBoxed())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
 				out_ << "\t" << "call __decref" << std::endl;
@@ -501,7 +501,7 @@ void CodeGen::visit(AssignNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->symbol()->type->isBoxed())
+	if (node->symbol()->typeScheme->isBoxed())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
@@ -523,7 +523,7 @@ void CodeGen::visit(LetNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->symbol()->type->isBoxed())
+	if (node->symbol()->typeScheme->isBoxed())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
@@ -549,7 +549,7 @@ void CodeGen::visit(MatchNode* node)
 	{
 		VariableSymbol* member = node->symbols().at(i);
 
-		if (member->type->isBoxed())
+		if (member->typeScheme->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
 			out_ << "\t" << "call __decref" << std::endl;
@@ -558,7 +558,7 @@ void CodeGen::visit(MatchNode* node)
 
 	out_ << "\t" << "pop rax" << std::endl;
 
-	FunctionType* functionType = node->constructorSymbol()->type->type()->get<FunctionType>();
+	FunctionType* functionType = node->constructorSymbol()->typeScheme->type()->get<FunctionType>();
 	auto& constructor = functionType->output()->valueConstructors().front();
 
 	// Copy over each of the members of the constructor pattern

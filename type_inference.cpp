@@ -21,14 +21,14 @@ void TypeInference::inferenceError(AstNode* node, const std::string& msg)
 std::set<TypeVariable*> TypeInference::getFreeVars(Symbol* symbol)
 {
     std::set<TypeVariable*> freeVars;
-    freeVars += symbol->type->freeVars();
+    freeVars += symbol->typeScheme->freeVars();
 
     if (symbol->kind == kFunction)
     {
         FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
 
-        assert(functionSymbol->type->tag() == ttFunction);
-        FunctionType* functionType = functionSymbol->type->type()->get<FunctionType>();
+        assert(functionSymbol->typeScheme->tag() == ttFunction);
+        FunctionType* functionType = functionSymbol->typeScheme->type()->get<FunctionType>();
         for (auto& type : functionType->inputs())
         {
             freeVars += type->freeVars();
