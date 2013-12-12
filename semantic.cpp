@@ -10,6 +10,7 @@ using namespace std;
 
 SemanticAnalyzer::SemanticAnalyzer(ProgramNode* root)
 : root_(root)
+, _enclosingFunction(nullptr)
 {
 }
 
@@ -17,14 +18,7 @@ bool SemanticAnalyzer::analyze()
 {
 	try
 	{
-		SemanticPass1 pass1;
-		root_->accept(&pass1);
-
-		SemanticPass2 pass2;
-		root_->accept(&pass2);
-
-		TypeChecker typeChecker;
-		root_->accept(&typeChecker);
+		root_->accept(this);
 	}
 	catch (std::exception& e)
 	{
@@ -35,7 +29,7 @@ bool SemanticAnalyzer::analyze()
 	return true;
 }
 
-void semanticError(AstNode* node, const std::string& msg)
+void SemanticAnalyzer::semanticError(AstNode* node, const std::string& msg)
 {
 	std::stringstream ss;
 
@@ -46,7 +40,7 @@ void semanticError(AstNode* node, const std::string& msg)
 	throw SemanticError(ss.str());
 }
 
-void SemanticPass1::visit(ProgramNode* node)
+void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 {
 	Scope* scope = node->scope();
 	TypeTable* typeTable = node->typeTable();
@@ -125,11 +119,24 @@ void SemanticPass1::visit(ProgramNode* node)
 	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
 	decref_no_free->isExternal = true;
 	scope->insert(decref_no_free);
-
-	AstVisitor::visit(node);
 }
 
-void SemanticPass1::visit(DataDeclaration* node)
+void SemanticAnalyzer::visit(ProgramNode* node)
+{
+	injectSymbols(node);
+
+	//// Recurse down into children
+	AstVisitor::visit(node);
+
+    for (auto& child : node->children())
+    {
+        TypeInference::unify(child->type(), TypeTable::Unit, node);
+    }
+
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(DataDeclaration* node)
 {
 	// Data declarations cannot be local
 	if (_enclosingFunction != nullptr)
@@ -189,9 +196,11 @@ void SemanticPass1::visit(DataDeclaration* node)
 	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
 	symbol->type = TypeScheme::trivial(FunctionType::create(memberTypes, newType));
 	topScope()->insert(symbol);
+
+	node->setType(TypeTable::Unit);
 }
 
-void SemanticPass1::visit(FunctionDefNode* node)
+void SemanticAnalyzer::visit(FunctionDefNode* node)
 {
 	// Functions cannot be declared inside of another function
 	if (_enclosingFunction != nullptr)
@@ -259,7 +268,6 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	node->attachSymbol(symbol);
 
 	enterScope(node->scope());
-	_enclosingFunction = node;
 
 	// Add symbols corresponding to the formal parameters to the
 	// function's scope
@@ -274,13 +282,16 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Recurse
+	_enclosingFunction = node;
 	node->body()->accept(this);
-
 	_enclosingFunction = nullptr;
+
 	exitScope();
+
+	node->setType(TypeTable::Unit);
 }
 
-void SemanticPass1::visit(ForeignDeclNode* node)
+void SemanticAnalyzer::visit(ForeignDeclNode* node)
 {
 	// Functions cannot be declared inside of another function
 	if (_enclosingFunction != nullptr)
@@ -358,16 +369,11 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	symbol->isExternal = true;
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
+
+	node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(FunctionDefNode* node)
-{
-	_enclosingFunction = node;
-	AstVisitor::visit(node);
-	_enclosingFunction = nullptr;
-}
-
-void SemanticPass2::visit(LetNode* node)
+void SemanticAnalyzer::visit(LetNode* node)
 {
 	// Visit children. Do this first so that we can't have recursive definitions.
 	AstVisitor::visit(node);
@@ -403,9 +409,12 @@ void SemanticPass2::visit(LetNode* node)
 
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
+
+	TypeInference::unify(node->value()->type(), symbol->type->type(), node);
+    node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(MatchNode* node)
+void SemanticAnalyzer::visit(MatchNode* node)
 {
 	AstVisitor::visit(node);
 
@@ -463,9 +472,12 @@ void SemanticPass2::visit(MatchNode* node)
 		topScope()->insert(member);
 		node->attachSymbol(member);
 	}
+
+	TypeInference::unify(node->body()->type(), functionType->output(), node);
+    node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(AssignNode* node)
+void SemanticAnalyzer::visit(AssignNode* node)
 {
 	const std::string& target = node->target();
 
@@ -486,11 +498,15 @@ void SemanticPass2::visit(AssignNode* node)
 
 	node->attachSymbol(static_cast<VariableSymbol*>(symbol));
 
-	// Recurse to children
-	AstVisitor::visit(node);
+	node->value()->accept(this);
+
+    assert(node->symbol()->type->quantified().empty());
+    TypeInference::unify(node->value()->type(), node->symbol()->type->type(), node);
+
+    node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(FunctionCallNode* node)
+void SemanticAnalyzer::visit(FunctionCallNode* node)
 {
 	const std::string& name = node->target();
 	Symbol* symbol = searchScopes(name);
@@ -509,37 +525,50 @@ void SemanticPass2::visit(FunctionCallNode* node)
 
 		semanticError(node, msg.str());
 	}
-	else
-	{
-		// TODO: Shouldn't this check be done in type checking?
 
-		FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
-		node->attachSymbol(functionSymbol);
+	std::vector<std::shared_ptr<Type>> paramTypes;
+    for (size_t i = 0; i < node->arguments().size(); ++i)
+    {
+        AstNode* argument = node->arguments().at(i).get();
+        argument->accept(this);
 
-		assert(functionSymbol->type->tag() == ttFunction);
-		FunctionType* functionType = functionSymbol->type->type()->get<FunctionType>();
-		if (functionType->inputs().size() != node->arguments().size())
-		{
-			std::stringstream msg;
-			msg << "call to \"" << symbol->name << "\" does not respect function arity.";
-			semanticError(node, msg.str());
-		}
-	}
+        paramTypes.push_back(argument->type());
+    }
 
-	// Recurse to children
-	AstVisitor::visit(node);
+    FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
+	node->attachSymbol(functionSymbol);
+
+    std::shared_ptr<Type> returnType = TypeVariable::create();
+    std::shared_ptr<Type> functionType = TypeInference::instantiate(functionSymbol->type.get());
+
+    TypeInference::unify(functionType, FunctionType::create(paramTypes, returnType), node);
+
+    node->setType(returnType);
 }
 
-void SemanticPass2::visit(NullaryNode* node)
+void SemanticAnalyzer::visit(NullaryNode* node)
 {
 	const std::string& name = node->name();
 
 	Symbol* symbol = searchScopes(name);
 	if (symbol != nullptr)
 	{
-		if (symbol->kind == kVariable || symbol->kind == kFunction)
+		if (symbol->kind == kVariable)
 		{
 			node->attachSymbol(symbol);
+
+			assert(symbol->type->quantified().empty());
+        	node->setType(symbol->type->type());
+		}
+		else if (symbol->kind == kFunction)
+		{
+			node->attachSymbol(symbol);
+
+	        std::shared_ptr<Type> returnType = TypeVariable::create();
+	        std::shared_ptr<Type> functionType = TypeInference::instantiate(symbol->type.get());
+	        TypeInference::unify(functionType, FunctionType::create({}, returnType), node);
+
+	        node->setType(returnType);
 		}
 		else
 		{
@@ -552,8 +581,124 @@ void SemanticPass2::visit(NullaryNode* node)
 	else
 	{
 		std::stringstream msg;
-		msg << "variable \"" << name << "\" is not defined in this scope.";
+		msg << "symbol \"" << name << "\" is not defined in this scope.";
 
 		semanticError(node, msg.str());
 	}
 }
+
+void SemanticAnalyzer::visit(ComparisonNode* node)
+{
+    node->lhs()->accept(this);
+    TypeInference::unify(node->lhs()->type(), TypeTable::Int, node);
+
+    node->rhs()->accept(this);
+    TypeInference::unify(node->rhs()->type(), TypeTable::Int, node);
+
+    node->setType(TypeTable::Bool);
+}
+
+void SemanticAnalyzer::visit(BinaryOperatorNode* node)
+{
+    node->lhs()->accept(this);
+    TypeInference::unify(node->lhs()->type(), TypeTable::Int, node);
+
+    node->rhs()->accept(this);
+    TypeInference::unify(node->rhs()->type(), TypeTable::Int, node);
+
+    node->setType(TypeTable::Int);
+}
+
+void SemanticAnalyzer::visit(LogicalNode* node)
+{
+    node->lhs()->accept(this);
+    TypeInference::unify(node->lhs()->type(), TypeTable::Bool, node);
+
+    node->rhs()->accept(this);
+    TypeInference::unify(node->rhs()->type(), TypeTable::Bool, node);
+
+    node->setType(TypeTable::Bool);
+}
+
+void SemanticAnalyzer::visit(BlockNode* node)
+{
+    for (auto& child : node->children())
+    {
+        child->accept(this);
+        TypeInference::unify(child->type(), TypeTable::Unit, node);
+    }
+
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(IfNode* node)
+{
+    node->condition()->accept(this);
+    TypeInference::unify(node->condition()->type(), TypeTable::Bool, node);
+
+    node->body()->accept(this);
+    TypeInference::unify(node->body()->type(), TypeTable::Unit, node);
+
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(IfElseNode* node)
+{
+    node->condition()->accept(this);
+    TypeInference::unify(node->condition()->type(), TypeTable::Bool, node);
+
+    node->body()->accept(this);
+    TypeInference::unify(node->body()->type(), TypeTable::Unit, node);
+
+    node->else_body()->accept(this);
+    TypeInference::unify(node->else_body()->type(), TypeTable::Unit, node);
+
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(WhileNode* node)
+{
+    node->condition()->accept(this);
+    TypeInference::unify(node->condition()->type(), TypeTable::Bool, node);
+
+    node->body()->accept(this);
+    TypeInference::unify(node->body()->type(), TypeTable::Unit, node);
+
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(IntNode* node)
+{
+    node->setType(TypeTable::Int);
+}
+
+void SemanticAnalyzer::visit(BoolNode* node)
+{
+    node->setType(TypeTable::Bool);
+}
+
+void SemanticAnalyzer::visit(ReturnNode* node)
+{
+    // This isn't really type checking, but this is the easiest place to put this check.
+    if (_enclosingFunction == nullptr)
+    {
+        std::stringstream msg;
+        msg << "Cannot return from top level.";
+        semanticError(node, msg.str());
+
+        return;
+    }
+
+    node->expression()->accept(this);
+
+    assert(_enclosingFunction->symbol()->type->quantified().empty());
+    assert(_enclosingFunction->symbol()->type->tag() == ttFunction);
+
+    // Value of expression must equal the return type of the enclosing function.
+    FunctionType* functionType = _enclosingFunction->symbol()->type->type()->get<FunctionType>();
+    TypeInference::unify(node->expression()->type(), functionType->output(), node);
+
+    node->setType(TypeTable::Unit);
+}
+
+

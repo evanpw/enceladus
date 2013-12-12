@@ -22,47 +22,43 @@ private:
     std::string _description;
 };
 
-void semanticError(AstNode* node, const std::string& msg);
-
-class SemanticAnalyzer
-{
-public:
-	SemanticAnalyzer(ProgramNode* root);
-	bool analyze();
-
-private:
-	ProgramNode* root_;
-};
-
 // Semantic analysis pass 1 - handle declarations and build the symbol tables
-class SemanticPass1 : public AstVisitor
+class SemanticAnalyzer : public AstVisitor
 {
 public:
-	SemanticPass1() : _enclosingFunction(nullptr) {}
+    SemanticAnalyzer(ProgramNode* root);
+    bool analyze();
 
-	virtual void visit(ProgramNode* node);
-	virtual void visit(FunctionDefNode* node);
-	virtual void visit(ForeignDeclNode* node);
-	virtual void visit(DataDeclaration* node);
+    // Declarations
+    virtual void visit(DataDeclaration* node);
+    virtual void visit(FunctionDefNode* node);
+    virtual void visit(ForeignDeclNode* node);
+    virtual void visit(LetNode* node);
+
+    // Internal nodes
+    virtual void visit(AssignNode* node);
+    virtual void visit(BinaryOperatorNode* node);
+    virtual void visit(BlockNode* node);
+    virtual void visit(ComparisonNode* node);
+    virtual void visit(FunctionCallNode* node);
+    virtual void visit(IfElseNode* node);
+    virtual void visit(IfNode* node);
+    virtual void visit(LogicalNode* node);
+    virtual void visit(MatchNode* node);
+    virtual void visit(ProgramNode* node);
+    virtual void visit(WhileNode* node);
+
+    // Leaf nodes
+    virtual void visit(BoolNode* node);
+    virtual void visit(IntNode* node);
+    virtual void visit(NullaryNode* node);
+    virtual void visit(ReturnNode* node);
 
 private:
-	FunctionDefNode* _enclosingFunction;
-};
+    void semanticError(AstNode* node, const std::string& msg);
+    void injectSymbols(ProgramNode* node);
 
-// Semantic analysis pass 2 - gotos / function calls
-class SemanticPass2 : public AstVisitor
-{
-public:
-	SemanticPass2() : _enclosingFunction(nullptr) {}
-
-	virtual void visit(LetNode* node);
-	virtual void visit(MatchNode* node);
-	virtual void visit(FunctionDefNode* node);
-	virtual void visit(FunctionCallNode* node);
-	virtual void visit(NullaryNode* node);
-	virtual void visit(AssignNode* node);
-
-private:
+    ProgramNode* root_;
 	FunctionDefNode* _enclosingFunction;
 };
 
@@ -83,54 +79,20 @@ private:
     std::string _description;
 };
 
-// Pass 3
-class TypeChecker : public AstVisitor
+class TypeInference
 {
 public:
-    TypeChecker()
-    : _enclosingFunction(nullptr)
-    {}
+    static void inferenceError(AstNode* node, const std::string& msg);
 
-    // Internal nodes
-    virtual void visit(AssignNode* node);
-    virtual void visit(BinaryOperatorNode* node);
-    virtual void visit(BlockNode* node);
-    virtual void visit(ComparisonNode* node);
-    virtual void visit(FunctionDefNode* node);
-    virtual void visit(IfElseNode* node);
-    virtual void visit(IfNode* node);
-    virtual void visit(LetNode* node);
-    virtual void visit(LogicalNode* node);
-    virtual void visit(MatchNode* node);
-    virtual void visit(ProgramNode* node);
-    virtual void visit(WhileNode* node);
+    static bool occurs(TypeVariable* variable, const std::shared_ptr<Type>& value);
+    static void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
+    static void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
 
-    // Leaf nodes
-    virtual void visit(BoolNode* node);
-    virtual void visit(FunctionCallNode* node);
-    virtual void visit(IntNode* node);
-    virtual void visit(NullaryNode* node);
-    virtual void visit(ReturnNode* node);
+    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<Scope*>& scopes);
+    static std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);
+    static std::shared_ptr<Type> instantiate(TypeScheme* scheme);
 
-    // Declaration nodes with void type
-    virtual void visit(DataDeclaration* node) { node->setType(typeTable_->getBaseType("Unit")); }
-    virtual void visit(ForeignDeclNode* node) { node->setType(typeTable_->getBaseType("Unit")); }
-
-private:
-    void inferenceError(AstNode* node, const std::string& msg);
-
-    bool occurs(TypeVariable* variable, const std::shared_ptr<Type>& value);
-    void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
-    void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
-
-    std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type);
-    std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);
-    std::shared_ptr<Type> instantiate(TypeScheme* scheme);
-
-    std::set<TypeVariable*> getFreeVars(Symbol* symbol);
-
-private:
-    FunctionDefNode* _enclosingFunction;
+    static std::set<TypeVariable*> getFreeVars(Symbol* symbol);
 };
 
 #endif
