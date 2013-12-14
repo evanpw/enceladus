@@ -40,11 +40,12 @@ public:
 	// Converts periods to underscores to make interfacing with C programs easier
 	std::string mangle(const std::string& name);
 
-	// Create the functions corresponding to a data type declaration
-	void createConstructor(ValueConstructor* constructor);
-
 private:
+	// Helper functions that build commonly-occuring or complicated code
+	void comparisonOperator(const std::string& op);
+	void arithmeticOperator(const std::string& op);
 	void decref(const VariableSymbol* symbol);
+	void createConstructor(ValueConstructor* constructor);
 
 	std::string foreignName(const std::string& name);
 

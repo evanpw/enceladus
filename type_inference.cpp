@@ -186,7 +186,7 @@ void TypeInference::bindVariable(const std::shared_ptr<Type>& variable, const st
     {
         std::stringstream ss;
         ss << "type variable " << variable->name() << " cannot be bound to unboxed type " << value->name();
-        //inferenceError(node, ss.str());
+        inferenceError(node, ss.str());
     }
 
     // And if these check out, make the substitution

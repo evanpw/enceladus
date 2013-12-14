@@ -122,10 +122,42 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 	divide->isBuiltin = true;
 	scope->insert(divide);
 
-	FunctionSymbol* modulus = new FunctionSymbol("%", node, nullptr);
+	FunctionSymbol* modulus = new FunctionSymbol("mod", node, nullptr);
 	modulus->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Int));
 	modulus->isBuiltin = true;
 	scope->insert(modulus);
+
+	// Integer comparison functions ////////////////////////////////////////////
+
+	FunctionSymbol* gt = new FunctionSymbol(">", node, nullptr);
+	gt->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Bool));
+	gt->isBuiltin = true;
+	scope->insert(gt);
+
+	FunctionSymbol* lt = new FunctionSymbol("<", node, nullptr);
+	lt->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Bool));
+	lt->isBuiltin = true;
+	scope->insert(lt);
+
+	FunctionSymbol* ge = new FunctionSymbol(">=", node, nullptr);
+	ge->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Bool));
+	ge->isBuiltin = true;
+	scope->insert(ge);
+
+	FunctionSymbol* le = new FunctionSymbol("<=", node, nullptr);
+	le->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Bool));
+	le->isBuiltin = true;
+	scope->insert(le);
+
+	FunctionSymbol* eq = new FunctionSymbol("==", node, nullptr);
+	eq->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Bool));
+	eq->isBuiltin = true;
+	scope->insert(eq);
+
+	FunctionSymbol* ne = new FunctionSymbol("!=", node, nullptr);
+	ne->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Bool));
+	ne->isBuiltin = true;
+	scope->insert(ne);
 
 
 	//// These definitions are only needed so that we list them as external
@@ -155,6 +187,11 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 	mallocFn->isExternal = true;
 	mallocFn->isForeign = true;
 	scope->insert(mallocFn);
+
+	FunctionSymbol* intFn = new FunctionSymbol("_Int", node, nullptr);
+	intFn->isExternal = true;
+	intFn->isForeign = true;
+	scope->insert(intFn);
 }
 
 void SemanticAnalyzer::visit(ProgramNode* node)

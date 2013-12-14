@@ -70,7 +70,7 @@ void _die(long errorCode)
 //// Ints //////////////////////////////////////////////////////////////////////
 long* _Int(long value)
 {
-    long* newInt = (long*)malloc();
+    long* newInt = (long*)malloc(24);
 
     *(newInt) = 0;
     *(newInt + 1) = (0L << 32) + 1;
@@ -81,7 +81,7 @@ long* _Int(long value)
 
 //// I/O ///////////////////////////////////////////////////////////////////////
 
-long read()
+long* read()
 {
     long result;
     scanf("%ld", &result);
@@ -97,11 +97,13 @@ void print(long* value)
 
 //// Reference counting ////////////////////////////////////////////////////////
 
-void _incref(long* p)
+long* _incref(long* p)
 {
-    if (p == NULL) return;
+    if (p == NULL) return p;
 
     ++(*p);
+
+    return p;
 }
 
 long _decrefNoFree(long* p)
@@ -149,6 +151,7 @@ long* Cons(long* value, long* next)
     *(newCell + 3) = (long)value;
 
     _incref(next);
+    _incref(value);
 
     return newCell;
 }
