@@ -25,18 +25,7 @@ void AstVisitor::visit(ProgramNode* node)
 	}
 }
 
-void AstVisitor::visit(NullNode* node)
-{
-	node->child()->accept(this);
-}
-
 void AstVisitor::visit(ComparisonNode* node)
-{
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
-}
-
-void AstVisitor::visit(BinaryOperatorNode* node)
 {
 	node->lhs()->accept(this);
 	node->rhs()->accept(this);

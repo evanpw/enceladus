@@ -11,114 +11,6 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "simple.flex",
-			"settings":
-			{
-				"buffer_size": 2872,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "simple.y",
-			"settings":
-			{
-				"buffer_size": 6673,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "ast.hpp",
-			"settings":
-			{
-				"buffer_size": 12513,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "ast_visitor.hpp",
-			"settings":
-			{
-				"buffer_size": 1847,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "ast_visitor.cpp",
-			"settings":
-			{
-				"buffer_size": 1882,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "testing/euler15.spl",
-			"settings":
-			{
-				"buffer_size": 959,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "codegen.cpp",
-			"settings":
-			{
-				"buffer_size": 21088,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "semantic.hpp",
-			"settings":
-			{
-				"buffer_size": 2446,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "semantic.cpp",
-			"settings":
-			{
-				"buffer_size": 19048,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "codegen.hpp",
-			"settings":
-			{
-				"buffer_size": 2130,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "symbol.hpp",
-			"settings":
-			{
-				"buffer_size": 1589,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "types.hpp",
-			"settings":
-			{
-				"buffer_size": 870,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "#include <sstream>\n#include \"symbol.hpp\"\n\nint Symbol::nextUnique = 0;\n\nstd::string Symbol::uniqueName()\n{\n    int n = nextUnique++;\n\n    std::stringstream stringBuilder;\n    stringBuilder << \"__hidden\" << n;\n\n    return stringBuilder.str();\n}\n",
-			"file": "symbol.cpp",
-			"file_size": 243,
-			"file_write_time": 130285060610000000,
-			"settings":
-			{
-				"buffer_size": 243,
-				"line_ending": "Unix",
-				"name": "#include \"symbol.hpp\""
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -156,31 +48,48 @@
 	"file_history":
 	[
 		"/Users/evanpw/Workspace/simple/codegen.cpp",
-		"/Users/evanpw/Workspace/simple/codegen.hpp",
 		"/Users/evanpw/Workspace/simple/semantic.cpp",
-		"/Users/evanpw/Dropbox/Progress/Reference/To Buy.md",
-		"/Users/evanpw/Workspace/simple/TODO",
-		"/Users/evanpw/Workspace/simple/build/cycle.asm",
-		"/Users/evanpw/Workspace/simple/build/test.asm",
+		"/Users/evanpw/Workspace/simple/types.hpp",
+		"/Users/evanpw/Workspace/simple/types.cpp",
+		"/Users/evanpw/Workspace/simple/library.c",
+		"/Users/evanpw/Workspace/simple/build/euler15.asm",
+		"/Users/evanpw/Workspace/simple/build/euler9.asm",
 		"/Users/evanpw/Workspace/simple/testing/test.spl",
-		"/Users/evanpw/Workspace/simple/testing/cycle.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
-		"/Users/evanpw/Workspace/simple/simple.y",
-		"/Users/evanpw/Workspace/simple/testing/euler12.spl",
-		"/Users/evanpw/Workspace/simple/prelude.spl",
+		"/Users/evanpw/Workspace/simple/build/test.asm",
+		"/Users/evanpw/Workspace/simple/TODO",
+		"/Users/evanpw/Dropbox/Progress/Weight.csv",
+		"/Users/evanpw/Workspace/simple/simplec.cpp",
 		"/Users/evanpw/Workspace/simple/ast.hpp",
+		"/Users/evanpw/Workspace/simple/codegen.hpp",
+		"/Users/evanpw/Workspace/simple/testing/euler15.spl",
+		"/Users/evanpw/Dropbox/Progress/Reference/Kayla's Loan.csv",
+		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
+		"/Users/evanpw/Dropbox/Progress/Abby.csv",
+		"/Users/evanpw/Workspace/simple/log",
+		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler12.spl",
+		"/Users/evanpw/Workspace/simple/testing/all.sh",
+		"/Users/evanpw/Workspace/simple/testing/euler13.spl",
+		"/Users/evanpw/Workspace/simple/testing/fail.spl",
+		"/Users/evanpw/Workspace/simple/ast.cpp",
+		"/Users/evanpw/Workspace/simple/prelude.spl",
+		"/Users/evanpw/Workspace/simple/simple.flex",
+		"/Users/evanpw/Workspace/simple/simple.y",
+		"/Users/evanpw/Workspace/simple/semantic.hpp",
+		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
+		"/Users/evanpw/Dropbox/Archive/logins",
+		"/Users/evanpw/Dropbox/Progress/Reference/Periodicity.md",
+		"/Users/evanpw/Workspace/simple/symbol.cpp",
+		"/Users/evanpw/Workspace/simple/symbol.hpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
+		"/Users/evanpw/Dropbox/Progress/Reference/To Buy.md",
+		"/Users/evanpw/Workspace/simple/build/cycle.asm",
+		"/Users/evanpw/Workspace/simple/testing/cycle.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
 		"/Users/evanpw/Workspace/simple/testing/test.cpp",
-		"/Users/evanpw/Workspace/simple/library.c",
-		"/Users/evanpw/Workspace/simple/symbol.hpp",
-		"/Users/evanpw/Workspace/simple/ast.cpp",
-		"/Users/evanpw/Workspace/simple/simple.flex",
-		"/Users/evanpw/Workspace/simple/semantic.hpp",
-		"/Users/evanpw/Workspace/simple/types.hpp",
-		"/Users/evanpw/Workspace/simple/types.cpp",
-		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
-		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
 		"/Users/evanpw/Workspace/simple/testing/set.spl",
 		"/Users/evanpw/Workspace/simple/testing/preref.spl",
 		"/Users/evanpw/Workspace/simple/build/euler1.asm",
@@ -198,22 +107,14 @@
 		"/Users/evanpw/Workspace/simple/osx/build.sh",
 		"/Users/evanpw/Workspace/simple/Makefile",
 		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler9.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
 		"/Users/evanpw/Workspace/simple/test.c",
-		"/Users/evanpw/Dropbox/Progress/Abby.csv",
 		"/Users/evanpw/Dropbox/Progress/Reference/Net Worth.md",
-		"/Users/evanpw/Dropbox/Archive/logins",
-		"/Users/evanpw/Dropbox/Progress/Reference/Periodicity.md",
 		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler13.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler14.spl",
 		"/Users/evanpw/Workspace/simple/linux/Set.asm",
 		"/Users/evanpw/Workspace/simple/linux/test.c",
-		"/Users/evanpw/Workspace/simple/testing/all.sh",
 		"/Users/evanpw/Workspace/simple/testing/euler13.txt",
-		"/Users/evanpw/Dropbox/Progress/Reference/Kayla's Loan.csv",
 		"/Users/evanpw/Workspace/simple/string_table.hpp",
 		"/Users/evanpw/Workspace/simple/string_table.cpp",
 		"/Users/evanpw/Workspace/simple/simple.output",
@@ -222,12 +123,10 @@
 		"/Users/evanpw/Workspace/simple/build/euler10-2.asm",
 		"/Users/evanpw/Workspace/simple/scope.hpp",
 		"/Users/evanpw/Workspace/simple/scope.cpp",
-		"/Users/evanpw/Workspace/simple/simplec.cpp",
 		"/Users/evanpw/Workspace/simple/linux/library.asm",
 		"/Users/evanpw/Workspace/simple/testing/test.sh",
 		"/Users/evanpw/Workspace/simple/build/euler8.asm",
 		"/Users/evanpw/Workspace/simple/testing/function.spl",
-		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
 		"/Users/evanpw/Dropbox/Progress/Year28.tex",
 		"/Users/evanpw/Workspace/simple/common.asm",
 		"/Users/evanpw/Workspace/simple/testing/euler5.spl",
@@ -251,7 +150,6 @@
 		"/Users/evanpw/.inputrc",
 		"/Users/evanpw/.bash_profile",
 		"/Users/evanpw/Dropbox/Progress/Todo List.md",
-		"/Users/evanpw/Dropbox/Progress/Weight.csv",
 		"/Users/evanpw/Workspace/mycraft/mycraft.cpp",
 		"/Users/evanpw/Workspace/bigdata/generate.py",
 		"/Users/evanpw/Workspace/bigdata/regression-big.R",
@@ -276,13 +174,7 @@
 		"/Users/evanpw/Dropbox/Progress/Reference/System.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/Library Books.md",
 		"/Users/evanpw/Dropbox/Progress/Reference/Great Ideas.md",
-		"/Applications/Sublime Text.app/Contents/MacOS/changelog.txt",
-		"/Users/evanpw/Dropbox/Progress/Reference/Hugo Winners.tex",
-		"/Users/evanpw/Workspace/evanpwright.com/app.py",
-		"/Users/evanpw/Workspace/evanpwright.com/template.html",
-		"/Users/evanpw/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
-		"/Users/evanpw/Workspace/raytracer/surface.cpp",
-		"/Users/evanpw/Workspace/raytracer/raytracer.cpp"
+		"/Applications/Sublime Text.app/Contents/MacOS/changelog.txt"
 	],
 	"find":
 	{
@@ -300,6 +192,43 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"isBoxed",
+			"isSimple",
+			"Pair",
+			"Cons",
+			"__decref",
+			"_range",
+			"decref",
+			"MatchNode",
+			"decref",
+			"TypeName",
+			"isSimple",
+			"std::cerr",
+			"Generic",
+			"ConstructorSpec",
+			"GenericValueConstructor",
+			"ConstructorSpec",
+			"Pair",
+			"concreteTypes_",
+			"Pair",
+			"_Pair",
+			"std::cerr",
+			"dataDecl",
+			"decref",
+			"table_",
+			"List",
+			"cerr",
+			"cout",
+			"&listOfInts",
+			"enclosingFunction",
+			"lookup(listOfInts",
+			"List",
+			"LetNode",
+			"TypeName",
+			"ConstructorSpec",
+			"type",
+			"UIDENT",
+			"ident",
 			"Pair",
 			"Match",
 			"ParamListNode",
@@ -390,44 +319,7 @@
 			"virtual void accept",
 			"NIL",
 			"not defined",
-			"ArgList",
-			"':'",
-			"typeCheck",
-			"Type::Int",
-			"kBool",
-			"kInt",
-			"call",
-			"fexpression",
-			"expression",
-			"PRINT .",
-			"INT_LIT .",
-			"IDENT .",
-			"expression",
-			"state 30",
-			"simple_expression",
-			"PRINT .",
-			"PRINT",
-			"simple_expression",
-			"VariableNode",
-			"expression",
-			"symbol_",
-			"IntNode",
-			"add rsp",
-			"edx",
-			"ecx",
-			"ebx",
-			"rbx",
-			"eax",
-			"esp",
-			"add esp",
-			"prepend",
-			"NULL",
-			"ArgList",
-			"ArgListNode",
-			"SymbolTable",
-			"topScope->",
-			"type",
-			"Kind type"
+			"ArgList"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -445,374 +337,8 @@
 	"groups":
 	[
 		{
-			"selected": 5,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "simple.flex",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2872,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2263,
-								2263
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1212.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "simple.y",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 6673,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2134,
-								2134
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1442.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "ast.hpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 12513,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								10549,
-								10549
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 5908.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "ast_visitor.hpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1847,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1067,
-								1067
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 492.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "ast_visitor.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1882,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1879,
-								1879
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1047.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "testing/euler15.spl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 959,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								104,
-								104
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Haskell/Haskell.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"file": "codegen.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 21088,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								17458,
-								17458
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 9147.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"file": "semantic.hpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2446,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1007,
-								1007
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 8,
-					"file": "semantic.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 19048,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								11420,
-								11420
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 5886.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 9,
-					"file": "codegen.hpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2130,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								769,
-								769
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 44.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 10,
-					"file": "symbol.hpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1589,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								919,
-								919
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 522.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 11,
-					"file": "types.hpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 870,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								217,
-								217
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 12,
-					"file": "symbol.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 243,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								243,
-								243
-							]
-						],
-						"settings":
-						{
-							"auto_name": "#include \"symbol.hpp\"",
-							"syntax": "Packages/C++/C++.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],

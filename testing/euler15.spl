@@ -1,33 +1,24 @@
 data Pair = Pair Int Int
+data Memo = Memo Pair Int
 
-data Memo = Entry Pair Int
-let memo :: [Memo] = []
-
-let xs = []
-let ys = []
-let counts = []
-
+let memo = []
 def searchMemo p :: Pair -> Int =
     let Pair x y = p
 
-    let xs' = xs
-    let ys' = ys
-    let counts' = counts
-    while not $ null xs' do
-        if x == head xs' and y == head ys' then
-            return head counts'
+    let memo' = memo
+    while not $ null memo' do
+        let Memo p' count = head memo'
+        let Pair x' y' = p'
 
-        xs' = tail xs'
-        ys' = tail ys'
-        counts' = tail counts'
+        if x == x' and y == y' then
+            return count
+
+        memo' = tail memo'
 
     return -1
 
-def insertMemo p count :: Pair -> Int -> Void =
-    let Pair x y = p
-    xs = x : xs
-    ys = y : ys
-    counts = count : counts
+def insertMemo p count :: Pair -> Int -> Unit =
+    memo = (Memo p count) : memo
 
 def countPaths p :: Pair -> Int =
     let Pair x y = p

@@ -5,7 +5,6 @@
 #include "scope.hpp"
 
 class AssignNode;
-class BinaryOperatorNode;
 class BlockNode;
 class BoolNode;
 class ComparisonNode;
@@ -20,9 +19,7 @@ class IntNode;
 class LetNode;
 class LogicalNode;
 class MatchNode;
-class NilNode;
 class NullaryNode;
-class NullNode;
 class ParamListNode;
 class ProgramNode;
 class ReturnNode;
@@ -35,7 +32,6 @@ public:
 
 	// Default implementations do nothing but visit each child
 	virtual void visit(AssignNode* node);
-	virtual void visit(BinaryOperatorNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(FunctionCallNode* node);
@@ -45,7 +41,6 @@ public:
 	virtual void visit(LetNode* node);
 	virtual void visit(MatchNode* node);
 	virtual void visit(LogicalNode* node);
-	virtual void visit(NullNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(WhileNode* node);
@@ -55,7 +50,6 @@ public:
 	virtual void visit(DataDeclaration* node) {}
 	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}
-	virtual void visit(NilNode* node) {}
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(ParamListNode* node) {}
 

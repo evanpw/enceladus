@@ -22,13 +22,13 @@ public:
 	virtual void accept(AstVisitor* visitor) = 0;
 
 	YYLTYPE* location() { return location_; }
-	const Type* type() { return type_; }
+	const std::shared_ptr<Type>& type() { return type_; }
 
-	void setType(const Type* type) { type_ = type; }
+	void setType(const std::shared_ptr<Type>& type) { type_ = type; }
 
 protected:
 	YYLTYPE* location_;
-	const Type* type_;
+	std::shared_ptr<Type> type_;
 };
 
 class StatementNode : public AstNode {};
@@ -49,21 +49,21 @@ public:
 
 	void append(TypeName* typeName) { members_.emplace_back(typeName); }
 
-	const std::string& name() { return name_; }
-	const std::vector<std::unique_ptr<TypeName>>& members() { return members_; }
+	const std::string& name() const { return name_; }
+	const std::vector<std::unique_ptr<TypeName>>& members() const { return members_; }
 
-	void setMemberTypes(const std::vector<const Type*> types)
+	void setMemberTypes(const std::vector<std::shared_ptr<Type>> types)
 	{
 		assert(types.size() == members_.size());
 		types_ = types;
 	}
-	const std::vector<const Type*>& memberTypes() { return types_; }
+	const std::vector<std::shared_ptr<Type>>& memberTypes() { return types_; }
 
 private:
 	std::string name_;
 
 	std::vector<std::unique_ptr<TypeName>> members_;
-	std::vector<const Type*> types_;
+	std::vector<std::shared_ptr<Type>> types_;
 };
 
 
@@ -92,39 +92,6 @@ private:
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
-class NullNode : public ExpressionNode
-{
-public:
-	NullNode(ExpressionNode* expression) : expression_(expression) {}
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* child() { return expression_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> expression_;
-};
-
-class BinaryOperatorNode : public ExpressionNode
-{
-public:
-	enum Operator {kPlus, kMinus, kTimes, kDivide, kMod};
-
-	BinaryOperatorNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: lhs_(lhs), op_(op), rhs_(rhs)
-	{}
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* lhs() { return lhs_.get(); }
-	Operator op() { return op_; }
-	ExpressionNode* rhs() { return rhs_.get(); }
-
-protected:
-	std::unique_ptr<ExpressionNode> lhs_;
-	Operator op_;
-	std::unique_ptr<ExpressionNode> rhs_;
-};
-
 class LogicalNode : public ExpressionNode
 {
 public:
@@ -206,12 +173,6 @@ public:
 
 private:
 	bool value_;
-};
-
-class NilNode : public ExpressionNode
-{
-public:
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 };
 
 class FunctionCallNode : public ExpressionNode
@@ -433,9 +394,13 @@ public:
 	const std::string& name() { return name_; }
 	ConstructorSpec* constructor() { return constructor_.get(); }
 
+	void attachConstructor(ValueConstructor* valueConstructor) { valueConstructor_ = valueConstructor; }
+	ValueConstructor* valueConstructor() { return valueConstructor_; }
+
 private:
 	std::string name_;
 	std::unique_ptr<ConstructorSpec> constructor_;
+	ValueConstructor* valueConstructor_;
 };
 
 class ForeignDeclNode : public StatementNode

@@ -1,13 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern void _main(void) asm("__main");
+#ifdef __APPLE__
+
+extern void _main(void);
 
 int main(void)
 {
     _main();
     return 0;
 }
+
+#else
+
+extern void __main(void);
+
+int main(void)
+{
+    __main();
+    return 0;
+}
+
+#endif
+
 
 #define ERR_HEAD_EMPTY  0
 #define ERR_TAIL_EMPTY  1
@@ -16,7 +31,6 @@ int main(void)
 #define ERR_LEFT_EMPTY  4
 #define ERR_RIGHT_EMPTY 5
 
-extern void _die(long) asm ("__die");
 void _die(long errorCode)
 {
     switch(errorCode)
@@ -53,22 +67,36 @@ void _die(long errorCode)
     exit(1);
 }
 
-extern long read() asm ("_read");
+//// Ints //////////////////////////////////////////////////////////////////////
+long* _Int(long value)
+{
+    long* newInt = (long*)malloc();
+
+    *(newInt) = 0;
+    *(newInt + 1) = (0L << 32) + 1;
+    *(newInt + 2) = value;
+
+    return newInt;
+}
+
+//// I/O ///////////////////////////////////////////////////////////////////////
+
 long read()
 {
     long result;
     scanf("%ld", &result);
 
-    return result;
+    return _Int(result);
 }
 
-extern void print(long) asm ("_print");
-void print(long value)
+void print(long* value)
 {
-    printf("%ld\n", value);
+    long a = *(value + 2);
+    printf("%ld\n", a);
 }
 
-extern void _incref(long*) asm ("__incref");
+//// Reference counting ////////////////////////////////////////////////////////
+
 void _incref(long* p)
 {
     if (p == NULL) return;
@@ -76,7 +104,6 @@ void _incref(long* p)
     ++(*p);
 }
 
-extern long _decrefNoFree(long*) asm ("__decrefNoFree");
 long _decrefNoFree(long* p)
 {
     if (p == NULL) return 1;
@@ -91,34 +118,67 @@ long _decrefNoFree(long* p)
     return *p;
 }
 
-extern void _List_decref(long*) asm ("__List_decref");
-void _List_decref(long* list)
+void _decref(long* object)
 {
-    if (list == NULL) return;
+    if (object == NULL) return;
 
-    while (_decrefNoFree(list) == 0)
+    if (_decrefNoFree(object) == 0)
     {
-        long* next = (long*)*(list + 2);
-        free(list);
-        list = next;
+        long pointerCount = *(object + 1) >> 32;
+
+        long* child = object + 2;
+        for (int i = 0; i < pointerCount; ++i)
+        {
+            _decref((long*)*child);
+            ++child;
+        }
+
+        free(object);
     }
 }
 
-extern long* Cons(long, long*) asm ("_Cons");
-long* Cons(long value, long* next)
-{
-    long* newCell = (long*)malloc(24);
+//// Lists /////////////////////////////////////////////////////////////////////
 
-    *newCell = 0;
-    *(newCell + 1) = value;
+long* Cons(long* value, long* next)
+{
+    long* newCell = (long*)malloc(32);
+
+    *(newCell + 0) = 0;                // Reference count
+    *(newCell + 1) = (2L << 32) + 0;   // Number of pointers; non-pointers
     *(newCell + 2) = (long)next;
+    *(newCell + 3) = (long)value;
 
     _incref(next);
 
     return newCell;
 }
 
-extern long top(long*) asm("_top");
+//// Trees /////////////////////////////////////////////////////////////////////
+
+long count(long*);
+
+long* Node(long value, long* left, long* right)
+{
+    long* newTree = (long*)malloc(48);
+
+    *(newTree + 0) = 0;              // Reference count
+    *(newTree + 1) = (2L << 32) + 2; // Number of pointsers; non-pointers
+    *(newTree + 2) = (long)left;     // Left child
+    *(newTree + 3) = (long)right;    // Right child
+    *(newTree + 4) = value;          // Value of this node
+    *(newTree + 5) = 1 + count(left) + count(right); // Nodes in this subtree
+
+    _incref(left);
+    _incref(right);
+
+    return newTree;
+}
+
+long* Empty()
+{
+    return NULL;
+}
+
 long top(long* tree)
 {
     if (tree == NULL)
@@ -126,10 +186,9 @@ long top(long* tree)
         _die(ERR_TOP_EMPTY);
     }
 
-    return *tree;
+    return *(tree + 4);
 }
 
-extern long* left(long*) asm("_left");
 long* left(long* tree)
 {
     if (tree == NULL)
@@ -140,7 +199,6 @@ long* left(long* tree)
     return (long*)*(tree + 2);
 }
 
-extern long* right(long*) asm("_right");
 long* right(long* tree)
 {
     if (tree == NULL)
@@ -151,7 +209,6 @@ long* right(long* tree)
     return (long*)*(tree + 3);
 }
 
-extern long count(long*) asm("_count");
 long count(long* tree)
 {
     if (tree == NULL)
@@ -160,34 +217,10 @@ long count(long* tree)
     }
     else
     {
-        return *(tree + 4);
+        return *(tree + 5);
     }
 }
 
-extern long* Node(long, long*, long*) asm("_Node");
-long* Node(long value, long* left, long* right)
-{
-    long* newTree = (long*)malloc(40);
-
-    *newTree = 0;
-    *(newTree + 1) = value;
-    *(newTree + 2) = (long)left;
-    *(newTree + 3) = (long)right;
-    *(newTree + 4) = 1 + count(left) + count(right);
-
-    _incref(left);
-    _incref(right);
-
-    return newTree;
-}
-
-extern long* Empty() asm ("_Empty");
-long* Empty()
-{
-    return NULL;
-}
-
-extern void _Tree_decref(long*) asm("__Tree_decref");
 void _Tree_decref(long* tree)
 {
 startOver:

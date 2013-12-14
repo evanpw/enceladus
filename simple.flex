@@ -87,7 +87,6 @@ int yycolumn = 1;
 "if"		{ return IF; }
 "in"		{ return IN; }
 "let"		{ return LET; }
-"null"		{ return ISNULL; }
 "return"	{ return RETURN; }
 "then"		{ return THEN; }
 "while"		{ return WHILE; }

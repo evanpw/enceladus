@@ -1,122 +1,262 @@
-#include <cstring>
-#include <sstream>
-#include "ast.hpp"
 #include "types.hpp"
 
-template<class T, class... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
+#include "utility.hpp"
 
-bool Type::is(const Type* rhs) const
-{
-    // TODO: Do a better job of this
-    return (this == rhs);
-}
+#include <algorithm>
+#include <cassert>
+#include <sstream>
 
-bool Type::isSimple() const
-{
-    return typeConstructor_->isSimple();
-}
-
-const std::string& Type::name() const
-{
-    return typeConstructor_->name();
-}
-
-std::string Type::longName() const
-{
-    if (typeParameters_.size() == 0)
-    {
-        return typeConstructor_->name();
-    }
-    else
-    {
-        std::stringstream ss;
-        ss << "(";
-        ss << typeConstructor_->name();
-
-        for (size_t i = 0; i < typeParameters_.size(); ++i)
-        {
-            ss << " " << typeParameters_[i]->longName();
-        }
-
-        ss << ")";
-
-        return ss.str();
-    }
-}
-
-size_t Type::constructorCount() const
-{
-    return typeConstructor_->valueConstructorCount();
-}
+std::shared_ptr<Type> TypeTable::Int = BaseType::create("Int", true);
+std::shared_ptr<Type> TypeTable::Bool = BaseType::create("Bool", true);
+std::shared_ptr<Type> TypeTable::Unit = BaseType::create("Unit", true);
 
 TypeTable::TypeTable()
 {
-    // Built-in types
-    table_.emplace(std::make_pair("Void", make_unique<TypeConstructor>("Void", true)));
-    table_.emplace(std::make_pair("Int", make_unique<TypeConstructor>("Int", true)));
-    table_.emplace(std::make_pair("Bool", make_unique<TypeConstructor>("Bool", true)));
-    table_.emplace(std::make_pair("List", make_unique<TypeConstructor>("List", false, 1)));
-    table_.emplace(std::make_pair("Tree", make_unique<TypeConstructor>("Tree", false)));
+    baseTypes_["Int"] = Int;
+    baseTypes_["Bool"] = Bool;
+    baseTypes_["Unit"] = Unit;
+    baseTypes_["Tree"] = BaseType::create("Tree", false);
+
+    typeConstructors_["List"] = std::unique_ptr<TypeConstructor>(new TypeConstructor("List", 1));
+}
+
+const TypeConstructor* TypeTable::getTypeConstructor(const std::string& name)
+{
+    auto i = typeConstructors_.find(name);
+    if (i == typeConstructors_.end())
+    {
+        std::cerr << "No type constructor " << name << std::endl;
+        return nullptr;
+    }
+    else
+    {
+        return i->second.get();
+    }
+}
+
+std::shared_ptr<Type> TypeTable::getBaseType(const std::string& name)
+{
+    auto i = baseTypes_.find(name);
+    if (i == baseTypes_.end())
+    {
+        std::cerr << "No primitive type " << name << std::endl;
+        return std::shared_ptr<Type>();
+    }
+    else
+    {
+        return i->second;
+    }
 }
 
 void TypeTable::insert(const std::string& name, TypeConstructor* typeConstructor)
 {
-    table_.emplace(std::make_pair(name, std::unique_ptr<TypeConstructor>(typeConstructor)));
+    typeConstructors_.emplace(std::make_pair(name, std::unique_ptr<TypeConstructor>(typeConstructor)));
 }
 
-// TODO: Produce a semantic error when there is a problem looking up a type
-const Type* TypeTable::lookup(const TypeName* name)
+void TypeTable::insert(const std::string& name, std::shared_ptr<Type> baseType)
 {
-    // First, find the type constructor referred to by this TypeName
-    auto i = table_.find(name->name());
-    if (i == table_.end()) return nullptr;
+    baseTypes_.emplace(std::make_pair(name, baseType));
+}
 
-    std::unique_ptr<TypeConstructor>& typeConstructor = i->second;
-    assert(typeConstructor->parameterCount() == name->parameters().size());
-
-    // Then, recursively look up all of the type parameters
-    std::vector<const Type*> typeParameters;
-    for (const std::unique_ptr<TypeName>& parameter : name->parameters())
+std::shared_ptr<Type> TypeTable::nameToType(const TypeName* typeName)
+{
+    if (typeName->parameters().empty())
     {
-        const Type* parameterType = lookup(parameter.get());
-        if (parameterType == nullptr) return nullptr;
+        return getBaseType(typeName->name());
+    }
+    else
+    {
+        const TypeConstructor* typeConstructor = getTypeConstructor(typeName->name());
 
-        typeParameters.push_back(parameterType);
+        std::vector<std::shared_ptr<Type>> typeParameters;
+        for (const std::unique_ptr<TypeName>& parameter : typeName->parameters())
+        {
+            std::shared_ptr<Type> parameterType = nameToType(parameter.get());
+            if (!parameterType) return std::shared_ptr<Type>();
+
+            typeParameters.push_back(parameterType);
+        }
+
+        return ConstructedType::create(typeConstructor, typeParameters);
+    }
+}
+
+TypeTag Type::tag() const
+{
+    return _impl->tag();
+}
+
+std::string Type::name() const
+{
+    return _impl->name();
+}
+
+bool Type::isBoxed() const
+{
+    return _impl->isBoxed();
+}
+
+const std::vector<std::unique_ptr<ValueConstructor>>& Type::valueConstructors() const
+{
+    return _impl->valueConstructors();
+}
+
+void Type::addValueConstructor(ValueConstructor* valueConstructor)
+{
+    _impl->addValueConstructor(valueConstructor);
+}
+
+std::set<TypeVariable*> Type::freeVars() const
+{
+    std::set<TypeVariable*> result;
+
+    switch (_impl->tag())
+    {
+        case ttBase:
+            break;
+
+        case ttVariable:
+        {
+            result.insert(get<TypeVariable>());
+            break;
+        }
+
+        case ttFunction:
+        {
+            FunctionType* functionType = get<FunctionType>();
+
+            for (auto& input : functionType->inputs())
+            {
+                result += input->freeVars();
+            }
+            result += functionType->output()->freeVars();
+            break;
+        }
+
+        case ttConstructed:
+        {
+            ConstructedType* constructedType = get<ConstructedType>();
+            for (const std::shared_ptr<Type>& parameter : constructedType->typeParameters())
+            {
+                result += parameter->freeVars();
+            }
+
+            break;
+        }
     }
 
-    // Finally, instantiate (or retrieve, if already instantiated) the type
-    // given by the constructor and the type parameters
-    return typeConstructor->instantiate(typeParameters);
+    return result;
 }
 
-const Type* TypeTable::lookup(const std::string& name)
+std::string TypeScheme::name() const
 {
-    TypeName dummy(name.c_str());
-    return lookup(&dummy);
-}
-
-const Type* TypeConstructor::instantiate()
-{
-    return instantiate(std::vector<const Type*>());
-}
-
-const Type* TypeConstructor::instantiate(const std::vector<const Type*>& parameters)
-{
-    // First, check the cache to see if a type has already been instantiated with these
-    // parameters
-    auto i = instantiations_.find(parameters);
-    if (i != instantiations_.end())
+    std::stringstream ss;
+    if (_quantified.size() > 0)
     {
-        return i->second.get();
+        ss << "forall ";
+        for (auto& typeVar : _quantified)
+        {
+            ss << typeVar->name() << " ";
+        }
+        ss << ". ";
     }
 
-    // Otherwise, create a new type from the template
-    Type* newType = new Type(this, parameters);
-    instantiations_.emplace(std::make_pair(parameters, std::unique_ptr<Type>(newType)));
+    ss << _type->name();
 
-    return newType;
+    return ss.str();
+}
+
+std::set<TypeVariable*> TypeScheme::freeVars() const
+{
+    std::set<TypeVariable*> allVars = _type->freeVars();
+    for (TypeVariable* boundVar : _quantified)
+    {
+        allVars.erase(boundVar);
+    }
+
+    return allVars;
+}
+
+std::string FunctionType::name() const
+{
+    std::stringstream ss;
+
+    for (auto& input : _inputs)
+    {
+        if (input->tag() == ttFunction)
+        {
+            ss << "(" << input->name() << ")";
+        }
+        else
+        {
+            ss << input->name();
+        }
+
+        ss << " -> ";
+    }
+
+    ss << _output->name();
+
+    return ss.str();
+}
+
+std::string ConstructedType::name() const
+{
+    std::stringstream ss;
+
+    if (_typeConstructor->name() == "List")
+    {
+        assert(_typeParameters.size() == 1);
+        ss << "[" << _typeParameters[0]->name() << "]";
+    }
+    else
+    {
+        ss << _typeConstructor;
+        for (const std::shared_ptr<Type>& type : _typeParameters)
+        {
+            ss << " " << type->name();
+        }
+    }
+
+    return ss.str();
+}
+
+int TypeVariable::_count;
+
+std::string TypeVariable::name() const
+{
+    std::stringstream ss;
+    ss << "a" << _index;
+    return ss.str();
+}
+
+ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& members)
+: name_(name), members_(members)
+{
+    // First pass -> just count the number of boxed / unboxed members
+    for (size_t i = 0; i < members.size(); ++i)
+    {
+        if (members[i]->isBoxed())
+        {
+            ++boxedMembers_;
+        }
+        else
+        {
+            ++unboxedMembers_;
+        }
+    }
+
+    // Second pass -> determine the actual layout
+    size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
+    for (size_t i = 0; i < members.size(); ++i)
+    {
+        if (members[i]->isBoxed())
+        {
+            memberLocations_.push_back(nextBoxed++);
+        }
+        else
+        {
+            memberLocations_.push_back(nextUnboxed++);
+        }
+    }
 }

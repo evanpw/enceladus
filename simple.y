@@ -56,7 +56,6 @@ void yyerror(const char* msg);
 %token EOL
 %token DCOLON RARROW
 %token TRUE FALSE
-%token ISNULL
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL CONCAT
 %token<str> LIDENT UIDENT
 %token<number> INT_LIT
@@ -69,7 +68,6 @@ void yyerror(const char* msg);
 %left '+' '-'
 %left '*' '/' MOD
 %right CONCAT
-%nonassoc ISNULL
 
 %%
 
@@ -121,19 +119,35 @@ statement: IF expression THEN suite
 		}
 	| LIDENT PLUS_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kPlus, $3));
+			ArgList* argList = new ArgList;
+			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($3);
+
+			$$ = new AssignNode($1, new FunctionCallNode("+", argList));
 		}
 	| LIDENT MINUS_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kMinus, $3));
+			ArgList* argList = new ArgList;
+			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($3);
+
+			$$ = new AssignNode($1, new FunctionCallNode("-", argList));
 		}
 	| LIDENT TIMES_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kTimes, $3));
+			ArgList* argList = new ArgList;
+			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($3);
+
+			$$ = new AssignNode($1, new FunctionCallNode("*", argList));
 		}
 	| LIDENT DIV_EQUAL expression EOL
 		{
-			$$ = new AssignNode($1, new BinaryOperatorNode(new NullaryNode($1), BinaryOperatorNode::kDivide, $3));
+			ArgList* argList = new ArgList;
+			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($3);
+
+			$$ = new AssignNode($1, new FunctionCallNode("/", argList));
 		}
 	| DEF ident parameters DCOLON typedecl '=' suite
 		{
@@ -214,11 +228,7 @@ statement_list: statement
 		}
 
 /* An expression that is not a function call */
-expression: ISNULL expression
-		{
-			$$ = new NullNode($2);
-		}
-	| ident '$' expression
+expression: ident '$' expression
 		{
 			ArgList* argList = new ArgList();
 			argList->emplace_back($3);
@@ -259,23 +269,43 @@ expression: ISNULL expression
 		}
 	| expression '+' expression
 		{
-			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kPlus, $3);
+			ArgList* argList = new ArgList;
+			argList->emplace_back($1);
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode("+", argList);
 		}
 	| expression '-' expression
 		{
-			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMinus, $3);
+			ArgList* argList = new ArgList;
+			argList->emplace_back($1);
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode("-", argList);
 		}
 	| expression '*' expression
 		{
-			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kTimes, $3);
+			ArgList* argList = new ArgList;
+			argList->emplace_back($1);
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode("*", argList);
 		}
 	| expression '/' expression
 		{
-			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kDivide, $3);
+			ArgList* argList = new ArgList;
+			argList->emplace_back($1);
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode("/", argList);
 		}
 	| expression MOD expression
 		{
-			$$ = new BinaryOperatorNode($1, BinaryOperatorNode::kMod, $3);
+			ArgList* argList = new ArgList;
+			argList->emplace_back($1);
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode("%", argList);
 		}
 	| expression ':' expression
 		{
@@ -340,7 +370,7 @@ simple_expression: '(' expression ')'
 		}
 	| '[' ']'
 		{
-			$$ = new NilNode();
+			$$ = new FunctionCallNode("Nil", new ArgList);
 		}
 
 ident: LIDENT

@@ -10,122 +10,169 @@ using namespace std;
 
 SemanticAnalyzer::SemanticAnalyzer(ProgramNode* root)
 : root_(root)
+, _enclosingFunction(nullptr)
 {
 }
 
 bool SemanticAnalyzer::analyze()
 {
-	SemanticPass1 pass1;
-	root_->accept(&pass1);
-
-	if (pass1.success())
+	try
 	{
-		SemanticPass2 pass2;
-		root_->accept(&pass2);
-
-		if (pass2.success())
-		{
-			TypeChecker typeChecker;
-			root_->accept(&typeChecker);
-
-			return typeChecker.success();
-		}
+		root_->accept(this);
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Error: " << e.what() << std::endl;
+		return false;
 	}
 
-	return false;
+	return true;
 }
 
-void SemanticBase::semanticError(AstNode* node, const std::string& msg)
+void SemanticAnalyzer::semanticError(AstNode* node, const std::string& msg)
 {
-	std::cerr << "Near line " << node->location()->first_line << ", "
-	  	      << "column " << node->location()->first_column << ": "
-	  	      << "error: " << msg << std::endl;
+	std::stringstream ss;
 
-	success_ = false;
+	ss << "Near line " << node->location()->first_line << ", "
+	   << "column " << node->location()->first_column << ": "
+	   << "error: " << msg;
+
+	throw SemanticError(ss.str());
 }
 
-void SemanticPass1::visit(ProgramNode* node)
+void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 {
 	Scope* scope = node->scope();
 	TypeTable* typeTable = node->typeTable();
 
-	TypeName listOfInts("List");
-	listOfInts.append(new TypeName("Int"));
+	const TypeConstructor* List = typeTable->getTypeConstructor("List");
 
-	// Create symbols for built-in functions
+	//// Create symbols for built-in functions
 	FunctionSymbol* notFn = new FunctionSymbol("not", node, nullptr);
-	notFn->type = typeTable->lookup("Bool");
-	notFn->arity = 1;
-	notFn->paramTypes.push_back(typeTable->lookup("Bool"));
+	notFn->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Bool}, TypeTable::Bool));
 	notFn->isBuiltin = true;
 	scope->insert(notFn);
 
 	FunctionSymbol* head = new FunctionSymbol("head", node, nullptr);
-	head->type = typeTable->lookup("Int");
-	head->arity = 1;
-	head->paramTypes.push_back(typeTable->lookup(&listOfInts));
+	std::shared_ptr<Type> a1 = TypeVariable::create();
+	std::shared_ptr<Type> headType =
+		FunctionType::create(
+			{ConstructedType::create(List, {a1})},
+			a1);
+	head->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(headType, {a1->get<TypeVariable>()}));
 	head->isBuiltin = true;
 	scope->insert(head);
 
 	FunctionSymbol* tail = new FunctionSymbol("tail", node, nullptr);
-	tail->type = typeTable->lookup(&listOfInts);
-	tail->arity = 1;
-	tail->paramTypes.push_back(typeTable->lookup(&listOfInts));
+	std::shared_ptr<Type> a2 = TypeVariable::create();
+	std::shared_ptr<Type> tailType =
+		FunctionType::create(
+			{ConstructedType::create(List, {a2})},
+			ConstructedType::create(List, {a2}));
+	tail->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(tailType, {a2->get<TypeVariable>()}));
 	tail->isBuiltin = true;
 	scope->insert(tail);
 
+	FunctionSymbol* cons = new FunctionSymbol("Cons", node, nullptr);
+	std::shared_ptr<Type> a3 = TypeVariable::create();
+	std::shared_ptr<Type> consType =
+		FunctionType::create(
+			{a3, ConstructedType::create(List, {a3})},
+			ConstructedType::create(List, {a3}));
+	cons->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(consType, {a3->get<TypeVariable>()}));
+	cons->isExternal = true;
+	cons->isForeign = true;
+	scope->insert(cons);
+
+	FunctionSymbol* nil = new FunctionSymbol("Nil", node, nullptr);
+	std::shared_ptr<Type> a4 = TypeVariable::create();
+	std::shared_ptr<Type> nilType =
+		FunctionType::create({}, ConstructedType::create(List, {a4}));
+	nil->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(nilType, {a4->get<TypeVariable>()}));
+	nil->isBuiltin = true;
+	scope->insert(nil);
+
+	FunctionSymbol* nullFn = new FunctionSymbol("null", node, nullptr);
+	std::shared_ptr<Type> a5 = TypeVariable::create();
+	std::shared_ptr<Type> nullType =
+		FunctionType::create({a5}, TypeTable::Bool);
+	nullFn->typeScheme = std::shared_ptr<TypeScheme>(new TypeScheme(nullType, {a5->get<TypeVariable>()}));
+	nullFn->isBuiltin = true;
+	scope->insert(nullFn);
+
+	// Integer arithmetic functions ////////////////////////////////////////////
+
+	FunctionSymbol* add = new FunctionSymbol("+", node, nullptr);
+	add->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Int));
+	add->isBuiltin = true;
+	scope->insert(add);
+
+	FunctionSymbol* subtract = new FunctionSymbol("-", node, nullptr);
+	subtract->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Int));
+	subtract->isBuiltin = true;
+	scope->insert(subtract);
+
+	FunctionSymbol* multiply = new FunctionSymbol("*", node, nullptr);
+	multiply->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Int));
+	multiply->isBuiltin = true;
+	scope->insert(multiply);
+
+	FunctionSymbol* divide = new FunctionSymbol("/", node, nullptr);
+	divide->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Int));
+	divide->isBuiltin = true;
+	scope->insert(divide);
+
+	FunctionSymbol* modulus = new FunctionSymbol("%", node, nullptr);
+	modulus->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Int));
+	modulus->isBuiltin = true;
+	scope->insert(modulus);
+
+
+	//// These definitions are only needed so that we list them as external
+	//// symbols in the output assembly file. They can't be called from
+	//// language.
 	FunctionSymbol* die = new FunctionSymbol("_die", node, nullptr);
-	die->type = typeTable->lookup("Void");
-	die->arity = 1;
-	die->paramTypes.push_back(typeTable->lookup("Void"));
 	die->isExternal = true;
 	die->isForeign = true;
 	scope->insert(die);
 
 	FunctionSymbol* incref = new FunctionSymbol("_incref", node, nullptr);
-	incref->type = typeTable->lookup("Void");
-	incref->arity = 1;
-	incref->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	incref->isExternal = true;
 	incref->isForeign = true;
 	scope->insert(incref);
 
 	FunctionSymbol* decref = new FunctionSymbol("_decref", node, nullptr);
-	decref->type = typeTable->lookup("Int");
-	decref->arity = 1;
-	decref->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	decref->isExternal = true;
 	decref->isForeign = true;
 	scope->insert(decref);
 
-	FunctionSymbol* listDecref = new FunctionSymbol("_List_decref", node, nullptr);
-	listDecref->type = typeTable->lookup("Void");
-	listDecref->arity = 1;
-	listDecref->paramTypes.push_back(typeTable->lookup(&listOfInts));
-	listDecref->isExternal = true;
-	listDecref->isForeign = true;
-	scope->insert(listDecref);
-
-	FunctionSymbol* treeDecref = new FunctionSymbol("_Tree_decref", node, nullptr);
-	treeDecref->type = typeTable->lookup("Void");
-	treeDecref->arity = 1;
-	treeDecref->paramTypes.push_back(typeTable->lookup("Tree"));
-	treeDecref->isExternal = true;
-	treeDecref->isForeign = true;
-	scope->insert(treeDecref);
-
 	FunctionSymbol* decref_no_free = new FunctionSymbol("_decrefNoFree", node, nullptr);
-	decref_no_free->type = typeTable->lookup("Int");
-	decref_no_free->arity = 1;
-	decref_no_free->paramTypes.push_back(typeTable->lookup(&listOfInts));
 	decref_no_free->isExternal = true;
 	decref_no_free->isForeign = true;
 	scope->insert(decref_no_free);
 
-	AstVisitor::visit(node);
+	FunctionSymbol* mallocFn = new FunctionSymbol("malloc", node, nullptr);
+	mallocFn->isExternal = true;
+	mallocFn->isForeign = true;
+	scope->insert(mallocFn);
 }
 
-void SemanticPass1::visit(DataDeclaration* node)
+void SemanticAnalyzer::visit(ProgramNode* node)
+{
+	injectSymbols(node);
+
+	//// Recurse down into children
+	AstVisitor::visit(node);
+
+    for (auto& child : node->children())
+    {
+        TypeInference::unify(child->type(), TypeTable::Unit, node);
+    }
+
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(DataDeclaration* node)
 {
 	// Data declarations cannot be local
 	if (_enclosingFunction != nullptr)
@@ -157,11 +204,11 @@ void SemanticPass1::visit(DataDeclaration* node)
 	}
 
 	// All of the constructor members must refer to already-declared types
-	std::vector<const Type*> memberTypes;
+	std::vector<std::shared_ptr<Type>> memberTypes;
 	for (auto& memberTypeName : node->constructor()->members())
 	{
-		const Type* memberType = typeTable_->lookup(memberTypeName.get());
-		if (memberType == nullptr)
+		std::shared_ptr<Type> memberType = typeTable_->nameToType(memberTypeName.get());
+		if (!memberType)
 		{
 			std::stringstream msg;
 			msg << "unknown member type \"" << memberType << "\".";
@@ -174,19 +221,22 @@ void SemanticPass1::visit(DataDeclaration* node)
 	node->constructor()->setMemberTypes(memberTypes);
 
 	// Actually create the type
-	TypeConstructor* typeConstructor = new TypeConstructor(node->name().c_str(), false);
-	typeTable_->insert(node->name(), typeConstructor);
-	const Type* newType = typeConstructor->instantiate();
+	std::shared_ptr<Type> newType = BaseType::create(node->name());
+	typeTable_->insert(typeName, newType);
+
+	ValueConstructor* valueConstructor = new ValueConstructor(node->constructor()->name(), memberTypes);
+	node->attachConstructor(valueConstructor);
+	newType->addValueConstructor(valueConstructor);
 
 	// Create a symbol for the constructor
 	FunctionSymbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
-	symbol->type = newType;
-	symbol->arity = memberTypes.size();
-	symbol->paramTypes = memberTypes;
+	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(memberTypes, newType));
 	topScope()->insert(symbol);
+
+	node->setType(TypeTable::Unit);
 }
 
-void SemanticPass1::visit(FunctionDefNode* node)
+void SemanticAnalyzer::visit(FunctionDefNode* node)
 {
 	// Functions cannot be declared inside of another function
 	if (_enclosingFunction != nullptr)
@@ -219,13 +269,13 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Parameter types must be valid
-	std::vector<const Type*> paramTypes;
+	std::vector<std::shared_ptr<Type>> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
 		TypeName* typeName = node->typeDecl()->at(i).get();
 
-		const Type* type = typeTable_->lookup(typeName);
-		if (type == nullptr)
+		std::shared_ptr<Type> type = typeTable_->nameToType(typeName);
+		if (!type)
 		{
 			std::stringstream msg;
 			msg << "unknown parameter type \"" << typeName << "\".";
@@ -237,8 +287,8 @@ void SemanticPass1::visit(FunctionDefNode* node)
 	}
 
 	// Return type must be valid
-	const Type* returnType = typeTable_->lookup(node->typeDecl()->back().get());
-	if (returnType == nullptr)
+	std::shared_ptr<Type> returnType = typeTable_->nameToType(node->typeDecl()->back().get());
+	if (!returnType)
 	{
 		std::stringstream msg;
 		msg << "unknown return type \"" << node->typeDecl()->back()->name() << "\".";
@@ -246,37 +296,38 @@ void SemanticPass1::visit(FunctionDefNode* node)
 		return;
 	}
 
+	// TODO: Generic functions
+
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
-	symbol->type = returnType;
-	symbol->arity = node->params().size();
-	symbol->paramTypes = paramTypes;
+	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 
 	enterScope(node->scope());
-	_enclosingFunction = node;
 
 	// Add symbols corresponding to the formal parameters to the
 	// function's scope
 	for (size_t i = 0; i < node->params().size(); ++i)
 	{
 		const std::string& param = node->params().at(i);
-		const Type* paramType = paramTypes[i];
 
 		VariableSymbol* paramSymbol = new VariableSymbol(param, node, node);
 		paramSymbol->isParam = true;
-		paramSymbol->type = paramType;
+		paramSymbol->typeScheme = TypeScheme::trivial(paramTypes[i]);
 		topScope()->insert(paramSymbol);
 	}
 
 	// Recurse
+	_enclosingFunction = node;
 	node->body()->accept(this);
-
 	_enclosingFunction = nullptr;
+
 	exitScope();
+
+	node->setType(TypeTable::Unit);
 }
 
-void SemanticPass1::visit(ForeignDeclNode* node)
+void SemanticAnalyzer::visit(ForeignDeclNode* node)
 {
 	// Functions cannot be declared inside of another function
 	if (_enclosingFunction != nullptr)
@@ -321,13 +372,13 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	// Parameter types must be valid
-	std::vector<const Type*> paramTypes;
+	std::vector<std::shared_ptr<Type>> paramTypes;
 	for (size_t i = 0; i < node->typeDecl()->size() - 1; ++i)
 	{
 		TypeName* typeName = node->typeDecl()->at(i).get();
 
-		const Type* type = typeTable_->lookup(typeName);
-		if (type == nullptr)
+		std::shared_ptr<Type> type = typeTable_->nameToType(typeName);
+		if (!type)
 		{
 			std::stringstream msg;
 			msg << "unknown parameter type \"" << typeName << "\".";
@@ -339,8 +390,8 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	// Return type must be valid
-	const Type* returnType = typeTable_->lookup(node->typeDecl()->back().get());
-	if (returnType == nullptr)
+	std::shared_ptr<Type> returnType = typeTable_->nameToType(node->typeDecl()->back().get());
+	if (!returnType)
 	{
 		std::stringstream msg;
 		msg << "unknown return type \"" << node->typeDecl()->back()->name() << "\".";
@@ -349,23 +400,16 @@ void SemanticPass1::visit(ForeignDeclNode* node)
 	}
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
-	symbol->type = returnType;
-	symbol->arity = node->typeDecl()->size() - 1;
+	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	symbol->isForeign = true;
 	symbol->isExternal = true;
-	symbol->paramTypes = paramTypes;
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
+
+	node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(FunctionDefNode* node)
-{
-	_enclosingFunction = node;
-	AstVisitor::visit(node);
-	_enclosingFunction = nullptr;
-}
-
-void SemanticPass2::visit(LetNode* node)
+void SemanticAnalyzer::visit(LetNode* node)
 {
 	// Visit children. Do this first so that we can't have recursive definitions.
 	AstVisitor::visit(node);
@@ -383,8 +427,8 @@ void SemanticPass2::visit(LetNode* node)
 
 	if (node->typeName())
 	{
-		const Type* type = typeTable_->lookup(node->typeName());
-		if (type == nullptr)
+		std::shared_ptr<Type> type = typeTable_->nameToType(node->typeName());
+		if (!type)
 		{
 			std::stringstream msg;
 			msg << "unknown type \"" << node->typeName()->name() << "\".";
@@ -392,14 +436,21 @@ void SemanticPass2::visit(LetNode* node)
 			return;
 		}
 
-		symbol->type = type;
+		symbol->typeScheme = TypeScheme::trivial(type);
+	}
+	else
+	{
+		symbol->typeScheme = TypeScheme::trivial(TypeVariable::create());
 	}
 
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
+
+	TypeInference::unify(node->value()->type(), symbol->typeScheme->type(), node);
+    node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(MatchNode* node)
+void SemanticAnalyzer::visit(MatchNode* node)
 {
 	AstVisitor::visit(node);
 
@@ -418,16 +469,20 @@ void SemanticPass2::visit(MatchNode* node)
 	assert(symbol->kind == kFunction);
 
 	FunctionSymbol* constructorSymbol = static_cast<FunctionSymbol*>(symbol);
-	assert(!constructorSymbol->type->isSimple());
+	assert(constructorSymbol->typeScheme->isBoxed());
 
-	if (constructorSymbol->type->constructorCount() > 1)
+	assert(constructorSymbol->typeScheme->tag() == ttFunction);
+	FunctionType* functionType = constructorSymbol->typeScheme->type()->get<FunctionType>();
+	const std::shared_ptr<Type> constructedType = functionType->output();
+
+	if (constructedType->valueConstructors().size() != 1)
 	{
 		std::stringstream msg;
-		msg << "let statement pattern matching only applies to types with a single constructor.";
+		msg << "let statement pattern matching only applies to types with a single constructor ";
 		semanticError(node, msg.str());
 	}
 
-	if (constructorSymbol->arity != node->params()->names().size())
+	if (functionType->inputs().size() != node->params()->names().size())
 	{
 		std::stringstream msg;
 		msg << "constructor pattern \"" << symbol->name << "\" does not have the correct number of arguments.";
@@ -440,7 +495,6 @@ void SemanticPass2::visit(MatchNode* node)
 	for (size_t i = 0; i < node->params()->names().size(); ++i)
 	{
 		const std::string& name = node->params()->names().at(i);
-		const Type* memberType = constructorSymbol->paramTypes[i];
 
 		if (topScope()->find(name) != nullptr)
 		{
@@ -450,13 +504,16 @@ void SemanticPass2::visit(MatchNode* node)
 		}
 
 		VariableSymbol* member = new VariableSymbol(name, node, _enclosingFunction);
-		member->type = memberType;
+		member->typeScheme = TypeScheme::trivial(functionType->inputs().at(i));
 		topScope()->insert(member);
 		node->attachSymbol(member);
 	}
+
+	TypeInference::unify(node->body()->type(), functionType->output(), node);
+    node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(AssignNode* node)
+void SemanticAnalyzer::visit(AssignNode* node)
 {
 	const std::string& target = node->target();
 
@@ -477,11 +534,15 @@ void SemanticPass2::visit(AssignNode* node)
 
 	node->attachSymbol(static_cast<VariableSymbol*>(symbol));
 
-	// Recurse to children
-	AstVisitor::visit(node);
+	node->value()->accept(this);
+
+    assert(node->symbol()->typeScheme->quantified().empty());
+    TypeInference::unify(node->value()->type(), node->symbol()->typeScheme->type(), node);
+
+    node->setType(TypeTable::Unit);
 }
 
-void SemanticPass2::visit(FunctionCallNode* node)
+void SemanticAnalyzer::visit(FunctionCallNode* node)
 {
 	const std::string& name = node->target();
 	Symbol* symbol = searchScopes(name);
@@ -500,33 +561,50 @@ void SemanticPass2::visit(FunctionCallNode* node)
 
 		semanticError(node, msg.str());
 	}
-	else
-	{
-		FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
-		node->attachSymbol(functionSymbol);
 
-		if (functionSymbol->arity != node->arguments().size())
-		{
-			std::stringstream msg;
-			msg << "call to \"" << symbol->name << "\" does not respect function arity.";
-			semanticError(node, msg.str());
-		}
-	}
+	std::vector<std::shared_ptr<Type>> paramTypes;
+    for (size_t i = 0; i < node->arguments().size(); ++i)
+    {
+        AstNode* argument = node->arguments().at(i).get();
+        argument->accept(this);
 
-	// Recurse to children
-	AstVisitor::visit(node);
+        paramTypes.push_back(argument->type());
+    }
+
+    FunctionSymbol* functionSymbol = static_cast<FunctionSymbol*>(symbol);
+	node->attachSymbol(functionSymbol);
+
+    std::shared_ptr<Type> returnType = TypeVariable::create();
+    std::shared_ptr<Type> functionType = TypeInference::instantiate(functionSymbol->typeScheme.get());
+
+    TypeInference::unify(functionType, FunctionType::create(paramTypes, returnType), node);
+
+    node->setType(returnType);
 }
 
-void SemanticPass2::visit(NullaryNode* node)
+void SemanticAnalyzer::visit(NullaryNode* node)
 {
 	const std::string& name = node->name();
 
 	Symbol* symbol = searchScopes(name);
 	if (symbol != nullptr)
 	{
-		if (symbol->kind == kVariable || symbol->kind == kFunction)
+		if (symbol->kind == kVariable)
 		{
 			node->attachSymbol(symbol);
+
+			assert(symbol->typeScheme->quantified().empty());
+        	node->setType(symbol->typeScheme->type());
+		}
+		else if (symbol->kind == kFunction)
+		{
+			node->attachSymbol(symbol);
+
+	        std::shared_ptr<Type> returnType = TypeVariable::create();
+	        std::shared_ptr<Type> functionType = TypeInference::instantiate(symbol->typeScheme.get());
+	        TypeInference::unify(functionType, FunctionType::create({}, returnType), node);
+
+	        node->setType(returnType);
 		}
 		else
 		{
@@ -539,230 +617,110 @@ void SemanticPass2::visit(NullaryNode* node)
 	else
 	{
 		std::stringstream msg;
-		msg << "variable \"" << name << "\" is not defined in this scope.";
+		msg << "symbol \"" << name << "\" is not defined in this scope.";
 
 		semanticError(node, msg.str());
 	}
 }
 
-void TypeChecker::typeCheck(AstNode* node, const Type* type)
+void SemanticAnalyzer::visit(ComparisonNode* node)
 {
-	if (!node->type()->is(type))
-	{
-		std::stringstream msg;
-		msg << "expected type " << type->longName() << ", but got " << node->type()->longName();
+    node->lhs()->accept(this);
+    TypeInference::unify(node->lhs()->type(), TypeTable::Int, node);
 
-		semanticError(node, msg.str());
-	}
+    node->rhs()->accept(this);
+    TypeInference::unify(node->rhs()->type(), TypeTable::Int, node);
+
+    node->setType(TypeTable::Bool);
 }
 
-// Internal nodes
-void TypeChecker::visit(ProgramNode* node)
+void SemanticAnalyzer::visit(LogicalNode* node)
 {
-	typeTable_ = node->typeTable();
+    node->lhs()->accept(this);
+    TypeInference::unify(node->lhs()->type(), TypeTable::Bool, node);
 
-	for (auto& child : node->children())
-	{
-		child->accept(this);
-		typeCheck(child.get(), typeTable_->lookup("Void"));
-	}
+    node->rhs()->accept(this);
+    TypeInference::unify(node->rhs()->type(), TypeTable::Bool, node);
 
-	node->setType(typeTable_->lookup("Void"));
+    node->setType(TypeTable::Bool);
 }
 
-void TypeChecker::visit(ComparisonNode* node)
+void SemanticAnalyzer::visit(BlockNode* node)
 {
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), typeTable_->lookup("Int"));
+    for (auto& child : node->children())
+    {
+        child->accept(this);
+        TypeInference::unify(child->type(), TypeTable::Unit, node);
+    }
 
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), typeTable_->lookup("Int"));
-
-	node->setType(typeTable_->lookup("Bool"));
+    node->setType(TypeTable::Unit);
 }
 
-void TypeChecker::visit(BinaryOperatorNode* node)
+void SemanticAnalyzer::visit(IfNode* node)
 {
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), typeTable_->lookup("Int"));
+    node->condition()->accept(this);
+    TypeInference::unify(node->condition()->type(), TypeTable::Bool, node);
 
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), typeTable_->lookup("Int"));
+    node->body()->accept(this);
+    TypeInference::unify(node->body()->type(), TypeTable::Unit, node);
 
-	node->setType(typeTable_->lookup("Int"));
+    node->setType(TypeTable::Unit);
 }
 
-void TypeChecker::visit(NullNode* node)
+void SemanticAnalyzer::visit(IfElseNode* node)
 {
-	node->child()->accept(this);
+    node->condition()->accept(this);
+    TypeInference::unify(node->condition()->type(), TypeTable::Bool, node);
 
-	// FIXME: This should probably be done in a better way
-	if (node->child()->type()->isSimple())
-	{
-		std::stringstream msg;
-		msg << "cannot call null on simple type " << node->child()->type()->name();
-		semanticError(node, msg.str());
-	}
+    node->body()->accept(this);
+    TypeInference::unify(node->body()->type(), TypeTable::Unit, node);
 
-	node->setType(typeTable_->lookup("Bool"));
+    node->else_body()->accept(this);
+    TypeInference::unify(node->else_body()->type(), TypeTable::Unit, node);
+
+    node->setType(TypeTable::Unit);
 }
 
-void TypeChecker::visit(LogicalNode* node)
+void SemanticAnalyzer::visit(WhileNode* node)
 {
-	node->lhs()->accept(this);
-	typeCheck(node->lhs(), typeTable_->lookup("Bool"));
+    node->condition()->accept(this);
+    TypeInference::unify(node->condition()->type(), TypeTable::Bool, node);
 
-	node->rhs()->accept(this);
-	typeCheck(node->rhs(), typeTable_->lookup("Bool"));
+    node->body()->accept(this);
+    TypeInference::unify(node->body()->type(), TypeTable::Unit, node);
 
-	node->setType(typeTable_->lookup("Bool"));
+    node->setType(TypeTable::Unit);
 }
 
-void TypeChecker::visit(MatchNode* node)
+void SemanticAnalyzer::visit(IntNode* node)
 {
-	node->body()->accept(this);
-	typeCheck(node->body(), node->constructorSymbol()->type);
-
-	node->setType(typeTable_->lookup("Void"));
+    node->setType(TypeTable::Int);
 }
 
-void TypeChecker::visit(BlockNode* node)
+void SemanticAnalyzer::visit(BoolNode* node)
 {
-	for (auto& child : node->children())
-	{
-		child->accept(this);
-		typeCheck(child.get(), typeTable_->lookup("Void"));
-	}
-
-	node->setType(typeTable_->lookup("Void"));
+    node->setType(TypeTable::Bool);
 }
 
-void TypeChecker::visit(IfNode* node)
+void SemanticAnalyzer::visit(ReturnNode* node)
 {
-	node->condition()->accept(this);
-	typeCheck(node->condition(), typeTable_->lookup("Bool"));
+    if (_enclosingFunction == nullptr)
+    {
+        std::stringstream msg;
+        msg << "Cannot return from top level.";
+        semanticError(node, msg.str());
 
-	node->body()->accept(this);
+        return;
+    }
 
-	node->setType(typeTable_->lookup("Void"));
-}
+    node->expression()->accept(this);
 
-void TypeChecker::visit(IfElseNode* node)
-{
-	node->condition()->accept(this);
-	typeCheck(node->condition(), typeTable_->lookup("Bool"));
+    assert(_enclosingFunction->symbol()->typeScheme->quantified().empty());
+    assert(_enclosingFunction->symbol()->typeScheme->tag() == ttFunction);
 
-	node->body()->accept(this);
-	node->else_body()->accept(this);
+    // Value of expression must equal the return type of the enclosing function.
+    FunctionType* functionType = _enclosingFunction->symbol()->typeScheme->type()->get<FunctionType>();
+    TypeInference::unify(node->expression()->type(), functionType->output(), node);
 
-	node->setType(typeTable_->lookup("Void"));
-}
-
-void TypeChecker::visit(WhileNode* node)
-{
-	node->condition()->accept(this);
-	typeCheck(node->condition(), typeTable_->lookup("Bool"));
-
-	node->body()->accept(this);
-
-	node->setType(typeTable_->lookup("Void"));
-}
-
-void TypeChecker::visit(AssignNode* node)
-{
-	node->value()->accept(this);
-	typeCheck(node->value(), node->symbol()->type);
-
-	node->setType(typeTable_->lookup("Void"));
-}
-
-// Leaf nodes
-void TypeChecker::visit(NullaryNode* node)
-{
-	node->setType(node->symbol()->type);
-}
-
-void TypeChecker::visit(IntNode* node)
-{
-	node->setType(typeTable_->lookup("Int"));
-}
-
-void TypeChecker::visit(BoolNode* node)
-{
-	node->setType(typeTable_->lookup("Bool"));
-}
-
-void TypeChecker::visit(NilNode* node)
-{
-	TypeName listOfInts("List");
-	listOfInts.append(new TypeName("Int"));
-
-	node->setType(typeTable_->lookup(&listOfInts));
-}
-
-void TypeChecker::visit(FunctionCallNode* node)
-{
-	// The type of a function call is the return type of the function
-	node->setType(node->symbol()->type);
-
-	assert(node->symbol()->paramTypes.size() == node->arguments().size());
-	for (size_t i = 0; i < node->arguments().size(); ++i)
-	{
-		AstNode* argument = node->arguments().at(i).get();
-		const Type* type = node->symbol()->paramTypes.at(i);
-
-		argument->accept(this);
-		typeCheck(argument, type);
-	}
-}
-
-void TypeChecker::visit(ReturnNode* node)
-{
-	// This isn't really type checking, but this is the easiest place to put this check.
-	if (_enclosingFunction == nullptr)
-	{
-		std::stringstream msg;
-		msg << "Cannot return from top level.";
-		semanticError(node, msg.str());
-
-		return;
-	}
-
-	node->expression()->accept(this);
-
-	// Value of expression must equal the return type of the enclosing function.
-	typeCheck(node->expression(), _enclosingFunction->symbol()->type);
-
-	node->setType(typeTable_->lookup("Void"));
-}
-
-void TypeChecker::visit(FunctionDefNode* node)
-{
-	enterScope(node->scope());
-	_enclosingFunction = node;
-
-	// Recurse
-	node->body()->accept(this);
-
-	_enclosingFunction = nullptr;
-	exitScope();
-
-	node->setType(typeTable_->lookup("Void"));
-}
-
-void TypeChecker::visit(LetNode* node)
-{
-	node->value()->accept(this);
-
-	// Baby type inference
-	if (!node->typeName())
-	{
-		node->symbol()->type = node->value()->type();
-	}
-	else
-	{
-		typeCheck(node->value(), node->symbol()->type);
-	}
-
-	node->setType(typeTable_->lookup("Void"));
+    node->setType(TypeTable::Unit);
 }

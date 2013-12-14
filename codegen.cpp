@@ -74,6 +74,17 @@ std::string CodeGen::access(const VariableSymbol* symbol)
 	}
 }
 
+std::string CodeGen::foreignName(const std::string& name)
+{
+#ifdef __APPLE__
+	std::stringstream ss;
+	ss << "_" << name;
+	return ss.str();
+#else
+	return name;
+#endif
+}
+
 std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 {
 	std::vector<std::string> result;
@@ -88,24 +99,28 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(symbol);
 		if (functionSymbol->isExternal)
 		{
-			result.push_back(name);
+			if (!functionSymbol->isForeign)
+			{
+				result.push_back(name);
+			}
+			else
+			{
+				result.push_back(foreignName(name));
+			}				
 		}
 	}
 
 	return result;
 }
 
-void CodeGen::createConstructors(DataDeclaration* dataDecl)
+void CodeGen::createConstructor(ValueConstructor* constructor)
 {
-	ConstructorSpec* constructor = dataDecl->constructor();
-
-	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
-	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
-	assert(memberNames.size() == memberTypes.size());
+	const std::vector<std::shared_ptr<Type>>& memberTypes = constructor->members();
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
-	// There is one extra qword for the reference count
-	size_t size = 8 * (memberNames.size() + 1);
+	// There is one extra qword for the reference count and one for the member
+	// counts (pointers and non-pointers)
+	size_t size = 8 * (memberTypes.size() + 2);
 
 	out_ << std::endl;
 	out_ << "_" << mangle(constructor->name()) << ":" << std::endl;
@@ -118,19 +133,29 @@ void CodeGen::createConstructors(DataDeclaration* dataDecl)
     out_ << "\t" << "add rsp, -8" << std::endl;
     out_ << "\t" << "push rbx" << std::endl;
     out_ << "\t" << "mov rdi, " << size << std::endl;
-	out_ << "\t" << "call _malloc" << std::endl;
+	out_ << "\t" << "call " << foreignName("malloc") << std::endl;
     out_ << "\t" << "pop rbx" << std::endl;
     out_ << "\t" << "mov rsp, rbx" << std::endl;
 
-	// Fill in the members with the constructor arguments
-	out_ << "\t" << "mov qword [rax], 0" << std::endl; 	// Reference count
-    for (size_t i = 0; i < memberNames.size(); ++i)
+	//// Fill in the members with the constructor arguments
+
+    // Reference count
+	out_ << "\t" << "mov qword [rax], 0" << std::endl;
+
+	// Boxed & unboxed member counts
+	long memberCount = (constructor->boxedMembers() << 32) + constructor->boxedMembers();
+	out_ << "\t" << "mov rbx, qword " << memberCount << std::endl;
+	out_ << "\t" << "mov qword [rax + 8], rbx" << std::endl;
+
+    for (size_t i = 0; i < memberTypes.size(); ++i)
     {
+    	size_t location = constructor->memberLocations().at(i);
+
     	out_ << "\t" << "mov rdi, qword [rbp + " << 8 * (i + 2) << "]" << std::endl;
-    	out_ << "\t" << "mov qword [rax + " << 8 * (i + 1) << "], rdi" << std::endl;
+    	out_ << "\t" << "mov qword [rax + " << 8 * (location + 2) << "], rdi" << std::endl;
 
     	// Increment reference count of non-simple, non-null members
-    	if (!memberTypes[i]->isSimple())
+    	if (memberTypes[i]->isBoxed())
     	{
     		std::string skipInc = uniqueLabel();
 
@@ -146,80 +171,19 @@ void CodeGen::createConstructors(DataDeclaration* dataDecl)
 	out_ << "\t" << "ret" << std::endl;
 }
 
-void CodeGen::createDestructors(DataDeclaration* dataDecl)
-{
-	ConstructorSpec* constructor = dataDecl->constructor();
-
-	const std::vector<std::unique_ptr<TypeName>>& memberNames = constructor->members();
-	const std::vector<const Type*>& memberTypes = constructor->memberTypes();
-	assert(memberNames.size() == memberTypes.size());
-
-	out_ << std::endl;
-	out_ << "__" << dataDecl->name() << "_decref:" << std::endl;
-
-	std::string endLabel = uniqueLabel();
-
-	// Don't do anything if the pointer is null
-	out_ << "\t" << "cmp rdi, 0" << std::endl;
-	out_ << "\t" << "je " << endLabel << std::endl;
-
-	// Do the reference decrement
-	out_ << "\t" << "add qword [rdi], -1" << std::endl;
-
-	// If negative, error. If positive, we're finished
-	std::string negRef = uniqueLabel();
-	out_ << "\t" << "cmp qword [rdi], 0" << std::endl;
-	out_ << "jl " << negRef << std::endl;
-	out_ << "jne " << endLabel << std::endl;
-
-	// If we reach this point, the ref count is zero, so we decrement
-	// the reference count of each non-simple member, and then deallocate
-	for (size_t i = 0; i < memberNames.size(); ++i)
-    {
-    	if (!memberTypes[i]->isSimple())
-    	{
-    		out_ << "\t" << "push rdi" << std::endl;
-    		out_ << "\t" << "mov qword rdi, [rdi + " << 8 * (i + 1) << "]" << std::endl;
-			out_ << "\t" << "call __" << memberTypes[i]->name() << "_decref" << std::endl;
-			out_ << "\t" << "pop rdi" << std::endl;
-		}
-    }
-
-    // Align stack, free, unalign
-    out_ << "\t" << "mov rbx, rsp" << std::endl;
-    out_ << "\t" << "and rsp, -16" << std::endl;
-    out_ << "\t" << "add rsp, -8" << std::endl;
-    out_ << "\t" << "push rbx" << std::endl;
-	out_ << "\t" << "call _free" << std::endl;
-    out_ << "\t" << "pop rbx" << std::endl;
-    out_ << "\t" << "mov rsp, rbx" << std::endl;
-
-	out_ << "\t" << "jmp " << endLabel << std::endl;
-
-
-	out_ << negRef << ":" << std::endl;
-	out_ << "\t" << "mov rdi, 2" << std::endl;
-	out_ << "\t" << "call __die" << std::endl;
-
-
-	out_ << endLabel << ":" << std::endl;
-	out_ << "\t" << "ret" << std::endl;
-}
-
 void CodeGen::visit(ProgramNode* node)
 {
 	out_ << "bits 64" << std::endl;
 	out_ << "section .text" << std::endl;
 	out_ << "global __main" << std::endl;
-	out_ << "extern _malloc, _free" << std::endl;
 
 	std::vector<std::string> externs = getExterns(node);
 	if (!externs.empty())
 	{
-		out_ << "extern _" << mangle(externs[0]);
+		out_ << "extern " << mangle(externs[0]);
 		for (size_t i = 1; i < externs.size(); ++i)
 		{
-			out_ << ", _" << mangle(externs[i]);
+			out_ << ", " << mangle(externs[i]);
 		}
 		out_ << std::endl;
 	}
@@ -243,10 +207,10 @@ void CodeGen::visit(ProgramNode* node)
 
 		const VariableSymbol* variableSymbol = static_cast<const VariableSymbol*>(symbol);
 
-		if (!variableSymbol->type->isSimple())
+		if (variableSymbol->typeScheme->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
-			out_ << "\t" << "call __" << variableSymbol->type->name() << "_decref" << std::endl;
+			out_ << "\t" << "call " << foreignName("_decref") << std::endl;
 		}
 	}
 
@@ -289,10 +253,10 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->isParam && !symbol->type->isSimple())
+			if (symbol->isParam && symbol->typeScheme->isBoxed())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
-				out_ << "\t" << "call __incref" << std::endl;
+				out_ << "\t" << "call " << foreignName("_incref") << std::endl;
 			}
 		}
 
@@ -302,12 +266,15 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "__end_" << function->name() << ":" << std::endl;
 		out_ << "\t" << "push rax" << std::endl;
 
+		assert(function->symbol()->typeScheme->tag() == ttFunction);
+		FunctionType* functionType = function->symbol()->typeScheme->type()->get<FunctionType>();
+
 		// Preserve the return value from being freed if it happens to be the
 		// same as one of the local variables.
-		if (!function->symbol()->type->isSimple())
+		if (functionType->output()->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, rax" << std::endl;
-			out_ << "\t" << "call __incref" << std::endl;
+			out_ << "\t" << "call " << foreignName("_incref") << std::endl;
 		}
 
 		// Going out of scope loses a reference to all of the local variables
@@ -316,20 +283,20 @@ void CodeGen::visit(ProgramNode* node)
 			assert(i.second->kind == kVariable);
 
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (!symbol->type->isSimple())
+			if (symbol->typeScheme->isBoxed())
 			{
 				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
-				out_ << "\t" << "call __" << symbol->type->name() << "_decref" << std::endl;
+				out_ << "\t" << "call " << foreignName("_decref") << std::endl;
 			}
 		}
 
 		// But after the function returns, we don't have a reference to the
 		// return value, it's just in a temporary. The caller will have to
 		// assign it a reference.
-		if (!function->symbol()->type->isSimple())
+		if (functionType->output()->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
-			out_ << "\t" << "call __decrefNoFree" << std::endl;
+			out_ << "\t" << "call " << foreignName("_decrefNoFree") << std::endl;
 		}
 
 		out_ << "\t" << "pop rax" << std::endl;
@@ -339,11 +306,9 @@ void CodeGen::visit(ProgramNode* node)
 		out_ << "\t" << "ret" << std::endl;
 	}
 
-	// Create constructors for each data declaration
-	for (DataDeclaration* dataDecl : dataDeclarations_)
+	for (DataDeclaration* dataDeclaration : dataDeclarations_)
 	{
-		createConstructors(dataDecl);
-		createDestructors(dataDecl);
+		createConstructor(dataDeclaration->valueConstructor());
 	}
 
 	// Declare global variables in the data segment
@@ -355,18 +320,6 @@ void CodeGen::visit(ProgramNode* node)
 			out_ << "_" << mangle(i.second->name) << ": dq 0" << std::endl;
 		}
 	}
-}
-
-void CodeGen::visit(NullNode* node)
-{
-	std::string finish = uniqueLabel();
-
-	node->child()->accept(this);
-	out_ << "\t" << "cmp rax, 0" << std::endl;
-	out_ << "\t" << "je " << finish << std::endl;
-	out_ << "\t" << "mov rax, 1" << std::endl;
-	out_ << finish << ":" << std::endl;
-	out_ << "\t" << "xor rax, 1" << std::endl;
 }
 
 void CodeGen::visit(ComparisonNode* node)
@@ -417,44 +370,6 @@ void CodeGen::visit(ComparisonNode* node)
 	out_ << "\t" << "pop rbx" << std::endl;
 }
 
-void CodeGen::visit(BinaryOperatorNode* node)
-{
-	node->lhs()->accept(this);
-	out_ << "\t" << "push rax" << std::endl;
-	node->rhs()->accept(this);
-
-	switch (node->op())
-	{
-	case BinaryOperatorNode::kPlus:
-		out_ << "\t" << "add rax, qword [rsp]" << std::endl;
-		break;
-
-	case BinaryOperatorNode::kMinus:
-		out_ << "\t" << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "\t" << "sub rax, qword [rsp]" << std::endl;
-		break;
-
-	case BinaryOperatorNode::kTimes:
-		out_ << "\t" << "imul rax, qword [rsp]" << std::endl;
-		break;
-
-	case BinaryOperatorNode::kDivide:
-		out_ << "\t" << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "\t" << "cqo" << std::endl;
-		out_ << "\t" << "idiv qword [rsp]" << std::endl;
-		break;
-
-	case BinaryOperatorNode::kMod:
-		out_ << "\t" << "xchg rax, qword [rsp]" << std::endl;
-		out_ << "\t" << "cqo" << std::endl;
-		out_ << "\t" << "idiv qword [rsp]" << std::endl;
-		out_ << "\t" << "mov rax, rdx" << std::endl;
-		break;
-	}
-
-	out_ << "\t" << "pop rbx" << std::endl;
-}
-
 void CodeGen::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);
@@ -486,18 +401,21 @@ void CodeGen::visit(NullaryNode* node)
 	}
 	else
 	{
-		out_ << "\t" << "call _" << mangle(node->name()) << std::endl;
+		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(node->symbol());
+		if (functionSymbol->isForeign)
+		{
+			out_ << "\t" << "call " << foreignName(mangle(node->name())) << std::endl;
+		}
+		else
+		{
+			out_ << "\t" << "call _" << mangle(node->name()) << std::endl;
+		}
 	}
 }
 
 void CodeGen::visit(IntNode* node)
 {
 	out_ << "\t" << "mov rax, " << node->value() << std::endl;
-}
-
-void CodeGen::visit(NilNode* node)
-{
-	out_ << "\t" << "mov rax, 0" << std::endl;
 }
 
 void CodeGen::visit(BoolNode* node)
@@ -570,15 +488,15 @@ void CodeGen::visit(AssignNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (!node->symbol()->type->isSimple())
+	if (node->symbol()->typeScheme->isBoxed())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
 		out_ << "\t" << "mov rdi, rax" << std::endl;
-		out_ << "\t" << "call __incref" << std::endl;
+		out_ << "\t" << "call " << foreignName("_incref") << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __" << node->symbol()->type->name() << "_decref" << std::endl;
+		out_ << "\t" << "call " << foreignName("_decref") << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -592,15 +510,15 @@ void CodeGen::visit(LetNode* node)
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (!node->symbol()->type->isSimple())
+	if (node->symbol()->typeScheme->isBoxed())
 	{
 		out_ << "\t" << "push rax" << std::endl;
 
 		out_ << "\t" << "mov rdi, rax" << std::endl;
-		out_ << "\t" << "call __incref" << std::endl;
+		out_ << "\t" << "call " << foreignName("_incref") << std::endl;
 
 		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call __" << node->symbol()->type->name() << "_decref" << std::endl;
+		out_ << "\t" << "call " << foreignName("_decref") << std::endl;
 
 		out_ << "\t" << "pop rax" << std::endl;
 	}
@@ -618,34 +536,33 @@ void CodeGen::visit(MatchNode* node)
 	{
 		VariableSymbol* member = node->symbols().at(i);
 
-		if (!member->type->isSimple())
+		if (member->typeScheme->isBoxed())
 		{
 			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
-			out_ << "\t" << "call __" << member->type->name() << "_decref" << std::endl;
+			out_ << "\t" << "call " << foreignName("_decref") << std::endl;
 		}
 	}
 
 	out_ << "\t" << "pop rax" << std::endl;
 
-	// Move over each of the members of the constructor pattern
+	FunctionType* functionType = node->constructorSymbol()->typeScheme->type()->get<FunctionType>();
+	auto& constructor = functionType->output()->valueConstructors().front();
+
+	// Copy over each of the members of the constructor pattern
 	for (size_t i = 0; i < node->symbols().size(); ++i)
 	{
 		VariableSymbol* member = node->symbols().at(i);
+		size_t location = constructor->memberLocations().at(i);
 
-		out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
+		out_ << "\t" << "mov rdi, [rax + " << 8 * (location + 2) << "]" << std::endl;
 		out_ << "\t" << "mov " << access(member) << ", rdi" << std::endl;
 	}
 
 	// Increment references to the new variables
-	for (size_t i = 0; i < node->symbols().size(); ++i)
+	for (size_t i = 0; i < constructor->boxedMembers(); ++i)
 	{
-		VariableSymbol* member = node->symbols().at(i);
-
-		if (!member->type->isSimple())
-		{
-			out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 1) << "]" << std::endl;
-			out_ << "\t" << "call __incref" << std::endl;
-		}
+		out_ << "\t" << "mov rdi, [rax + " << 8 * (i + 2) << "]" << std::endl;
+		out_ << "\t" << "call " << foreignName("_incref") << std::endl;
 	}
 }
 
@@ -689,12 +606,12 @@ void CodeGen::visit(FunctionCallNode* node)
 		    out_ << "\t" << "add rsp, -8" << std::endl;
 		    out_ << "\t" << "push rbx" << std::endl;
 		    out_ << "\t" << "mov rdi, 0" << std::endl;
-		    out_ << "\t" << "call __die" << std::endl;
+		    out_ << "\t" << "call _" << foreignName("die") << std::endl;
 		    out_ << "\t" << "pop rbx" << std::endl;
 		    out_ << "\t" << "mov rsp, rbx" << std::endl;
 
 			out_ << good << ":" << std::endl;
-			out_ << "\t" << "mov rax, qword [rax + 8]" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 24]" << std::endl;
 		}
 		else if (node->target() == "tail")
 		{
@@ -711,12 +628,64 @@ void CodeGen::visit(FunctionCallNode* node)
 		    out_ << "\t" << "add rsp, -8" << std::endl;
 		    out_ << "\t" << "push rbx" << std::endl;
 		    out_ << "\t" << "mov rdi, 1" << std::endl;
-		    out_ << "\t" << "call __die" << std::endl;
+		    out_ << "\t" << "call _" << foreignName("die") << std::endl;
 		    out_ << "\t" << "pop rbx" << std::endl;
 		    out_ << "\t" << "mov rsp, rbx" << std::endl;
 
 			out_ << good << ":" << std::endl;
 			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+		}
+		else if (node->target() == "Nil")
+		{
+			out_ << "\t" << "mov rax, 0" << std::endl;
+		}
+		else if (node->target() == "null")
+		{
+			std::string finish = uniqueLabel();
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "cmp rax, 0" << std::endl;
+			out_ << "\t" << "je " << finish << std::endl;
+			out_ << "\t" << "mov rax, 1" << std::endl;
+			out_ << finish << ":" << std::endl;
+			out_ << "\t" << "xor rax, 1" << std::endl;
+		}
+		else if (node->target() == "+")
+		{
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+			out_ << "\t" << "add rax, qword [rbx + 16]" << std::endl;
+		}
+		else if (node->target() == "-")
+		{
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+			out_ << "\t" << "sub rax, qword [rbx + 16]" << std::endl;
+		}
+		else if (node->target() == "*")
+		{
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+			out_ << "\t" << "imul rax, qword [rbx + 16]" << std::endl;
+		}
+		else if (node->target() == "/")
+		{
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+			out_ << "\t" << "cqo" << std::endl;
+			out_ << "\t" << "idiv qword [rbx + 16]" << std::endl;
+		}
+		else if (node->target() == "%")
+		{
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+			out_ << "\t" << "cqo" << std::endl;
+			out_ << "\t" << "idiv qword [rbx + 16]" << std::endl;
+			out_ << "\t" << "mov rax, rdx" << std::endl;
 		}
 		else
 		{
@@ -739,7 +708,7 @@ void CodeGen::visit(FunctionCallNode* node)
 	    out_ << "\t" << "add rsp, -8" << std::endl;
 	    out_ << "\t" << "push rbx" << std::endl;
 
-	    out_ << "\t" << "call _" << mangle(node->target()) << std::endl;
+	    out_ << "\t" << "call " << foreignName(mangle(node->target())) << std::endl;
 
 	    // Undo the stack alignment
 	    out_ << "\t" << "pop rbx" << std::endl;

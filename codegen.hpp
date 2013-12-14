@@ -13,7 +13,6 @@ public:
 	CodeGen() : labels_(0), out_(std::cout) {}
 
 	virtual void visit(AssignNode* node);
-	virtual void visit(BinaryOperatorNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(BoolNode* node);
 	virtual void visit(ComparisonNode* node);
@@ -26,9 +25,7 @@ public:
 	virtual void visit(LetNode* node);
 	virtual void visit(MatchNode* node);
 	virtual void visit(LogicalNode* node);
-	virtual void visit(NilNode* node);
 	virtual void visit(NullaryNode* node);
-	virtual void visit(NullNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(WhileNode* node);
@@ -44,10 +41,13 @@ public:
 	std::string mangle(const std::string& name);
 
 	// Create the functions corresponding to a data type declaration
-	void createConstructors(DataDeclaration* dataDecl);
-	void createDestructors(DataDeclaration* dataDecl);
+	void createConstructor(ValueConstructor* constructor);
 
 private:
+	void decref(const VariableSymbol* symbol);
+
+	std::string foreignName(const std::string& name);
+
 	std::string uniqueLabel() { return std::string("__") + boost::lexical_cast<std::string>(labels_++); }
 	int labels_;
 	std::ostream& out_;
@@ -55,10 +55,9 @@ private:
 	// The name of the function currently being generated
 	std::string currentFunction_;
 
-	// Keep track of the function definitions so that we can walk through them after the main function
+	// Keep track of the function & data type definitions so that we can walk
+	// through them after the main function
 	std::vector<FunctionDefNode*> functionDefs_;
-
-	// Same for data declarations - we need to create constructors
 	std::vector<DataDeclaration*> dataDeclarations_;
 };
 

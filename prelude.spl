@@ -2,10 +2,10 @@
 
 -- Basic functions
 foreign read :: Int
-foreign print :: Int -> Void
+foreign print :: Int -> Unit
 
 -- List functions
-foreign Cons :: Int -> [Int] -> [Int]
+-- foreign Cons :: Int -> [Int] -> [Int]
 
 -- Tree functions
 foreign Node :: Int -> Tree -> Tree -> Tree
@@ -102,28 +102,28 @@ def Set.insert x set :: Int -> Tree -> Tree =
 
 def Set.findMin set :: Tree -> Int =
     -- TODO: Check for empty set and die
-    if null (left set) then
+    if null $ left set then
         return top set
     else
         return Set.findMin $ left set
 
 def Set.deleteMin set :: Tree -> Tree =
     -- TODO: Check for empty set and die
-    if null left set then
+    if null $ left set then
         return right set
     else
         return Set.balancedNode (top set) (Set.deleteMin $ left set) (right set)
 
 def Set.findMax set :: Tree -> Int =
     -- TODO: Check for empty set and die
-    if null right set then
+    if null $ right set then
         return top set
     else
         return Set.findMax $ right set
 
 def Set.deleteMax set :: Tree -> Tree =
     -- TODO: Check for empty set and die
-    if null right set then
+    if null $ right set then
         return left set
     else
         return Set.balancedNode (top set) (left set) (Set.deleteMax $ right set)
@@ -138,10 +138,10 @@ def Set.delete x set :: Int -> Tree -> Tree =
     else if x > value then
         return Set.balancedNode value (left set) (Set.delete x (right set))
     else -- x == value
-        if null right set then
-            return left
-        else if null left set then
-            return right
+        if null $right set then
+            return left set
+        else if null $ left set then
+            return right set
         else
             let newHead :: Int = Set.findMin $ right set
             return Set.balancedNode newHead (left set) (Set.deleteMin $ right set)
