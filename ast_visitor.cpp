@@ -25,12 +25,6 @@ void AstVisitor::visit(ProgramNode* node)
 	}
 }
 
-void AstVisitor::visit(ComparisonNode* node)
-{
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
-}
-
 void AstVisitor::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);

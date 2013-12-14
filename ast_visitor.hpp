@@ -7,7 +7,6 @@
 class AssignNode;
 class BlockNode;
 class BoolNode;
-class ComparisonNode;
 class DataDeclaration;
 class ExternalFunctionCallNode;
 class ForeignDeclNode;
@@ -33,7 +32,6 @@ public:
 	// Default implementations do nothing but visit each child
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
-	virtual void visit(ComparisonNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(IfElseNode* node);

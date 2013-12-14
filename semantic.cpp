@@ -660,17 +660,6 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 	}
 }
 
-void SemanticAnalyzer::visit(ComparisonNode* node)
-{
-    node->lhs()->accept(this);
-    TypeInference::unify(node->lhs()->type(), TypeTable::Int, node);
-
-    node->rhs()->accept(this);
-    TypeInference::unify(node->rhs()->type(), TypeTable::Int, node);
-
-    node->setType(TypeTable::Bool);
-}
-
 void SemanticAnalyzer::visit(LogicalNode* node)
 {
     node->lhs()->accept(this);

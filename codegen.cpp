@@ -322,54 +322,6 @@ void CodeGen::visit(ProgramNode* node)
 	}
 }
 
-void CodeGen::visit(ComparisonNode* node)
-{
-	node->lhs()->accept(this);
-	out_ << "\t" << "push rax" << std::endl;
-	node->rhs()->accept(this);
-	out_ << "\t" << "cmp qword [rsp], rax" << std::endl;
-
-	std::string trueBranch = uniqueLabel();
-	std::string endLabel = uniqueLabel();
-
-	switch(node->op())
-	{
-		case ComparisonNode::kGreater:
-			out_ << "\t" << "jg near " << trueBranch << std::endl;
-			break;
-
-		case ComparisonNode::kLess:
-			out_ << "\t" << "jl near " << trueBranch << std::endl;
-			break;
-
-		case ComparisonNode::kEqual:
-			out_ << "\t" << "je near " << trueBranch << std::endl;
-			break;
-
-		case ComparisonNode::kGreaterOrEqual:
-			out_ << "\t" << "jge near " << trueBranch << std::endl;
-			break;
-
-		case ComparisonNode::kLessOrEqual:
-			out_ << "\t" << "jle near " << trueBranch << std::endl;
-			break;
-
-		case ComparisonNode::kNotEqual:
-			out_ << "\t" << "jne near " << trueBranch << std::endl;
-			break;
-
-		default: assert(false);
-
-	}
-
-	out_ << "\t" << "mov rax, 0" << std::endl;
-	out_ << "\t" << "jmp " << endLabel << std::endl;
-	out_ << trueBranch << ":" << std::endl;
-	out_ << "\t" << "mov rax, 1" << std::endl;
-	out_ << endLabel << ":" << std::endl;
-	out_ << "\t" << "pop rbx" << std::endl;
-}
-
 void CodeGen::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);

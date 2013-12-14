@@ -15,7 +15,6 @@ public:
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(BoolNode* node);
-	virtual void visit(ComparisonNode* node);
 	virtual void visit(DataDeclaration* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(FunctionDefNode* node);

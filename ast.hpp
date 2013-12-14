@@ -113,27 +113,6 @@ protected:
 	std::unique_ptr<ExpressionNode> rhs_;
 };
 
-class ComparisonNode : public ExpressionNode
-{
-public:
-	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual, kNotEqual };
-
-	ComparisonNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: lhs_(lhs), op_(op), rhs_(rhs)
-	{}
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	ExpressionNode* lhs() { return lhs_.get(); }
-	Operator op() { return op_; }
-	ExpressionNode* rhs() { return rhs_.get(); }
-
-protected:
-	std::unique_ptr<ExpressionNode> lhs_;
-	Operator op_;
-	std::unique_ptr<ExpressionNode> rhs_;
-};
-
 class NullaryNode : public ExpressionNode
 {
 public:
