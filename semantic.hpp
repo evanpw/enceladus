@@ -38,6 +38,7 @@ public:
     // Internal nodes
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
+    virtual void visit(ComparisonNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);

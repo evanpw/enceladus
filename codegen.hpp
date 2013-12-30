@@ -15,6 +15,7 @@ public:
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(BoolNode* node);
+	virtual void visit(ComparisonNode* node);
 	virtual void visit(DataDeclaration* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(FunctionDefNode* node);
@@ -39,12 +40,11 @@ public:
 	// Converts periods to underscores to make interfacing with C programs easier
 	std::string mangle(const std::string& name);
 
-private:
-	// Helper functions that build commonly-occuring or complicated code
-	void comparisonOperator(const std::string& op);
-	void arithmeticOperator(const std::string& op);
-	void decref(const VariableSymbol* symbol);
+	// Create the functions corresponding to a data type declaration
 	void createConstructor(ValueConstructor* constructor);
+
+private:
+	void decref(const VariableSymbol* symbol);
 
 	std::string foreignName(const std::string& name);
 

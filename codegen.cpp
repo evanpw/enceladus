@@ -106,7 +106,7 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 			else
 			{
 				result.push_back(foreignName(name));
-			}				
+			}
 		}
 	}
 
@@ -322,6 +322,54 @@ void CodeGen::visit(ProgramNode* node)
 	}
 }
 
+void CodeGen::visit(ComparisonNode* node)
+{
+	node->lhs()->accept(this);
+	out_ << "\t" << "push rax" << std::endl;
+	node->rhs()->accept(this);
+	out_ << "\t" << "cmp qword [rsp], rax" << std::endl;
+
+	std::string trueBranch = uniqueLabel();
+	std::string endLabel = uniqueLabel();
+
+	switch(node->op())
+	{
+		case ComparisonNode::kGreater:
+			out_ << "\t" << "jg near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kLess:
+			out_ << "\t" << "jl near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kEqual:
+			out_ << "\t" << "je near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kGreaterOrEqual:
+			out_ << "\t" << "jge near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kLessOrEqual:
+			out_ << "\t" << "jle near " << trueBranch << std::endl;
+			break;
+
+		case ComparisonNode::kNotEqual:
+			out_ << "\t" << "jne near " << trueBranch << std::endl;
+			break;
+
+		default: assert(false);
+
+	}
+
+	out_ << "\t" << "mov rax, 01b" << std::endl;
+	out_ << "\t" << "jmp " << endLabel << std::endl;
+	out_ << trueBranch << ":" << std::endl;
+	out_ << "\t" << "mov rax, 11b" << std::endl;
+	out_ << endLabel << ":" << std::endl;
+	out_ << "\t" << "pop rbx" << std::endl;
+}
+
 void CodeGen::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);
@@ -367,19 +415,19 @@ void CodeGen::visit(NullaryNode* node)
 
 void CodeGen::visit(IntNode* node)
 {
-	out_ << "\t" << "mov rdi, " << node->value() << std::endl;
-	out_ << "\t" << "call " << foreignName("_Int") << std::endl;
+	out_ << "\t" << "mov rax, " << node->value() << std::endl;
+	out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
 }
 
 void CodeGen::visit(BoolNode* node)
 {
 	if (node->value())
 	{
-		out_ << "\t" << "mov rax, 1" << std::endl;
+		out_ << "\t" << "mov rax, 11b" << std::endl;
 	}
 	else
 	{
-		out_ << "\t" << "mov rax, 0" << std::endl;
+		out_ << "\t" << "mov rax, 01b" << std::endl;
 	}
 }
 
@@ -397,8 +445,8 @@ void CodeGen::visit(IfNode* node)
 
 	std::string endLabel = uniqueLabel();
 
-	out_ << "\t" << "cmp rax, 0" << std::endl;
-	out_ << "\t" << "je near " << endLabel << std::endl;
+	out_ << "\t" << "and rax, 10b" << std::endl;
+	out_ << "\t" << "jz near " << endLabel << std::endl;
 	node->body()->accept(this);
 	out_ << endLabel << ":" << std::endl;
 }
@@ -410,8 +458,8 @@ void CodeGen::visit(IfElseNode* node)
 	std::string elseLabel = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 
-	out_ << "\t" << "cmp rax, 0" << std::endl;
-	out_ << "\t" << "je near " << elseLabel << std::endl;
+	out_ << "\t" << "and rax, 10b" << std::endl;
+	out_ << "\t" << "jz near " << elseLabel << std::endl;
 	node->body()->accept(this);
 	out_ << "\t" << "jmp " << endLabel << std::endl;
 	out_ << elseLabel << ":" << std::endl;
@@ -427,8 +475,8 @@ void CodeGen::visit(WhileNode* node)
 	out_ << beginLabel << ":" << std::endl;
 	node->condition()->accept(this);
 
-	out_ << "\t" << "cmp rax, 0" << std::endl;
-	out_ << "\t" << "je near " << endLabel << std::endl;
+	out_ << "\t" << "and rax, 10b" << std::endl;
+	out_ << "\t" << "jz near " << endLabel << std::endl;
 	node->body()->accept(this);
 
 	out_ << "\t" << "jmp " << beginLabel << std::endl;
@@ -529,115 +577,6 @@ void CodeGen::visit(DataDeclaration* node)
 	dataDeclarations_.push_back(node);
 }
 
-// Assumes that the two arguments (boxed integers) have been pushed onto the
-// stack already
-void CodeGen::comparisonOperator(const std::string& op)
-{
-	out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_incref") << std::endl;
-	out_ << "\t" << "mov rdi, qword [rsp + 8]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_incref") << std::endl;
-
-	out_ << "\t" << "mov rax, qword [rsp]" << std::endl;
-	out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
-	out_ << "\t" << "mov rbx, qword [rsp + 8]" << std::endl;
-	out_ << "\t" << "mov rbx, qword [rbx + 16]" << std::endl;
-
-	out_ << "\t" << "cmp rax, rbx" << std::endl;
-
-	std::string trueBranch = uniqueLabel();
-	std::string endLabel = uniqueLabel();
-
-	if (op == ">")
-	{
-		out_ << "\t" << "jg near " << trueBranch << std::endl;
-	}
-	else if (op == "<")
-	{
-		out_ << "\t" << "jl near " << trueBranch << std::endl;
-	}
-	else if (op == ">=")
-	{
-		out_ << "\t" << "jge near " << trueBranch << std::endl;
-	}
-	else if (op == "<=")
-	{
-		out_ << "\t" << "jle near " << trueBranch << std::endl;
-	}
-	else if (op == "==")
-	{
-		out_ << "\t" << "je near " << trueBranch << std::endl;
-	}
-	else if (op == "!=")
-	{
-		out_ << "\t" << "jne near " << trueBranch << std::endl;
-	}
-
-	out_ << "\t" << "mov rax, 0" << std::endl;
-	out_ << "\t" << "jmp " << endLabel << std::endl;
-	out_ << trueBranch << ":" << std::endl;
-	out_ << "\t" << "mov rax, 1" << std::endl;
-	out_ << endLabel << ":" << std::endl;
-
-	out_ << "\t" << "push rax" << std::endl;
-	out_ << "\t" << "mov rdi, qword [rsp + 8]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_decref") << std::endl;
-	out_ << "\t" << "mov rdi, qword [rsp + 16]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_decref") << std::endl;
-	out_ << "\t" << "pop rax" << std::endl;
-	out_ << "\t" << "add rsp, 16" << std::endl;
-}
-
-// Assumes that the two arguments (boxed integers) have been pushed onto the
-// stack already
-void CodeGen::arithmeticOperator(const std::string& op)
-{
-	out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_incref") << std::endl;
-	out_ << "\t" << "mov rdi, qword [rsp + 8]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_incref") << std::endl;
-
-	out_ << "\t" << "mov rax, qword [rsp]" << std::endl;
-	out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
-	out_ << "\t" << "mov rbx, qword [rsp + 8]" << std::endl;
-	out_ << "\t" << "mov rbx, qword [rbx + 16]" << std::endl;
-
-	if (op == "+")
-	{
-		out_ << "\t" << "add rax, rbx" << std::endl;
-	}
-	else if (op == "-")
-	{
-		out_ << "\t" << "sub rax, rbx" << std::endl;
-	}
-	else if (op == "*")
-	{
-		out_ << "\t" << "imul rax, rbx" << std::endl;
-	}
-	else if (op == "/")
-	{
-		out_ << "\t" << "cqo" << std::endl;
-		out_ << "\t" << "idiv rbx" << std::endl;
-	}
-	else if (op == "mod")
-	{
-		out_ << "\t" << "cqo" << std::endl;
-		out_ << "\t" << "idiv rbx" << std::endl;
-		out_ << "\t" << "mov rax, rdx" << std::endl;
-	}
-
-	out_ << "\t" << "mov rdi, rax" << std::endl;
-	out_ << "\t" << "call " << foreignName("_Int") << std::endl;
-
-	out_ << "\t" << "push rax" << std::endl;
-	out_ << "\t" << "mov rdi, qword [rsp + 8]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_decref") << std::endl;
-	out_ << "\t" << "mov rdi, qword [rsp + 16]" << std::endl;
-	out_ << "\t" << "call " << foreignName("_decref") << std::endl;
-	out_ << "\t" << "pop rax" << std::endl;
-	out_ << "\t" << "add rsp, 16" << std::endl;
-}
-
 void CodeGen::visit(FunctionCallNode* node)
 {
 	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
@@ -651,7 +590,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		if (node->target() == "not")
 		{
 			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "xor rax, 1" << std::endl;
+			out_ << "\t" << "xor rax, 10b" << std::endl;
 		}
 		else if (node->target() == "head")
 		{
@@ -707,21 +646,53 @@ void CodeGen::visit(FunctionCallNode* node)
 			out_ << "\t" << "pop rax" << std::endl;
 			out_ << "\t" << "cmp rax, 0" << std::endl;
 			out_ << "\t" << "je " << finish << std::endl;
-			out_ << "\t" << "mov rax, 1" << std::endl;
+			out_ << "\t" << "mov rax, 11b" << std::endl;
 			out_ << finish << ":" << std::endl;
-			out_ << "\t" << "xor rax, 1" << std::endl;
+			out_ << "\t" << "xor rax, 10b" << std::endl;
 		}
-		else if (node->target() == "+" || node->target() == "-" ||
-			     node->target() == "*" || node->target() == "/" ||
-			     node->target() == "mod")
+		else if (node->target() == "+")
 		{
-			arithmeticOperator(node->target());
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "xor rbx, 1" << std::endl;
+			out_ << "\t" << "add rax, rbx" << std::endl;
 		}
-		else if (node->target() == ">" || node->target() == "<" ||
-			     node->target() == "<=" || node->target() == ">=" ||
-			     node->target() == "==" || node->target() == "!=")
+		else if (node->target() == "-")
 		{
-			comparisonOperator(node->target());
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "xor rbx, 1" << std::endl;
+			out_ << "\t" << "sub rax, rbx" << std::endl;
+		}
+		else if (node->target() == "*")
+		{
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "shr rax, 1" << std::endl;
+			out_ << "\t" << "shr rbx, 1" << std::endl;
+			out_ << "\t" << "imul rax, rbx" << std::endl;
+			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
+		}
+		else if (node->target() == "/")
+		{
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "shr rax, 1" << std::endl;
+			out_ << "\t" << "shr rbx, 1" << std::endl;
+			out_ << "\t" << "cqo" << std::endl;
+			out_ << "\t" << "idiv rbx" << std::endl;
+			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
+		}
+		else if (node->target() == "%")
+		{
+			out_ << "\t" << "pop rax" << std::endl;
+			out_ << "\t" << "pop rbx" << std::endl;
+			out_ << "\t" << "shr rax, 1" << std::endl;
+			out_ << "\t" << "shr rbx, 1" << std::endl;
+			out_ << "\t" << "cqo" << std::endl;
+			out_ << "\t" << "idiv rbx" << std::endl;
+			out_ << "\t" << "mov rax, rdx" << std::endl;
+			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
 		}
 		else
 		{

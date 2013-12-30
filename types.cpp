@@ -6,7 +6,7 @@
 #include <cassert>
 #include <sstream>
 
-std::shared_ptr<Type> TypeTable::Int = BaseType::create("Int", false);
+std::shared_ptr<Type> TypeTable::Int = BaseType::create("Int", true);
 std::shared_ptr<Type> TypeTable::Bool = BaseType::create("Bool", true);
 std::shared_ptr<Type> TypeTable::Unit = BaseType::create("Unit", true);
 

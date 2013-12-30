@@ -180,15 +180,6 @@ void TypeInference::bindVariable(const std::shared_ptr<Type>& variable, const st
         inferenceError(node, ss.str());
     }
 
-    // Polymorphic type variables can be bound only to lifted (i.e., boxed) types
-    TypeVariable* typeVariable = variable->get<TypeVariable>();
-    if (typeVariable->isPolymorphic() && !value->isBoxed())
-    {
-        std::stringstream ss;
-        ss << "type variable " << variable->name() << " cannot be bound to unboxed type " << value->name();
-        inferenceError(node, ss.str());
-    }
-
     // And if these check out, make the substitution
     *variable = *value;
 }

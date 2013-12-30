@@ -67,48 +67,33 @@ void _die(long errorCode)
     exit(1);
 }
 
-//// Ints //////////////////////////////////////////////////////////////////////
-long* _Int(long value)
-{
-    long* newInt = (long*)malloc(24);
-
-    *(newInt) = 0;
-    *(newInt + 1) = (0L << 32) + 1;
-    *(newInt + 2) = value;
-
-    return newInt;
-}
-
 //// I/O ///////////////////////////////////////////////////////////////////////
 
-long* read()
+long read()
 {
     long result;
     scanf("%ld", &result);
 
-    return _Int(result);
+    return (result << 1) + 1;
 }
 
-void print(long* value)
+void print(long value)
 {
-    long a = *(value + 2);
-    printf("%ld\n", a);
+    printf("%ld\n", (value >> 1));
 }
 
 //// Reference counting ////////////////////////////////////////////////////////
 
-long* _incref(long* p)
+void _incref(long* p)
 {
-    if (p == NULL) return p;
+    if (p == NULL || ((long)p & 0x3)) return;
 
     ++(*p);
-
-    return p;
 }
 
 long _decrefNoFree(long* p)
 {
-    if (p == NULL) return 1;
+    if (p == NULL || ((long)p & 0x3)) return 1;
 
     --(*p);
 
@@ -122,7 +107,7 @@ long _decrefNoFree(long* p)
 
 void _decref(long* object)
 {
-    if (object == NULL) return;
+    if (object == NULL || ((long)object & 0x3)) return;
 
     if (_decrefNoFree(object) == 0)
     {
@@ -169,7 +154,11 @@ long* Node(long value, long* left, long* right)
     *(newTree + 2) = (long)left;     // Left child
     *(newTree + 3) = (long)right;    // Right child
     *(newTree + 4) = value;          // Value of this node
-    *(newTree + 5) = 1 + count(left) + count(right); // Nodes in this subtree
+
+    long leftCount = count(left) >> 1;
+    long rightCount = count(right) >> 1;
+    long myCount = ((1 + leftCount + rightCount) << 1) + 1;
+    *(newTree + 5) = myCount;        // Nodes in this subtree
 
     _incref(left);
     _incref(right);

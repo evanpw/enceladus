@@ -245,51 +245,27 @@ expression: ident '$' expression
 		}
 	| expression '>' expression
 		{
-			ArgList* argList = new ArgList;
-			argList->emplace_back($1);
-			argList->emplace_back($3);
-
-			$$ = new FunctionCallNode(">", argList);
+			$$ = new ComparisonNode($1, ComparisonNode::kGreater, $3);
 		}
 	| expression '<' expression
 		{
-			ArgList* argList = new ArgList;
-			argList->emplace_back($1);
-			argList->emplace_back($3);
-
-			$$ = new FunctionCallNode("<", argList);
+			$$ = new ComparisonNode($1, ComparisonNode::kLess, $3);
 		}
 	| expression GE expression
 		{
-			ArgList* argList = new ArgList;
-			argList->emplace_back($1);
-			argList->emplace_back($3);
-
-			$$ = new FunctionCallNode(">=", argList);
+			$$ = new ComparisonNode($1, ComparisonNode::kGreaterOrEqual, $3);
 		}
 	| expression LE expression
 		{
-			ArgList* argList = new ArgList;
-			argList->emplace_back($1);
-			argList->emplace_back($3);
-
-			$$ = new FunctionCallNode("<=", argList);
+			$$ = new ComparisonNode($1, ComparisonNode::kLessOrEqual, $3);
 		}
 	| expression EQUALS expression
 		{
-			ArgList* argList = new ArgList;
-			argList->emplace_back($1);
-			argList->emplace_back($3);
-
-			$$ = new FunctionCallNode("==", argList);
+			$$ = new ComparisonNode($1, ComparisonNode::kEqual, $3);
 		}
 	| expression NE expression
 		{
-			ArgList* argList = new ArgList;
-			argList->emplace_back($1);
-			argList->emplace_back($3);
-
-			$$ = new FunctionCallNode("!=", argList);
+			$$ = new ComparisonNode($1, ComparisonNode::kNotEqual, $3);
 		}
 	| expression '+' expression
 		{
@@ -329,7 +305,7 @@ expression: ident '$' expression
 			argList->emplace_back($1);
 			argList->emplace_back($3);
 
-			$$ = new FunctionCallNode("mod", argList);
+			$$ = new FunctionCallNode("%", argList);
 		}
 	| expression ':' expression
 		{
