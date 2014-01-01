@@ -425,8 +425,7 @@ void CodeGen::visit(NullaryNode* node)
 
 void CodeGen::visit(IntNode* node)
 {
-	out_ << "\t" << "mov rax, " << node->value() << std::endl;
-	out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
+	out_ << "\t" << "mov rax, " << (2 * node->value() + 1) << std::endl;
 }
 
 void CodeGen::visit(BoolNode* node)
