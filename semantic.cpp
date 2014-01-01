@@ -298,7 +298,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 	// TODO: Generic functions
 
-	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
+	FunctionSymbol* symbol = new FunctionSymbol(name, node, node);
 	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
@@ -399,7 +399,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 		return;
 	}
 
-	FunctionSymbol* symbol = new FunctionSymbol(name, node, _enclosingFunction);
+	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
 	symbol->typeScheme = TypeScheme::trivial(FunctionType::create(paramTypes, returnType));
 	symbol->isForeign = true;
 	symbol->isExternal = true;

@@ -19,17 +19,13 @@ Todo
 * Allow function declarations and definitions to be separate
 * Use a freeing list to avoid recursive deallocations in the reference counting
 * Fix all of the const correctness
-* Don't include unused functions
 * Add algebraic data types, and change List and Tree to behave nicely
 * Allow polymorphic function definitions
 * Fix null to have type [a] -> Bool (currently used as Tree -> Bool in prelude)
-* Make integers boxed and reinstate check that variables are bound only to
-  boxed types.
-* Add tagged pointers so that unboxed integers are fast
 * Add an intermediate representation step between the AST and assembly language
 * Allow in-language definitions of parameterized types
 * Define equality operators for all types
 * Better syntax for pattern matching
 * Recursive pattern matching -> Memo (Pair x y) n
 * Enhanced pattern matching for lists -> x : xs
-* Fix for loops for lists of non-Int type
+* Better I/O capabilities

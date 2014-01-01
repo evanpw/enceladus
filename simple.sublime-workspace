@@ -11,6 +11,14 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "type_inference.cpp",
+			"settings":
+			{
+				"buffer_size": 7284,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -47,16 +55,16 @@
 	},
 	"file_history":
 	[
+		"/Users/evanpw/Workspace/simple/types.cpp",
+		"/Users/evanpw/Workspace/simple/TODO",
 		"/Users/evanpw/Workspace/simple/codegen.cpp",
 		"/Users/evanpw/Workspace/simple/semantic.cpp",
 		"/Users/evanpw/Workspace/simple/types.hpp",
-		"/Users/evanpw/Workspace/simple/types.cpp",
 		"/Users/evanpw/Workspace/simple/library.c",
 		"/Users/evanpw/Workspace/simple/build/euler15.asm",
 		"/Users/evanpw/Workspace/simple/build/euler9.asm",
 		"/Users/evanpw/Workspace/simple/testing/test.spl",
 		"/Users/evanpw/Workspace/simple/build/test.asm",
-		"/Users/evanpw/Workspace/simple/TODO",
 		"/Users/evanpw/Dropbox/Progress/Weight.csv",
 		"/Users/evanpw/Workspace/simple/simplec.cpp",
 		"/Users/evanpw/Workspace/simple/ast.hpp",
@@ -337,8 +345,39 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "type_inference.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7284,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								244,
+								244
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -373,6 +412,10 @@
 		]
 	},
 	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
 	"project": "simple.sublime-project",
 	"replace":
 	{
@@ -384,6 +427,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"type_inference.cpp",
+				"type_inference.cpp"
+			],
 			[
 				"makefile",
 				"Makefile"

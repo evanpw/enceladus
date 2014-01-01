@@ -52,11 +52,12 @@ struct VariableSymbol : public Symbol
 
 struct FunctionSymbol : public Symbol
 {
-    FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
-    : Symbol(name, kFunction, node, enclosingFunction)
+    FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition)
+    : Symbol(name, kFunction, node, nullptr)
     , isForeign(false)
     , isExternal(false)
     , isBuiltin(false)
+    , definition(definition)
     {}
 
     // C argument-passing style
@@ -65,6 +66,8 @@ struct FunctionSymbol : public Symbol
     bool isExternal;
 
     bool isBuiltin;
+
+    FunctionDefNode* definition;
 };
 
 #endif

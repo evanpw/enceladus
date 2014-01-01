@@ -217,8 +217,12 @@ void CodeGen::visit(ProgramNode* node)
 	out_ << "\t" << "ret" << std::endl;
 
 	// All other functions
-	for (FunctionDefNode* function : functionDefs_)
+	while (!referencedFunctions_.empty())
 	{
+		FunctionDefNode* function = *(referencedFunctions_.begin());
+		referencedFunctions_.erase(referencedFunctions_.begin());
+		visitedFunctions_.insert(function);
+
 		currentFunction_ = function->name();
 		out_ << std::endl;
 		out_ << "_" << mangle(function->name()) << ":" << std::endl;
@@ -408,6 +412,12 @@ void CodeGen::visit(NullaryNode* node)
 		}
 		else
 		{
+			if (functionSymbol->definition &&
+				visitedFunctions_.find(functionSymbol->definition) == visitedFunctions_.end())
+			{
+				referencedFunctions_.insert(functionSymbol->definition);
+			}
+
 			out_ << "\t" << "call _" << mangle(node->name()) << std::endl;
 		}
 	}
@@ -569,7 +579,6 @@ void CodeGen::visit(MatchNode* node)
 
 void CodeGen::visit(FunctionDefNode* node)
 {
-	functionDefs_.push_back(node);
 }
 
 void CodeGen::visit(DataDeclaration* node)
@@ -668,8 +677,8 @@ void CodeGen::visit(FunctionCallNode* node)
 		{
 			out_ << "\t" << "pop rax" << std::endl;
 			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "shr rax, 1" << std::endl;
-			out_ << "\t" << "shr rbx, 1" << std::endl;
+			out_ << "\t" << "sar rax, 1" << std::endl;
+			out_ << "\t" << "sar rbx, 1" << std::endl;
 			out_ << "\t" << "imul rax, rbx" << std::endl;
 			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
 		}
@@ -677,8 +686,8 @@ void CodeGen::visit(FunctionCallNode* node)
 		{
 			out_ << "\t" << "pop rax" << std::endl;
 			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "shr rax, 1" << std::endl;
-			out_ << "\t" << "shr rbx, 1" << std::endl;
+			out_ << "\t" << "sar rax, 1" << std::endl;
+			out_ << "\t" << "sar rbx, 1" << std::endl;
 			out_ << "\t" << "cqo" << std::endl;
 			out_ << "\t" << "idiv rbx" << std::endl;
 			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
@@ -687,8 +696,8 @@ void CodeGen::visit(FunctionCallNode* node)
 		{
 			out_ << "\t" << "pop rax" << std::endl;
 			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "shr rax, 1" << std::endl;
-			out_ << "\t" << "shr rbx, 1" << std::endl;
+			out_ << "\t" << "sar rax, 1" << std::endl;
+			out_ << "\t" << "sar rbx, 1" << std::endl;
 			out_ << "\t" << "cqo" << std::endl;
 			out_ << "\t" << "idiv rbx" << std::endl;
 			out_ << "\t" << "mov rax, rdx" << std::endl;
@@ -723,6 +732,12 @@ void CodeGen::visit(FunctionCallNode* node)
 	}
 	else
 	{
+		if (node->symbol()->definition &&
+			visitedFunctions_.find(node->symbol()->definition) == visitedFunctions_.end())
+		{
+			referencedFunctions_.insert(node->symbol()->definition);
+		}
+
 		out_ << "\t" << "call _" << mangle(node->target()) << std::endl;
 
 		size_t args = node->arguments().size();

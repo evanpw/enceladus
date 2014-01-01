@@ -3,6 +3,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <iostream>
+#include <set>
 #include <vector>
 #include "ast.hpp"
 #include "ast_visitor.hpp"
@@ -55,9 +56,14 @@ private:
 	// The name of the function currently being generated
 	std::string currentFunction_;
 
+	// Keep track of referenced and visited functions so that we generate code
+	// only for those functions referenced directly or indirectly by the main
+	// function
+	std::set<FunctionDefNode*> visitedFunctions_;
+	std::set<FunctionDefNode*> referencedFunctions_;
+
 	// Keep track of the function & data type definitions so that we can walk
 	// through them after the main function
-	std::vector<FunctionDefNode*> functionDefs_;
 	std::vector<DataDeclaration*> dataDeclarations_;
 };
 

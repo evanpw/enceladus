@@ -5,15 +5,12 @@ let memo = []
 def searchMemo p :: Pair -> Int =
     let Pair x y = p
 
-    let memo' = memo
-    while not $ null memo' do
-        let Memo p' count = head memo'
+    for m in memo do
+        let Memo p' count = m
         let Pair x' y' = p'
 
         if x == x' and y == y' then
             return count
-
-        memo' = tail memo'
 
     return -1
 
