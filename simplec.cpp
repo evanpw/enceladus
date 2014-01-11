@@ -29,7 +29,7 @@ extern "C" int yywrap()
 		yyin = mainFile;
 
 		lastFile = true;
-		yylineno = 0;
+		yylineno = 1;
 		yycolumn = 0;
 
 		return 0;
