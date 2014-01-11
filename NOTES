@@ -1,0 +1,7 @@
+* Values of type Int or Bool are tagged, meaning that the least-significant bit
+  is always set to 1, in order to distinguish these types from pointers at
+  run-time (useful for polymorphic functions). All pointers, on the other hand,
+  should have the two least-significant bits set to 0 (i.e., they should be
+  divisible by 4), which is true at least for the gcc implementation of malloc.
+
+* True = 11b, False = 01b
