@@ -290,25 +290,22 @@ private:
 class TypeVariable : public TypeImpl
 {
 public:
-    static std::shared_ptr<Type> create(bool polymorphic = false)
+    static std::shared_ptr<Type> create()
     {
-        return std::make_shared<Type>(new TypeVariable(polymorphic));
+        return std::make_shared<Type>(new TypeVariable);
     }
 
     virtual bool isBoxed() const { return true; }
     virtual std::string name() const;
 
-    // Was this type variable introduced by instantiating a quantified type
-    // variable? If so, it can be bound only to a lifted type
-    bool isPolymorphic () const { return _polymorphic; }
+    int index() const { return _index; }
 
 private:
-    TypeVariable(bool polymorphic)
-    : TypeImpl(ttVariable), _index(_count++), _polymorphic(polymorphic)
+    TypeVariable()
+    : TypeImpl(ttVariable), _index(_count++)
     {}
 
     int _index;
-    bool _polymorphic;
     static int _count;
 };
 

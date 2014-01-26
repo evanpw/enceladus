@@ -1,0 +1,16 @@
+def drop n xs =
+    if n == 0 then
+        return xs
+    else
+        return drop (n - 1) (tail xs)
+
+let xs = 1 : 2 : 3 : 4 : []
+let ys = drop 2 xs
+let n = head ys
+
+let zs = True : True : True : False : False : False : []
+let us = drop n zs
+if head us then
+   print -1
+else
+   print 1

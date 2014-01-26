@@ -58,7 +58,23 @@ private:
     void injectSymbols(ProgramNode* node);
 
     ProgramNode* root_;
-	FunctionDefNode* _enclosingFunction;
+    FunctionDefNode* _enclosingFunction;
+
+private:
+    std::shared_ptr<Type> newVariable();
+    std::map<TypeVariable*, std::vector<std::shared_ptr<Type>>> _variables;
+
+    static void inferenceError(AstNode* node, const std::string& msg);
+
+    static bool occurs(TypeVariable* variable, const std::shared_ptr<Type>& value);
+    void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
+    void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
+
+    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<Scope*>& scopes);
+    std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);
+    std::shared_ptr<Type> instantiate(TypeScheme* scheme);
+
+    static std::set<TypeVariable*> getFreeVars(Symbol* symbol);
 };
 
 class TypeInferenceError : public std::exception
@@ -81,17 +97,7 @@ private:
 class TypeInference
 {
 public:
-    static void inferenceError(AstNode* node, const std::string& msg);
 
-    static bool occurs(TypeVariable* variable, const std::shared_ptr<Type>& value);
-    static void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
-    static void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
-
-    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<Scope*>& scopes);
-    static std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);
-    static std::shared_ptr<Type> instantiate(TypeScheme* scheme);
-
-    static std::set<TypeVariable*> getFreeVars(Symbol* symbol);
 };
 
 #endif

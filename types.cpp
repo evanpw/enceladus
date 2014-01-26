@@ -233,6 +233,9 @@ std::string TypeVariable::name() const
 ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& members)
 : name_(name), members_(members)
 {
+    boxedMembers_ = 0;
+    unboxedMembers_ = 0;
+
     // First pass -> just count the number of boxed / unboxed members
     for (size_t i = 0; i < members.size(); ++i)
     {

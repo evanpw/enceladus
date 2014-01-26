@@ -34,3 +34,11 @@ void Scope::insert(Symbol* symbol)
 
 	symbols_[symbol->name].reset(symbol);
 }
+
+Symbol* Scope::release(const std::string& name)
+{
+	Symbol* symbol = symbols_[name].release();
+	symbols_.erase(name);
+
+	return symbol;
+}

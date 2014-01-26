@@ -40,7 +40,7 @@ void yyerror(const char* msg);
 %type<block> statement_list
 %type<params> param_list parameters
 %type<arguments> arg_list
-%type<typeDecl> typedecl
+%type<typeDecl> typedecl optionaltype
 %type<str> ident
 %type<typeName> type
 %type<constructorSpec> constructor_spec
@@ -149,9 +149,9 @@ statement: IF expression THEN suite
 
 			$$ = new AssignNode($1, new FunctionCallNode("/", argList));
 		}
-	| DEF ident parameters DCOLON typedecl '=' suite
+	| DEF ident parameters optionaltype '=' suite
 		{
-			$$ = new FunctionDefNode($2, $7, $3, $5);
+			$$ = new FunctionDefNode($2, $6, $3, $4);
 		}
 	| FOREIGN ident parameters DCOLON typedecl EOL
 		{
@@ -174,6 +174,15 @@ constructor_spec: UIDENT
 		{
 			$1->append($2);
 			$$ = $1;
+		}
+
+optionaltype: /* empty */
+		{
+			$$ = nullptr;
+		}
+	| DCOLON typedecl
+		{
+			$$ = $2;
 		}
 
 typedecl: type
