@@ -25,6 +25,7 @@ $platform/build.sh euler13 > /dev/null && value=$(cat testing/euler13.txt | buil
 
 testing/test.sh $platform euler14 837799 || echo "Project Euler 13 failed!"
 testing/test.sh $platform euler15 137846528820 || echo "Project Euler 15 failed!"
+testing/test.sh $platform euler16 1378465288201366 || echo "Project Euler 16 failed!"
 
 testing/test.sh $platform poly 4 || echo "Polymorphism test failed!"
 testing/test.sh $platform poly2 1 || echo "Polymorphism test 2 failed!"
