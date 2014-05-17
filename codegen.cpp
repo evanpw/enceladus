@@ -315,7 +315,7 @@ void CodeGen::visit(ProgramNode* node)
 		createConstructor(dataDeclaration->valueConstructor());
 	}
 
-	// Declare global variables in the data segment
+	// Declare global variables and string literalsin the data segment
 	out_ << std::endl<< "section .data" << std::endl;
 	for (auto& i : topScope()->symbols())
 	{
@@ -323,6 +323,16 @@ void CodeGen::visit(ProgramNode* node)
 		{
 			out_ << "_" << mangle(i.second->name) << ": dq 0" << std::endl;
 		}
+	}
+
+	for (StringNode* node : stringLiterals_)
+	{
+		out_ << node->name() << ":" << std::endl;
+		out_ << "dq 1" << std::endl;
+		out_ << "dd 1" << std::endl;
+		out_ << "dd 0" << std::endl;
+		out_ << "dq " << (node->value().length() << 1) + 1 << std::endl;
+		out_ << "db \"" << node->value() << "\", 0" << std::endl;
 	}
 }
 
@@ -408,7 +418,17 @@ void CodeGen::visit(NullaryNode* node)
 		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(node->symbol());
 		if (functionSymbol->isForeign)
 		{
-			out_ << "\t" << "call " << foreignName(mangle(node->name())) << std::endl;
+			// Realign the stack to 16 bytes (may not be necessary on all platforms)
+		    out_ << "\t" << "mov rbx, rsp" << std::endl;
+		    out_ << "\t" << "and rsp, -16" << std::endl;
+		    out_ << "\t" << "add rsp, -8" << std::endl;
+		    out_ << "\t" << "push rbx" << std::endl;
+
+		    out_ << "\t" << "call " << foreignName(mangle(node->name())) << std::endl;
+
+		    // Undo the stack alignment
+		    out_ << "\t" << "pop rbx" << std::endl;
+		    out_ << "\t" << "mov rsp, rbx" << std::endl;
 		}
 		else
 		{
@@ -426,6 +446,13 @@ void CodeGen::visit(NullaryNode* node)
 void CodeGen::visit(IntNode* node)
 {
 	out_ << "\t" << "mov rax, " << (2 * node->value() + 1) << std::endl;
+}
+
+void CodeGen::visit(StringNode* node)
+{
+	out_ << "\t" << "mov rax, " << node->name() << std::endl;
+
+	stringLiterals_.push_back(node);
 }
 
 void CodeGen::visit(BoolNode* node)

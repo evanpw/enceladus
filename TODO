@@ -29,3 +29,7 @@ Todo
 * Recursive pattern matching -> Memo (Pair x y) n
 * Enhanced pattern matching for lists -> x : xs
 * Better I/O capabilities
+* Unary minus
+* Convert strings to be just lists of Chars
+* Add explicit Char type
+* Type aliases (Char = Int, String = [Char])

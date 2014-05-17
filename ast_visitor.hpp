@@ -16,6 +16,7 @@ class FunctionDefNode;
 class IfElseNode;
 class IfNode;
 class IntNode;
+class StringNode;
 class LetNode;
 class LogicalNode;
 class MatchNode;
@@ -50,6 +51,7 @@ public:
 	virtual void visit(DataDeclaration* node) {}
 	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}
+	virtual void visit(StringNode* node) {}
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(ParamListNode* node) {}
 

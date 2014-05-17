@@ -1,5 +1,7 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef __APPLE__
 
@@ -24,14 +26,15 @@ int main(void)
 #endif
 
 
-#define ERR_HEAD_EMPTY  0
-#define ERR_TAIL_EMPTY  1
-#define ERR_REF_NEG     2
-#define ERR_TOP_EMPTY   3
-#define ERR_LEFT_EMPTY  4
-#define ERR_RIGHT_EMPTY 5
+#define ERR_HEAD_EMPTY      0
+#define ERR_TAIL_EMPTY      1
+#define ERR_REF_NEG         2
+#define ERR_TOP_EMPTY       3
+#define ERR_LEFT_EMPTY      4
+#define ERR_RIGHT_EMPTY     5
+#define ERR_OUT_OF_BOUNDS   6
 
-void _die(long errorCode)
+void _die(int64_t errorCode)
 {
     switch(errorCode)
     {
@@ -59,6 +62,10 @@ void _die(long errorCode)
             puts("*** Exception: Called right on empty tree");
             break;
 
+        case ERR_OUT_OF_BOUNDS:
+            puts("*** Exception: Index passed to charAt is out of range");
+            break;
+
         default:
             puts("*** Exception: Unknown error");
             break;
@@ -67,33 +74,43 @@ void _die(long errorCode)
     exit(1);
 }
 
-//// I/O ///////////////////////////////////////////////////////////////////////
+//// Various structs ///////////////////////////////////////////////////////////
+#define SplObject_HEAD \
+    int64_t refCount; \
+    uint32_t numScalars; \
+    uint32_t numPointers; \
 
-long read()
+typedef struct SplObject
 {
-    long result;
-    scanf("%ld", &result);
+    SplObject_HEAD
+} SplObject;
 
-    return (result << 1) + 1;
-}
-
-void print(long value)
+typedef struct List
 {
-    printf("%ld\n", (value >> 1));
-}
+    SplObject_HEAD
+    struct List* next;
+    void* value;
+} List;
+
+typedef struct String
+{
+    SplObject_HEAD
+    int64_t length;
+} String;
 
 //// Reference counting ////////////////////////////////////////////////////////
 
-void _incref(long* p)
+#define Spl_INCREF(p) _incref((SplObject*)(p))
+void _incref(SplObject* p)
 {
-    if (p == NULL || ((long)p & 0x3)) return;
+    if (p == NULL || ((int64_t)p & 0x3)) return;
 
-    ++(*p);
+    ++(p->refCount);
 }
 
-long _decrefNoFree(long* p)
+int64_t _decrefNoFree(int64_t* p)
 {
-    if (p == NULL || ((long)p & 0x3)) return 1;
+    if (p == NULL || ((int64_t)p & 0x3)) return 1;
 
     --(*p);
 
@@ -105,18 +122,18 @@ long _decrefNoFree(long* p)
     return *p;
 }
 
-void _decref(long* object)
+void _decref(int64_t* object)
 {
-    if (object == NULL || ((long)object & 0x3)) return;
+    if (object == NULL || ((int64_t)object & 0x3)) return;
 
     if (_decrefNoFree(object) == 0)
     {
-        long pointerCount = *(object + 1) >> 32;
+        int64_t pointerCount = *(object + 1) >> 32;
 
-        long* child = object + 2;
+        int64_t* child = object + 2;
         for (int i = 0; i < pointerCount; ++i)
         {
-            _decref((long*)*child);
+            _decref((int64_t*)*child);
             ++child;
         }
 
@@ -124,54 +141,204 @@ void _decref(long* object)
     }
 }
 
+//// Ints //////////////////////////////////////////////////////////////////////
+
+int64_t toInt(int64_t n)
+{
+    return (n << 1) + 1;
+}
+
+int64_t fromInt(int64_t n)
+{
+    return n >> 1;
+}
+
+//// Strings ///////////////////////////////////////////////////////////////////
+
+static inline char* content(String* s)
+{
+    return (char*)(s + 1);
+}
+
+static String* makeString(const char* s)
+{
+    size_t length = strlen(s);
+
+    String* result = malloc(sizeof(String) + length + 1);
+    result->refCount = 0;
+    result->numScalars = 1;
+    result->numPointers = 0;
+    result->length = toInt(length);
+
+    strcpy(content(result), s);
+
+    return result;
+}
+
+void echo(String* s)
+{
+    printf("%s\n", content(s));
+}
+
+int64_t len(String* s)
+{
+    return s->length;
+}
+
+int64_t charAt(int64_t i, String* s)
+{
+    int64_t n = fromInt(i);
+
+    int64_t length = fromInt(len(s));
+    if (n >= length)
+    {
+        _die(ERR_OUT_OF_BOUNDS);
+    }
+
+    const char* str = content(s);
+    return toInt((int64_t)(str[n]));
+}
+
+String* cat(String* p1, String* p2)
+{
+    int64_t length1 = fromInt(len(p1));
+    int64_t length2 = fromInt(len(p2));
+
+    int64_t newLength = length1 + length2;
+
+    String* result = malloc(sizeof(String) + newLength + 1);
+    result->refCount = 0;
+    result->numScalars = 1;
+    result->numPointers = 0;
+    result->length = toInt(newLength);
+
+    char* resultString = content(result);
+    strncpy(resultString, content(p1), length1);
+    strncpy(resultString + length1, content(p2), length2);
+    resultString[length1 + length2] = 0;
+
+    return result;
+}
+
+String* listToString(List* xs)
+{
+    size_t length = 0;
+    List* p = xs;
+    while (p != 0)
+    {
+        ++length;
+        p = p->next;
+    }
+
+    String* result = malloc(sizeof(String) + length + 1);
+    result->refCount = 0;
+    result->numScalars = 0;
+    result->numPointers = 1;
+    result->length = toInt(length);
+
+    char* resultString = content(result);
+
+    p = xs;
+    while (p != 0)
+    {
+        *resultString = (char)fromInt((int64_t)p->value);
+        ++resultString;
+        p = p->next;
+    }
+
+    return result;
+}
+
+void dieWithMessage(String* s)
+{
+    echo(s);
+    exit(1);
+}
+
+//// I/O ///////////////////////////////////////////////////////////////////////
+
+int64_t read()
+{
+    int64_t result;
+    scanf("%lld", &result);
+
+    return toInt(result);
+}
+
+String* readLine()
+{
+    char * line = NULL;
+    size_t len = 0;
+
+    ssize_t read = getline(&line, &len, stdin);
+
+    if (read == -1)
+    {
+        return 0;
+    }
+    else
+    {
+        String* result = makeString(line);
+        free(line);
+
+        return result;
+    }
+}
+
+void print(int64_t value)
+{
+    printf("%lld\n", fromInt(value));
+}
+
 //// Lists /////////////////////////////////////////////////////////////////////
 
-long* Cons(long* value, long* next)
+List* Cons(void* value, List* next)
 {
-    long* newCell = (long*)malloc(32);
+    List* newCell = (List*)malloc(sizeof(List));
 
-    *(newCell + 0) = 0;                // Reference count
-    *(newCell + 1) = (2L << 32) + 0;   // Number of pointers; non-pointers
-    *(newCell + 2) = (long)next;
-    *(newCell + 3) = (long)value;
+    newCell->refCount = 0;
+    newCell->numScalars = 0;
+    newCell->numPointers = 2;
+    newCell->next = next;
+    newCell->value = value;
 
-    _incref(next);
-    _incref(value);
+    Spl_INCREF(next);
+    Spl_INCREF(value);
 
     return newCell;
 }
 
 //// Trees /////////////////////////////////////////////////////////////////////
 
-long count(long*);
+int64_t count(int64_t*);
 
-long* Node(long value, long* left, long* right)
+int64_t* Node(int64_t value, int64_t* left, int64_t* right)
 {
-    long* newTree = (long*)malloc(48);
+    int64_t* newTree = (int64_t*)malloc(48);
 
     *(newTree + 0) = 0;              // Reference count
-    *(newTree + 1) = (2L << 32) + 2; // Number of pointsers; non-pointers
-    *(newTree + 2) = (long)left;     // Left child
-    *(newTree + 3) = (long)right;    // Right child
+    *(newTree + 1) = (2L << 32) + 2; // Number of pointers; non-pointers
+    *(newTree + 2) = (int64_t)left;     // Left child
+    *(newTree + 3) = (int64_t)right;    // Right child
     *(newTree + 4) = value;          // Value of this node
 
-    long leftCount = count(left) >> 1;
-    long rightCount = count(right) >> 1;
-    long myCount = ((1 + leftCount + rightCount) << 1) + 1;
+    int64_t leftCount = fromInt(count(left));
+    int64_t rightCount = fromInt(count(right));
+    int64_t myCount = toInt(1 + leftCount + rightCount);
     *(newTree + 5) = myCount;        // Nodes in this subtree
 
-    _incref(left);
-    _incref(right);
+    Spl_INCREF(left);
+    Spl_INCREF(right);
 
     return newTree;
 }
 
-long* Empty()
+int64_t* Empty()
 {
     return NULL;
 }
 
-long top(long* tree)
+int64_t top(int64_t* tree)
 {
     if (tree == NULL)
     {
@@ -181,27 +348,27 @@ long top(long* tree)
     return *(tree + 4);
 }
 
-long* left(long* tree)
+int64_t* left(int64_t* tree)
 {
     if (tree == NULL)
     {
         _die(ERR_LEFT_EMPTY);
     }
 
-    return (long*)*(tree + 2);
+    return (int64_t*)*(tree + 2);
 }
 
-long* right(long* tree)
+int64_t* right(int64_t* tree)
 {
     if (tree == NULL)
     {
         _die(ERR_RIGHT_EMPTY);
     }
 
-    return (long*)*(tree + 3);
+    return (int64_t*)*(tree + 3);
 }
 
-long count(long* tree)
+int64_t count(int64_t* tree)
 {
     if (tree == NULL)
     {
@@ -213,34 +380,3 @@ long count(long* tree)
     }
 }
 
-void _Tree_decref(long* tree)
-{
-startOver:
-    if (tree == NULL) return;
-
-    if (_decrefNoFree(tree) == 0)
-    {
-        long* leftChild = left(tree);
-        long* rightChild = right(tree);
-
-        free(tree);
-
-        // This hacked-in tail recursion is necessary to avoid a stack overflow
-        // when the tree is very large and lopsided
-        if (leftChild == NULL)
-        {
-            tree = rightChild;
-            goto startOver;
-        }
-        else if (rightChild == NULL)
-        {
-            tree = leftChild;
-            goto startOver;
-        }
-        else
-        {
-            _Tree_decref(leftChild);
-            _Tree_decref(rightChild);
-        }
-    }
-}

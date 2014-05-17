@@ -4,6 +4,8 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <boost/lexical_cast.hpp>
+
 #include "scope.hpp"
 #include "semantic.hpp"
 #include "simple.tab.h"
@@ -129,6 +131,12 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 	modulus->typeScheme = TypeScheme::trivial(FunctionType::create({TypeTable::Int, TypeTable::Int}, TypeTable::Int));
 	modulus->isBuiltin = true;
 	scope->insert(modulus);
+
+    /*
+    VariableSymbol* hello = new VariableSymbol("hello", node, nullptr);
+    hello->typeScheme = TypeScheme::trivial(node->typeTable()->getBaseType("String"));
+    scope->insert(hello);
+    */
 
 
 	//// These definitions are only needed so that we list them as external
@@ -989,6 +997,16 @@ void SemanticAnalyzer::visit(WhileNode* node)
 void SemanticAnalyzer::visit(IntNode* node)
 {
     node->setType(TypeTable::Int);
+}
+
+void SemanticAnalyzer::visit(StringNode* node)
+{
+    static int stringCount = 0;
+
+    std::string literalName = std::string("__string") + boost::lexical_cast<std::string>(stringCount++);
+    node->attachName(literalName);
+
+    node->setType(typeTable_->getBaseType("String"));
 }
 
 void SemanticAnalyzer::visit(BoolNode* node)

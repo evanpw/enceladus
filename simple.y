@@ -57,6 +57,7 @@ void yyerror(const char* msg);
 %token DCOLON RARROW
 %token TRUE FALSE
 %token PLUS_EQUAL MINUS_EQUAL TIMES_EQUAL DIV_EQUAL CONCAT
+%token<str> STRING_LIT
 %token<str> LIDENT UIDENT
 %token<number> INT_LIT
 %token<number> WHITESPACE // Handled by the second stage of the lexer - won't be seen by parser
@@ -380,6 +381,10 @@ simple_expression: '(' expression ')'
 	| '[' ']'
 		{
 			$$ = new FunctionCallNode("Nil", new ArgList);
+		}
+	| STRING_LIT
+		{
+			$$ = new StringNode($1);
 		}
 
 ident: LIDENT

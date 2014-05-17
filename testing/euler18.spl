@@ -1,0 +1,36 @@
+-- Solves Project Euler 18
+
+def readInput :: [[Int]] =
+    let pyramid = []
+
+    let keepGoing = True
+    while keepGoing do
+        let line = readLine
+
+        if null line then
+            keepGoing = False
+        else
+            let xs = []
+            for s in split line do
+                xs = (stringToInt s) : xs
+
+            let row = reverse xs
+
+            pyramid = row : pyramid
+
+    return reverse pyramid
+
+def bestRouteFrom x y pyramid :: Int -> Int -> [[Int]] -> Int =
+    let row = at y pyramid
+    let here = at x row
+
+    if y == (length pyramid - 1) then
+        return here
+    else
+        let left = bestRouteFrom x (y + 1) pyramid
+        let right = bestRouteFrom (x + 1) (y + 1) pyramid
+
+        return (max left right) + here
+
+print $ bestRouteFrom 0 0 readInput
+

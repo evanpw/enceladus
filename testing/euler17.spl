@@ -1,0 +1,46 @@
+-- Solves Project Euler 17
+
+let smallNumbers = "zero" : "one" : "two" : "three" : "four" : "five" : "six" : "seven" : "eight" : "nine" : "ten" : "eleven" : "twelve" : "thirteen" : "fourteen" : "fifteen" : "sixteen" : "seventeen" : "eighteen" : "nineteen" : []
+
+let multiplesOfTen = "zero" : "ten" : "twenty" : "thirty" : "forty" : "fifty" : "sixty" : "seventy" : "eighty" : "ninety" : []
+
+def join xs :: [String] -> String =
+    if null xs then
+        return ""
+    else if length xs == 1 then
+        return head xs
+    else
+        return cat (head xs) (join $ tail xs)
+
+def numInWords x :: Int -> String =
+    if x < 20 then
+        return at x smallNumbers
+    else if x < 100 then
+        let tens = x / 10
+        let ones = x mod 10
+
+        if ones != 0 then
+            return join $ (at tens multiplesOfTen) : (at ones smallNumbers) : []
+        else
+            return (at tens multiplesOfTen)
+    else if x < 1000 then
+        ones = x mod 10
+        tens = (x / 10) mod 10
+        let hundreds = x / 100
+        let rest = x mod 100
+
+        if rest != 0 then
+            return join $ (at hundreds smallNumbers) : "hundred" : "and" : numInWords rest : []
+        else
+            return join $ (at hundreds smallNumbers) : "hundred" : []
+    else if x == 1000 then
+        return join $ "one" : "thousand" : []
+    else
+        return "unknown"
+
+let totalLength = 0
+for i in range 1 1000 do
+    let s = numInWords i
+    totalLength += len s
+
+print totalLength

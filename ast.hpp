@@ -175,6 +175,22 @@ private:
 	bool value_;
 };
 
+class StringNode : public ExpressionNode
+{
+public:
+	StringNode(const std::string& value) : value_(value) { }
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& value() const { return value_; }
+
+	const std::string& name() const { return name_; }
+	void attachName(const std::string& name) { name_ = name; }
+
+private:
+	std::string name_;
+	std::string value_;
+};
+
 class FunctionCallNode : public ExpressionNode
 {
 public:

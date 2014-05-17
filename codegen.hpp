@@ -23,6 +23,7 @@ public:
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(IntNode* node);
+	virtual void visit(StringNode* node);
 	virtual void visit(LetNode* node);
 	virtual void visit(MatchNode* node);
 	virtual void visit(LogicalNode* node);
@@ -65,6 +66,9 @@ private:
 	// Keep track of the function & data type definitions so that we can walk
 	// through them after the main function
 	std::vector<DataDeclaration*> dataDeclarations_;
+
+	// All string literals
+	std::vector<StringNode*> stringLiterals_;
 };
 
 #endif

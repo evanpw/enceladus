@@ -12,7 +12,7 @@
 class StringTable
 {
 public:
-	static const char* add(const char* str);
+	static const char* add(const std::string& str);
 
 private:
 	StringTable();

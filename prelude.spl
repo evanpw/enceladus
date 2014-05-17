@@ -1,7 +1,10 @@
 ---- Declarations for built-in functions written in C
 
--- Basic functions
+foreign dieWithMessage :: String -> Unit
+
+-- I/O functions
 foreign read :: Int
+foreign readLine :: String
 foreign print :: Int -> Unit
 
 -- List functions
@@ -15,7 +18,21 @@ foreign left :: Tree -> Tree
 foreign right :: Tree -> Tree
 foreign count :: Tree -> Int
 
+-- String functions
+foreign echo :: String -> Unit
+foreign cat :: String -> String -> String
+foreign len :: String -> Int
+foreign charAt :: Int -> String -> Int
+foreign listToString xs :: [Int] -> String
+
+
 ---- Native-language standard library
+
+def assert b :: Bool -> Unit =
+    if not b then dieWithMessage "Assertion failed!"
+
+def assertMessage b err :: Bool -> String -> Unit =
+    if not b then dieWithMessage $ cat "Assertion failed: " err
 
 ---- Set functions (see http://groups.csail.mit.edu/mac/users/adams/BB/92-10.ps)
 
@@ -197,6 +214,13 @@ def take n xs =
     else
         return head xs : take (n - 1) (tail xs)
 
+-- drop :: Int -> [a] -> [a]
+def drop n xs =
+    if n == 0 then
+        return xs
+    else
+        return drop (n - 1) (tail xs)
+
 def max a b :: Int -> Int -> Int =
     if a > b then
         return a
@@ -216,9 +240,10 @@ def at n xs =
     else
         return at (n - 1) (tail xs)
 
+
 -- reverse :: [a] -> [a]
 def reverse xs =
-    let ys :: [Int] = []
+    let ys = []
     for x in xs do
         ys = x : ys
 
@@ -239,6 +264,14 @@ def odd x :: Int -> Bool =
     if x mod 2 == 0 then return False
     else return True
 
+-- TODO: Make this work (allow functions as parameters)
+--def filter f xs =
+--    let ys = []
+--    for x in xs do
+--        if f x then ys = x : ys
+
+--    return reverse ys
+
 -- Non stack-destroying version
 --def concat xs ys :: [Int] -> [Int] -> [Int] =
 --    let zs :: [Int] = ys
@@ -247,3 +280,95 @@ def odd x :: Int -> Bool =
 --        zs = x : zs
 
 --    return zs
+
+def stringToList s :: String -> [Int] =
+    let xs = []
+    for i in range 0 (len s - 1) do
+        xs = (charAt i s) : xs
+
+    return reverse xs
+
+def isSpace c :: Int -> Bool =
+    if c == ' ' or c == '\n' or c == '\r' or c == '\t' then
+        return True
+    else
+        return False
+
+def trimLeft s :: String -> String =
+    let s' = stringToList s
+
+    let xs = []
+    for c in s' do
+        if not $ isSpace c then xs = c : xs
+
+    return listToString $ reverse $ xs
+
+def trim s :: String -> String =
+    let s1 = stringToList s
+
+    while (not $ null s1) and (isSpace $ head s1) do
+        s1 = tail s1
+
+    let s2 = reverse s1
+    while (not $ null s2) and (isSpace $ head s2) do
+        s2 = tail s2
+
+    return listToString $ reverse s2
+
+def substring s start n :: String -> Int -> Int -> String =
+    let s1 = stringToList s
+    let s2 = drop start s1
+    let s3 = take n s2
+
+    return listToString s3
+
+def split s :: String -> [String] =
+    let result = []
+    let start = 0
+    for i in range 0 (len s - 1) do
+        if isSpace $ charAt i s then
+            if i != start then
+                let piece = substring s start (i - start)
+                result = piece : result
+
+            start = i + 1
+
+    if start != len s then
+        let n = len s - start
+        let piece' = substring s start n
+        result = piece' : result
+
+    return reverse result
+
+def stringToInt s :: String -> Int =
+    let digits = stringToList s
+
+    let x = 0
+    for digit in digits do
+        assertMessage (digit >= '0' and digit <= '9') "stringToInt: Digit out of range"
+
+        x *= 10
+        x += (digit - '0')
+
+    return x
+
+def intToString x :: Int -> String =
+    if x == 0 then return "0"
+
+    let negative = (x < 0)
+    if negative then x = 0 - x
+
+    let s = []
+    while x != 0 do
+        let digit = x mod 10
+        s = (digit + '0') : s
+        x = x / 10
+
+    if negative then s = '-' : s
+
+    return listToString s
+
+
+
+
+

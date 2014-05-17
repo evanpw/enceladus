@@ -4,19 +4,18 @@
 
 std::vector<std::string> StringTable::strings_;
 
-const char* StringTable::add(const char* str)
+const char* StringTable::add(const std::string& str)
 {
 	// Horribly inefficient
-	std::string new_string = str;
 	for (auto& i : strings_)
 	{
-		if (new_string == i)
+		if (i == str)
 		{
 			return i.c_str();
 		}
 	}
 
 
-	strings_.push_back(std::move(new_string));
+	strings_.push_back(str);
 	return strings_.back().c_str();
 }

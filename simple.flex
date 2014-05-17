@@ -9,7 +9,43 @@ extern YYSTYPE yylval;
 
 #define YY_DECL int yylex_raw()
 
-int count_whitespace(const char* s, int length);
+std::string trim_quotes(const std::string& str)
+{
+	return str.substr(1, str.length() - 2);
+}
+
+int count_whitespace(const char* s, int length)
+{
+	int count = 0;
+	for (int i = 0; i < length; ++i)
+	{
+		if (s[i] == ' ') count += 1;
+		if (s[i] == '\t') count += 4;
+	}
+
+	return count;
+}
+
+int char_literal(const char* s)
+{
+	if (s[1] != '\\')
+	{
+		return s[1];
+	}
+	else if (s[2] == 'n')
+	{
+		return '\n';
+	}
+	else if (s[2] == 'r')
+	{
+		return '\r';
+	}
+	else if (s[2] == 't')
+	{
+		return '\t';
+	}
+
+}
 
 int yycolumn = 1;
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
@@ -45,7 +81,7 @@ int yycolumn = 1;
 "--".*			/* Haskell-style comments */
 
 
- /* Operators */
+ /* Operators and punctuation */
 "+"		{ return '+'; }
 "-"		{ return '-'; }
 "*"		{ return '*'; }
@@ -93,6 +129,10 @@ int yycolumn = 1;
 "True"		{ return TRUE; }
 "False"		{ return FALSE; }
 
+ /* String and char literals */
+\"[^"]*\"				{ yylval.str = StringTable::add(trim_quotes(yytext)); return STRING_LIT; }
+\'([^']|\\[nrt])\'		{ yylval.number = char_literal(yytext); return INT_LIT; }
+
 [a-z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return LIDENT; }
 [A-Z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return UIDENT; }
 \n						 { yycolumn = 1; return EOL; }
@@ -107,14 +147,3 @@ int yycolumn = 1;
 
 %%
 
-int count_whitespace(const char* s, int length)
-{
-	int count = 0;
-	for (int i = 0; i < length; ++i)
-	{
-		if (s[i] == ' ') count += 1;
-		if (s[i] == '\t') count += 4;
-	}
-
-	return count;
-}

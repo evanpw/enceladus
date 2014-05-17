@@ -50,6 +50,7 @@ public:
     // Leaf nodes
     virtual void visit(BoolNode* node);
     virtual void visit(IntNode* node);
+    virtual void visit(StringNode* node);
     virtual void visit(NullaryNode* node);
     virtual void visit(ReturnNode* node);
 
@@ -92,12 +93,6 @@ public:
 
 private:
     std::string _description;
-};
-
-class TypeInference
-{
-public:
-
 };
 
 #endif

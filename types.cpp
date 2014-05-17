@@ -16,6 +16,7 @@ TypeTable::TypeTable()
     baseTypes_["Bool"] = Bool;
     baseTypes_["Unit"] = Unit;
     baseTypes_["Tree"] = BaseType::create("Tree", false);
+    baseTypes_["String"] = BaseType::create("String", false);
 
     typeConstructors_["List"] = std::unique_ptr<TypeConstructor>(new TypeConstructor("List", 1));
 }
