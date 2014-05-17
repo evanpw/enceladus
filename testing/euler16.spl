@@ -1,11 +1,11 @@
 -- Solves Project Euler 16
 
 def longSum xs ys :: [Int] -> [Int] -> [Int] =
-    let carry :: Int = 0
-    let result :: [Int] = []
+    carry := 0
+    result := []
 
-    let x :: Int = 0
-    let y :: Int = 0
+    x := 0
+    y := 0
     while not (null xs and null ys and (carry == 0)) do
         if null xs then
             x = 0
@@ -19,14 +19,14 @@ def longSum xs ys :: [Int] -> [Int] -> [Int] =
             y = head ys
             ys = tail ys
 
-        let z :: Int = x + y + carry
+        z := x + y + carry
 
         result = (z mod 10) : result
         carry = z / 10
 
     return reverse result
 
-let x = 1 : []
+x := 1 : []
 
 for i in range 1 1000 do
     x = longSum x x

@@ -1,7 +1,7 @@
 -- Solves Project Euler 10
 
 def isPrime x :: Int -> Bool =
-    let i :: Int = 2
+    i := 2
     while i * i <= x do
         if x mod i == 0 then return False
         i += 1
@@ -9,7 +9,7 @@ def isPrime x :: Int -> Bool =
     return True
 
 def sumPrimes n :: Int -> Int =
-    let total :: Int = 0
+    total := 0
 
     for i in range 2 n do
         if isPrime i then total += i

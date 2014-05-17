@@ -1,7 +1,7 @@
 # Solves Project Euler #1
 
-let n :: Int = 1
-let total :: Int = 0
+n := 1
+total := 0
 while n < 1000 do
     if n mod 3 == 0 or n mod 5 == 0 then
         total = total + n

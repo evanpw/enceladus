@@ -1,5 +1,5 @@
-let xs = True : []
-let ys = 4 : 3 : []
+xs := True : []
+ys := 4 : 3 : []
 
 if head xs then
     print $ head ys

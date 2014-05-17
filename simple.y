@@ -46,8 +46,8 @@ void yyerror(const char* msg);
 %type<constructorSpec> constructor_spec
 
 %token ERROR
-%token IF THEN ELSE
-%token LET DEF FOREIGN DATA
+%token IF THEN ELSE LET
+%token DEF FOREIGN DATA COLON_EQUAL
 %token AND OR MOD EQUALS
 %token RETURN
 %token WHILE DO
@@ -102,13 +102,13 @@ statement: IF expression THEN suite
 		{
 			$$ = new AssignNode($1, $3);
 		}
-	| LET LIDENT DCOLON type '=' expression EOL
+	| LIDENT DCOLON type COLON_EQUAL expression EOL
 		{
-			$$ = new LetNode($2, $4, $6);
+			$$ = new LetNode($1, $3, $5);
 		}
-	| LET LIDENT '=' expression EOL
+	| LIDENT COLON_EQUAL expression EOL
 		{
-			$$ = new LetNode($2, nullptr, $4);
+			$$ = new LetNode($1, nullptr, $3);
 		}
 	| LET UIDENT param_list '=' expression EOL
 		{

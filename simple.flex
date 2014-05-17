@@ -44,7 +44,10 @@ int char_literal(const char* s)
 	{
 		return '\t';
 	}
-
+	else
+	{
+		return '\0';
+	}
 }
 
 int yycolumn = 1;
@@ -93,6 +96,7 @@ int yycolumn = 1;
 ")"		{ return ')'; }
 ","		{ return ','; }
 "="		{ return '='; }
+":="	{ return COLON_EQUAL; }
 "$"		{ return '$'; }
 "["		{ return '['; }
 "]"	    { return ']'; }
@@ -122,10 +126,10 @@ int yycolumn = 1;
 "foreign"	{ return FOREIGN; }
 "if"		{ return IF; }
 "in"		{ return IN; }
-"let"		{ return LET; }
 "return"	{ return RETURN; }
 "then"		{ return THEN; }
 "while"		{ return WHILE; }
+"let"		{ return LET; }
 "True"		{ return TRUE; }
 "False"		{ return FALSE; }
 

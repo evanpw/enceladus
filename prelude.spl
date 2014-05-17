@@ -38,61 +38,61 @@ def assertMessage b err :: Bool -> String -> Unit =
 
 -- Rotations
 def Set.singleL a x r :: Int -> Tree -> Tree -> Tree =
-    let b :: Int = top r
-    let y :: Tree = left r
-    let z :: Tree = right r
+    b :: Int := top r
+    y :: Tree := left r
+    z :: Tree := right r
 
     return Node b (Node a x y) z
 
 def Set.singleR b l z :: Int -> Tree -> Tree -> Tree =
-    let a :: Int = top l
-    let x :: Tree = left l
-    let y :: Tree = right l
+    a :: Int := top l
+    x :: Tree := left l
+    y :: Tree := right l
 
     return Node a x (Node b y z)
 
 def Set.doubleL a x r :: Int -> Tree -> Tree -> Tree =
-    let c :: Int = top r
-    let lr :: Tree = left r
-    let b :: Int = top lr
-    let y1 :: Tree = left lr
-    let y2 :: Tree = right lr
-    let z :: Tree = right r
+    c :: Int := top r
+    lr :: Tree := left r
+    b :: Int := top lr
+    y1 :: Tree := left lr
+    y2 :: Tree := right lr
+    z :: Tree := right r
 
     return Node b (Node a x y1) (Node c y2 z)
 
 def Set.doubleR c l z :: Int -> Tree -> Tree -> Tree =
-    let a :: Int = top l
-    let x :: Tree = left l
-    let rl :: Tree = right l
-    let b :: Int = top rl
-    let y1 :: Tree = left rl
-    let y2 :: Tree = right rl
+    a :: Int := top l
+    x :: Tree := left l
+    rl :: Tree := right l
+    b :: Int := top rl
+    y1 :: Tree := left rl
+    y2 :: Tree := right rl
 
     return Node b (Node a x y1) (Node c y2 z)
 
 -- Special constructor for self-balancing trees
 def Set.balancedNode v l r :: Int -> Tree -> Tree -> Tree =
-    let ln :: Int = count l
-    let rn :: Int = count r
+    ln :: Int := count l
+    rn :: Int := count r
 
     if ln + rn < 2 then
         return Node v l r
     else if rn > 4 * ln then
-        let rl :: Tree = left r
-        let rr :: Tree = right r
-        let rln :: Int = count rl
-        let rrn :: Int = count rr
+        rl :: Tree := left r
+        rr :: Tree := right r
+        rln :: Int := count rl
+        rrn :: Int := count rr
 
         if rln < rrn then
             return Set.singleL v l r
         else
             return Set.doubleL v l r
     else if ln > 4 * rn then
-        let ll :: Tree = left l
-        let lr :: Tree = right l
-        let lln :: Int = count ll
-        let lrn :: Int = count lr
+        ll :: Tree := left l
+        lr :: Tree := right l
+        lln :: Int := count ll
+        lrn :: Int := count lr
 
         if lrn < lln then
             return Set.singleR v l r
@@ -109,7 +109,7 @@ def Set.insert x set :: Int -> Tree -> Tree =
     if null set then
         return Node x Empty Empty
 
-    let current :: Int = top set
+    current := top set
     if x == current then
         return set
     else if x < current then
@@ -149,7 +149,7 @@ def Set.delete x set :: Int -> Tree -> Tree =
     if null set then
         return Empty
 
-    let value :: Int = top set
+    value := top set
     if x < value then
         return Set.balancedNode value (Set.delete x (left set)) (right set)
     else if x > value then
@@ -160,11 +160,11 @@ def Set.delete x set :: Int -> Tree -> Tree =
         else if null $ left set then
             return right set
         else
-            let newHead :: Int = Set.findMin $ right set
+            newHead := Set.findMin $ right set
             return Set.balancedNode newHead (left set) (Set.deleteMin $ right set)
 
 def Set.fromList xs :: [Int] -> Tree =
-    let result :: Tree = Set.empty
+    result := Set.empty
     while not $ null xs do
         result = Set.insert (head xs) result
         xs = tail xs
@@ -179,9 +179,9 @@ def Set.toList set :: Tree -> [Int] =
 
 -- Miscellanous functions
 def range a b :: Int -> Int -> [Int] =
-    let xs :: [Int] = []
+    xs := []
 
-    let i :: Int = b
+    i := b
     while i >= a do
         xs = i : xs
         i -= 1
@@ -243,7 +243,7 @@ def at n xs =
 
 -- reverse :: [a] -> [a]
 def reverse xs =
-    let ys = []
+    ys := []
     for x in xs do
         ys = x : ys
 
@@ -282,7 +282,7 @@ def odd x :: Int -> Bool =
 --    return zs
 
 def stringToList s :: String -> [Int] =
-    let xs = []
+    xs := []
     for i in range 0 (len s - 1) do
         xs = (charAt i s) : xs
 
@@ -295,55 +295,55 @@ def isSpace c :: Int -> Bool =
         return False
 
 def trimLeft s :: String -> String =
-    let s' = stringToList s
+    s' := stringToList s
 
-    let xs = []
+    xs := []
     for c in s' do
         if not $ isSpace c then xs = c : xs
 
     return listToString $ reverse $ xs
 
 def trim s :: String -> String =
-    let s1 = stringToList s
+    s1 := stringToList s
 
     while (not $ null s1) and (isSpace $ head s1) do
         s1 = tail s1
 
-    let s2 = reverse s1
+    s2 := reverse s1
     while (not $ null s2) and (isSpace $ head s2) do
         s2 = tail s2
 
     return listToString $ reverse s2
 
 def substring s start n :: String -> Int -> Int -> String =
-    let s1 = stringToList s
-    let s2 = drop start s1
-    let s3 = take n s2
+    s1 := stringToList s
+    s2 := drop start s1
+    s3 := take n s2
 
     return listToString s3
 
 def split s :: String -> [String] =
-    let result = []
-    let start = 0
+    result := []
+    start := 0
     for i in range 0 (len s - 1) do
         if isSpace $ charAt i s then
             if i != start then
-                let piece = substring s start (i - start)
+                piece := substring s start (i - start)
                 result = piece : result
 
             start = i + 1
 
     if start != len s then
-        let n = len s - start
-        let piece' = substring s start n
-        result = piece' : result
+        n := len s - start
+        piece = substring s start n
+        result = piece : result
 
     return reverse result
 
 def stringToInt s :: String -> Int =
-    let digits = stringToList s
+    digits := stringToList s
 
-    let x = 0
+    x := 0
     for digit in digits do
         assertMessage (digit >= '0' and digit <= '9') "stringToInt: Digit out of range"
 
@@ -355,12 +355,12 @@ def stringToInt s :: String -> Int =
 def intToString x :: Int -> String =
     if x == 0 then return "0"
 
-    let negative = (x < 0)
+    negative := (x < 0)
     if negative then x = 0 - x
 
-    let s = []
+    s := []
     while x != 0 do
-        let digit = x mod 10
+        digit := x mod 10
         s = (digit + '0') : s
         x = x / 10
 

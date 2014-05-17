@@ -1,7 +1,7 @@
 -- Solves Project Euler 14
 
 def collatzLength n :: Int -> Int =
-    let count :: Int = 1
+    count := 1
 
     while n != 1 do
         if even n then
@@ -13,11 +13,11 @@ def collatzLength n :: Int -> Int =
 
     return count
 
-let best :: Int = 1
-let longest :: Int = 0
+best := 1
+longest := 0
 
 for n in range 2 1000000 do
-    let newLength :: Int = collatzLength n
+    newLength := collatzLength n
 
     if newLength > longest then
         best = n

@@ -1,16 +1,16 @@
 # Solves Project Euler 3
 
-let n :: Int = 600851475143
-let biggest :: Int = 0
+n := 600851475143
+biggest := 0
 
 # Loop over all possible divisors of n
-let i :: Int = 2
+i := 2
 while i * i <= n do
 
 	# When we find a divisor, determine whether it is a prime number
 	if n mod i == 0 then
-		let j :: Int = 2
-		let isPrime :: Int = 1
+		j := 2
+		isPrime := 1
 		while j * j <= i do
 			if i mod j == 0 then
 				isPrime  = 0

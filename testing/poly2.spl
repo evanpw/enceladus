@@ -4,12 +4,12 @@ def mydrop n xs =
     else
         return mydrop (n - 1) (tail xs)
 
-let xs = 1 : 2 : 3 : 4 : []
-let ys = mydrop 2 xs
-let n = head ys
+xs := 1 : 2 : 3 : 4 : []
+ys := mydrop 2 xs
+n := head ys
 
-let zs = True : True : True : False : False : False : []
-let us = mydrop n zs
+zs := True : True : True : False : False : False : []
+us := mydrop n zs
 if head us then
    echo "True"
 else

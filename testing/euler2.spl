@@ -1,14 +1,14 @@
 # Solves Project Euler 2
 
-let total :: Int = 0
-let last :: Int = 1
-let current :: Int = 2
+total := 0
+last := 1
+current := 2
 
 while current < 4000000 do
 	if current mod 2 == 0 then
 		total = total + current
 
-    let next :: Int = last + current
+    next := last + current
 	last = current
 	current = next
 
