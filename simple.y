@@ -47,7 +47,7 @@ void yyerror(const char* msg);
 
 %token ERROR
 %token IF THEN ELSE LET
-%token DEF FOREIGN DATA COLON_EQUAL
+%token DEF FOREIGN DATA COLON_EQUAL VAR
 %token AND OR MOD EQUALS
 %token RETURN
 %token WHILE DO
@@ -109,6 +109,14 @@ statement: IF expression THEN suite
 	| LIDENT COLON_EQUAL expression EOL
 		{
 			$$ = new LetNode($1, nullptr, $3);
+		}
+	| VAR LIDENT DCOLON type '=' expression EOL
+		{
+			$$ = new LetNode($2, $4, $6);
+		}
+	| VAR LIDENT '=' expression EOL
+		{
+			$$ = new LetNode($2, nullptr, $4);
 		}
 	| LET UIDENT param_list '=' expression EOL
 		{

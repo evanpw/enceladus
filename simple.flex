@@ -118,20 +118,21 @@ int yycolumn = 1;
 "++"	{ return CONCAT; }
 
  /* Keywords */
-"def"		{ return DEF; }
 "data"		{ return DATA; }
+"def"		{ return DEF; }
 "do"		{ return DO; }
 "else"		{ return ELSE; }
+"False"		{ return FALSE; }
 "for"		{ return FOR; }
 "foreign"	{ return FOREIGN; }
 "if"		{ return IF; }
 "in"		{ return IN; }
+"let"		{ return LET; }
 "return"	{ return RETURN; }
 "then"		{ return THEN; }
-"while"		{ return WHILE; }
-"let"		{ return LET; }
 "True"		{ return TRUE; }
-"False"		{ return FALSE; }
+"var"		{ return VAR; }
+"while"		{ return WHILE; }
 
  /* String and char literals */
 \"[^"]*\"				{ yylval.str = StringTable::add(trim_quotes(yytext)); return STRING_LIT; }
