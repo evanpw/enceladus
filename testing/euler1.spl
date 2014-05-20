@@ -1,11 +1,8 @@
-# Solves Project Euler #1
+-- Solves Project Euler #1
 
-n := 1
 total := 0
-while n < 1000 do
+for n in range 1 999 do
     if n mod 3 == 0 or n mod 5 == 0 then
-        total = total + n
-
-    n = n + 1
+        total += n
 
 print total

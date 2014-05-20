@@ -31,6 +31,9 @@ testing/test.sh $platform euler17 21124 || echo "Project Euler 17 failed!"
 $platform/build.sh euler18 > /dev/null && value=$(cat testing/euler18.txt | build/euler18)
 [ "x$value" == "x1074" ] || echo "Project Euler 18 failed!"
 
+testing/test.sh $platform euler19 171 || echo "Project Euler 19 failed!"
+testing/test.sh $platform euler20 648 || echo "Project Euler 20 failed!"
+
 testing/test.sh $platform poly 4 || echo "Polymorphism test failed!"
 testing/test.sh $platform poly2 "False" || echo "Polymorphism test 2 failed!"
 testing/test.sh $platform fail "*** Exception: Called tail on empty list" || echo "Exception test failed!"

@@ -1,28 +1,28 @@
-# Solves Project Euler 3
+-- Solves Project Euler 3
 
 n := 600851475143
 biggest := 0
 
-# Loop over all possible divisors of n
+-- Loop over all possible divisors of n
 i := 2
 while i * i <= n do
 
-	# When we find a divisor, determine whether it is a prime number
+	-- When we find a divisor, determine whether it is a prime number
 	if n mod i == 0 then
 		j := 2
-		isPrime := 1
+		isPrime := True
 		while j * j <= i do
 			if i mod j == 0 then
-				isPrime  = 0
+				isPrime  = False
 
-				# We don't have a "break" statement
+				-- TODO: Add this syntax
+				-- break
 				j = i
 
-			j = j + 1
+			j += 1
 
-		if isPrime == 1 then
-			biggest = i
+		if isPrime then biggest = i
 
-	i = i + 1
+	i += 1
 
 print biggest

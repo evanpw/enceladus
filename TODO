@@ -10,8 +10,6 @@ Todo
 * Fix bug that causes bad line numbers and columns in error messages
 * Syntactic sugar for lists
 * Clean up the documentation
-* Add some support for strings (at least when printing)
-* Replace C library calls with direct system calls
 * Handle the case where prelude does not end with a newline
 * Support for infix functions
 * Make return at least act like a function (useable with $ for example)
@@ -21,7 +19,6 @@ Todo
 * Fix all of the const correctness
 * Add algebraic data types, and change List and Tree to behave nicely
 * Allow polymorphic function definitions
-* Fix null to have type [a] -> Bool (currently used as Tree -> Bool in prelude)
 * Add an intermediate representation step between the AST and assembly language
 * Allow in-language definitions of parameterized types
 * Define equality operators for all types

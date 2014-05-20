@@ -1,0 +1,91 @@
+-- Solves Project Euler 20
+
+def longSum xs ys :: [Int] -> [Int] -> [Int] =
+    carry := 0
+    result := []
+
+    x := 0
+    y := 0
+    while not (null xs and null ys and (carry == 0)) do
+        if null xs then
+            x = 0
+        else
+            x = head xs
+            xs = tail xs
+
+        if null ys then
+            y = 0
+        else
+            y = head ys
+            ys = tail ys
+
+        z := x + y + carry
+
+        result = (z mod 10) : result
+        carry = z / 10
+
+    return reverse result
+
+def sumAll xss :: [[Int]] -> [Int] =
+    result := 0 : []
+
+    for xs in xss do
+        result = longSum result xs
+
+    return result
+
+def singleProduct xs y :: [Int] -> Int -> [Int] =
+    carry := 0
+    result := []
+
+    while not (null xs and carry == 0) do
+        if null xs then
+            z := carry
+        else
+            x := head xs
+            z = x * y + carry
+            xs = tail xs
+
+        result = (z mod 10) : result
+        carry = z / 10
+
+    return reverse result
+
+def shift xs n :: [Int] -> Int -> [Int] =
+    if n == 0 then
+        return xs
+    else
+        return shift (0 : xs) (n - 1)
+
+def longProduct xs ys :: [Int] -> [Int] -> [Int] =
+    partialProducts := []
+
+    for n in range 0 (length ys - 1) do
+        y := at n ys
+        z1 := singleProduct xs y
+        z2 := shift z1 n
+        partialProducts = z2 : partialProducts
+
+    return sumAll partialProducts
+
+def intTolong x :: Int -> [Int] =
+    result := []
+
+    while x != 0 do
+        result = (x mod 10) : result
+        x /= 10
+
+    return reverse result
+
+def printNumber xs :: [Int] -> Unit =
+    result := []
+    for x in xs do
+        result = x + '0' : result
+
+    echo $ listToString result
+
+x := 1 : []
+for i in range 2 100 do
+    x = longProduct x (intTolong i)
+
+print $ sum x

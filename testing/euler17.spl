@@ -4,14 +4,6 @@ smallNumbers := "zero" : "one" : "two" : "three" : "four" : "five" : "six" : "se
 
 multiplesOfTen := "zero" : "ten" : "twenty" : "thirty" : "forty" : "fifty" : "sixty" : "seventy" : "eighty" : "ninety" : []
 
-def join xs :: [String] -> String =
-    if null xs then
-        return ""
-    else if length xs == 1 then
-        return head xs
-    else
-        return cat (head xs) (join $ tail xs)
-
 def numInWords x :: Int -> String =
     if x < 20 then
         return at x smallNumbers
@@ -20,7 +12,7 @@ def numInWords x :: Int -> String =
         ones := x mod 10
 
         if ones != 0 then
-            return join $ (at tens multiplesOfTen) : (at ones smallNumbers) : []
+            return join "" ((at tens multiplesOfTen) : (at ones smallNumbers) : [])
         else
             return (at tens multiplesOfTen)
     else if x < 1000 then
@@ -30,11 +22,11 @@ def numInWords x :: Int -> String =
         rest := x mod 100
 
         if rest != 0 then
-            return join $ (at hundreds smallNumbers) : "hundred" : "and" : numInWords rest : []
+            return join "" ((at hundreds smallNumbers) : "hundred" : "and" : numInWords rest : [])
         else
-            return join $ (at hundreds smallNumbers) : "hundred" : []
+            return join "" ((at hundreds smallNumbers) : "hundred" : [])
     else if x == 1000 then
-        return join $ "one" : "thousand" : []
+        return join "" ("one" : "thousand" : [])
     else
         return "unknown"
 

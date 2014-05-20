@@ -340,6 +340,14 @@ def split s :: String -> [String] =
 
     return reverse result
 
+def join sep xs :: String -> [String] -> String =
+    if null xs then
+        return ""
+    else if length xs == 1 then
+        return head xs
+    else
+        return cat (head xs) (cat sep (join sep (tail xs)))
+
 def stringToInt s :: String -> Int =
     digits := stringToList s
 
