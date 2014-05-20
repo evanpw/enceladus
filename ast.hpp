@@ -191,6 +191,9 @@ private:
 	std::string value_;
 };
 
+// Syntactic sugar for lists
+FunctionCallNode* makeList(ArgList* elements);
+
 class FunctionCallNode : public ExpressionNode
 {
 public:

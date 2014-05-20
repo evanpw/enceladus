@@ -33,8 +33,8 @@ def isLeapYear date =
 def daysInMonth date =
     let Date y m d w = date
 
-    nonLeap  := 0 : 31 : 28 : 31 : 30 : 31 : 30 : 31 : 31 : 30 : 31 : 30 : 31 : []
-    leapYear := 0 : 31 : 29 : 31 : 30 : 31 : 30 : 31 : 31 : 30 : 31 : 30 : 31 : []
+    nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
     if isLeapYear date then
         return at m leapYear
@@ -64,11 +64,10 @@ def incrementDate date =
 def printDate date =
     let Date y m d w = date
 
-    monthNames := "" : "January" : "February" : "March" : "April" : "May" : "June" : "July" : "August" : "September" : "October" : "November" : "December" : []
-    dayNames := "Sunday" : "Monday" : "Tuesday" : "Wednesday" : "Thursday" : "Friday" : "Saturday" : []
+    monthNames := ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-    pieces := at m monthNames : " " : intToString d : ", " : intToString y : " (" : at w dayNames : ")" : []
-    return join "" pieces
+    return join "" [at m monthNames, " ", intToString d, ", ", intToString y, " (", at w dayNames, ")"]
 
 current := Date 1900 1 1 1
 

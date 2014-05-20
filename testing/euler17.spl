@@ -1,8 +1,8 @@
 -- Solves Project Euler 17
 
-smallNumbers := "zero" : "one" : "two" : "three" : "four" : "five" : "six" : "seven" : "eight" : "nine" : "ten" : "eleven" : "twelve" : "thirteen" : "fourteen" : "fifteen" : "sixteen" : "seventeen" : "eighteen" : "nineteen" : []
+smallNumbers := ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
 
-multiplesOfTen := "zero" : "ten" : "twenty" : "thirty" : "forty" : "fifty" : "sixty" : "seventy" : "eighty" : "ninety" : []
+multiplesOfTen := ["zero", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
 
 def numInWords x :: Int -> String =
     if x < 20 then
@@ -12,7 +12,7 @@ def numInWords x :: Int -> String =
         ones := x mod 10
 
         if ones != 0 then
-            return join "" ((at tens multiplesOfTen) : (at ones smallNumbers) : [])
+            return join "" [at tens multiplesOfTen, at ones smallNumbers]
         else
             return (at tens multiplesOfTen)
     else if x < 1000 then
@@ -22,11 +22,11 @@ def numInWords x :: Int -> String =
         rest := x mod 100
 
         if rest != 0 then
-            return join "" ((at hundreds smallNumbers) : "hundred" : "and" : numInWords rest : [])
+            return join "" [at hundreds smallNumbers, "hundred", "and", numInWords rest]
         else
-            return join "" ((at hundreds smallNumbers) : "hundred" : [])
+            return join "" [at hundreds smallNumbers, "hundred"]
     else if x == 1000 then
-        return join "" ("one" : "thousand" : [])
+        return join "" ["one", "thousand"]
     else
         return "unknown"
 

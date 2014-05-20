@@ -70,3 +70,19 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
 
     return forNode;
 }
+
+FunctionCallNode* makeList(ArgList* elements)
+{
+    FunctionCallNode* result = new FunctionCallNode("Nil", new ArgList);
+
+    for (auto i = elements->rbegin(); i != elements->rend(); ++i)
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(std::move(*i));
+        argList->emplace_back(result);
+
+        result = new FunctionCallNode("Cons", argList);
+    }
+
+    return result;
+}

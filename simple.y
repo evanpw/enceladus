@@ -36,10 +36,10 @@ void yyerror(const char* msg);
 
 %type<program> program
 %type<statement> statement suite
-%type<expression> expression fexpression simple_expression
+%type<expression> expression fexpression simple_expression inline_list
 %type<block> statement_list
 %type<params> param_list parameters
-%type<arguments> arg_list
+%type<arguments> arg_list list_interior
 %type<typeDecl> typedecl optionaltype
 %type<str> ident
 %type<typeName> type
@@ -386,14 +386,34 @@ simple_expression: '(' expression ')'
 		{
 			$$ = new BoolNode(false);
 		}
-	| '[' ']'
+	| inline_list
 		{
-			$$ = new FunctionCallNode("Nil", new ArgList);
+			$$ = $1;
 		}
 	| STRING_LIT
 		{
 			$$ = new StringNode($1);
 		}
+
+inline_list: '[' list_interior ']'
+		{
+			$$ = makeList($2);
+		}
+	| '[' ']'
+		{
+			$$ = new FunctionCallNode("Nil", new ArgList);
+		}
+
+list_interior: expression
+        {
+            $$ = new ArgList();
+            $$->emplace_back($1);
+        }
+	| list_interior ',' expression
+        {
+            $1->emplace_back($3);
+            $$ = $1;
+        }
 
 ident: LIDENT
 		{

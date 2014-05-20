@@ -26,7 +26,7 @@ def longSum xs ys :: [Int] -> [Int] -> [Int] =
 
     return reverse result
 
-x := 1 : []
+x := [1]
 
 for i in range 1 1000 do
     x = longSum x x
