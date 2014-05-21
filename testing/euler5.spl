@@ -1,4 +1,4 @@
-# Solve Project Euler 5
+-- Solve Project Euler 5
 
 def gcd a b :: Int -> Int -> Int =
 	if b == 0 then
@@ -10,9 +10,8 @@ def lcm a b :: Int -> Int -> Int =
     return a * b / gcd a b
 
 n := 1
-i := 1
-while i <= 20 do
+
+for i in range 1 20 do
 	n = lcm n i
-	i = i + 1
 
 print n

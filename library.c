@@ -74,6 +74,12 @@ void _die(int64_t errorCode)
     exit(1);
 }
 
+void _dieWithMessage(const char* str)
+{
+    puts(str);
+    exit(1);
+}
+
 //// Various structs ///////////////////////////////////////////////////////////
 #define SplObject_HEAD \
     int64_t refCount; \
@@ -98,6 +104,15 @@ typedef struct String
     int64_t length;
 } String;
 
+typedef struct Tree
+{
+    SplObject_HEAD
+    struct Tree* left;
+    struct Tree* right;
+    int64_t value;
+    int64_t count;
+} Tree;
+
 //// Reference counting ////////////////////////////////////////////////////////
 
 #define Spl_INCREF(p) _incref((SplObject*)(p))
@@ -116,7 +131,7 @@ int64_t _decrefNoFree(int64_t* p)
 
     if (*p < 0)
     {
-        _die(ERR_REF_NEG);
+        _dieWithMessage("*** Exception: Reference count is negative");
     }
 
     return *p;
@@ -157,6 +172,11 @@ int64_t fromInt(int64_t n)
 
 static inline char* content(String* s)
 {
+    if (s == NULL)
+    {
+        _dieWithMessage("*** Exception: Called content on null string");
+    }
+
     return (char*)(s + 1);
 }
 
@@ -182,6 +202,11 @@ void echo(String* s)
 
 int64_t len(String* s)
 {
+    if (s == NULL)
+    {
+        _dieWithMessage("*** Exception: Called len on null string");
+    }
+
     return s->length;
 }
 
@@ -192,7 +217,7 @@ int64_t charAt(int64_t i, String* s)
     int64_t length = fromInt(len(s));
     if (n >= length)
     {
-        _die(ERR_OUT_OF_BOUNDS);
+        _dieWithMessage("*** Exception: Index passed to charAt is out of range");
     }
 
     const char* str = content(s);
@@ -274,7 +299,7 @@ String* readLine()
 
     if (read == -1)
     {
-        return 0;
+        return NULL;
     }
     else
     {
@@ -310,22 +335,23 @@ List* Cons(void* value, List* next)
 
 //// Trees /////////////////////////////////////////////////////////////////////
 
-int64_t count(int64_t*);
+int64_t count(Tree*);
 
-int64_t* Node(int64_t value, int64_t* left, int64_t* right)
+Tree* Node(int64_t value, Tree* left, Tree* right)
 {
-    int64_t* newTree = (int64_t*)malloc(48);
+    Tree* newTree = (Tree*)malloc(sizeof(Node));
 
-    *(newTree + 0) = 0;              // Reference count
-    *(newTree + 1) = (2L << 32) + 2; // Number of pointers; non-pointers
-    *(newTree + 2) = (int64_t)left;     // Left child
-    *(newTree + 3) = (int64_t)right;    // Right child
-    *(newTree + 4) = value;          // Value of this node
+    newTree->refCount = 0;
+    newTree->numScalars = 2;
+    newTree->numPointers = 2;
+    newTree->left = left;
+    newTree->right = right;
+    newTree->value = value;
 
     int64_t leftCount = fromInt(count(left));
     int64_t rightCount = fromInt(count(right));
     int64_t myCount = toInt(1 + leftCount + rightCount);
-    *(newTree + 5) = myCount;        // Nodes in this subtree
+    newTree->count = myCount;
 
     Spl_INCREF(left);
     Spl_INCREF(right);
@@ -333,42 +359,42 @@ int64_t* Node(int64_t value, int64_t* left, int64_t* right)
     return newTree;
 }
 
-int64_t* Empty()
+Tree* Empty()
 {
     return NULL;
 }
 
-int64_t top(int64_t* tree)
+int64_t top(Tree* tree)
 {
     if (tree == NULL)
     {
-        _die(ERR_TOP_EMPTY);
+        _dieWithMessage("*** Exception: Called top on empty tree");
     }
 
-    return *(tree + 4);
+    return tree->value;
 }
 
-int64_t* left(int64_t* tree)
+Tree* left(Tree* tree)
 {
     if (tree == NULL)
     {
-        _die(ERR_LEFT_EMPTY);
+        _dieWithMessage("*** Exception: Called left on empty tree");
     }
 
-    return (int64_t*)*(tree + 2);
+    return tree->left;
 }
 
-int64_t* right(int64_t* tree)
+Tree* right(Tree* tree)
 {
     if (tree == NULL)
     {
-        _die(ERR_RIGHT_EMPTY);
+        _dieWithMessage("*** Exception: Called right on empty tree");
     }
 
-    return (int64_t*)*(tree + 3);
+    return tree->right;
 }
 
-int64_t count(int64_t* tree)
+int64_t count(Tree* tree)
 {
     if (tree == NULL)
     {
@@ -376,7 +402,7 @@ int64_t count(int64_t* tree)
     }
     else
     {
-        return *(tree + 5);
+        return tree->count;
     }
 }
 

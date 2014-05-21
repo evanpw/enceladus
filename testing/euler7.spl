@@ -1,4 +1,4 @@
-# Solves Project Euler 7
+-- Solves Project Euler 7
 
 def isPrime x :: Int -> Bool =
     i := 2
