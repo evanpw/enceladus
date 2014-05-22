@@ -36,7 +36,7 @@ void yyerror(const char* msg);
 
 %type<program> program
 %type<statement> statement suite
-%type<expression> expression fexpression simple_expression inline_list
+%type<expression> expression simple_expression inline_list arg_list_tail
 %type<block> statement_list
 %type<params> param_list parameters
 %type<arguments> arg_list list_interior
@@ -245,15 +245,7 @@ statement_list: statement
 			$$ = $1;
 		}
 
-/* An expression that is not a function call */
-expression: ident '$' expression
-		{
-			ArgList* argList = new ArgList();
-			argList->emplace_back($3);
-
-			$$ = new FunctionCallNode($1, argList);
-		}
-	| expression AND expression
+expression: expression AND expression
 		{
 			$$ = new LogicalNode($1, LogicalNode::kAnd, $3);
 		}
@@ -341,25 +333,31 @@ expression: ident '$' expression
 
 			$$ = new FunctionCallNode("concat", argList);
 		}
-	| fexpression
+	| simple_expression
+		{
+			$$ = $1;
+		}
+	| ident arg_list arg_list_tail
+		{
+			ArgList* argList = $2;
+			argList->emplace_back($3);
+
+			$$ = new FunctionCallNode($1, argList);
+		}
+
+arg_list_tail: '$' expression
+		{
+			$$ = $2;
+		}
+	| simple_expression
 		{
 			$$ = $1;
 		}
 
-fexpression: simple_expression
-		{
-			$$ = $1;
-		}
-	| ident arg_list
-		{
-			$$ = new FunctionCallNode($1, $2);
-		}
-
-arg_list: simple_expression
-        {
-            $$ = new ArgList();
-            $$->emplace_back($1);
-        }
+arg_list: /* empty */
+    	{
+    		$$ = new ArgList();
+    	}
 	| arg_list simple_expression
         {
             $1->emplace_back($2);

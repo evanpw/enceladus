@@ -6,7 +6,7 @@ def longSum xs ys :: [Int] -> [Int] -> [Int] =
 
     x := 0
     y := 0
-    while not (null xs and null ys and (carry == 0)) do
+    while not (null xs and null ys and carry == 0) do
         if null xs then
             x = 0
         else

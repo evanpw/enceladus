@@ -6,7 +6,7 @@ def longSum xs ys :: [Int] -> [Int] -> [Int] =
 
     x := 0
     y := 0
-    while not (null xs and null ys and (carry == 0)) do
+    while not (null xs and null ys and carry == 0) do
         if null xs then
             x = 0
         else
@@ -60,7 +60,7 @@ def shift xs n :: [Int] -> Int -> [Int] =
 def longProduct xs ys :: [Int] -> [Int] -> [Int] =
     partialProducts := []
 
-    for n in range 0 (length ys - 1) do
+    for n in range 0 $ length ys - 1 do
         y := at n ys
         z1 := singleProduct xs y
         z2 := shift z1 n
@@ -86,6 +86,6 @@ def printNumber xs :: [Int] -> Unit =
 
 x := [1]
 for i in range 2 100 do
-    x = longProduct x (intTolong i)
+    x = longProduct x $ intTolong i
 
 print $ sum x

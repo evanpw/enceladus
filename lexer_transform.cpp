@@ -32,6 +32,7 @@ int yylex()
         }
 
         int token = yylex_raw();
+        //std::cerr << token << " " << yylloc.first_line << " " << yylloc.first_column << std::endl;
 
         // Handle unfinished indentation blocks when EOF is reached
         if (token == 0)

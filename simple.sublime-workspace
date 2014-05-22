@@ -12,27 +12,43 @@
 	"buffers":
 	[
 		{
-			"contents": "* Put away things in the house\n* Wash the dishes\n* Vaccum the living room\n* Decide what to store on my USB drive\n* Organize the filing cabinet\n* Decide what needs to be done on Simple compiler before posting\n* Look over Year29 goals\n* Make some new years resolutions\n\nIn Progress / Waiting\n---------------------\n* Get Vanguard contribution changed to 6%\n* Buy some PATH trips with my CRP\n\nLater\n-----\n* Buy an office chair\n\nRepeating\n---------\n* Read some QM\n* Eat Ramen & drink tea for lunch\n* Make a list every day",
+			"file": "testing/test.spl",
 			"settings":
 			{
-				"buffer_size": 516,
+				"buffer_size": 50,
 				"line_ending": "Unix",
-				"name": "* Put away things in the house"
+				"name": "def f x :: Int -> Int ="
 			}
 		},
 		{
-			"file": "/Users/evanpw/Dropbox/Progress/Abby.csv",
+			"file": "lexer_transform.cpp",
 			"settings":
 			{
-				"buffer_size": 335,
+				"buffer_size": 2897,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "/Users/evanpw/Dropbox/Progress/Year29.mdown",
+			"file": "ast.cpp",
 			"settings":
 			{
-				"buffer_size": 2772,
+				"buffer_size": 2195,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "prelude.spl",
+			"settings":
+			{
+				"buffer_size": 8809,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "simple.flex",
+			"settings":
+			{
+				"buffer_size": 3393,
 				"line_ending": "Unix"
 			}
 		}
@@ -43,6 +59,10 @@
 		"height": 49.0,
 		"selected_items":
 		[
+			[
+				"Remove",
+				"Package Control: Remove Package"
+			],
 			[
 				"Install",
 				"Package Control: Install Package"
@@ -72,76 +92,95 @@
 	},
 	"file_history":
 	[
+		"/Users/evanpw/Workspace/simple/TODO",
+		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler16.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler17.spl",
+		"/Users/evanpw/Workspace/simple/library.c",
+		"/Users/evanpw/Workspace/simple/testing/crash.spl",
+		"/Users/evanpw/Workspace/simple/simple.flex",
+		"/Users/evanpw/Workspace/simple/testing/euler19.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler5.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler7.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler20.spl",
+		"/Users/evanpw/Workspace/simple/simple.y",
+		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
+		"/Users/evanpw/Workspace/simple/ast.cpp",
+		"/Users/evanpw/Workspace/simple/ast.hpp",
+		"/Users/evanpw/Workspace/simple/testing/all.sh",
+		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
+		"/Users/evanpw/Workspace/simple/prelude.spl",
+		"/Users/evanpw/Dropbox/Progress/Weight.csv",
+		"/Users/evanpw/Workspace/simple/testing/while.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler9.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler10.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler12.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler13.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler14.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler15.spl",
+		"/Users/evanpw/Workspace/simple/testing/poly.spl",
+		"/Users/evanpw/Workspace/simple/testing/poly2.spl",
+		"/Users/evanpw/Workspace/simple/testing/fail.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler18.spl",
+		"/Users/evanpw/Workspace/simple/semantic.cpp",
+		"/Users/evanpw/Workspace/simple/codegen.hpp",
+		"/Users/evanpw/Workspace/simple/codegen.cpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
+		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
+		"/Users/evanpw/Workspace/simple/semantic.hpp",
+		"/Users/evanpw/Workspace/simple/testing/euler10-3.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler10-2.spl",
+		"/Users/evanpw/Workspace/simple/testing/string.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler18.txt",
+		"/Users/evanpw/Workspace/simple/build/string.asm",
+		"/Users/evanpw/Workspace/simple/build/euler17.asm",
+		"/Users/evanpw/Workspace/simple/types.cpp",
+		"/Users/evanpw/Workspace/simple/build/string_table.d",
+		"/Users/evanpw/Workspace/simple/string_table.cpp",
+		"/Users/evanpw/Workspace/simple/types.hpp",
+		"/Users/evanpw/Workspace/simple/string_table.hpp",
+		"/Users/evanpw/Dropbox/Progress/Abby.csv",
+		"/Users/evanpw/Dropbox/Progress/Year29.mdown",
 		"/Users/evanpw/Dropbox/Progress/Reference/Net Worth.md",
 		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
-		"/Users/evanpw/Dropbox/Progress/Abby.csv",
-		"/Users/evanpw/Workspace/simple/types.hpp",
-		"/Users/evanpw/Workspace/simple/types.cpp",
-		"/Users/evanpw/Workspace/simple/semantic.hpp",
-		"/Users/evanpw/Workspace/simple/semantic.cpp",
-		"/Users/evanpw/Workspace/simple/ast.hpp",
 		"/Users/evanpw/Workspace/simple/scope.hpp",
 		"/Users/evanpw/Workspace/simple/scope.cpp",
-		"/Users/evanpw/Workspace/simple/testing/all.sh",
-		"/Users/evanpw/Workspace/simple/testing/poly2.spl",
-		"/Users/evanpw/Workspace/simple/prelude.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler16.spl",
 		"/Users/evanpw/Workspace/simple/type_inference.cpp",
 		"/Users/evanpw/Workspace/simple/build/poly2.asm",
-		"/Users/evanpw/Workspace/simple/codegen.cpp",
 		"/Users/evanpw/Workspace/typedtoy/type_checker.cpp",
-		"/Users/evanpw/Workspace/simple/testing/euler15.spl",
 		"/Users/evanpw/Workspace/simple/build/poly",
 		"/Users/evanpw/Workspace/simple/simplec.cpp",
-		"/Users/evanpw/Workspace/simple/simple.y",
 		"/Users/evanpw/Dropbox/Archive/logins",
-		"/Users/evanpw/Dropbox/Progress/Year29.mdown",
 		"/Users/evanpw/Workspace/typedtoy/ti/type_inference.cpp",
 		"/Users/evanpw/Dropbox/Progress/Reference/Periodicity.md",
-		"/Users/evanpw/Workspace/simple/TODO",
-		"/Users/evanpw/Workspace/simple/codegen.hpp",
 		"/Users/evanpw/Workspace/simple/build/euler1.asm",
 		"/Users/evanpw/Workspace/simple/symbol.hpp",
-		"/Users/evanpw/Workspace/simple/ast.cpp",
 		"/Users/evanpw/Workspace/simple/build/euler3.asm",
 		"/Users/evanpw/Workspace/simple/simplec",
 		"/Users/evanpw/Workspace/simple/build/euler15.asm",
 		"/Users/evanpw/Workspace/simple/build/euler15",
 		"/Users/evanpw/Workspace/simple/build/euler1",
-		"/Users/evanpw/Dropbox/Progress/Weight.csv",
 		"/Users/evanpw/Dropbox/Progress/Monthly.2013-12.md",
 		"/Users/evanpw/Dropbox/Progress/Waist.csv",
 		"/Users/evanpw/Dropbox/Progress/Walking.csv",
 		"/Users/evanpw/Dropbox/Progress/Weekly.2013-12-02.md",
 		"/Users/evanpw/Dropbox/Progress/Weight Lifting.md",
-		"/Users/evanpw/Workspace/simple/library.c",
 		"/Users/evanpw/Workspace/simple/build/euler9.asm",
 		"/Users/evanpw/Workspace/simple/testing/test.spl",
 		"/Users/evanpw/Workspace/simple/build/test.asm",
 		"/Users/evanpw/Dropbox/Progress/Reference/Kayla's Loan.csv",
 		"/Users/evanpw/Workspace/simple/log",
-		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler12.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler13.spl",
-		"/Users/evanpw/Workspace/simple/testing/fail.spl",
-		"/Users/evanpw/Workspace/simple/simple.flex",
-		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
 		"/Users/evanpw/Workspace/simple/symbol.cpp",
-		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
-		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
 		"/Users/evanpw/Dropbox/Progress/Reference/To Buy.md",
 		"/Users/evanpw/Workspace/simple/build/cycle.asm",
 		"/Users/evanpw/Workspace/simple/testing/cycle.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
 		"/Users/evanpw/Workspace/simple/testing/test.cpp",
 		"/Users/evanpw/Workspace/simple/testing/set.spl",
 		"/Users/evanpw/Workspace/simple/testing/preref.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler7.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler10-2.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler10-3.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler10.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler10.py",
 		"/Users/evanpw/Workspace/simple/testing/euler10.hs",
 		"/Users/evanpw/Workspace/simple/Set.c",
@@ -151,16 +190,10 @@
 		"/Users/evanpw/Workspace/simple/osx/library.asm",
 		"/Users/evanpw/Workspace/simple/osx/build.sh",
 		"/Users/evanpw/Workspace/simple/Makefile",
-		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler9.spl",
 		"/Users/evanpw/Workspace/simple/test.c",
-		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler14.spl",
 		"/Users/evanpw/Workspace/simple/linux/Set.asm",
 		"/Users/evanpw/Workspace/simple/linux/test.c",
 		"/Users/evanpw/Workspace/simple/testing/euler13.txt",
-		"/Users/evanpw/Workspace/simple/string_table.hpp",
-		"/Users/evanpw/Workspace/simple/string_table.cpp",
 		"/Users/evanpw/Workspace/simple/simple.output",
 		"/Users/evanpw/Workspace/simple/simple.tab.c",
 		"/Users/evanpw/Workspace/simple/string_table.hpp.bak",
@@ -171,7 +204,6 @@
 		"/Users/evanpw/Workspace/simple/testing/function.spl",
 		"/Users/evanpw/Dropbox/Progress/Year28.tex",
 		"/Users/evanpw/Workspace/simple/common.asm",
-		"/Users/evanpw/Workspace/simple/testing/euler5.spl",
 		"/Users/evanpw/Workspace/simple/build/euler5.asm",
 		"/Users/evanpw/Workspace/simple/testing/euler7.spl.py",
 		"/Users/evanpw/Workspace/simple/build.sh",
@@ -187,19 +219,7 @@
 		"/Users/evanpw/Workspace/simple/testing/euler4.spl.py",
 		"/Users/evanpw/Workspace/simple/hello.asm",
 		"/Users/evanpw/Workspace/simple/build/library-64.asm",
-		"/Users/evanpw/Workspace/simple/build/euler1-64.asm",
-		"/Users/evanpw/.inputrc",
-		"/Users/evanpw/.bash_profile",
-		"/Users/evanpw/Dropbox/Progress/Todo List.md",
-		"/Users/evanpw/Workspace/mycraft/mycraft.cpp",
-		"/Users/evanpw/Workspace/bigdata/generate.py",
-		"/Users/evanpw/Workspace/bigdata/regression-big.R",
-		"/Users/evanpw/Workspace/bigdata/regression-big.Rout",
-		"/Users/evanpw/Workspace/bigdata/regression.log",
-		"/Users/evanpw/Workspace/bigdata/regression-big.log",
-		"/Users/evanpw/Dropbox/Progress/Goals/One Month.tex",
-		"/Users/evanpw/Dropbox/Progress/Past/Accomplishments2012.tex",
-		"/Users/evanpw/Dropbox/Progress/Calendar.md"
+		"/Users/evanpw/Workspace/simple/build/euler1-64.asm"
 	],
 	"find":
 	{
@@ -217,6 +237,73 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"yylloc",
+			"yylineno",
+			"Node*",
+			"dieWithMessage",
+			"String",
+			"charAt",
+			"_die",
+			"->",
+			"[]",
+			":",
+			"ArgList",
+			"COLON",
+			"COLON_EQUAL",
+			"let",
+			"saturday",
+			"join",
+			"=",
+			"LET",
+			"let",
+			"LET",
+			"LetNode",
+			"108",
+			"LET",
+			"LetNode",
+			"AssignNode",
+			"LET",
+			"LetNode",
+			"AssignNode",
+			"let",
+			"List",
+			"drop",
+			"at",
+			"null",
+			"reverse",
+			"drop",
+			"take",
+			"drop",
+			"%ld",
+			"uint64_t",
+			"long",
+			"_incref",
+			"decref",
+			"_decref",
+			"ERR_OUT_OF_BOUNDS",
+			"stringLiterals",
+			"stringLi",
+			"stringnode",
+			"string",
+			"std::cerr",
+			"read",
+			"length",
+			"at",
+			"malloc",
+			"cat",
+			"decref",
+			"std::cer",
+			"stringLiterals_",
+			"_variables",
+			"VariableSymbol",
+			"StringNode",
+			"VariableSymbol",
+			"StringNode",
+			"IntNode",
+			"INT_LIT",
+			"count_whitespace",
+			"typeTable_",
+			"Tree",
 			"TypeDecl",
 			"std::cerr",
 			"generalize",
@@ -277,74 +364,7 @@
 			"ident",
 			"Pair",
 			"Match",
-			"ParamListNode",
-			"LetNode",
-			"die",
-			"__decref",
-			"incref",
-			"ConstructorSpec",
-			"ConstructorSpec*",
-			"let",
-			"LetNode",
-			"':'",
-			"DO",
-			"Constructor",
-			"BlockNode",
-			"assert",
-			"semanticError",
-			"typeTable",
-			"LetNode",
-			"type_",
-			"Type",
-			"Type::",
-			"&Type::",
-			"&Type::List",
-			"&Type::Bool",
-			"&Type::Int",
-			"&Type::Void",
-			"Type::lookup",
-			"Type::",
-			"_Set_empty",
-			"head",
-			"Head",
-			"HEAD",
-			"NullNode",
-			"ISNULL",
-			"NotNode",
-			"NotNod",
-			"NotNode",
-			"NOT",
-			"_enclosingFunction",
-			"FunctionCall",
-			"count",
-			"reference",
-			"List",
-			"typeCheck",
-			"Tree.",
-			"isSimple",
-			"List_",
-			"decref",
-			"_decref",
-			"__decref",
-			"decref",
-			"mangle",
-			"TYPE",
-			"cons",
-			"Read",
-			"read",
-			"READ",
-			"VariableNode",
-			"_decref",
-			"Cons",
-			"die",
-			"__die",
-			"Print",
-			"PRINT",
-			"isForeign",
-			"isExternal",
-			"External",
-			"EXTERN",
-			"extern"
+			"ParamListNode"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -362,57 +382,60 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 4,
 			"sheets":
 			[
 				{
 					"buffer": 0,
+					"file": "testing/test.spl",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 516,
+						"buffer_size": 50,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								311,
-								311
+								45,
+								45
 							]
 						],
 						"settings":
 						{
-							"auto_name": "* Put away things in the house",
-							"syntax": "Packages/Text/Plain text.tmLanguage"
+							"auto_name": "def f x :: Int -> Int =",
+							"syntax": "Packages/Haskell/Haskell.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 4,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "/Users/evanpw/Dropbox/Progress/Abby.csv",
+					"file": "lexer_transform.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 335,
+						"buffer_size": 2897,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								335,
-								335
+								1147,
+								1147
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -423,29 +446,88 @@
 				},
 				{
 					"buffer": 2,
-					"file": "/Users/evanpw/Dropbox/Progress/Year29.mdown",
-					"semi_transient": false,
+					"file": "ast.cpp",
+					"semi_transient": true,
 					"settings":
 					{
-						"buffer_size": 2772,
+						"buffer_size": 2195,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2046,
-								2046
+								212,
+								212
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Markdown/Markdown.tmLanguage",
+							"syntax": "Packages/C++/C++.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1152.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "prelude.spl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8809,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2953,
+								2953
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Haskell/Haskell.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1453.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "simple.flex",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3393,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								151,
+								151
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
