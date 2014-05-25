@@ -7,14 +7,12 @@
 using namespace std;
 
 AstNode::AstNode()
-: type_(nullptr)
+: location_(new YYLTYPE(yylloc)), type_(nullptr)
 {
-	location_ = new YYLTYPE(yylloc);
 }
 
 AstNode::~AstNode()
 {
-	delete location_;
 }
 
 void ProgramNode::append(AstNode* child)
@@ -52,7 +50,8 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
     ArgList* tailArgList = new ArgList;
     tailArgList->emplace_back(new NullaryNode(listVar.c_str()));
     newBody->append(
-        new AssignNode(listVar.c_str(),
+        new AssignNode(
+            new VariableNode(listVar),
             new FunctionCallNode("tail", tailArgList)));
 
     BlockNode* forNode = new BlockNode;

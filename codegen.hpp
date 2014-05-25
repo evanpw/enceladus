@@ -23,18 +23,27 @@ public:
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(IntNode* node);
-	virtual void visit(StringNode* node);
 	virtual void visit(LetNode* node);
-	virtual void visit(MatchNode* node);
 	virtual void visit(LogicalNode* node);
+	virtual void visit(MatchNode* node);
+	virtual void visit(MemberAccessNode* node);
+	virtual void visit(MemberDefNode* node);
 	virtual void visit(NullaryNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
+	virtual void visit(StringNode* node);
+	virtual void visit(StructDefNode* node);
+	virtual void visit(StructInitNode* node);
+	virtual void visit(VariableNode* node);
 	virtual void visit(WhileNode* node);
 
 	// Generate a code fragment to access the symbol with the given name in the
 	// current scope.
 	std::string access(const VariableSymbol* symbol);
+
+	// Emit code to move the address of the given assignable location to the
+	// given register
+	void getAddress(AssignableNode* node, const std::string& dest);
 
 	// Gets the list of all external symbols which are referenced in this module
 	std::vector<std::string> getExterns(ProgramNode* node);
@@ -44,6 +53,7 @@ public:
 
 	// Create the functions corresponding to a data type declaration
 	void createConstructor(ValueConstructor* constructor);
+	void createStructInit(StructDefNode* node);
 
 private:
 	void decref(const VariableSymbol* symbol);
@@ -66,6 +76,7 @@ private:
 	// Keep track of the function & data type definitions so that we can walk
 	// through them after the main function
 	std::vector<DataDeclaration*> dataDeclarations_;
+	std::vector<StructDefNode*> structDeclarations_;
 
 	// All string literals
 	std::vector<StringNode*> stringLiterals_;

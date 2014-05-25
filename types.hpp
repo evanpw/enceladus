@@ -71,7 +71,7 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Type>> baseTypes_;
 };
 
-enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed};
+enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed, ttStruct};
 
 class TypeImpl;
 class TypeVariable;
@@ -214,6 +214,40 @@ private:
     std::string name_;
     bool primitive_;
     std::vector<std::unique_ptr<ValueConstructor>> valueConstructors_;
+};
+
+class StructDefNode;
+
+// Represents a compound type (a struct)
+class StructType : public TypeImpl
+{
+public:
+    static std::shared_ptr<Type> create(const std::string& name, StructDefNode* node)
+    {
+        return std::make_shared<Type>(new StructType(name, node));
+    }
+
+    virtual std::string name() const { return name_; }
+    virtual bool isBoxed() const { return true; }
+
+    size_t boxedMembers() const { return boxedMembers_; }
+    size_t unboxedMembers() const { return unboxedMembers_; }
+
+    struct MemberDesc
+    {
+        std::shared_ptr<Type> type;
+        size_t location;
+    };
+
+    const std::unordered_map<std::string, MemberDesc>& members() { return members_; }
+
+private:
+    StructType(const std::string& name, StructDefNode* node);
+
+    std::string name_;
+    std::unordered_map<std::string, MemberDesc> members_;
+
+    size_t boxedMembers_, unboxedMembers_;
 };
 
 // The type of a function from one type to another

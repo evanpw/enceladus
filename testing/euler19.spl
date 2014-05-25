@@ -74,7 +74,7 @@ current := Date 1900 1 1 1
 dayCount := 0
 while (year current) <= 2000 do
     if (year current >= 1901) and (day current == 1) and (dayOfWeek current == 0) then
-        -- echo $ printDate current
+        echo $ printDate current
         dayCount += 1
 
     current = incrementDate current

@@ -24,18 +24,22 @@ void yyerror(const char* msg);
 	ProgramNode* program;
 	StatementNode* statement;
 	BlockNode* block;
+	AssignableNode* assignable;
 	ExpressionNode* expression;
 	ParamListNode* params;
 	ArgList* arguments;
 	TypeDecl* typeDecl;
 	ConstructorSpec* constructorSpec;
 	TypeName* typeName;
+	MemberList* memberList;
+	MemberDefNode* memberDef;
 	const char* str;
 	long number;
 }
 
 %type<program> program
 %type<statement> statement suite
+%type<assignable> assignable
 %type<expression> expression simple_expression inline_list arg_list_tail
 %type<block> statement_list
 %type<params> param_list parameters
@@ -44,10 +48,12 @@ void yyerror(const char* msg);
 %type<str> ident
 %type<typeName> type
 %type<constructorSpec> constructor_spec
+%type<memberList> struct_def member_list;
+%type<memberDef> member_def;
 
 %token ERROR
 %token IF THEN ELSE LET
-%token DEF FOREIGN DATA COLON_EQUAL VAR
+%token DEF FOREIGN DATA COLON_EQUAL VAR STRUCT
 %token AND OR MOD EQUALS
 %token RETURN
 %token WHILE DO
@@ -98,7 +104,7 @@ statement: IF expression THEN suite
 		{
 			$$ = makeForNode($2, $4, $6);
 		}
-	| LIDENT '=' expression EOL
+	| assignable '=' expression EOL
 		{
 			$$ = new AssignNode($1, $3);
 		}
@@ -126,41 +132,45 @@ statement: IF expression THEN suite
 		{
 			$$ = new DataDeclaration($2, $4);
 		}
-	| LIDENT PLUS_EQUAL expression EOL
+	| assignable PLUS_EQUAL expression EOL
 		{
 			ArgList* argList = new ArgList;
-			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($1);
 			argList->emplace_back($3);
 
-			$$ = new AssignNode($1, new FunctionCallNode("+", argList));
+			$$ = new AssignNode($1->clone(), new FunctionCallNode("+", argList));
 		}
-	| LIDENT MINUS_EQUAL expression EOL
+	| assignable MINUS_EQUAL expression EOL
 		{
 			ArgList* argList = new ArgList;
-			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($1);
 			argList->emplace_back($3);
 
-			$$ = new AssignNode($1, new FunctionCallNode("-", argList));
+			$$ = new AssignNode($1->clone(), new FunctionCallNode("-", argList));
 		}
-	| LIDENT TIMES_EQUAL expression EOL
+	| assignable TIMES_EQUAL expression EOL
 		{
 			ArgList* argList = new ArgList;
-			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($1);
 			argList->emplace_back($3);
 
-			$$ = new AssignNode($1, new FunctionCallNode("*", argList));
+			$$ = new AssignNode($1->clone(), new FunctionCallNode("*", argList));
 		}
-	| LIDENT DIV_EQUAL expression EOL
+	| assignable DIV_EQUAL expression EOL
 		{
 			ArgList* argList = new ArgList;
-			argList->emplace_back(new NullaryNode($1));
+			argList->emplace_back($1);
 			argList->emplace_back($3);
 
-			$$ = new AssignNode($1, new FunctionCallNode("/", argList));
+			$$ = new AssignNode($1->clone(), new FunctionCallNode("/", argList));
 		}
 	| DEF ident parameters optionaltype '=' suite
 		{
 			$$ = new FunctionDefNode($2, $6, $3, $4);
+		}
+	| STRUCT UIDENT '=' struct_def
+		{
+			$$ = new StructDefNode($2, $4);
 		}
 	| FOREIGN ident parameters DCOLON typedecl EOL
 		{
@@ -244,6 +254,36 @@ statement_list: statement
 			$1->append($2);
 			$$ = $1;
 		}
+
+ //// Structures ///////////////////////////////////////////////////////////////
+
+struct_def: member_def
+		{
+			$$ = new MemberList();
+			$$->emplace_back($1);
+		}
+	| EOL INDENT member_list DEDENT
+		{
+			$$ = $3;
+		}
+
+member_def: LIDENT DCOLON type EOL
+		{
+			$$ = new MemberDefNode($1, $3);
+		}
+
+member_list: member_def
+		{
+			$$ = new MemberList();
+			$$->emplace_back($1);
+		}
+	| member_list member_def
+		{
+			$1->emplace_back($2);
+			$$ = $1;
+		}
+
+ //// Expressions //////////////////////////////////////////////////////////////
 
 expression: expression AND expression
 		{
@@ -344,6 +384,10 @@ expression: expression AND expression
 
 			$$ = new FunctionCallNode($1, argList);
 		}
+	| UIDENT '{' '}'
+		{
+			$$ = new StructInitNode($1);
+		}
 
 arg_list_tail: '$' expression
 		{
@@ -372,6 +416,10 @@ simple_expression: '(' expression ')'
 		{
 			$$ = new NullaryNode($1);
 		}
+	| LIDENT '{' LIDENT '}'
+		{
+			$$ = new MemberAccessNode($1, $3);
+		}
 	| INT_LIT
 		{
 			$$ = new IntNode($1);
@@ -391,6 +439,15 @@ simple_expression: '(' expression ')'
 	| STRING_LIT
 		{
 			$$ = new StringNode($1);
+		}
+
+assignable: LIDENT
+		{
+			$$ = new VariableNode($1);
+		}
+	| LIDENT '{' LIDENT '}'
+		{
+			$$ = new MemberAccessNode($1, $3);
 		}
 
 inline_list: '[' list_interior ']'

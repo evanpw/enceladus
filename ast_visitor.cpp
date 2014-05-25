@@ -98,3 +98,11 @@ void AstVisitor::visit(MatchNode* node)
 {
 	node->body()->accept(this);
 }
+
+void AstVisitor::visit(StructDefNode* node)
+{
+	for (auto& member : node->members())
+	{
+		member->accept(this);
+	}
+}

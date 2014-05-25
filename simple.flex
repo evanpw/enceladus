@@ -100,6 +100,8 @@ int yycolumn = 1;
 "$"		{ return '$'; }
 "["		{ return '['; }
 "]"	    { return ']'; }
+"{"		{ return '{'; }
+"}"		{ return '}'; }
 "mod"	{ return MOD; }
 "->"	{ return RARROW; }
 "<="	{ return LE; }
@@ -129,6 +131,7 @@ int yycolumn = 1;
 "in"		{ return IN; }
 "let"		{ return LET; }
 "return"	{ return RETURN; }
+"struct"	{ return STRUCT; }
 "then"		{ return THEN; }
 "True"		{ return TRUE; }
 "var"		{ return VAR; }

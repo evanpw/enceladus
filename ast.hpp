@@ -33,6 +33,11 @@ protected:
 
 class StatementNode : public AstNode {};
 class ExpressionNode : public StatementNode {};
+class AssignableNode : public ExpressionNode
+{
+public:
+	virtual AssignableNode* clone() = 0;
+};
 
 
 
@@ -142,8 +147,8 @@ public:
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	const std::string& name() { return name_; }
-	const Symbol* symbol() { return symbol_; }
 
+	const Symbol* symbol() { return symbol_; }
 	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
 
 private:
@@ -218,7 +223,27 @@ private:
 	FunctionSymbol* symbol_;
 };
 
+class VariableNode : public AssignableNode
+{
+public:
+	VariableNode(const std::string& name)
+	: name_(name), symbol_(nullptr)
+	{
+	}
 
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	virtual VariableNode* clone() { return new VariableNode(*this); }
+
+	const std::string& name() { return name_; }
+
+	VariableSymbol* symbol() { return symbol_; }
+	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
+
+private:
+	std::string name_;
+	VariableSymbol* symbol_;
+};
 
 ////// Statement nodes /////////////////////////////////////////////////////////
 class BlockNode : public StatementNode
@@ -287,23 +312,19 @@ BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode*
 class AssignNode : public StatementNode
 {
 public:
-	AssignNode(const char* target, ExpressionNode* value)
-	: target_(target), value_(value), symbol_(nullptr)
-	{}
+	AssignNode(AssignableNode* target, ExpressionNode* value)
+	: target_(target), value_(value)
+	{
+	}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& target() { return target_; }
+	AssignableNode* target() { return target_.get(); }
 	ExpressionNode* value() { return value_.get(); }
 
-	VariableSymbol* symbol() { return symbol_; }
-	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
-
 private:
-	std::string target_;
+	std::unique_ptr<AssignableNode> target_;
 	std::unique_ptr<ExpressionNode> value_;
-
-	VariableSymbol* symbol_;
 };
 
 class LetNode : public StatementNode
@@ -462,6 +483,94 @@ public:
 
 private:
 	std::unique_ptr<ExpressionNode> expression_;
+};
+
+//// Structures ////////////////////////////////////////////////////////////////
+
+struct MemberDefNode : public AstNode
+{
+	MemberDefNode(const char* name, TypeName* typeName)
+	: name_(name), typeName_(typeName)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& name() { return name_; }
+	TypeName* typeName() { return typeName_.get(); }
+
+	void attachType(std::shared_ptr<Type> type) { type_ = type; }
+	std::shared_ptr<Type> type() const { return type_; }
+
+private:
+	std::string name_;
+	std::unique_ptr<TypeName> typeName_;
+	std::shared_ptr<Type> type_;
+};
+
+typedef std::vector<std::unique_ptr<MemberDefNode>> MemberList;
+
+class StructDefNode : public StatementNode
+{
+public:
+	StructDefNode(const char* name, MemberList* members)
+	: name_(name), members_(members)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& name() { return name_; }
+	MemberList& members() { return *(members_.get()); }
+
+	void attachStructType(std::shared_ptr<Type> type) { structType_ = type; }
+	std::shared_ptr<Type> structType() const { return structType_; }
+
+private:
+	std::string name_;
+	std::unique_ptr<MemberList> members_;
+	std::shared_ptr<Type> structType_;
+};
+
+class StructInitNode : public ExpressionNode
+{
+public:
+	StructInitNode(const char* structName)
+	: structName_(structName)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& structName() { return structName_; }
+
+private:
+	std::string structName_;
+};
+
+class MemberAccessNode : public AssignableNode
+{
+public:
+	MemberAccessNode(const char* varName, const char* memberName)
+	: varName_(varName), memberName_(memberName)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	virtual MemberAccessNode* clone() { return new MemberAccessNode(*this); }
+
+	const std::string& varName() { return varName_; }
+	const std::string& memberName() { return memberName_; }
+
+	const Symbol* symbol() { return symbol_; }
+	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
+
+	size_t memberLocation() { return memberLocation_; }
+	void setMemberLocation(size_t memberLocation) { memberLocation_ = memberLocation; }
+
+private:
+	std::string varName_;
+	std::string memberName_;
+
+	Symbol* symbol_;
+	size_t memberLocation_;
 };
 
 #endif

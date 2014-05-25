@@ -1,4 +1,5 @@
 #include "types.hpp"
+#include "ast.hpp"
 
 #include "utility.hpp"
 
@@ -114,6 +115,7 @@ std::set<TypeVariable*> Type::freeVars() const
     switch (_impl->tag())
     {
         case ttBase:
+        case ttStruct:
             break;
 
         case ttVariable:
@@ -261,6 +263,40 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<st
         else
         {
             memberLocations_.push_back(nextUnboxed++);
+        }
+    }
+}
+
+StructType::StructType(const std::string& name, StructDefNode* node)
+: TypeImpl(ttStruct), name_(name)
+{
+    boxedMembers_ = 0;
+    unboxedMembers_ = 0;
+
+    // First pass -> just count the number of boxed / unboxed members
+    for (auto& member : node->members())
+    {
+        if (member->type()->isBoxed())
+        {
+            ++boxedMembers_;
+        }
+        else
+        {
+            ++unboxedMembers_;
+        }
+    }
+
+    // Second pass -> determine the actual layout
+    size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
+    for (auto& member : node->members())
+    {
+        if (member->type()->isBoxed())
+        {
+            members_[member->name()] = { member->type(), nextBoxed++ };
+        }
+        else
+        {
+            members_[member->name()] = { member->type(), nextUnboxed++ };
         }
     }
 }

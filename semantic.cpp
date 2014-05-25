@@ -11,6 +11,8 @@
 #include "simple.tab.h"
 #include "utility.hpp"
 
+#define CHECK(p, msg) if (!(p)) { std::stringstream ss##__LINE__; ss##__LINE__ << msg; semanticError(node, ss##__LINE__.str()); }
+
 using namespace std;
 
 SemanticAnalyzer::SemanticAnalyzer(ProgramNode* root)
@@ -280,6 +282,7 @@ std::shared_ptr<Type> SemanticAnalyzer::instantiate(const std::shared_ptr<Type>&
     switch (type->tag())
     {
         case ttBase:
+        case ttStruct:
             return type;
 
         case ttVariable:
@@ -344,6 +347,7 @@ bool SemanticAnalyzer::occurs(TypeVariable* variable, const std::shared_ptr<Type
     switch (value->tag())
     {
         case ttBase:
+        case ttStruct:
             return false;
 
         case ttVariable:
@@ -381,9 +385,16 @@ bool SemanticAnalyzer::occurs(TypeVariable* variable, const std::shared_ptr<Type
 
 void SemanticAnalyzer::unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node)
 {
+    assert(lhs && rhs && node);
+
     if (lhs->tag() == ttBase && rhs->tag() == ttBase)
     {
         // Two base types can be unified only if equal (we don't have inheritance)
+        if (lhs->name() == rhs->name())
+            return;
+    }
+    else if (lhs->tag() == ttStruct && rhs->tag() == ttStruct)
+    {
         if (lhs->name() == rhs->name())
             return;
     }
@@ -747,7 +758,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 	topScope()->insert(symbol);
 	node->attachSymbol(symbol);
 
-	unify(node->value()->type(), symbol->typeScheme->type(), node);
+	unify(node->value()->type(), symbol->type(), node);
 
     node->setType(TypeTable::Unit);
 }
@@ -774,7 +785,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 	assert(constructorSymbol->typeScheme->isBoxed());
 
 	assert(constructorSymbol->typeScheme->tag() == ttFunction);
-	FunctionType* functionType = constructorSymbol->typeScheme->type()->get<FunctionType>();
+	FunctionType* functionType = constructorSymbol->type()->get<FunctionType>();
 	const std::shared_ptr<Type> constructedType = functionType->output();
 
 	if (constructedType->valueConstructors().size() != 1)
@@ -817,29 +828,10 @@ void SemanticAnalyzer::visit(MatchNode* node)
 
 void SemanticAnalyzer::visit(AssignNode* node)
 {
-	const std::string& target = node->target();
-
-	Symbol* symbol = searchScopes(target);
-	if (symbol == nullptr)
-	{
-		std::stringstream msg;
-		msg << "symbol \"" << target << "\" is not defined.";
-		semanticError(node, msg.str());
-		return;
-	}
-	else if (symbol->kind != kVariable)
-	{
-		std::stringstream msg;
-		msg << "target of assignment \"" << target << "\" is not a variable.";
-		semanticError(node, msg.str());
-	}
-
-	node->attachSymbol(static_cast<VariableSymbol*>(symbol));
-
+    node->target()->accept(this);
 	node->value()->accept(this);
 
-    assert(node->symbol()->typeScheme->quantified().empty());
-    unify(node->value()->type(), node->symbol()->typeScheme->type(), node);
+    unify(node->value()->type(), node->target()->type(), node);
 
     node->setType(TypeTable::Unit);
 }
@@ -894,9 +886,7 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 		if (symbol->kind == kVariable)
 		{
 			node->attachSymbol(symbol);
-
-			assert(symbol->typeScheme->quantified().empty());
-        	node->setType(symbol->typeScheme->type());
+        	node->setType(symbol->type());
 		}
 		else if (symbol->kind == kFunction)
 		{
@@ -1031,9 +1021,146 @@ void SemanticAnalyzer::visit(ReturnNode* node)
     assert(_enclosingFunction->symbol()->typeScheme->tag() == ttFunction);
 
     // Value of expression must equal the return type of the enclosing function.
-    FunctionType* functionType = _enclosingFunction->symbol()->typeScheme->type()->get<FunctionType>();
+    FunctionType* functionType = _enclosingFunction->symbol()->type()->get<FunctionType>();
 
     unify(node->expression()->type(), functionType->output(), node);
 
     node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(VariableNode* node)
+{
+    const std::string& name = node->name();
+
+    Symbol* symbol = searchScopes(name);
+    CHECK(symbol != nullptr, "symbol " << name << " is not defined in this scope");
+    CHECK(symbol->kind == kVariable, "symbol " << name << "is not a variable");
+
+    node->attachSymbol(static_cast<VariableSymbol*>(symbol));
+    node->setType(symbol->type());
+}
+
+//// Structures ////////////////////////////////////////////////////////////////
+
+void SemanticAnalyzer::visit(StructDefNode* node)
+{
+    AstVisitor::visit(node);
+
+    // Data declarations cannot be local
+    if (_enclosingFunction != nullptr)
+    {
+        std::stringstream msg;
+        msg << "struct declarations must be at top level.";
+
+        semanticError(node, msg.str());
+        return;
+    }
+
+    // The struct name cannot have already been used for something
+    const std::string& structName = node->name();
+    if (searchScopes(structName) != nullptr)
+    {
+        std::stringstream msg;
+        msg << "symbol \"" << structName << "\" is already defined.";
+        semanticError(node, msg.str());
+        return;
+    }
+
+    // TODO: Make sure this isn't already used as a type name
+
+    // Actually create the type
+    std::shared_ptr<Type> newType = StructType::create(structName, node);
+    typeTable_->insert(structName, newType);
+
+    node->attachStructType(newType);
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(MemberDefNode* node)
+{
+    // All of the constructor members must refer to already-declared types
+    std::shared_ptr<Type> type = typeTable_->nameToType(node->typeName());
+    if (!type)
+    {
+        std::stringstream msg;
+        msg << "unknown member type \"" << type << "\".";
+        semanticError(node, msg.str());
+        return;
+    }
+
+    node->attachType(type);
+    node->setType(TypeTable::Unit);
+}
+
+void SemanticAnalyzer::visit(StructInitNode* node)
+{
+    std::shared_ptr<Type> type = typeTable_->getBaseType(node->structName());
+    if (!type)
+    {
+        std::stringstream msg;
+        msg << "unknown type \"" << type << "\".";
+        semanticError(node, msg.str());
+        return;
+    }
+
+    if (!type->get<StructType>())
+    {
+        std::stringstream msg;
+        msg << "cannot initialize non-struct type \"" << type << "\".";
+        semanticError(node, msg.str());
+        return;
+    }
+
+    node->setType(type);
+}
+
+void SemanticAnalyzer::visit(MemberAccessNode* node)
+{
+    const std::string& name = node->varName();
+
+    Symbol* symbol = searchScopes(name);
+    if (symbol != nullptr)
+    {
+        if (symbol->kind == kVariable)
+        {
+            node->attachSymbol(symbol);
+        }
+        else
+        {
+            std::stringstream msg;
+            msg << "expected variable but got function name \"" << name << "\".";
+
+            semanticError(node, msg.str());
+        }
+    }
+    else
+    {
+        std::stringstream msg;
+        msg << "symbol \"" << name << "\" is not defined in this scope.";
+
+        semanticError(node, msg.str());
+    }
+
+    std::shared_ptr<Type> type = symbol->type();
+
+    StructType* structType = type->get<StructType>();
+    if (!structType)
+    {
+        std::stringstream msg;
+        msg << "cannot access member of non-struct variable \"" << name << "\".";
+
+        semanticError(node, msg.str());
+    }
+
+    auto i = structType->members().find(node->memberName());
+    if (i == structType->members().end())
+    {
+        std::stringstream msg;
+        msg << "no such member \"" << node->memberName() << "\" of variable " << name << ".";
+
+        semanticError(node, msg.str());
+    }
+
+    node->setMemberLocation(i->second.location);
+    node->setType(i->second.type);
 }

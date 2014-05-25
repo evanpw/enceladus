@@ -32,6 +32,12 @@ struct Symbol
 
     // Type (possibly polymorphic) of this variable or function
     std::shared_ptr<TypeScheme> typeScheme;
+
+    std::shared_ptr<Type> type()
+    {
+        assert(typeScheme->quantified().empty());
+        return typeScheme->type();
+    }
 };
 
 struct VariableSymbol : public Symbol

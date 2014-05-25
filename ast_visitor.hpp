@@ -16,14 +16,19 @@ class FunctionDefNode;
 class IfElseNode;
 class IfNode;
 class IntNode;
-class StringNode;
 class LetNode;
 class LogicalNode;
 class MatchNode;
+class MemberAccessNode;
+class MemberDefNode;
 class NullaryNode;
 class ParamListNode;
 class ProgramNode;
 class ReturnNode;
+class StringNode;
+class StructDefNode;
+class StructInitNode;
+class VariableNode;
 class WhileNode;
 
 class AstVisitor
@@ -44,6 +49,7 @@ public:
 	virtual void visit(LogicalNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
+	virtual void visit(StructDefNode* node);
 	virtual void visit(WhileNode* node);
 
 	// Leaf nodes
@@ -51,9 +57,13 @@ public:
 	virtual void visit(DataDeclaration* node) {}
 	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}
+	virtual void visit(MemberAccessNode* node) {}
+	virtual void visit(MemberDefNode* node) {}
 	virtual void visit(StringNode* node) {}
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(ParamListNode* node) {}
+	virtual void visit(StructInitNode* node) {}
+	virtual void visit(VariableNode* node) {}
 
 protected:
 	Scope* topScope() { return scopes_.back(); }

@@ -6,6 +6,11 @@
 #include "scope.hpp"
 #include "simple.tab.h"
 
+#define EMIT_BLANK() out_ << std::endl;
+#define EMIT_LEFT(x) out_ << x << std::endl;
+#define EMIT_LABEL(x) out_ << x << ":" << std::endl;
+#define EMIT(x) out_ << "\t" << x << std::endl;
+
 std::string CodeGen::mangle(const std::string& name)
 {
 	if (name.find(".") == std::string::npos)
@@ -22,6 +27,27 @@ std::string CodeGen::mangle(const std::string& name)
 
 		return copy;
 	}
+}
+
+void CodeGen::getAddress(AssignableNode* node, const std::string& dest)
+{
+	VariableNode* variableNode = dynamic_cast<VariableNode*>(node);
+	if (variableNode != nullptr)
+	{
+		EMIT("lea " << dest << ", " << access(variableNode->symbol()));
+		return;
+	}
+
+	MemberAccessNode* memberAccess = dynamic_cast<MemberAccessNode*>(node);
+	if (memberAccess != nullptr)
+	{
+		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(memberAccess->symbol());
+		EMIT("mov " << dest << ", " << access(symbol));
+		EMIT("lea " << dest << ", [" << dest << " + " << 8 * (2 + memberAccess->memberLocation()) << "]");
+		return;
+	}
+
+	assert(false);
 }
 
 std::string CodeGen::access(const VariableSymbol* symbol)
@@ -122,80 +148,126 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 	// counts (pointers and non-pointers)
 	size_t size = 8 * (memberTypes.size() + 2);
 
-	out_ << std::endl;
-	out_ << "_" << mangle(constructor->name()) << ":" << std::endl;
-	out_ << "\t" << "push rbp" << std::endl;
-	out_ << "\t" << "mov rbp, rsp" << std::endl;
+	EMIT_BLANK();
+	EMIT_LABEL("_" << mangle(constructor->name()));
+	EMIT("push rbp");
+	EMIT("mov rbp, rsp");
 
 	// Align stack, allocate, unalign
-    out_ << "\t" << "mov rbx, rsp" << std::endl;
-    out_ << "\t" << "and rsp, -16" << std::endl;
-    out_ << "\t" << "add rsp, -8" << std::endl;
-    out_ << "\t" << "push rbx" << std::endl;
-    out_ << "\t" << "mov rdi, " << size << std::endl;
-	out_ << "\t" << "call " << foreignName("malloc") << std::endl;
-    out_ << "\t" << "pop rbx" << std::endl;
-    out_ << "\t" << "mov rsp, rbx" << std::endl;
+    EMIT("mov rbx, rsp");
+    EMIT("and rsp, -16");
+    EMIT("add rsp, -8");
+    EMIT("push rbx");
+    EMIT("mov rdi, " << size);
+	EMIT("call " << foreignName("malloc"));
+    EMIT("pop rbx");
+    EMIT("mov rsp, rbx");
 
 	//// Fill in the members with the constructor arguments
 
     // Reference count
-	out_ << "\t" << "mov qword [rax], 0" << std::endl;
+	EMIT("mov qword [rax], 0");
 
 	// Boxed & unboxed member counts
 	long memberCount = (constructor->boxedMembers() << 32) + constructor->boxedMembers();
-	out_ << "\t" << "mov rbx, qword " << memberCount << std::endl;
-	out_ << "\t" << "mov qword [rax + 8], rbx" << std::endl;
+	EMIT("mov rbx, qword " << memberCount);
+	EMIT("mov qword [rax + 8], rbx");
 
     for (size_t i = 0; i < memberTypes.size(); ++i)
     {
     	size_t location = constructor->memberLocations().at(i);
 
-    	out_ << "\t" << "mov rdi, qword [rbp + " << 8 * (i + 2) << "]" << std::endl;
-    	out_ << "\t" << "mov qword [rax + " << 8 * (location + 2) << "], rdi" << std::endl;
+    	EMIT("mov rdi, qword [rbp + " << 8 * (i + 2) << "]");
+    	EMIT("mov qword [rax + " << 8 * (location + 2) << "], rdi");
 
     	// Increment reference count of non-simple, non-null members
     	if (memberTypes[i]->isBoxed())
     	{
     		std::string skipInc = uniqueLabel();
 
-    		out_ << "\t" << "cmp rdi, 0" << std::endl;
-    		out_ << "\t" << "je " << skipInc << std::endl;
-    		out_ << "\t" << "add qword [rdi], 1" << std::endl;
-    		out_ << skipInc << ":" << std::endl;
+    		EMIT("cmp rdi, 0");
+    		EMIT("je " << skipInc);
+    		EMIT("add qword [rdi], 1");
+    		EMIT_LABEL(skipInc);
     	}
     }
 
-	out_ << "\t" << "mov rsp, rbp" << std::endl;
-	out_ << "\t" << "pop rbp" << std::endl;
-	out_ << "\t" << "ret" << std::endl;
+	EMIT("mov rsp, rbp");
+	EMIT("pop rbp");
+	EMIT("ret");
+}
+
+void CodeGen::createStructInit(StructDefNode* node)
+{
+	StructType* structType = node->structType()->get<StructType>();
+	MemberList& members = node->members();
+
+	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
+	// There is one extra qword for the reference count and one for the member
+	// counts (pointers and non-pointers)
+	size_t size = 8 * (members.size() + 2);
+
+	EMIT_BLANK();
+	EMIT_LABEL("__init_" << mangle(node->name()));
+	EMIT("push rbp");
+	EMIT("mov rbp, rsp");
+
+	// Align stack, allocate, unalign
+    EMIT("mov rbx, rsp");
+    EMIT("and rsp, -16");
+    EMIT("add rsp, -8");
+    EMIT("push rbx");
+    EMIT("mov rdi, " << size);
+	EMIT("call " << foreignName("malloc"));
+    EMIT("pop rbx");
+    EMIT("mov rsp, rbx");
+
+	//// Zero out all of the members
+
+    // Reference count
+	EMIT("mov qword [rax], 0");
+
+	// Boxed & unboxed member counts
+	long memberCount = (structType->boxedMembers() << 32) + structType->boxedMembers();
+	EMIT("mov rbx, qword " << memberCount);
+	EMIT("mov qword [rax + 8], rbx");
+
+	// Initialize all members to zero
+    for (size_t i = 0; i < members.size(); ++i)
+    {
+    	EMIT("mov qword [rax + " << 8 * (i + 2) << "], 0");
+    }
+
+	EMIT("mov rsp, rbp");
+	EMIT("pop rbp");
+	EMIT("ret");
 }
 
 void CodeGen::visit(ProgramNode* node)
 {
-	out_ << "bits 64" << std::endl;
-	out_ << "section .text" << std::endl;
-	out_ << "global __main" << std::endl;
+	EMIT_LEFT("bits 64");
+	EMIT_LEFT("section .text");
+	EMIT_LEFT("global __main");
 
 	std::vector<std::string> externs = getExterns(node);
 	if (!externs.empty())
 	{
-		out_ << "extern " << mangle(externs[0]);
+		EMIT_LEFT("extern " << mangle(externs[0]));
 		for (size_t i = 1; i < externs.size(); ++i)
 		{
-			out_ << ", " << mangle(externs[i]);
+			EMIT_LEFT("extern " << mangle(externs[i]));
 		}
-		out_ << std::endl;
+		EMIT_BLANK();
 	}
-	out_ << std::endl;
+	EMIT_BLANK();
 
-	out_ << "__main:" << std::endl;
+	EMIT_LABEL("__main");
 	currentFunction_ = "_main";
 
 	// Recurse to child nodes
 	AstVisitor::visit(node);
 
-	out_ << "__end__main:" << std::endl;
+	EMIT_LABEL("__end__main");
 
 	// Clean up all global variables before exiting, just to make valgrind
 	// happy
@@ -209,12 +281,12 @@ void CodeGen::visit(ProgramNode* node)
 
 		if (variableSymbol->typeScheme->isBoxed())
 		{
-			out_ << "\t" << "mov rdi, " << access(variableSymbol) << std::endl;
-			out_ << "\t" << "call " << foreignName("_decref") << std::endl;
+			EMIT("mov rdi, " << access(variableSymbol));
+			EMIT("call " << foreignName("_decref"));
 		}
 	}
 
-	out_ << "\t" << "ret" << std::endl;
+	EMIT("ret");
 
 	// All other functions
 	while (!referencedFunctions_.empty())
@@ -224,10 +296,10 @@ void CodeGen::visit(ProgramNode* node)
 		visitedFunctions_.insert(function);
 
 		currentFunction_ = function->name();
-		out_ << std::endl;
-		out_ << "_" << mangle(function->name()) << ":" << std::endl;
-		out_ << "\t" << "push rbp" << std::endl;
-		out_ << "\t" << "mov rbp, rsp" << std::endl;
+		EMIT_BLANK();
+		EMIT_LABEL("_" << mangle(function->name()));
+		EMIT("push rbp");
+		EMIT("mov rbp, rsp");
 
 		// Assign a location for all of the local variables and parameters.
 		int locals = 0;
@@ -242,14 +314,14 @@ void CodeGen::visit(ProgramNode* node)
 				++locals;
 			}
 		}
-		if (locals > 0) out_ << "\t" << "add rsp, -" << (8 * locals) << std::endl;
+		if (locals > 0) EMIT("add rsp, -" << (8 * locals));
 
 		// We have to zero out the local variables for the reference counting
 		// to work correctly
-		out_ << "\t" << "mov rax, 0" << std::endl;
-		out_ << "\t" << "mov rcx, " << locals << std::endl;
-		out_ << "\t" << "mov rdi, rsp" << std::endl;
-		out_ << "\t" << "rep stosq" << std::endl;
+		EMIT("mov rax, 0");
+		EMIT("mov rcx, " << locals);
+		EMIT("mov rdi, rsp");
+		EMIT("rep stosq");
 
 		// We gain a reference to all of the parameters passed in
 		for (auto& i : function->scope()->symbols())
@@ -259,16 +331,16 @@ void CodeGen::visit(ProgramNode* node)
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
 			if (symbol->isParam && symbol->typeScheme->isBoxed())
 			{
-				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
-				out_ << "\t" << "call " << foreignName("_incref") << std::endl;
+				EMIT("mov rdi, " << access(symbol));
+				EMIT("call " << foreignName("_incref"));
 			}
 		}
 
 		// Recurse to children
 		AstVisitor::visit(function);
 
-		out_ << "__end_" << function->name() << ":" << std::endl;
-		out_ << "\t" << "push rax" << std::endl;
+		EMIT_LABEL("__end_" << function->name());
+		EMIT("push rax");
 
 		assert(function->symbol()->typeScheme->tag() == ttFunction);
 		FunctionType* functionType = function->symbol()->typeScheme->type()->get<FunctionType>();
@@ -277,8 +349,8 @@ void CodeGen::visit(ProgramNode* node)
 		// same as one of the local variables.
 		if (functionType->output()->isBoxed())
 		{
-			out_ << "\t" << "mov rdi, rax" << std::endl;
-			out_ << "\t" << "call " << foreignName("_incref") << std::endl;
+			EMIT("mov rdi, rax");
+			EMIT("call " << foreignName("_incref"));
 		}
 
 		// Going out of scope loses a reference to all of the local variables
@@ -289,8 +361,8 @@ void CodeGen::visit(ProgramNode* node)
 			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
 			if (symbol->typeScheme->isBoxed())
 			{
-				out_ << "\t" << "mov rdi, " << access(symbol) << std::endl;
-				out_ << "\t" << "call " << foreignName("_decref") << std::endl;
+				EMIT("mov rdi, " << access(symbol));
+				EMIT("call " << foreignName("_decref"));
 			}
 		}
 
@@ -299,15 +371,15 @@ void CodeGen::visit(ProgramNode* node)
 		// assign it a reference.
 		if (functionType->output()->isBoxed())
 		{
-			out_ << "\t" << "mov rdi, qword [rsp]" << std::endl;
-			out_ << "\t" << "call " << foreignName("_decrefNoFree") << std::endl;
+			EMIT("mov rdi, qword [rsp]");
+			EMIT("call " << foreignName("_decrefNoFree"));
 		}
 
-		out_ << "\t" << "pop rax" << std::endl;
+		EMIT("pop rax");
 
-		out_ << "\t" << "mov rsp, rbp" << std::endl;
-		out_ << "\t" << "pop rbp" << std::endl;
-		out_ << "\t" << "ret" << std::endl;
+		EMIT("mov rsp, rbp");
+		EMIT("pop rbp");
+		EMIT("ret");
 	}
 
 	for (DataDeclaration* dataDeclaration : dataDeclarations_)
@@ -315,33 +387,39 @@ void CodeGen::visit(ProgramNode* node)
 		createConstructor(dataDeclaration->valueConstructor());
 	}
 
+	for (StructDefNode* structDef : structDeclarations_)
+	{
+		createStructInit(structDef);
+	}
+
 	// Declare global variables and string literalsin the data segment
-	out_ << std::endl<< "section .data" << std::endl;
+	EMIT_BLANK();
+	EMIT_LEFT("section .data");
 	for (auto& i : topScope()->symbols())
 	{
 		if (i.second->kind == kVariable)
 		{
-			out_ << "_" << mangle(i.second->name) << ": dq 0" << std::endl;
+			EMIT_LEFT("_" << mangle(i.second->name) << ": dq 0");
 		}
 	}
 
 	for (StringNode* node : stringLiterals_)
 	{
-		out_ << node->name() << ":" << std::endl;
-		out_ << "dq 1" << std::endl;
-		out_ << "dd 1" << std::endl;
-		out_ << "dd 0" << std::endl;
-		out_ << "dq " << (node->value().length() << 1) + 1 << std::endl;
-		out_ << "db \"" << node->value() << "\", 0" << std::endl;
+		EMIT_LABEL(node->name());
+		EMIT_LEFT("dq 1");
+		EMIT_LEFT("dd 1");
+		EMIT_LEFT("dd 0");
+		EMIT_LEFT("dq " << (node->value().length() << 1) + 1);
+		EMIT_LEFT("db \"" << node->value() << "\", 0");
 	}
 }
 
 void CodeGen::visit(ComparisonNode* node)
 {
 	node->lhs()->accept(this);
-	out_ << "\t" << "push rax" << std::endl;
+	EMIT("push rax");
 	node->rhs()->accept(this);
-	out_ << "\t" << "cmp qword [rsp], rax" << std::endl;
+	EMIT("cmp qword [rsp], rax");
 
 	std::string trueBranch = uniqueLabel();
 	std::string endLabel = uniqueLabel();
@@ -349,59 +427,59 @@ void CodeGen::visit(ComparisonNode* node)
 	switch(node->op())
 	{
 		case ComparisonNode::kGreater:
-			out_ << "\t" << "jg near " << trueBranch << std::endl;
+			EMIT("jg near " << trueBranch);
 			break;
 
 		case ComparisonNode::kLess:
-			out_ << "\t" << "jl near " << trueBranch << std::endl;
+			EMIT("jl near " << trueBranch);
 			break;
 
 		case ComparisonNode::kEqual:
-			out_ << "\t" << "je near " << trueBranch << std::endl;
+			EMIT("je near " << trueBranch);
 			break;
 
 		case ComparisonNode::kGreaterOrEqual:
-			out_ << "\t" << "jge near " << trueBranch << std::endl;
+			EMIT("jge near " << trueBranch);
 			break;
 
 		case ComparisonNode::kLessOrEqual:
-			out_ << "\t" << "jle near " << trueBranch << std::endl;
+			EMIT("jle near " << trueBranch);
 			break;
 
 		case ComparisonNode::kNotEqual:
-			out_ << "\t" << "jne near " << trueBranch << std::endl;
+			EMIT("jne near " << trueBranch);
 			break;
 
 		default: assert(false);
 
 	}
 
-	out_ << "\t" << "mov rax, 01b" << std::endl;
-	out_ << "\t" << "jmp " << endLabel << std::endl;
-	out_ << trueBranch << ":" << std::endl;
-	out_ << "\t" << "mov rax, 11b" << std::endl;
-	out_ << endLabel << ":" << std::endl;
-	out_ << "\t" << "pop rbx" << std::endl;
+	EMIT("mov rax, 01b");
+	EMIT("jmp " << endLabel);
+	EMIT_LABEL(trueBranch);
+	EMIT("mov rax, 11b");
+	EMIT_LABEL(endLabel);
+	EMIT("pop rbx");
 }
 
 void CodeGen::visit(LogicalNode* node)
 {
 	node->lhs()->accept(this);
-	out_ << "\t" << "push rax" << std::endl;
+	EMIT("push rax");
 	node->rhs()->accept(this);
 
 	switch (node->op())
 	{
 	case LogicalNode::kAnd:
-		out_ << "\t" << "and rax, qword [rsp]" << std::endl;
+		EMIT("and rax, qword [rsp]");
 		break;
 
 	case LogicalNode::kOr:
-		out_ << "\t" << "or rax, qword [rsp]" << std::endl;
+		EMIT("or rax, qword [rsp]");
 		break;
 	}
 
-	out_ << "\t" << "pop rbx" << std::endl;
+	EMIT("pop rbx");
 }
 
 void CodeGen::visit(NullaryNode* node)
@@ -411,7 +489,7 @@ void CodeGen::visit(NullaryNode* node)
 	if (node->symbol()->kind == kVariable)
 	{
 		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol());
-		out_ << "\t" << "mov rax, " << access(symbol) << std::endl;
+		EMIT("mov rax, " << access(symbol));
 	}
 	else
 	{
@@ -419,16 +497,16 @@ void CodeGen::visit(NullaryNode* node)
 		if (functionSymbol->isForeign)
 		{
 			// Realign the stack to 16 bytes (may not be necessary on all platforms)
-		    out_ << "\t" << "mov rbx, rsp" << std::endl;
-		    out_ << "\t" << "and rsp, -16" << std::endl;
-		    out_ << "\t" << "add rsp, -8" << std::endl;
-		    out_ << "\t" << "push rbx" << std::endl;
+		    EMIT("mov rbx, rsp");
+		    EMIT("and rsp, -16");
+		    EMIT("add rsp, -8");
+		    EMIT("push rbx");
 
-		    out_ << "\t" << "call " << foreignName(mangle(node->name())) << std::endl;
+		    EMIT("call " << foreignName(mangle(node->name())));
 
 		    // Undo the stack alignment
-		    out_ << "\t" << "pop rbx" << std::endl;
-		    out_ << "\t" << "mov rsp, rbx" << std::endl;
+		    EMIT("pop rbx");
+		    EMIT("mov rsp, rbx");
 		}
 		else
 		{
@@ -438,19 +516,19 @@ void CodeGen::visit(NullaryNode* node)
 				referencedFunctions_.insert(functionSymbol->definition);
 			}
 
-			out_ << "\t" << "call _" << mangle(node->name()) << std::endl;
+			EMIT("call _" << mangle(node->name()));
 		}
 	}
 }
 
 void CodeGen::visit(IntNode* node)
 {
-	out_ << "\t" << "mov rax, " << (2 * node->value() + 1) << std::endl;
+	EMIT("mov rax, " << (2 * node->value() + 1));
 }
 
 void CodeGen::visit(StringNode* node)
 {
-	out_ << "\t" << "mov rax, " << node->name() << std::endl;
+	EMIT("mov rax, " << node->name());
 
 	stringLiterals_.push_back(node);
 }
@@ -459,11 +537,11 @@ void CodeGen::visit(BoolNode* node)
 {
 	if (node->value())
 	{
-		out_ << "\t" << "mov rax, 11b" << std::endl;
+		EMIT("mov rax, 11b");
 	}
 	else
 	{
-		out_ << "\t" << "mov rax, 01b" << std::endl;
+		EMIT("mov rax, 01b");
 	}
 }
 
@@ -481,10 +559,10 @@ void CodeGen::visit(IfNode* node)
 
 	std::string endLabel = uniqueLabel();
 
-	out_ << "\t" << "and rax, 10b" << std::endl;
-	out_ << "\t" << "jz near " << endLabel << std::endl;
+	EMIT("and rax, 10b");
+	EMIT("jz near " << endLabel);
 	node->body()->accept(this);
-	out_ << endLabel << ":" << std::endl;
+	EMIT_LABEL(endLabel);
 }
 
 void CodeGen::visit(IfElseNode* node)
@@ -494,13 +572,13 @@ void CodeGen::visit(IfElseNode* node)
 	std::string elseLabel = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 
-	out_ << "\t" << "and rax, 10b" << std::endl;
-	out_ << "\t" << "jz near " << elseLabel << std::endl;
+	EMIT("and rax, 10b");
+	EMIT("jz near " << elseLabel);
 	node->body()->accept(this);
-	out_ << "\t" << "jmp " << endLabel << std::endl;
-	out_ << elseLabel << ":" << std::endl;
+	EMIT("jmp " << endLabel);
+	EMIT_LABEL(elseLabel);
 	node->else_body()->accept(this);
-	out_ << endLabel << ":" << std::endl;
+	EMIT_LABEL(endLabel);
 }
 
 void CodeGen::visit(WhileNode* node)
@@ -508,37 +586,42 @@ void CodeGen::visit(WhileNode* node)
 	std::string beginLabel = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 
-	out_ << beginLabel << ":" << std::endl;
+	EMIT_LABEL(beginLabel);
 	node->condition()->accept(this);
 
-	out_ << "\t" << "and rax, 10b" << std::endl;
-	out_ << "\t" << "jz near " << endLabel << std::endl;
+	EMIT("and rax, 10b");
+	EMIT("jz near " << endLabel);
 	node->body()->accept(this);
 
-	out_ << "\t" << "jmp " << beginLabel << std::endl;
-	out_ << endLabel << ":" << std::endl;
+	EMIT("jmp " << beginLabel);
+	EMIT_LABEL(endLabel);
 }
 
 void CodeGen::visit(AssignNode* node)
 {
+	// Do NOT recurse into the target node, we will instead take its address
+	// node->target()->accept(this);
+
 	node->value()->accept(this);
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->symbol()->typeScheme->isBoxed())
+	if (node->target()->type()->isBoxed())
 	{
-		out_ << "\t" << "push rax" << std::endl;
+		EMIT("push rax");
 
-		out_ << "\t" << "mov rdi, rax" << std::endl;
-		out_ << "\t" << "call " << foreignName("_incref") << std::endl;
+		EMIT("mov rdi, rax");
+		EMIT("call " << foreignName("_incref"));
 
-		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call " << foreignName("_decref") << std::endl;
+		getAddress(node->target(), "rdi");
+		EMIT("mov qword [rdi], rdi");
+		EMIT("call " << foreignName("_decref"));
 
-		out_ << "\t" << "pop rax" << std::endl;
+		EMIT("pop rax");
 	}
 
-	out_ << "\t" << "mov " << access(node->symbol()) << ", rax" << std::endl;
+	getAddress(node->target(), "rbx");
+	EMIT("mov qword [rbx], rax");
 }
 
 void CodeGen::visit(LetNode* node)
@@ -549,24 +632,24 @@ void CodeGen::visit(LetNode* node)
 	// new rhs
 	if (node->symbol()->typeScheme->isBoxed())
 	{
-		out_ << "\t" << "push rax" << std::endl;
+		EMIT("push rax");
 
-		out_ << "\t" << "mov rdi, rax" << std::endl;
-		out_ << "\t" << "call " << foreignName("_incref") << std::endl;
+		EMIT("mov rdi, rax");
+		EMIT("call " << foreignName("_incref"));
 
-		out_ << "\t" << "mov rdi, " << access(node->symbol()) << std::endl;
-		out_ << "\t" << "call " << foreignName("_decref") << std::endl;
+		EMIT("mov rdi, " << access(node->symbol()));
+		EMIT("call " << foreignName("_decref"));
 
-		out_ << "\t" << "pop rax" << std::endl;
+		EMIT("pop rax");
 	}
 
-	out_ << "\t" << "mov " << access(node->symbol()) << ", rax" << std::endl;
+	EMIT("mov " << access(node->symbol()) << ", rax");
 }
 
 void CodeGen::visit(MatchNode* node)
 {
 	node->body()->accept(this);
-	out_ << "\t" << "push rax" << std::endl;
+	EMIT("push rax");
 
 	// Decrement references to the existing variables
 	for (size_t i = 0; i < node->symbols().size(); ++i)
@@ -575,12 +658,12 @@ void CodeGen::visit(MatchNode* node)
 
 		if (member->typeScheme->isBoxed())
 		{
-			out_ << "\t" << "mov rdi, " << access(member) << std::endl;
-			out_ << "\t" << "call " << foreignName("_decref") << std::endl;
+			EMIT("mov rdi, " << access(member));
+			EMIT("call " << foreignName("_decref"));
 		}
 	}
 
-	out_ << "\t" << "pop rsi" << std::endl;
+	EMIT("pop rsi");
 
 	FunctionType* functionType = node->constructorSymbol()->typeScheme->type()->get<FunctionType>();
 	auto& constructor = functionType->output()->valueConstructors().front();
@@ -591,15 +674,15 @@ void CodeGen::visit(MatchNode* node)
 		VariableSymbol* member = node->symbols().at(i);
 		size_t location = constructor->memberLocations().at(i);
 
-		out_ << "\t" << "mov rdi, [rsi + " << 8 * (location + 2) << "]" << std::endl;
-		out_ << "\t" << "mov " << access(member) << ", rdi" << std::endl;
+		EMIT("mov rdi, [rsi + " << 8 * (location + 2) << "]");
+		EMIT("mov " << access(member) << ", rdi");
 	}
 
 	// Increment references to the new variables
 	for (size_t i = 0; i < constructor->boxedMembers(); ++i)
 	{
-		out_ << "\t" << "mov rdi, [rsi + " << 8 * (i + 2) << "]" << std::endl;
-		out_ << "\t" << "call " << foreignName("_incref") << std::endl;
+		EMIT("mov rdi, [rsi + " << 8 * (i + 2) << "]");
+		EMIT("call " << foreignName("_incref"));
 	}
 }
 
@@ -617,117 +700,117 @@ void CodeGen::visit(FunctionCallNode* node)
 	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
 	{
 		(*i)->accept(this);
-		out_ << "\t" << "push rax" << std::endl;
+		EMIT("push rax");
 	}
 
 	if (node->symbol()->isBuiltin)
 	{
 		if (node->target() == "not")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "xor rax, 10b" << std::endl;
+			EMIT("pop rax");
+			EMIT("xor rax, 10b");
 		}
 		else if (node->target() == "head")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
+			EMIT("pop rax");
 
 			std::string good = uniqueLabel();
 
-			out_ << "\t" << "cmp rax, 0" << std::endl;
-			out_ << "\t" << "jne " << good << std::endl;
+			EMIT("cmp rax, 0");
+			EMIT("jne " << good);
 
 			// If the list is null, then fail
-		    out_ << "\t" << "mov rbx, rsp" << std::endl;
-		    out_ << "\t" << "and rsp, -16" << std::endl;
-		    out_ << "\t" << "add rsp, -8" << std::endl;
-		    out_ << "\t" << "push rbx" << std::endl;
-		    out_ << "\t" << "mov rdi, 0" << std::endl;
-		    out_ << "\t" << "call _" << foreignName("die") << std::endl;
-		    out_ << "\t" << "pop rbx" << std::endl;
-		    out_ << "\t" << "mov rsp, rbx" << std::endl;
+		    EMIT("mov rbx, rsp");
+		    EMIT("and rsp, -16");
+		    EMIT("add rsp, -8");
+		    EMIT("push rbx");
+		    EMIT("mov rdi, 0");
+		    EMIT("call _" << foreignName("die"));
+		    EMIT("pop rbx");
+		    EMIT("mov rsp, rbx");
 
-			out_ << good << ":" << std::endl;
-			out_ << "\t" << "mov rax, qword [rax + 24]" << std::endl;
+			EMIT_LABEL(good);
+			EMIT("mov rax, qword [rax + 24]");
 		}
 		else if (node->target() == "tail")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
+			EMIT("pop rax");
 
 			std::string good = uniqueLabel();
 
-			out_ << "\t" << "cmp rax, 0" << std::endl;
-			out_ << "\t" << "jne " << good << std::endl;
+			EMIT("cmp rax, 0");
+			EMIT("jne " << good);
 
 			// If the list is null, then fail
-		    out_ << "\t" << "mov rbx, rsp" << std::endl;
-		    out_ << "\t" << "and rsp, -16" << std::endl;
-		    out_ << "\t" << "add rsp, -8" << std::endl;
-		    out_ << "\t" << "push rbx" << std::endl;
-		    out_ << "\t" << "mov rdi, 1" << std::endl;
-		    out_ << "\t" << "call _" << foreignName("die") << std::endl;
-		    out_ << "\t" << "pop rbx" << std::endl;
-		    out_ << "\t" << "mov rsp, rbx" << std::endl;
+		    EMIT("mov rbx, rsp");
+		    EMIT("and rsp, -16");
+		    EMIT("add rsp, -8");
+		    EMIT("push rbx");
+		    EMIT("mov rdi, 1");
+		    EMIT("call _" << foreignName("die"));
+		    EMIT("pop rbx");
+		    EMIT("mov rsp, rbx");
 
-			out_ << good << ":" << std::endl;
-			out_ << "\t" << "mov rax, qword [rax + 16]" << std::endl;
+			EMIT_LABEL(good);
+			EMIT("mov rax, qword [rax + 16]");
 		}
 		else if (node->target() == "Nil")
 		{
-			out_ << "\t" << "mov rax, 0" << std::endl;
+			EMIT("mov rax, 0");
 		}
 		else if (node->target() == "null")
 		{
 			std::string finish = uniqueLabel();
-			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "cmp rax, 0" << std::endl;
-			out_ << "\t" << "je " << finish << std::endl;
-			out_ << "\t" << "mov rax, 11b" << std::endl;
-			out_ << finish << ":" << std::endl;
-			out_ << "\t" << "xor rax, 10b" << std::endl;
+			EMIT("pop rax");
+			EMIT("cmp rax, 0");
+			EMIT("je " << finish);
+			EMIT("mov rax, 11b");
+			EMIT_LABEL(finish);
+			EMIT("xor rax, 10b");
 		}
 		else if (node->target() == "+")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "xor rbx, 1" << std::endl;
-			out_ << "\t" << "add rax, rbx" << std::endl;
+			EMIT("pop rax");
+			EMIT("pop rbx");
+			EMIT("xor rbx, 1");
+			EMIT("add rax, rbx");
 		}
 		else if (node->target() == "-")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "xor rbx, 1" << std::endl;
-			out_ << "\t" << "sub rax, rbx" << std::endl;
+			EMIT("pop rax");
+			EMIT("pop rbx");
+			EMIT("xor rbx, 1");
+			EMIT("sub rax, rbx");
 		}
 		else if (node->target() == "*")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "sar rax, 1" << std::endl;
-			out_ << "\t" << "sar rbx, 1" << std::endl;
-			out_ << "\t" << "imul rax, rbx" << std::endl;
-			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
+			EMIT("pop rax");
+			EMIT("pop rbx");
+			EMIT("sar rax, 1");
+			EMIT("sar rbx, 1");
+			EMIT("imul rax, rbx");
+			EMIT("lea rax, [2 * rax + 1]");
 		}
 		else if (node->target() == "/")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "sar rax, 1" << std::endl;
-			out_ << "\t" << "sar rbx, 1" << std::endl;
-			out_ << "\t" << "cqo" << std::endl;
-			out_ << "\t" << "idiv rbx" << std::endl;
-			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
+			EMIT("pop rax");
+			EMIT("pop rbx");
+			EMIT("sar rax, 1");
+			EMIT("sar rbx, 1");
+			EMIT("cqo");
+			EMIT("idiv rbx");
+			EMIT("lea rax, [2 * rax + 1]");
 		}
 		else if (node->target() == "%")
 		{
-			out_ << "\t" << "pop rax" << std::endl;
-			out_ << "\t" << "pop rbx" << std::endl;
-			out_ << "\t" << "sar rax, 1" << std::endl;
-			out_ << "\t" << "sar rbx, 1" << std::endl;
-			out_ << "\t" << "cqo" << std::endl;
-			out_ << "\t" << "idiv rbx" << std::endl;
-			out_ << "\t" << "mov rax, rdx" << std::endl;
-			out_ << "\t" << "lea rax, [2 * rax + 1]" << std::endl;
+			EMIT("pop rax");
+			EMIT("pop rbx");
+			EMIT("sar rax, 1");
+			EMIT("sar rbx, 1");
+			EMIT("cqo");
+			EMIT("idiv rbx");
+			EMIT("mov rax, rdx");
+			EMIT("lea rax, [2 * rax + 1]");
 		}
 		else
 		{
@@ -737,24 +820,24 @@ void CodeGen::visit(FunctionCallNode* node)
 	else if (node->symbol()->isForeign)
 	{
 		// x86_64 calling convention for C puts the first 6 arguments in registers
-		if (node->arguments().size() >= 1) out_ << "\t" << "pop rdi" << std::endl;
-		if (node->arguments().size() >= 2) out_ << "\t" << "pop rsi" << std::endl;
-		if (node->arguments().size() >= 3) out_ << "\t" << "pop rdx" << std::endl;
-		if (node->arguments().size() >= 4) out_ << "\t" << "pop rcx" << std::endl;
-		if (node->arguments().size() >= 5) out_ << "\t" << "pop r8" << std::endl;
-		if (node->arguments().size() >= 6) out_ << "\t" << "pop r9" << std::endl;
+		if (node->arguments().size() >= 1) EMIT("pop rdi");
+		if (node->arguments().size() >= 2) EMIT("pop rsi");
+		if (node->arguments().size() >= 3) EMIT("pop rdx");
+		if (node->arguments().size() >= 4) EMIT("pop rcx");
+		if (node->arguments().size() >= 5) EMIT("pop r8");
+		if (node->arguments().size() >= 6) EMIT("pop r9");
 
 		// Realign the stack to 16 bytes (may not be necessary on all platforms)
-	    out_ << "\t" << "mov rbx, rsp" << std::endl;
-	    out_ << "\t" << "and rsp, -16" << std::endl;
-	    out_ << "\t" << "add rsp, -8" << std::endl;
-	    out_ << "\t" << "push rbx" << std::endl;
+	    EMIT("mov rbx, rsp");
+	    EMIT("and rsp, -16");
+	    EMIT("add rsp, -8");
+	    EMIT("push rbx");
 
-	    out_ << "\t" << "call " << foreignName(mangle(node->target())) << std::endl;
+	    EMIT("call " << foreignName(mangle(node->target())));
 
 	    // Undo the stack alignment
-	    out_ << "\t" << "pop rbx" << std::endl;
-	    out_ << "\t" << "mov rsp, rbx" << std::endl;
+	    EMIT("pop rbx");
+	    EMIT("mov rsp, rbx");
 	}
 	else
 	{
@@ -764,10 +847,10 @@ void CodeGen::visit(FunctionCallNode* node)
 			referencedFunctions_.insert(node->symbol()->definition);
 		}
 
-		out_ << "\t" << "call _" << mangle(node->target()) << std::endl;
+		EMIT("call _" << mangle(node->target()));
 
 		size_t args = node->arguments().size();
-		if (args > 0) out_ << "\t" << "add rsp, " << 8 * args << std::endl;
+		if (args > 0) EMIT("add rsp, " << 8 * args);
 	}
 }
 
@@ -775,5 +858,36 @@ void CodeGen::visit(ReturnNode* node)
 {
 	node->expression()->accept(this);
 
-	out_ << "\t" << "jmp __end_" << currentFunction_ << std::endl;
+	EMIT("jmp __end_" << currentFunction_);
+}
+
+void CodeGen::visit(VariableNode* node)
+{
+	assert(node->symbol()->kind == kVariable);
+
+	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol());
+	EMIT("mov rax, " << access(symbol));
+}
+
+//// Structures ////////////////////////////////////////////////////////////////
+
+void CodeGen::visit(StructDefNode* node)
+{
+	structDeclarations_.push_back(node);
+}
+
+void CodeGen::visit(MemberDefNode* node)
+{
+}
+
+void CodeGen::visit(StructInitNode* node)
+{
+	EMIT("call __init_" << mangle(node->structName()));
+}
+
+void CodeGen::visit(MemberAccessNode* node)
+{
+	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol());
+	EMIT("mov rax, " << access(symbol));
+	EMIT("mov rax, qword [rax + " << 8 * (2 + node->memberLocation()) << "]");
 }
