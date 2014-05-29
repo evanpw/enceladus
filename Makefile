@@ -1,4 +1,4 @@
-CFLAGS=-I/opt/local/include -I. -g -Wall -Wfatal-errors -std=c++11
+CFLAGS=-I/opt/local/include -I. -g -Wall -Wfatal-errors -Werror -std=c++11
 
 SOURCES=$(wildcard *.cpp)
 HEADERS=$(wildcard *.hpp) simple.tab.h
