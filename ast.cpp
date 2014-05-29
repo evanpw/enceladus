@@ -20,7 +20,7 @@ void ProgramNode::append(AstNode* child)
 	children_.emplace_back(child);
 }
 
-void ParamListNode::append(const char* param)
+void ParamListNode::append(const std::string& param)
 {
     names_.emplace_back(param);
 }
@@ -30,7 +30,7 @@ void BlockNode::append(StatementNode* child)
 	children_.emplace_back(child);
 }
 
-BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode* body)
+BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, StatementNode* body)
 {
     // We need a unique variable name for the variable which holds the list
     // we are iterating over

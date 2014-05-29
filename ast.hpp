@@ -48,7 +48,7 @@ typedef std::vector<std::unique_ptr<TypeName>> TypeDecl;
 class ConstructorSpec
 {
 public:
-	ConstructorSpec(const char* name)
+	ConstructorSpec(const std::string& name)
 	: name_(name)
 	{}
 
@@ -142,7 +142,7 @@ protected:
 class NullaryNode : public ExpressionNode
 {
 public:
-	NullaryNode(const char* name) : name_(name), symbol_(nullptr) {}
+	NullaryNode(const std::string& name) : name_(name), symbol_(nullptr) {}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
@@ -202,7 +202,7 @@ FunctionCallNode* makeList(ArgList* elements);
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(const char* target, ArgList* arguments)
+	FunctionCallNode(const std::string& target, ArgList* arguments)
 	: target_(target), symbol_(nullptr)
 	{
 		arguments_.reset(arguments);
@@ -307,7 +307,7 @@ private:
 };
 
 // For loops are implemented as pure syntactic sugar
-BlockNode* makeForNode(const char* loopVar, ExpressionNode* list, StatementNode* body);
+BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, StatementNode* body);
 
 class AssignNode : public StatementNode
 {
@@ -330,7 +330,7 @@ private:
 class LetNode : public StatementNode
 {
 public:
-	LetNode(const char* target, TypeName* typeName, ExpressionNode* value)
+	LetNode(const std::string& target, TypeName* typeName, ExpressionNode* value)
 	: target_(target), typeName_(typeName), value_(value), symbol_(nullptr)
 	{}
 
@@ -354,7 +354,7 @@ private:
 class ParamListNode : public AstNode
 {
 public:
-	void append(const char* param);
+	void append(const std::string& param);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
@@ -367,7 +367,7 @@ private:
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const char* name, StatementNode* body, ParamListNode* params, TypeDecl* typeDecl)
+	FunctionDefNode(const std::string& name, StatementNode* body, ParamListNode* params, TypeDecl* typeDecl)
 	: name_(name), body_(body), params_(params), typeDecl_(typeDecl), symbol_(nullptr), scope_(new Scope)
 	{}
 
@@ -396,7 +396,7 @@ private:
 class MatchNode : public StatementNode
 {
 public:
-	MatchNode(const char* constructor, ParamListNode* params, ExpressionNode* body)
+	MatchNode(const std::string& constructor, ParamListNode* params, ExpressionNode* body)
 	: constructor_(constructor), params_(params), body_(body), constructorSymbol_(nullptr)
 	{}
 
@@ -425,7 +425,7 @@ private:
 class DataDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(const char* name, ConstructorSpec* constructor)
+	DataDeclaration(const std::string& name, ConstructorSpec* constructor)
 	: name_(name), constructor_(constructor)
 	{}
 
@@ -446,7 +446,7 @@ private:
 class ForeignDeclNode : public StatementNode
 {
 public:
-	ForeignDeclNode(const char* name, ParamListNode* params, TypeDecl* typeDecl)
+	ForeignDeclNode(const std::string& name, ParamListNode* params, TypeDecl* typeDecl)
 	: name_(name), params_(params), typeDecl_(typeDecl), symbol_(nullptr)
 	{}
 
@@ -487,9 +487,10 @@ private:
 
 //// Structures ////////////////////////////////////////////////////////////////
 
-struct MemberDefNode : public AstNode
+class MemberDefNode : public AstNode
 {
-	MemberDefNode(const char* name, TypeName* typeName)
+public:
+	MemberDefNode(const std::string& name, TypeName* typeName)
 	: name_(name), typeName_(typeName)
 	{}
 
@@ -512,7 +513,7 @@ typedef std::vector<std::unique_ptr<MemberDefNode>> MemberList;
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(const char* name, MemberList* members)
+	StructDefNode(const std::string& name, MemberList* members)
 	: name_(name), members_(members)
 	{}
 
@@ -533,7 +534,7 @@ private:
 class StructInitNode : public ExpressionNode
 {
 public:
-	StructInitNode(const char* structName)
+	StructInitNode(const std::string& structName)
 	: structName_(structName)
 	{}
 
@@ -548,7 +549,7 @@ private:
 class MemberAccessNode : public AssignableNode
 {
 public:
-	MemberAccessNode(const char* varName, const char* memberName)
+	MemberAccessNode(const std::string& varName, const std::string& memberName)
 	: varName_(varName), memberName_(memberName)
 	{}
 
