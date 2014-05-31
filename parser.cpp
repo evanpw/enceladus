@@ -727,7 +727,7 @@ ExpressionNode* concat_expression()
 {
     //std::cerr << __func__ << std::endl;
 
-    ExpressionNode* lhs = func_call_expression();
+    ExpressionNode* lhs = negation_expression();
 
     if (accept(tCONCAT))
     {
@@ -739,6 +739,22 @@ ExpressionNode* concat_expression()
     else
     {
         return lhs;
+    }
+}
+
+ExpressionNode* negation_expression()
+{
+    //std::cerr << __func__ << std::endl;
+    if (accept('-'))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(new IntNode(0));
+        argList->emplace_back(expression());
+        return new FunctionCallNode("-", argList);
+    }
+    else
+    {
+        return func_call_expression();
     }
 }
 

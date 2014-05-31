@@ -148,7 +148,11 @@ multiplicative_expression
     | concat_expression
 
 concat_expression
-    : func_call_expression CONCAT concat_expression
+    : negation_expression CONCAT concat_expression
+    | negation_expression
+
+negation_expression
+    : '-' expression
     | func_call_expression
 
 func_call_expression
