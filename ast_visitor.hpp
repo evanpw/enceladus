@@ -25,9 +25,9 @@ class NullaryNode;
 class ParamListNode;
 class ProgramNode;
 class ReturnNode;
-class StringNode;
 class StructDefNode;
 class StructInitNode;
+class TypeAliasNode;
 class VariableNode;
 class WhileNode;
 
@@ -59,10 +59,10 @@ public:
 	virtual void visit(IntNode* node) {}
 	virtual void visit(MemberAccessNode* node) {}
 	virtual void visit(MemberDefNode* node) {}
-	virtual void visit(StringNode* node) {}
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(ParamListNode* node) {}
 	virtual void visit(StructInitNode* node) {}
+	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(VariableNode* node) {}
 
 protected:

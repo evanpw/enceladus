@@ -33,6 +33,6 @@ def numInWords x :: Int -> String =
 totalLength := 0
 for i in range 1 1000 do
     s := numInWords i
-    totalLength += len s
+    totalLength += length s
 
 print totalLength

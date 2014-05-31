@@ -9,6 +9,7 @@ statement
     if_statement
     | assignment_statement
     | data_declaration
+    | type_alias_declaration
     | function_definition
     | for_statement
     | foreign_declaration
@@ -36,6 +37,9 @@ assignable
 
 data_declaration
     : DATA UIDENT '=' constructor_spec EOL
+
+type_alias_declaration
+    : TYPE UIDENT '=' type EOL
 
 function_definition
     : DEF ident parameters [ DCOLON type_declaration ] '=' suite

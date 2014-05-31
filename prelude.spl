@@ -1,5 +1,10 @@
 ---- Declarations for built-in functions written in C
 
+-- String functions
+type Char = Int
+type String = [Char]
+
+foreign echo :: String -> Unit
 foreign dieWithMessage :: String -> Unit
 
 -- I/O functions
@@ -18,21 +23,21 @@ foreign left :: Tree -> Tree
 foreign right :: Tree -> Tree
 foreign count :: Tree -> Int
 
--- String functions
-foreign echo :: String -> Unit
-foreign cat :: String -> String -> String
-foreign len :: String -> Int
-foreign charAt :: Int -> String -> Int
-foreign listToString xs :: [Int] -> String
-
 
 ---- Native-language standard library
+
+-- concat :: [a] -> [a] -> [a]
+def concat xs ys =
+    if null xs then
+        return ys
+    else
+        return head xs : concat (tail xs) ys
 
 def assert b :: Bool -> Unit =
     if not b then dieWithMessage "Assertion failed!"
 
 def assertMessage b err :: Bool -> String -> Unit =
-    if not b then dieWithMessage $ cat "Assertion failed: " err
+    if not b then dieWithMessage $ "Assertion failed: " ++ err
 
 ---- Set functions (see http://groups.csail.mit.edu/mac/users/adams/BB/92-10.ps)
 
@@ -249,13 +254,6 @@ def reverse xs =
 
     return ys
 
--- concat :: [a] -> [a] -> [a]
-def concat xs ys =
-    if null xs then
-        return ys
-    else
-        return head xs : concat (tail xs) ys
-
 def even x :: Int -> Bool =
     if x mod 2 == 0 then return True
     else return False
@@ -281,31 +279,21 @@ def odd x :: Int -> Bool =
 
 --    return zs
 
-def stringToList s :: String -> [Int] =
-    xs := []
-    for i in range 0 (len s - 1) do
-        xs = (charAt i s) : xs
-
-    return reverse xs
-
-def isSpace c :: Int -> Bool =
+def isSpace c :: Char -> Bool =
     if c == ' ' or c == '\n' or c == '\r' or c == '\t' then
         return True
     else
         return False
 
 def trimLeft s :: String -> String =
-    s' := stringToList s
-
     xs := []
-    for c in s' do
+    for c in s do
         if not $ isSpace c then xs = c : xs
 
-    return listToString $ reverse $ xs
+    return reverse xs
 
 def trim s :: String -> String =
-    s1 := stringToList s
-
+    s1 := s
     while (not $ null s1) and (isSpace $ head s1) do
         s1 = tail s1
 
@@ -313,28 +301,24 @@ def trim s :: String -> String =
     while (not $ null s2) and (isSpace $ head s2) do
         s2 = tail s2
 
-    return listToString $ reverse s2
+    return reverse s2
 
 def substring s start n :: String -> Int -> Int -> String =
-    s1 := stringToList s
-    s2 := drop start s1
-    s3 := take n s2
-
-    return listToString s3
+    return take n (drop start s)
 
 def split s :: String -> [String] =
     result := []
     start := 0
-    for i in range 0 (len s - 1) do
-        if isSpace $ charAt i s then
+    for i in range 0 (length s - 1) do
+        if isSpace $ at i s then
             if i != start then
                 piece := substring s start (i - start)
                 result = piece : result
 
             start = i + 1
 
-    if start != len s then
-        n := len s - start
+    if start != length s then
+        n := length s - start
         piece = substring s start n
         result = piece : result
 
@@ -346,13 +330,11 @@ def join sep xs :: String -> [String] -> String =
     else if length xs == 1 then
         return head xs
     else
-        return cat (head xs) (cat sep (join sep (tail xs)))
+        return head xs ++ sep ++ join sep $ tail xs
 
 def stringToInt s :: String -> Int =
-    digits := stringToList s
-
     x := 0
-    for digit in digits do
+    for digit in s do
         assertMessage (digit >= '0' and digit <= '9') "stringToInt: Digit out of range"
 
         x *= 10
@@ -374,4 +356,4 @@ def intToString x :: Int -> String =
 
     if negative then s = '-' : s
 
-    return listToString s
+    return s

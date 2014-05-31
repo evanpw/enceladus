@@ -82,7 +82,7 @@ def printNumber xs :: [Int] -> Unit =
     for x in xs do
         result = x + '0' : result
 
-    echo $ listToString result
+    echo result
 
 x := [1]
 for i in range 2 100 do

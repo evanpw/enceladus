@@ -30,6 +30,8 @@ private:
     std::vector<std::unique_ptr<TypeName>> parameters_;
 };
 
+std::ostream& operator<<(std::ostream& out, const TypeName& typeName);
+
 class TypeConstructor
 {
 public:

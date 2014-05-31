@@ -43,6 +43,7 @@ enum TokenType : int
     tTHEN,
     tTIMES_EQUAL,
     tTRUE,
+    tTYPE,
     tUIDENT,
     tVAR,
     tWHILE,

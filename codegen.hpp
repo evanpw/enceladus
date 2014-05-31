@@ -27,15 +27,17 @@ public:
 	virtual void visit(LogicalNode* node);
 	virtual void visit(MatchNode* node);
 	virtual void visit(MemberAccessNode* node);
-	virtual void visit(MemberDefNode* node);
 	virtual void visit(NullaryNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
-	virtual void visit(StringNode* node);
 	virtual void visit(StructDefNode* node);
 	virtual void visit(StructInitNode* node);
 	virtual void visit(VariableNode* node);
 	virtual void visit(WhileNode* node);
+
+	// AST nodes with no code generation tasks
+	virtual void visit(MemberDefNode* node) {}
+	virtual void visit(TypeAliasNode* node) {}
 
 	// Generate a code fragment to access the symbol with the given name in the
 	// current scope.
@@ -77,9 +79,6 @@ private:
 	// through them after the main function
 	std::vector<DataDeclaration*> dataDeclarations_;
 	std::vector<StructDefNode*> structDeclarations_;
-
-	// All string literals
-	std::vector<StringNode*> stringLiterals_;
 };
 
 #endif

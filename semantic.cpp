@@ -478,22 +478,14 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 
 	// The data type and constructor name cannot have already been used for something
 	const std::string& typeName = node->name();
-	if (searchScopes(typeName) != nullptr)
-	{
-		std::stringstream msg;
-		msg << "symbol \"" << typeName << "\" is already defined.";
-		semanticError(node, msg.str());
-		return;
-	}
+    CHECK(!searchScopes(typeName), "symbol \"" << typeName << "\" is already defined.");
+    CHECK(!typeTable_->getBaseType(typeName), "symbol \"" << typeName << "\" is already defined.");
+    CHECK(!typeTable_->getTypeConstructor(typeName), "symbol \"" << typeName << "\" is already defined.");
 
 	const std::string& constructorName = node->constructor()->name();
-	if (searchScopes(constructorName) != nullptr)
-	{
-		std::stringstream msg;
-		msg << "symbol \"" << typeName << "\" is already defined.";
-		semanticError(node, msg.str());
-		return;
-	}
+    CHECK(!searchScopes(constructorName), "symbol \"" << constructorName << "\" is already defined.");
+    CHECK(!typeTable_->getBaseType(constructorName), "symbol \"" << constructorName << "\" is already defined.");
+    CHECK(!typeTable_->getTypeConstructor(constructorName), "symbol \"" << constructorName << "\" is already defined.");
 
 	// All of the constructor members must refer to already-declared types
 	std::vector<std::shared_ptr<Type>> memberTypes;
@@ -503,7 +495,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 		if (!memberType)
 		{
 			std::stringstream msg;
-			msg << "unknown member type \"" << memberType << "\".";
+			msg << "unknown member type \"" << *memberTypeName << "\".";
 			semanticError(node, msg.str());
 			return;
 		}
@@ -528,6 +520,33 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 	node->setType(TypeTable::Unit);
 }
 
+void SemanticAnalyzer::visit(TypeAliasNode* node)
+{
+    // Type aliases cannot be local
+    if (_enclosingFunction != nullptr)
+    {
+        std::stringstream msg;
+        msg << "type alias declarations must be at top level.";
+
+        semanticError(node, msg.str());
+        return;
+    }
+
+    // The new type name cannot have already been used
+    const std::string& typeName = node->name();
+    CHECK(!searchScopes(typeName), "symbol \"" << typeName << "\" is already defined.");
+    CHECK(!typeTable_->getBaseType(typeName), "symbol \"" << typeName << "\" is already defined.");
+    CHECK(!typeTable_->getTypeConstructor(typeName), "symbol \"" << typeName << "\" is already defined.");
+
+    std::shared_ptr<Type> underlying = typeTable_->nameToType(node->underlying());
+    CHECK(underlying, "unknown type \"" << node->underlying()->name() << "\".");
+
+    // Insert the alias into the type table
+    typeTable_->insert(typeName, underlying);
+
+    node->setType(TypeTable::Unit);
+}
+
 void SemanticAnalyzer::visit(FunctionDefNode* node)
 {
 	// Functions cannot be declared inside of another function
@@ -542,14 +561,9 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 	// The function name cannot have already been used as something else
 	const std::string& name = node->name();
-	if (searchScopes(name) != nullptr)
-	{
-		std::stringstream msg;
-		msg << "symbol \"" << name << "\" is already defined.";
-		semanticError(node, msg.str());
-
-		return;
-	}
+    CHECK(!searchScopes(name), "symbol \"" << name << "\" is already defined.");
+    CHECK(!typeTable_->getBaseType(name), "symbol \"" << name << "\" is already defined.");
+    CHECK(!typeTable_->getTypeConstructor(name), "symbol \"" << name << "\" is already defined.");
 
 	std::vector<std::shared_ptr<Type>> paramTypes;
 	std::shared_ptr<Type> returnType;
@@ -573,7 +587,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 			if (!type)
 			{
 				std::stringstream msg;
-				msg << "unknown parameter type \"" << typeName << "\".";
+				msg << "unknown parameter type \"" << *typeName << "\".";
 				semanticError(node, msg.str());
 				return;
 			}
@@ -653,14 +667,9 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 
 	// The function name cannot have already been used as something else
 	const std::string& name = node->name();
-	if (searchScopes(name) != nullptr)
-	{
-		std::stringstream msg;
-		msg << "symbol \"" << name << "\" is already defined.";
-		semanticError(node, msg.str());
-
-		return;
-	}
+    CHECK(!searchScopes(name), "symbol \"" << name << "\" is already defined.");
+    CHECK(!typeTable_->getBaseType(name), "symbol \"" << name << "\" is already defined.");
+    CHECK(!typeTable_->getTypeConstructor(name), "symbol \"" << name << "\" is already defined.");
 
 	// If parameters names are given, must have a type specified for
 	// each parameter + one for return type
@@ -693,7 +702,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 		if (!type)
 		{
 			std::stringstream msg;
-			msg << "unknown parameter type \"" << typeName << "\".";
+			msg << "unknown parameter type \"" << *typeName << "\".";
 			semanticError(node, msg.str());
 			return;
 		}
@@ -743,7 +752,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 		if (!type)
 		{
 			std::stringstream msg;
-			msg << "unknown type \"" << node->typeName()->name() << "\".";
+			msg << "unknown type \"" << *node->typeName() << "\".";
 			semanticError(node, msg.str());
 			return;
 		}
@@ -989,16 +998,6 @@ void SemanticAnalyzer::visit(IntNode* node)
     node->setType(TypeTable::Int);
 }
 
-void SemanticAnalyzer::visit(StringNode* node)
-{
-    static int stringCount = 0;
-
-    std::string literalName = std::string("__string") + boost::lexical_cast<std::string>(stringCount++);
-    node->attachName(literalName);
-
-    node->setType(typeTable_->getBaseType("String"));
-}
-
 void SemanticAnalyzer::visit(BoolNode* node)
 {
     node->setType(TypeTable::Bool);
@@ -1058,15 +1057,9 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 
     // The struct name cannot have already been used for something
     const std::string& structName = node->name();
-    if (searchScopes(structName) != nullptr)
-    {
-        std::stringstream msg;
-        msg << "symbol \"" << structName << "\" is already defined.";
-        semanticError(node, msg.str());
-        return;
-    }
-
-    // TODO: Make sure this isn't already used as a type name
+    CHECK(!searchScopes(structName), "symbol \"" << structName << "\" is already defined.");
+    CHECK(!typeTable_->getBaseType(structName), "symbol \"" << structName << "\" is already defined.");
+    CHECK(!typeTable_->getTypeConstructor(structName), "symbol \"" << structName << "\" is already defined.");
 
     // Actually create the type
     std::shared_ptr<Type> newType = StructType::create(structName, node);

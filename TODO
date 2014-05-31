@@ -30,3 +30,8 @@ Todo
 * Convert strings to be just lists of Chars
 * Add explicit Char type
 * Type aliases (Char = Int, String = [Char])
+* Do some type lookups while parsing
+* Clean up semantic analysis using CHECK macro
+* Merge symbols tables: identifiers, base types, type constructors
+* Add mutable, fixed-length arrays
+* Remove integer print statement

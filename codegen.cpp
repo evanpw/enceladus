@@ -402,16 +402,6 @@ void CodeGen::visit(ProgramNode* node)
 			EMIT_LEFT("_" << mangle(i.second->name) << ": dq 0");
 		}
 	}
-
-	for (StringNode* node : stringLiterals_)
-	{
-		EMIT_LABEL(node->name());
-		EMIT_LEFT("dq 1");
-		EMIT_LEFT("dd 1");
-		EMIT_LEFT("dd 0");
-		EMIT_LEFT("dq " << (node->value().length() << 1) + 1);
-		EMIT_LEFT("db \"" << node->value() << "\", 0");
-	}
 }
 
 void CodeGen::visit(ComparisonNode* node)
@@ -524,13 +514,6 @@ void CodeGen::visit(NullaryNode* node)
 void CodeGen::visit(IntNode* node)
 {
 	EMIT("mov rax, " << (2 * node->value() + 1));
-}
-
-void CodeGen::visit(StringNode* node)
-{
-	EMIT("mov rax, " << node->name());
-
-	stringLiterals_.push_back(node);
 }
 
 void CodeGen::visit(BoolNode* node)
@@ -874,10 +857,6 @@ void CodeGen::visit(VariableNode* node)
 void CodeGen::visit(StructDefNode* node)
 {
 	structDeclarations_.push_back(node);
-}
-
-void CodeGen::visit(MemberDefNode* node)
-{
 }
 
 void CodeGen::visit(StructInitNode* node)

@@ -135,6 +135,7 @@ int yycolumn = 1;
 "struct"	{ return tSTRUCT; }
 "then"		{ return tTHEN; }
 "True"		{ return tTRUE; }
+"type"		{ return tTYPE; }
 "var"		{ return tVAR; }
 "while"		{ return tWHILE; }
 

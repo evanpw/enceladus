@@ -31,6 +31,7 @@ public:
 
     // Declarations
     virtual void visit(DataDeclaration* node);
+    virtual void visit(TypeAliasNode* node);
     virtual void visit(FunctionDefNode* node);
     virtual void visit(ForeignDeclNode* node);
     virtual void visit(LetNode* node);
@@ -51,7 +52,6 @@ public:
     // Leaf nodes
     virtual void visit(BoolNode* node);
     virtual void visit(IntNode* node);
-    virtual void visit(StringNode* node);
     virtual void visit(MemberAccessNode* node);
     virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);

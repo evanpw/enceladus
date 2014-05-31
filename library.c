@@ -98,12 +98,6 @@ typedef struct List
     void* value;
 } List;
 
-typedef struct String
-{
-    SplObject_HEAD
-    int64_t length;
-} String;
-
 typedef struct Tree
 {
     SplObject_HEAD
@@ -112,6 +106,8 @@ typedef struct Tree
     int64_t value;
     int64_t count;
 } Tree;
+
+typedef List String;
 
 //// Reference counting ////////////////////////////////////////////////////////
 
@@ -170,108 +166,59 @@ int64_t fromInt(int64_t n)
 
 //// Strings ///////////////////////////////////////////////////////////////////
 
-static inline char* content(String* s)
+List* Cons(void* value, List* next);
+
+String* makeString(const char* s)
 {
-    if (s == NULL)
+    List* str = NULL;
+
+    for (int i = strlen(s) - 1; i >= 0; --i)
     {
-        _dieWithMessage("*** Exception: Called content on null string");
+        int64_t c = toInt(s[i]);
+        str = Cons((void*)c, str);
     }
 
-    return (char*)(s + 1);
+    return str;
 }
 
-static String* makeString(const char* s)
+size_t get_length(String* s)
 {
-    size_t length = strlen(s);
+    size_t length = 0;
 
-    String* result = malloc(sizeof(String) + length + 1);
-    result->refCount = 0;
-    result->numScalars = 1;
-    result->numPointers = 0;
-    result->length = toInt(length);
+    while (s != NULL)
+    {
+        ++length;
+        s = s->next;
+    }
 
-    strcpy(content(result), s);
+    return length;
+}
 
-    return result;
+char* content(String* s)
+{
+    char* str = (char*)malloc(get_length(s) + 1);
+
+    char* out = str;
+    while (s != NULL)
+    {
+        *out = fromInt((int64_t)s->value);
+
+        ++out;
+        s = s->next;
+    }
+
+    *out = '\0';
+
+    return str;
 }
 
 void echo(String* s)
 {
-    printf("%s\n", content(s));
-}
+    char* str = content(s);
 
-int64_t len(String* s)
-{
-    if (s == NULL)
-    {
-        _dieWithMessage("*** Exception: Called len on null string");
-    }
+    printf("%s\n", str);
 
-    return s->length;
-}
-
-int64_t charAt(int64_t i, String* s)
-{
-    int64_t n = fromInt(i);
-
-    int64_t length = fromInt(len(s));
-    if (n >= length)
-    {
-        _dieWithMessage("*** Exception: Index passed to charAt is out of range");
-    }
-
-    const char* str = content(s);
-    return toInt((int64_t)(str[n]));
-}
-
-String* cat(String* p1, String* p2)
-{
-    int64_t length1 = fromInt(len(p1));
-    int64_t length2 = fromInt(len(p2));
-
-    int64_t newLength = length1 + length2;
-
-    String* result = malloc(sizeof(String) + newLength + 1);
-    result->refCount = 0;
-    result->numScalars = 1;
-    result->numPointers = 0;
-    result->length = toInt(newLength);
-
-    char* resultString = content(result);
-    strncpy(resultString, content(p1), length1);
-    strncpy(resultString + length1, content(p2), length2);
-    resultString[length1 + length2] = 0;
-
-    return result;
-}
-
-String* listToString(List* xs)
-{
-    size_t length = 0;
-    List* p = xs;
-    while (p != 0)
-    {
-        ++length;
-        p = p->next;
-    }
-
-    String* result = malloc(sizeof(String) + length + 1);
-    result->refCount = 0;
-    result->numScalars = 0;
-    result->numPointers = 1;
-    result->length = toInt(length);
-
-    char* resultString = content(result);
-
-    p = xs;
-    while (p != 0)
-    {
-        *resultString = (char)fromInt((int64_t)p->value);
-        ++resultString;
-        p = p->next;
-    }
-
-    return result;
+    free(str);
 }
 
 void dieWithMessage(String* s)
@@ -292,7 +239,7 @@ int64_t read()
 
 String* readLine()
 {
-    char * line = NULL;
+    char* line = NULL;
     size_t len = 0;
 
     ssize_t read = getline(&line, &len, stdin);

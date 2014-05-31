@@ -7,6 +7,17 @@
 #include <cassert>
 #include <sstream>
 
+std::ostream& operator<<(std::ostream& out, const TypeName& typeName)
+{
+    out << typeName.name();
+    for (auto& param : typeName.parameters())
+    {
+        out << " " << *param;
+    }
+
+    return out;
+}
+
 std::shared_ptr<Type> TypeTable::Int = BaseType::create("Int", true);
 std::shared_ptr<Type> TypeTable::Bool = BaseType::create("Bool", true);
 std::shared_ptr<Type> TypeTable::Unit = BaseType::create("Unit", true);
@@ -17,7 +28,7 @@ TypeTable::TypeTable()
     baseTypes_["Bool"] = Bool;
     baseTypes_["Unit"] = Unit;
     baseTypes_["Tree"] = BaseType::create("Tree", false);
-    baseTypes_["String"] = BaseType::create("String", false);
+    //baseTypes_["String"] = BaseType::create("String", false);
 
     typeConstructors_["List"] = std::unique_ptr<TypeConstructor>(new TypeConstructor("List", 1));
 }
@@ -27,7 +38,6 @@ const TypeConstructor* TypeTable::getTypeConstructor(const std::string& name)
     auto i = typeConstructors_.find(name);
     if (i == typeConstructors_.end())
     {
-        std::cerr << "No type constructor " << name << std::endl;
         return nullptr;
     }
     else
@@ -41,7 +51,6 @@ std::shared_ptr<Type> TypeTable::getBaseType(const std::string& name)
     auto i = baseTypes_.find(name);
     if (i == baseTypes_.end())
     {
-        std::cerr << "No primitive type " << name << std::endl;
         return std::shared_ptr<Type>();
     }
     else

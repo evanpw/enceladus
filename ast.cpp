@@ -85,3 +85,20 @@ FunctionCallNode* makeList(ArgList* elements)
 
     return result;
 }
+
+FunctionCallNode* makeString(const std::string& s)
+{
+    FunctionCallNode* result = new FunctionCallNode("Nil", new ArgList);
+
+    for (auto i = s.rbegin(); i != s.rend(); ++i)
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(new IntNode(*i));
+        argList->emplace_back(result);
+
+        result = new FunctionCallNode("Cons", argList);
+    }
+
+    return result;
+}
+

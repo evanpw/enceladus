@@ -51,6 +51,8 @@ bool accept(TokenType t)
     return false;
 }
 
+bool accept(char c) { return accept((TokenType)c); }
+
 Token expect(TokenType t)
 {
     if (nextTokens[0].type == t)
@@ -63,6 +65,8 @@ Token expect(TokenType t)
     std::cerr << "ERROR: Expected " << tokenToString(t) << ", but got " << tokenToString(nextTokens[0].type) << std::endl;
     exit(1);
 }
+
+Token expect(char c) { return expect((TokenType)c); }
 
 TokenType peekType()
 {
@@ -111,6 +115,9 @@ StatementNode* statement()
 
     case tDATA:
         return data_declaration();
+
+    case tTYPE:
+        return type_alias_declaration();
 
     case tDEF:
         return function_definition();
@@ -186,11 +193,24 @@ StatementNode* data_declaration()
 
     expect(tDATA);
     Token name = expect(tUIDENT);
-    expect((TokenType)'=');
+    expect('=');
     ConstructorSpec* constructorSpec = constructor_spec();
     expect(tEOL);
 
     return new DataDeclaration(name.value.str, constructorSpec);
+}
+
+StatementNode* type_alias_declaration()
+{
+    //std::cerr << __func__ << std::endl;
+
+    expect(tTYPE);
+    Token name = expect(tUIDENT);
+    expect('=');
+    TypeName* typeName = type();
+    expect(tEOL);
+
+    return new TypeAliasNode(name.value.str, typeName);
 }
 
 StatementNode* function_definition()
@@ -201,7 +221,7 @@ StatementNode* function_definition()
     std::string name = ident();
     ParamListNode* params = parameters();
     TypeDecl* typeDecl = accept(tDCOLON) ? type_declaration() : nullptr;
-    expect((TokenType)'=');
+    expect('=');
     StatementNode* body = suite();
 
     return new FunctionDefNode(name, body, params, typeDecl);
@@ -242,7 +262,7 @@ StatementNode* match_statement()
     expect(tLET);
     Token constructor = expect(tUIDENT);
     ParamListNode* params = parameters();
-    expect((TokenType)'=');
+    expect('=');
     ExpressionNode* body = expression();
     expect(tEOL);
 
@@ -266,7 +286,7 @@ StatementNode* struct_declaration()
 
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
-    expect((TokenType)'=');
+    expect('=');
     MemberList* memberList = members();
 
     return new StructDefNode(name.value.str, memberList);
@@ -358,7 +378,7 @@ StatementNode* variable_declaration()
         expect(tVAR);
         Token varName = expect(tLIDENT);
         TypeName* varType = accept(tDCOLON) ? type() : nullptr;
-        expect((TokenType)'=');
+        expect('=');
         ExpressionNode* value = expression();
         expect(tEOL);
 
@@ -377,9 +397,9 @@ AssignableNode* assignable()
 
     if (peekType() == '{')
     {
-        expect((TokenType)'{');
+        expect('{');
         Token memberName = expect(tLIDENT);
-        expect((TokenType)'}');
+        expect('}');
 
         return new MemberAccessNode(token.value.str, memberName.value.str);
     }
@@ -478,9 +498,9 @@ TypeName* type()
     }
     else
     {
-        expect((TokenType)'[');
+        expect('[');
         TypeName* internalType = type();
-        expect((TokenType)']');
+        expect(']');
 
         TypeName* typeName = new TypeName("List");
         typeName->append(internalType);
@@ -754,7 +774,7 @@ ExpressionNode* func_call_expression()
 
         if (peekType() == '$')
         {
-            expect((TokenType)'$');
+            expect('$');
             argList->emplace_back(expression());
         }
 
@@ -774,9 +794,9 @@ ExpressionNode* unary_expression()
     {
     case '(':
     {
-        expect((TokenType)'(');
+        expect('(');
         ExpressionNode* interior = expression();
-        expect((TokenType)')');
+        expect(')');
 
         return interior;
     }
@@ -790,7 +810,7 @@ ExpressionNode* unary_expression()
         return new BoolNode(false);
 
     case '[':
-        expect((TokenType)'[');
+        expect('[');
         if (accept((TokenType)']'))
         {
             return new FunctionCallNode("Nil", new ArgList);
@@ -805,7 +825,7 @@ ExpressionNode* unary_expression()
                 argList->emplace_back(expression());
             }
 
-            expect((TokenType)']');
+            expect(']');
 
             return makeList(argList);
         }
@@ -819,7 +839,7 @@ ExpressionNode* unary_expression()
     case tSTRING_LIT:
     {
         Token token = expect(tSTRING_LIT);
-        return new StringNode(token.value.str);
+        return makeString(token.value.str);
     }
 
     case tLIDENT:
@@ -827,17 +847,17 @@ ExpressionNode* unary_expression()
         if (peekType() == tUIDENT && peek2ndType() == '{')
         {
             Token name = expect(tUIDENT);
-            expect((TokenType)'{');
-            expect((TokenType)'}');
+            expect('{');
+            expect('}');
 
             return new StructInitNode(name.value.str);
         }
         else if (peekType() == tLIDENT && peek2ndType() == '{')
         {
             Token varName = expect(tLIDENT);
-            expect((TokenType)'{');
+            expect('{');
             Token memberName = expect(tLIDENT);
-            expect((TokenType)'}');
+            expect('}');
 
             return new MemberAccessNode(varName.value.str, memberName.value.str);
         }

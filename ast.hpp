@@ -180,24 +180,9 @@ private:
 	bool value_;
 };
 
-class StringNode : public ExpressionNode
-{
-public:
-	StringNode(const std::string& value) : value_(value) { }
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	const std::string& value() const { return value_; }
-
-	const std::string& name() const { return name_; }
-	void attachName(const std::string& name) { name_ = name; }
-
-private:
-	std::string name_;
-	std::string value_;
-};
-
-// Syntactic sugar for lists
+// Syntactic sugar for list and string literals
 FunctionCallNode* makeList(ArgList* elements);
+FunctionCallNode* makeString(const std::string& s);
 
 class FunctionCallNode : public ExpressionNode
 {
@@ -441,6 +426,23 @@ private:
 	std::string name_;
 	std::unique_ptr<ConstructorSpec> constructor_;
 	ValueConstructor* valueConstructor_;
+};
+
+class TypeAliasNode : public StatementNode
+{
+public:
+	TypeAliasNode(const std::string& name, TypeName* underlying)
+	: name_(name), underlying_(underlying)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	const std::string& name() { return name_; }
+	TypeName* underlying() { return underlying_.get(); }
+
+private:
+	std::string name_;
+	std::unique_ptr<TypeName> underlying_;
 };
 
 class ForeignDeclNode : public StatementNode
