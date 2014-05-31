@@ -1,7 +1,7 @@
-CFLAGS=-I/opt/local/include -I. -g -Wall -Wfatal-errors -Werror -std=c++11
+CFLAGS=-I/opt/local/include -I. -g -Wall -Wfatal-errors -Werror -Wno-switch -std=c++11
 
 SOURCES=$(wildcard *.cpp)
-HEADERS=$(wildcard *.hpp) simple.tab.h
+HEADERS=$(wildcard *.hpp)
 OBJECTS=$(patsubst %.cpp,build/%.o,$(SOURCES))
 
 ifeq ($(shell uname -s),Darwin)
@@ -17,7 +17,7 @@ all: simplec tests
 .PHONY: clean
 
 clean:
-	rm -f simplec build/* lex.yy.c simple.tab.c simple.tab.h
+	rm -f simplec build/* lex.yy.c
 
 build/%.d: %.cpp
 	@set -e; rm -f $@; \
@@ -25,7 +25,7 @@ build/%.d: %.cpp
 		sed 's,\($*\)\.o[ :]*,build/\1.o $@ : ,g' < $@.$$$$ > $@; \
 		rm -f $@.$$$$
 
-simplec: build/simple.tab.o build/lex.yy.o $(OBJECTS)
+simplec: build/lex.yy.o $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o simplec
 
 -include $(patsubst %.cpp,build/%.d,$(SOURCES))
@@ -33,16 +33,10 @@ simplec: build/simple.tab.o build/lex.yy.o $(OBJECTS)
 lex.yy.c: simple.flex
 	flex -o lex.yy.c simple.flex
 
-simple.tab.c simple.tab.h: simple.y
-	bison -d simple.y
+build/lex.yy.o: lex.yy.c
+	$(CC) $(CFLAGS) -Wno-unused-function -c $< -o $@
 
-build/lex.yy.o: lex.yy.c simple.tab.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/simple.tab.o: simple.tab.c simple.tab.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/%.o: %.cpp simple.tab.h
+build/%.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 tests: simplec

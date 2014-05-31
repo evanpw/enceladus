@@ -2,7 +2,8 @@
 #include <deque>
 #include <stack>
 #include "ast.hpp"
-#include "simple.tab.h"
+#include "tokens.hpp"
+#include "parser.hpp"
 
 // The scanner function produced by flex
 extern int yylex_raw();
@@ -14,7 +15,7 @@ std::deque<int> token_queue;
 // and python-style indentation
 int yylex()
 {
-    static int last_token = EOL, last_returned_token = EOL;
+    static int last_token = tEOL, last_returned_token = tEOL;
 
     // TODO: Move this initialization elsewhere, and don't do the check repeatedly.
     if (indentation.empty()) indentation.push(0);
@@ -32,46 +33,46 @@ int yylex()
         }
 
         int token = yylex_raw();
-        //std::cerr << token << " " << yylloc.first_line << " " << yylloc.first_column << std::endl;
+        //std::cerr << "yylex_raw() = " << tokenToString((TokenType)token) << std::endl;
 
         // Handle unfinished indentation blocks when EOF is reached
         if (token == 0)
         {
-            if (last_returned_token != EOL) token_queue.push_back(EOL);
+            if (last_returned_token != tEOL) token_queue.push_back(tEOL);
 
             while (indentation.top() > 0)
             {
                 indentation.pop();
-                token_queue.push_back(DEDENT);
+                token_queue.push_back(tDEDENT);
             }
 
             token_queue.push_back(0);
             continue;
         }
 
-        if (last_token == EOL)
+        if (last_token == tEOL)
         {
-            // Non-whitespace following an EOL means that the indentation level is 0
+            // Non-whitespace following an tEOL means that the indentation level is 0
             int new_level = 0;
-            if (token == WHITESPACE)
+            if (token == tWHITESPACE)
             {
                 new_level = yylval.number;
             }
 
             if (new_level > indentation.top())
             {
-                // Increase of indentation -> INDENT
+                // Increase of indentation -> tINDENT
                 indentation.push(new_level);
-                token_queue.push_back(INDENT);
+                token_queue.push_back(tINDENT);
                 continue;
             }
             else if (new_level < indentation.top())
             {
-                // Decrease of indentation -> DEDENT(s)
+                // Decrease of indentation -> tDEDENT(s)
                 while (new_level < indentation.top())
                 {
                     indentation.pop();
-                    token_queue.push_back(DEDENT);
+                    token_queue.push_back(tDEDENT);
                 }
 
                 // Dedenting to a level we have seen before is an error
@@ -83,18 +84,18 @@ int yylex()
                 }
             }
 
-            if (token != WHITESPACE)
+            if (token != tWHITESPACE)
             {
                 token_queue.push_back(token);
             }
             else
             {
-                last_token = WHITESPACE;
+                last_token = tWHITESPACE;
             }
         }
         else
         {
-            if (token != WHITESPACE)
+            if (token != tWHITESPACE)
             {
                 token_queue.push_back(token);
             }

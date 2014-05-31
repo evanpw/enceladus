@@ -2,7 +2,8 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 #include "ast.hpp"
-#include "simple.tab.h"
+#include "parser.hpp"
+#include "tokens.hpp"
 #include "string_table.hpp"
 
 extern YYSTYPE yylval;
@@ -62,24 +63,24 @@ int yycolumn = 1;
 
 					/* It's easier to get rid of blank lines here than in the grammar. */
 ^[ \t]*\n         	{ yycolumn = 1; }
-^[ \t]*"#".+\n 	  	{ yycolumn = 1; }
-^[ \t]*"--".+\n 	{ yycolumn = 1; }
+^[ \t]*"#".*\n 	  	{ yycolumn = 1; }
+^[ \t]*"--".*\n 	{ yycolumn = 1; }
 
 -?[0-9][0-9]*	{
 					try
-					{
-						yylval.number = boost::lexical_cast<long>(yytext);
-						return INT_LIT;
-					}
-					catch (boost::bad_lexical_cast&)
-					{
-						std::cerr << "Near line " << yylloc.first_line << ", "
-						 		  << "column " << yylloc.first_column << ": "
-						 		  << "error: integer literal out of range: " << yytext << std::endl;
+	                {
+	                        yylval.number = boost::lexical_cast<long>(yytext);
+	                        return tINT_LIT;
+	                }
+	                catch (boost::bad_lexical_cast&)
+	                {
+	                        std::cerr << "Near line " << yylloc.first_line << ", "
+	                                  << "column " << yylloc.first_column << ": "
+	                                  << "error: integer literal out of range: " << yytext << std::endl;
 
-						return ERROR;
-					}
-				}
+	                        return tNONE;
+	                 }
+	            }
 "#".*			/* Python-style comments */
 "--".*			/* Haskell-style comments */
 
@@ -96,61 +97,61 @@ int yycolumn = 1;
 ")"		{ return ')'; }
 ","		{ return ','; }
 "="		{ return '='; }
-":="	{ return COLON_EQUAL; }
+":="	{ return tCOLON_EQUAL; }
 "$"		{ return '$'; }
 "["		{ return '['; }
 "]"	    { return ']'; }
 "{"		{ return '{'; }
 "}"		{ return '}'; }
-"mod"	{ return MOD; }
-"->"	{ return RARROW; }
-"<="	{ return LE; }
-">="	{ return GE; }
-"=="	{ return EQUALS; }
-"!="	{ return NE; }
-"::"	{ return DCOLON; }
-"and"	{ return AND; }
-"or"	{ return OR; }
+"mod"	{ return tMOD; }
+"->"	{ return tRARROW; }
+"<="	{ return tLE; }
+">="	{ return tGE; }
+"=="	{ return tEQUALS; }
+"!="	{ return tNE; }
+"::"	{ return tDCOLON; }
+"and"	{ return tAND; }
+"or"	{ return tOR; }
 
  /* Syntactic sugar */
-"+="	{ return PLUS_EQUAL; }
-"-="	{ return MINUS_EQUAL; }
-"*="	{ return TIMES_EQUAL; }
-"/="	{ return DIV_EQUAL; }
-"++"	{ return CONCAT; }
+"+="	{ return tPLUS_EQUAL; }
+"-="	{ return tMINUS_EQUAL; }
+"*="	{ return tTIMES_EQUAL; }
+"/="	{ return tDIV_EQUAL; }
+"++"	{ return tCONCAT; }
 
  /* Keywords */
-"data"		{ return DATA; }
-"def"		{ return DEF; }
-"do"		{ return DO; }
-"else"		{ return ELSE; }
-"False"		{ return FALSE; }
-"for"		{ return FOR; }
-"foreign"	{ return FOREIGN; }
-"if"		{ return IF; }
-"in"		{ return IN; }
-"let"		{ return LET; }
-"return"	{ return RETURN; }
-"struct"	{ return STRUCT; }
-"then"		{ return THEN; }
-"True"		{ return TRUE; }
-"var"		{ return VAR; }
-"while"		{ return WHILE; }
+"data"		{ return tDATA; }
+"def"		{ return tDEF; }
+"do"		{ return tDO; }
+"else"		{ return tELSE; }
+"False"		{ return tFALSE; }
+"for"		{ return tFOR; }
+"foreign"	{ return tFOREIGN; }
+"if"		{ return tIF; }
+"in"		{ return tIN; }
+"let"		{ return tLET; }
+"return"	{ return tRETURN; }
+"struct"	{ return tSTRUCT; }
+"then"		{ return tTHEN; }
+"True"		{ return tTRUE; }
+"var"		{ return tVAR; }
+"while"		{ return tWHILE; }
 
  /* String and char literals */
-\"[^"]*\"				{ yylval.str = StringTable::add(trim_quotes(yytext)); return STRING_LIT; }
-\'([^']|\\[nrt])\'		{ yylval.number = char_literal(yytext); return INT_LIT; }
+\"[^"]*\"				{ yylval.str = StringTable::add(trim_quotes(yytext)); return tSTRING_LIT; }
+\'([^']|\\[nrt])\'		{ yylval.number = char_literal(yytext); return tINT_LIT; }
 
-[a-z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return LIDENT; }
-[A-Z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return UIDENT; }
-\n						 { yycolumn = 1; return EOL; }
-[ \t]+				     { yylval.number = count_whitespace(yytext, yyleng); return WHITESPACE; }
+[a-z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return tLIDENT; }
+[A-Z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return tUIDENT; }
+\n						 { yycolumn = 1; return tEOL; }
+[ \t]+				     { yylval.number = count_whitespace(yytext, yyleng); return tWHITESPACE; }
 .						 {
 						 	std::cerr << "Near line " << yylloc.first_line << ", "
 						 			  << "column " << yylloc.first_column << ": "
 						 			  << "error: stray '" << yytext[0] << "'" << std::endl;
 
-						 	return ERROR;
+						 	return tNONE;
 						 }
 
 %%

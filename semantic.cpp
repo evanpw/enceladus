@@ -8,7 +8,7 @@
 
 #include "scope.hpp"
 #include "semantic.hpp"
-#include "simple.tab.h"
+#include "parser.hpp"
 #include "utility.hpp"
 
 #define CHECK(p, msg) if (!(p)) { std::stringstream ss##__LINE__; ss##__LINE__ << msg; semanticError(node, ss##__LINE__.str()); }

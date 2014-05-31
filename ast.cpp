@@ -2,7 +2,7 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 #include "ast.hpp"
-#include "simple.tab.h"
+#include "parser.hpp"
 
 using namespace std;
 

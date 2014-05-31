@@ -4,7 +4,7 @@
 #include "ast.hpp"
 #include "codegen.hpp"
 #include "scope.hpp"
-#include "simple.tab.h"
+#include "parser.hpp"
 
 #define EMIT_BLANK() out_ << std::endl;
 #define EMIT_LEFT(x) out_ << x << std::endl;

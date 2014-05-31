@@ -5,7 +5,8 @@ program
 //// Statements ////////////////////////////////////////////////////////////////
 
 statement
-    : if_statement
+    : EOL
+    if_statement
     | assignment_statement
     | data_declaration
     | function_definition
@@ -37,7 +38,7 @@ data_declaration
     : DATA UIDENT '=' constructor_spec EOL
 
 function_definition
-    : DEF ident parameters optional_type '=' suite
+    : DEF ident parameters [ DCOLON type_declaration ] '=' suite
 
 for_statement
     : FOR LIDENT IN expression DO suite
@@ -52,21 +53,17 @@ return_statement
     : RETURN expression EOL
 
 struct_declaration
-    : STRUCT UIDENT '=' member_list
+    : STRUCT UIDENT '=' members
 
 variable_declaration
-    : LIDENT optional_type COLON_EQUAL expression EOL
-    | VAR LIDENT optional_type '=' expression EOL
+    : LIDENT [ type ] COLON_EQUAL expression EOL
+    | VAR LIDENT [ type ] '=' expression EOL
 
 while_statement
     : WHILE expression DO suite
 
 
 //// Types /////////////////////////////////////////////////////////////////////
-
-optional_type
-    : /* empty */
-    | DCOLON type_declaration
 
 type_declaration
     : type
@@ -76,18 +73,9 @@ type
     : UIDENT
     | '[' type ']'
 
-////////////////////////////////////////////////////////////////////////////////
 constructor_spec
     : UIDENT
     | constructor_spec type
-
-parameters
-    : /* empty */
-    | parameter_list
-
-parameter_list
-    : LIDENT
-    | parameter_list LIDENT
 
 suite
     : statement
@@ -97,57 +85,81 @@ statement_list
     : statement
     | statement_list statement
 
+parameters
+    : /* empty */
+    | parameter_list
+
+parameter_list
+    : LIDENT
+    | parameter_list LIDENT
+
  //// Structures ///////////////////////////////////////////////////////////////
 
-member_list
-    : member_def
+members
+    : member_definition
     | EOL INDENT member_list DEDENT
 
-member_def
+member_definition
     : LIDENT DCOLON type EOL
 
 member_list
-    : member_def
-    | member_list member_def
+    : member_definition
+    | member_list member_definition
 
  //// Expressions //////////////////////////////////////////////////////////////
 
 expression
-    : expression AND expression
-    | expression OR expression
-    | expression '>' expression
-    | expression '<' expression
-    | expression GE expression
-    | expression LE expression
-    | expression EQUALS expression
-    | expression NE expression
-    | expression '+' expression
-    | expression '-' expression
-    | expression '*' expression
-    | expression '/' expression
-    | expression MOD expression
-    | expression ':' expression
-    | expression CONCAT expression
-    | simple_expression
-    | ident arg_list arg_list_tail
-    | UIDENT '{' '}'
+    : and_expression OR expression
+    | and_expression
 
-arg_list_tail
-    : '$' expression
-    | simple_expression
+and_expression
+    : equality_expression AND and_expression
+    | equality_expression
 
-arg_list
-    : /* empty */
-    | arg_list simple_expression
+equality_expression
+    : relational_expression EQUALS equality_expression
+    | relational_expression NE equality_expression
+    | relational_expression
 
-simple_expression
-    : '(' expression ')'
+relational_expression
+    : cons_expression '>' relational_expression
+    | cons_expression '<' relational_expression
+    | cons_expression GE relational_expression
+    | cons_expression LE relational_expression
+    | cons_expression
+
+cons_expression
+    : additive_expression ':' cons_expression
+    | additive_expression
+
+additive_expression
+    : multiplicative_expression '+' additive_expression
+    | multiplicative_expression '-' additive_expression
+    | multiplicative_expression
+
+multiplicative_expression
+    : concat_expression '*' multiplicative_expression
+    | concat_expression '/' multiplicative_expression
+    | concat_expression MOD multiplicative_expression
+    | concat_expression
+
+concat_expression
+    : func_call_expression CONCAT concat_expression
+    | func_call_expression
+
+func_call_expression
+    : ident { unary_expression } [ '$' expression ]
+    | unary_expression
+
+unary_expression
+    | '(' expression ')'
     | ident
+    | UIDENT '{' '}'
     | LIDENT '{' LIDENT '}'
-    | INT_LIT
     | TRUE
     | FALSE
     | inline_list
+    | INT_LIT
     | STRING_LIT
 
 inline_list

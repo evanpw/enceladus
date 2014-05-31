@@ -7,7 +7,7 @@
 
 using namespace std;
 
-extern int yyparse();
+extern ProgramNode* parse();
 extern FILE* yyin;
 
 ProgramNode* root;
@@ -60,19 +60,17 @@ int main(int argc, char* argv[])
 
 	int return_value = 1;
 
-	int parse_failure = yyparse();
-	if (parse_failure == 0)
+	ProgramNode* root = parse();
+
+	SemanticAnalyzer semant(root);
+	bool semantic_success = semant.analyze();
+
+	if (semantic_success)
 	{
-		SemanticAnalyzer semant(root);
-		bool semantic_success = semant.analyze();
+		CodeGen codegen;
+		root->accept(&codegen);
 
-		if (semantic_success)
-		{
-			CodeGen codegen;
-			root->accept(&codegen);
-
-			return_value = 0;
-		}
+		return_value = 0;
 	}
 
 	delete root;

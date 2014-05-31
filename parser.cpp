@@ -1,40 +1,42 @@
-enum TokenType
-{
-    tCOLON,
-    tDATA,
-    tDCOLON,
-    tDEF,
-    tDIV,
-    tDO,
-    tELSE,
-    tEOF,
-    tEOL,
-    tFOR,
-    tFOREIGN,
-    tIF,
-    tIN,
-    tLET,
-    tLIDENT,
-    tMINUS,
-    tNONE,
-    tPLUS,
-    tRETURN,
-    tSTRUCT,
-    tTHEN,
-    tTIMES,
-    tUIDENT,
-    tVAR,
-    tWHILE
-};
+#include "parser.hpp"
+#include "tokens.hpp"
+
+#include <iostream>
+#include <boost/lexical_cast.hpp>
+
+//// Lexing machinery //////////////////////////////////////////////////////////
+
+YYSTYPE yylval;
 
 struct Token
 {
     TokenType type;
-    std::string lexeme;
+    YYSTYPE value;
 };
 
-Token nextTokens[2];
-void advance();
+// Two tokens of look-ahead
+Token nextTokens[2] = { {tNONE, ""}, {tNONE, ""} };
+
+// Location of the current token
+YYLTYPE yylloc;
+
+// Calls the lexer
+int yylex();
+
+void advance()
+{
+    //std::cerr << "consuming " << tokenToString(nextTokens[0].type) << " (" << nextTokens[0].type << ")" << std::endl;
+    nextTokens[0] = nextTokens[1];
+
+    nextTokens[1].type = (TokenType)yylex();
+    nextTokens[1].value = yylval;
+}
+
+void initialize()
+{
+    advance();
+    advance();
+}
 
 //// Parsing machinery /////////////////////////////////////////////////////////
 
@@ -58,7 +60,7 @@ Token expect(TokenType t)
         return token;
     }
 
-    std::cerr << "ERROR: Expected " << t << ", but got " << nextTokens[0].type << std::endl;
+    std::cerr << "ERROR: Expected " << tokenToString(t) << ", but got " << tokenToString(nextTokens[0].type) << std::endl;
     exit(1);
 }
 
@@ -72,12 +74,22 @@ TokenType peek2ndType()
     return nextTokens[1].type;
 }
 
+ProgramNode* parse()
+{
+    initialize();
+    return program();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //// Grammar ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+//// Statements ////////////////////////////////////////////////////////////////
+
 ProgramNode* program()
 {
+    //std::cerr << __func__ << std::endl;
+
     ProgramNode* node = new ProgramNode;
 
     while (!accept(tEOF))
@@ -88,10 +100,10 @@ ProgramNode* program()
     return node;
 }
 
-//// Statements ////////////////////////////////////////////////////////////////
-
 StatementNode* statement()
 {
+    //std::cerr << __func__ << std::endl;
+
     switch(peekType())
     {
     case tIF:
@@ -116,22 +128,27 @@ StatementNode* statement()
         return return_statement();
 
     case tSTRUCT:
-        return struct_statement();
+        return struct_declaration();
 
     case tWHILE:
         return while_statement();
 
     case tVAR:
-        return var_declaration();
+        return variable_declaration();
 
     case tLIDENT:
-        if (peek2ndType() == '{')
+        if (peek2ndType() == '{' ||
+            peek2ndType() == '=' ||
+            peek2ndType() == tPLUS_EQUAL ||
+            peek2ndType() == tMINUS_EQUAL ||
+            peek2ndType() == tTIMES_EQUAL ||
+            peek2ndType() == tDIV_EQUAL)
         {
             return assignment_statement();
         }
         else if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == tDCOLON)
         {
-            return var_declaration();
+            return variable_declaration();
         }
 
         // Else fallthrough
@@ -145,6 +162,8 @@ StatementNode* statement()
 
 StatementNode* if_statement()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tIF);
     ExpressionNode* condition = expression();
     expect(tTHEN);
@@ -163,41 +182,49 @@ StatementNode* if_statement()
 
 StatementNode* data_declaration()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tDATA);
     Token name = expect(tUIDENT);
-    expect('=');
+    expect((TokenType)'=');
     ConstructorSpec* constructorSpec = constructor_spec();
-    expect(EOL);
+    expect(tEOL);
 
-    return new DataDeclaration(name.lexeme, constructorSpec);
+    return new DataDeclaration(name.value.str, constructorSpec);
 }
 
 StatementNode* function_definition()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tDEF);
     std::string name = ident();
     ParamListNode* params = parameters();
-    TypeDecl* typeDecl = optionalType();
-    expect('=');
-    StatementNode* body = suit();
+    TypeDecl* typeDecl = accept(tDCOLON) ? type_declaration() : nullptr;
+    expect((TokenType)'=');
+    StatementNode* body = suite();
 
-    return new FunctionDefNode(name, params, typeDecl, body);
+    return new FunctionDefNode(name, body, params, typeDecl);
 }
 
 StatementNode* for_statement()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tFOR);
-    Token loopVar = expect(LIDENT);
+    Token loopVar = expect(tLIDENT);
     expect(tIN);
     ExpressionNode* listExpression = expression();
     expect(tDO);
-    StatementNode* body = suit();
+    StatementNode* body = suite();
 
-    return makeForNode(loopVar.lexeme, listExpression, body);
+    return makeForNode(loopVar.value.str, listExpression, body);
 }
 
 StatementNode* foreign_declaration()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tFOREIGN);
     std::string name = ident();
     ParamListNode* params = parameters();
@@ -210,18 +237,22 @@ StatementNode* foreign_declaration()
 
 StatementNode* match_statement()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tLET);
     Token constructor = expect(tUIDENT);
-    ParamListNode* params = parameter_list();
-    expect('=');
+    ParamListNode* params = parameters();
+    expect((TokenType)'=');
     ExpressionNode* body = expression();
     expect(tEOL);
 
-    return new MatchNode(constructor.lexeme, params, body);
+    return new MatchNode(constructor.value.str, params, body);
 }
 
 StatementNode* return_statement()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tRETURN);
     ExpressionNode* value = expression();
     expect(tEOL);
@@ -231,16 +262,20 @@ StatementNode* return_statement()
 
 StatementNode* struct_declaration()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
-    expect('=');
-    MemberList* memberList = member_list();
+    expect((TokenType)'=');
+    MemberList* memberList = members();
 
-    return new StructDefNode(name.lexeme, memberList);
+    return new StructDefNode(name.value.str, memberList);
 }
 
 StatementNode* while_statement()
 {
+    //std::cerr << __func__ << std::endl;
+
     expect(tWHILE);
     ExpressionNode* condition = expression();
     expect(tDO);
@@ -249,13 +284,18 @@ StatementNode* while_statement()
     return new WhileNode(condition, body);
 }
 
-StatementNode* assignment_node()
+StatementNode* assignment_statement()
 {
-    AssignableNode* lhs = assignable_node();
+    //std::cerr << __func__ << std::endl;
 
-    if (accept('='))
+    AssignableNode* lhs = assignable();
+
+    if (accept((TokenType)'='))
     {
         ExpressionNode* rhs = expression();
+
+        expect(tEOL);
+
         return new AssignNode(lhs, rhs);
     }
 
@@ -266,22 +306,27 @@ StatementNode* assignment_node()
     switch (peekType())
     {
     case tPLUS_EQUAL:
+        expect(tPLUS_EQUAL);
         functionName = '+';
         break;
 
     case tMINUS_EQUAL:
+        expect(tMINUS_EQUAL);
         functionName = '-';
+        break;
 
     case tTIMES_EQUAL:
+        expect(tTIMES_EQUAL);
         functionName = '*';
         break;
 
     case tDIV_EQUAL:
+        expect(tDIV_EQUAL);
         functionName = '/';
         break;
 
     default:
-        std::cerr << "ERROR: Unexpected " << nextTokens[0].type << std::endl;
+        std::cerr << "ERROR: Unexpected " << tokenToString(nextTokens[0].type) << std::endl;
         exit(1);
 
     }
@@ -291,75 +336,126 @@ StatementNode* assignment_node()
 
     expect(tEOL);
 
-    return new AssignNode($1->clone(), new FunctionCallNode(functionName, argList));
-}
-
-AssignableNode* assignable()
-{
-    Token token = expect(tLIDENT);
-    if (peekType() == '{')
-    {
-        expect('{');
-        Token memberName = expect(tLIDENT);
-        expect('}');
-
-        return new MemberAccessNode(token.lexeme, memberName.lexeme);
-    }
-
-    return new VariableNode(token.lexeme);
+    return new AssignNode(lhs->clone(), new FunctionCallNode(functionName, argList));
 }
 
 StatementNode* variable_declaration()
 {
+    //std::cerr << __func__ << std::endl;
+
     if (peekType() == tLIDENT)
     {
         Token varName = expect(tLIDENT);
-        TypeDecl* varType = optional_type();
+        TypeName* varType = accept(tDCOLON) ? type() : nullptr;
         expect(tCOLON_EQUAL);
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(varName.lexeme, varType, value);
+        return new LetNode(varName.value.str, varType, value);
     }
     else
     {
         expect(tVAR);
         Token varName = expect(tLIDENT);
-        TypeDecl* varType = optional_type();
-        expect('=');
+        TypeName* varType = accept(tDCOLON) ? type() : nullptr;
+        expect((TokenType)'=');
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(varName.lexeme, varType, value);
+        return new LetNode(varName.value.str, varType, value);
     }
 }
 
-StatementNode* while_statement()
-{
-    expect(tWHILE);
-    ExpressionNode* condition = expression();
-    expect(tDO);
-    StatementNode* body = suite();
+//// Miscellaneous /////////////////////////////////////////////////////////////
 
-    return new WhileNode(condition, body);
+AssignableNode* assignable()
+{
+    //std::cerr << __func__ << std::endl;
+
+    Token token = expect(tLIDENT);
+    //std::cerr << "assignable: " << token.value.str << std::endl;
+
+    if (peekType() == '{')
+    {
+        expect((TokenType)'{');
+        Token memberName = expect(tLIDENT);
+        expect((TokenType)'}');
+
+        return new MemberAccessNode(token.value.str, memberName.value.str);
+    }
+
+    return new VariableNode(token.value.str);
+}
+
+StatementNode* suite()
+{
+    //std::cerr << __func__ << std::endl;
+
+    if (accept(tEOL))
+    {
+        expect(tINDENT);
+
+        BlockNode* block = new BlockNode;
+        while (peekType() != tDEDENT)
+        {
+            block->append(statement());
+        }
+
+        expect(tDEDENT);
+
+        return block;
+    }
+    else
+    {
+        return statement();
+    }
+}
+
+ParamListNode* parameters()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ParamListNode* result = new ParamListNode;
+    while (peekType() == tLIDENT)
+    {
+        Token param = expect(tLIDENT);
+
+        result->append(param.value.str);
+    }
+
+    return result;
+}
+
+std::string ident()
+{
+    //std::cerr << __func__ << std::endl;
+
+    Token name;
+    if (peekType() == tLIDENT)
+    {
+        name = expect(tLIDENT);
+    }
+    else if (peekType() == tUIDENT)
+    {
+        name = expect(tUIDENT);
+    }
+    else
+    {
+        std::cerr << "ERROR: Expected identifier, but got " << tokenToString(nextTokens[0].type) << std::endl;
+        exit(1);
+    }
+
+    //std::cerr << "ident: " << name.value.str << std::endl;
+
+    return name.value.str;
 }
 
 //// Types /////////////////////////////////////////////////////////////////////
 
-TypeDecl* optional_type()
-{
-    if (accept(tDCOLON))
-    {
-        return type_declaration();
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
 TypeDecl* type_declaration()
 {
+    //std::cerr << __func__ << std::endl;
+
     TypeDecl* typeDecl = new TypeDecl;
     typeDecl->emplace_back(type());
 
@@ -373,16 +469,18 @@ TypeDecl* type_declaration()
 
 TypeName* type()
 {
+    //std::cerr << __func__ << std::endl;
+
     if (peekType() == tUIDENT)
     {
         Token typeName = expect(tUIDENT);
-        return new TypeName(typeName.lexeme);
+        return new TypeName(typeName.value.str);
     }
     else
     {
-        expect('[');
+        expect((TokenType)'[');
         TypeName* internalType = type();
-        expect(']');
+        expect((TokenType)']');
 
         TypeName* typeName = new TypeName("List");
         typeName->append(internalType);
@@ -391,4 +489,366 @@ TypeName* type()
     }
 }
 
+ConstructorSpec* constructor_spec()
+{
+    //std::cerr << __func__ << std::endl;
+
+    Token name = expect(tUIDENT);
+
+    ConstructorSpec* constructorSpec = new ConstructorSpec(name.value.str);
+    while (peekType() == tUIDENT || peekType() == '[')
+    {
+        constructorSpec->append(type());
+    }
+
+    return constructorSpec;
+}
+
+ //// Structures ///////////////////////////////////////////////////////////////
+
+MemberList* members()
+{
+    //std::cerr << __func__ << std::endl;
+
+    MemberList* memberList = new MemberList();
+
+    if (accept(tEOL))
+    {
+        expect(tINDENT);
+
+        while (peekType() != tDEDENT)
+        {
+            memberList->emplace_back(member_definition());
+        }
+
+        expect(tDEDENT);
+    }
+    else
+    {
+        memberList->emplace_back(member_definition());
+    }
+
+    return memberList;
+}
+
+MemberDefNode* member_definition()
+{
+    //std::cerr << __func__ << std::endl;
+
+    Token name = expect(tLIDENT);
+    expect(tDCOLON);
+    TypeName* typeName = type();
+    expect(tEOL);
+
+    return new MemberDefNode(name.value.str, typeName);
+}
+
+//// Expressions ///////////////////////////////////////////////////////////////
+
+ExpressionNode* expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = and_expression();
+
+    if (accept(tOR))
+    {
+        return new LogicalNode(lhs, LogicalNode::kOr, expression());
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+ExpressionNode* and_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = equality_expression();
+
+    if (accept(tAND))
+    {
+        return new LogicalNode(lhs, LogicalNode::kAnd, and_expression());
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+ExpressionNode* equality_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = relational_expression();
+
+    if (accept(tEQUALS))
+    {
+        return new ComparisonNode(lhs, ComparisonNode::kEqual, equality_expression());
+    }
+    else if (accept(tNE))
+    {
+        return new ComparisonNode(lhs, ComparisonNode::kNotEqual, equality_expression());
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+ExpressionNode* relational_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = cons_expression();
+
+    if (accept((TokenType)'>'))
+    {
+        return new ComparisonNode(lhs, ComparisonNode::kGreater, relational_expression());
+    }
+    else if (accept((TokenType)'<'))
+    {
+        return new ComparisonNode(lhs, ComparisonNode::kLess, relational_expression());
+    }
+    else if (accept(tGE))
+    {
+        return new ComparisonNode(lhs, ComparisonNode::kGreaterOrEqual, relational_expression());
+    }
+    else if (accept(tLE))
+    {
+        return new ComparisonNode(lhs, ComparisonNode::kLessOrEqual, relational_expression());
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+ExpressionNode* cons_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = additive_expression();
+
+    if (accept((TokenType)':'))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(lhs);
+        argList->emplace_back(cons_expression());
+        return new FunctionCallNode("Cons", argList);
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+ExpressionNode* additive_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = multiplicative_expression();
+
+    if (accept((TokenType)'+'))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(lhs);
+        argList->emplace_back(additive_expression());
+        return new FunctionCallNode("+", argList);
+    }
+    else if (accept((TokenType)'-'))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(lhs);
+        argList->emplace_back(additive_expression());
+        return new FunctionCallNode("-", argList);
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+ExpressionNode* multiplicative_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = concat_expression();
+
+    if (accept((TokenType)'*'))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(lhs);
+        argList->emplace_back(multiplicative_expression());
+        return new FunctionCallNode("*", argList);
+    }
+    else if (accept((TokenType)'/'))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(lhs);
+        argList->emplace_back(multiplicative_expression());
+        return new FunctionCallNode("/", argList);
+    }
+    else if (accept(tMOD))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(lhs);
+        argList->emplace_back(multiplicative_expression());
+        return new FunctionCallNode("%", argList);
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+ExpressionNode* concat_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    ExpressionNode* lhs = func_call_expression();
+
+    if (accept(tCONCAT))
+    {
+        ArgList* argList = new ArgList;
+        argList->emplace_back(lhs);
+        argList->emplace_back(concat_expression());
+        return new FunctionCallNode("concat", argList);
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+bool canStartUnaryExpression(TokenType t)
+{
+    return (t == '(' ||
+            t == tTRUE ||
+            t == tFALSE ||
+            t == '[' ||
+            t == tINT_LIT ||
+            t == tSTRING_LIT ||
+            t == tLIDENT ||
+            t == tUIDENT);
+}
+
+ExpressionNode* func_call_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    if ((peekType() == tLIDENT || peekType() == tUIDENT) && (canStartUnaryExpression(peek2ndType()) || peek2ndType() == '$'))
+    {
+        std::string functionName = ident();
+
+        //std::cerr << "function call: " << functionName << std::endl;
+
+        ArgList* argList = new ArgList;
+        while (canStartUnaryExpression(peekType()))
+        {
+            argList->emplace_back(unary_expression());
+        }
+
+        //std::cerr << "end args: " << functionName << std::endl;
+
+        if (peekType() == '$')
+        {
+            expect((TokenType)'$');
+            argList->emplace_back(expression());
+        }
+
+        return new FunctionCallNode(functionName, argList);
+    }
+    else
+    {
+        return unary_expression();
+    }
+}
+
+ExpressionNode* unary_expression()
+{
+    //std::cerr << __func__ << std::endl;
+
+    switch (peekType())
+    {
+    case '(':
+    {
+        expect((TokenType)'(');
+        ExpressionNode* interior = expression();
+        expect((TokenType)')');
+
+        return interior;
+    }
+
+    case tTRUE:
+        expect(tTRUE);
+        return new BoolNode(true);
+
+    case tFALSE:
+        expect(tFALSE);
+        return new BoolNode(false);
+
+    case '[':
+        expect((TokenType)'[');
+        if (accept((TokenType)']'))
+        {
+            return new FunctionCallNode("Nil", new ArgList);
+        }
+        else
+        {
+            ArgList* argList = new ArgList;
+            argList->emplace_back(expression());
+
+            while (accept((TokenType)','))
+            {
+                argList->emplace_back(expression());
+            }
+
+            expect((TokenType)']');
+
+            return makeList(argList);
+        }
+
+    case tINT_LIT:
+    {
+        Token token = expect(tINT_LIT);
+        return new IntNode(token.value.number);
+    }
+
+    case tSTRING_LIT:
+    {
+        Token token = expect(tSTRING_LIT);
+        return new StringNode(token.value.str);
+    }
+
+    case tLIDENT:
+    case tUIDENT:
+        if (peekType() == tUIDENT && peek2ndType() == '{')
+        {
+            Token name = expect(tUIDENT);
+            expect((TokenType)'{');
+            expect((TokenType)'}');
+
+            return new StructInitNode(name.value.str);
+        }
+        else if (peekType() == tLIDENT && peek2ndType() == '{')
+        {
+            Token varName = expect(tLIDENT);
+            expect((TokenType)'{');
+            Token memberName = expect(tLIDENT);
+            expect((TokenType)'}');
+
+            return new MemberAccessNode(varName.value.str, memberName.value.str);
+        }
+        else
+        {
+            return new NullaryNode(ident());
+        }
+
+    default:
+        std::cerr << "ERROR: Token " << tokenToString(nextTokens[0].type) << " cannot start an expression." << std::endl;
+        exit(1);
+    }
+}
 
