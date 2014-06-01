@@ -283,9 +283,9 @@ StructType::StructType(const std::string& name, StructDefNode* node)
     unboxedMembers_ = 0;
 
     // First pass -> just count the number of boxed / unboxed members
-    for (auto& member : node->members())
+    for (auto& member : *node->members)
     {
-        if (member->type()->isBoxed())
+        if (member->memberType->isBoxed())
         {
             ++boxedMembers_;
         }
@@ -297,15 +297,15 @@ StructType::StructType(const std::string& name, StructDefNode* node)
 
     // Second pass -> determine the actual layout
     size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
-    for (auto& member : node->members())
+    for (auto& member : *node->members)
     {
-        if (member->type()->isBoxed())
+        if (member->memberType->isBoxed())
         {
-            members_[member->name()] = { member->type(), nextBoxed++ };
+            members_[member->name] = { member->memberType, nextBoxed++ };
         }
         else
         {
-            members_[member->name()] = { member->type(), nextUnboxed++ };
+            members_[member->name] = { member->memberType, nextUnboxed++ };
         }
     }
 }

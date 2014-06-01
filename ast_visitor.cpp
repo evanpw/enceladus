@@ -15,11 +15,11 @@ Symbol* AstVisitor::searchScopes(const std::string& name)
 
 void AstVisitor::visit(ProgramNode* node)
 {
-	typeTable_ = node->typeTable();
+	typeTable_ = node->typeTable.get();
 
-	scopes_.push_back(node->scope());
+	scopes_.push_back(node->scope.get());
 
-	for (auto& child : node->children())
+	for (auto& child : node->children)
 	{
 		child->accept(this);
 	}
@@ -27,19 +27,19 @@ void AstVisitor::visit(ProgramNode* node)
 
 void AstVisitor::visit(ComparisonNode* node)
 {
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
+	node->lhs->accept(this);
+	node->rhs->accept(this);
 }
 
 void AstVisitor::visit(LogicalNode* node)
 {
-	node->lhs()->accept(this);
-	node->rhs()->accept(this);
+	node->lhs->accept(this);
+	node->rhs->accept(this);
 }
 
 void AstVisitor::visit(BlockNode* node)
 {
-	for (auto& child : node->children())
+	for (auto& child : node->children)
 	{
 		child->accept(this);
 	}
@@ -47,7 +47,7 @@ void AstVisitor::visit(BlockNode* node)
 
 void AstVisitor::visit(FunctionCallNode* node)
 {
-	for (auto& argument : node->arguments())
+	for (auto& argument : *node->arguments)
 	{
 		argument->accept(this);
 	}
@@ -55,53 +55,53 @@ void AstVisitor::visit(FunctionCallNode* node)
 
 void AstVisitor::visit(IfNode* node)
 {
-	node->condition()->accept(this);
-	node->body()->accept(this);
+	node->condition->accept(this);
+	node->body->accept(this);
 }
 
 void AstVisitor::visit(IfElseNode* node)
 {
-	node->condition()->accept(this);
-	node->body()->accept(this);
-	node->else_body()->accept(this);
+	node->condition->accept(this);
+	node->body->accept(this);
+	node->else_body->accept(this);
 }
 
 void AstVisitor::visit(WhileNode* node)
 {
-	node->condition()->accept(this);
-	node->body()->accept(this);
+	node->condition->accept(this);
+	node->body->accept(this);
 }
 
 void AstVisitor::visit(AssignNode* node)
 {
-	node->value()->accept(this);
+	node->value->accept(this);
 }
 
 void AstVisitor::visit(LetNode* node)
 {
-	node->value()->accept(this);
+	node->value->accept(this);
 }
 
 void AstVisitor::visit(FunctionDefNode* node)
 {
-	enterScope(node->scope());
-	node->body()->accept(this);
+	enterScope(node->scope.get());
+	node->body->accept(this);
 	exitScope();
 }
 
 void AstVisitor::visit(ReturnNode* node)
 {
-	node->expression()->accept(this);
+	node->expression->accept(this);
 }
 
 void AstVisitor::visit(MatchNode* node)
 {
-	node->body()->accept(this);
+	node->body->accept(this);
 }
 
 void AstVisitor::visit(StructDefNode* node)
 {
-	for (auto& member : node->members())
+	for (auto& member : *node->members)
 	{
 		member->accept(this);
 	}

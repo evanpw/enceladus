@@ -35,3 +35,5 @@ Todo
 * Merge symbols tables: identifiers, base types, type constructors
 * Add mutable, fixed-length arrays
 * Remove integer print statement
+* Move ParamListNode to a non-node
+* Replace as many pointer parameters as possible to references

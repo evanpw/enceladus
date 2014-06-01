@@ -14,6 +14,7 @@
 struct YYLTYPE;
 
 ////// Abstract base nodes /////////////////////////////////////////////////////
+
 class AstNode
 {
 public:
@@ -21,14 +22,8 @@ public:
 	virtual ~AstNode();
 	virtual void accept(AstVisitor* visitor) = 0;
 
-	YYLTYPE* location() { return location_; }
-	const std::shared_ptr<Type>& type() { return type_; }
-
-	void setType(const std::shared_ptr<Type>& type) { type_ = type; }
-
-protected:
-	YYLTYPE* location_;
-	std::shared_ptr<Type> type_;
+	YYLTYPE* location;
+	std::shared_ptr<Type> type;
 };
 
 class StatementNode : public AstNode {};
@@ -39,9 +34,8 @@ public:
 	virtual AssignableNode* clone() = 0;
 };
 
-
-
 ////// Utility classes other than AST nodes ////////////////////////////////////
+
 typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
 typedef std::vector<std::unique_ptr<TypeName>> TypeDecl;
 
@@ -49,12 +43,11 @@ class ConstructorSpec
 {
 public:
 	ConstructorSpec(const std::string& name)
-	: name_(name)
+	: name(name)
 	{}
 
 	void append(TypeName* typeName) { members_.emplace_back(typeName); }
 
-	const std::string& name() const { return name_; }
 	const std::vector<std::unique_ptr<TypeName>>& members() const { return members_; }
 
 	void setMemberTypes(const std::vector<std::shared_ptr<Type>> types)
@@ -64,9 +57,9 @@ public:
 	}
 	const std::vector<std::shared_ptr<Type>>& memberTypes() { return types_; }
 
-private:
-	std::string name_;
+	std::string name;
 
+private:
 	std::vector<std::unique_ptr<TypeName>> members_;
 	std::vector<std::shared_ptr<Type>> types_;
 };
@@ -78,44 +71,35 @@ class ProgramNode : public AstNode
 {
 public:
 	ProgramNode()
-	: scope_(new Scope)
-	, typeTable_(new TypeTable)
+	: scope(new Scope)
+	, typeTable(new TypeTable)
 	{}
 
 	void append(AstNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::list<std::unique_ptr<AstNode>>& children() const { return children_; }
-	Scope* scope() { return scope_.get(); }
-	TypeTable* typeTable() { return typeTable_.get(); }
-
-private:
-	std::list<std::unique_ptr<AstNode>> children_;
-	std::unique_ptr<Scope> scope_;
-	std::unique_ptr<TypeTable> typeTable_;
+	std::unique_ptr<Scope> scope;
+	std::unique_ptr<TypeTable> typeTable;
+	std::list<std::unique_ptr<AstNode>> children;
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
+
 class LogicalNode : public ExpressionNode
 {
 public:
 	enum Operator {kAnd, kOr};
 
 	LogicalNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: lhs_(lhs), op_(op), rhs_(rhs)
+	: lhs(lhs), op(op), rhs(rhs)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* lhs() { return lhs_.get(); }
-	Operator op() { return op_; }
-	ExpressionNode* rhs() { return rhs_.get(); }
-
-protected:
-	std::unique_ptr<ExpressionNode> lhs_;
-	Operator op_;
-	std::unique_ptr<ExpressionNode> rhs_;
+	std::unique_ptr<ExpressionNode> lhs;
+	Operator op;
+	std::unique_ptr<ExpressionNode> rhs;
 };
 
 class ComparisonNode : public ExpressionNode
@@ -124,60 +108,43 @@ public:
 	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual, kNotEqual };
 
 	ComparisonNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: lhs_(lhs), op_(op), rhs_(rhs)
+	: lhs(lhs), op(op), rhs(rhs)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* lhs() { return lhs_.get(); }
-	Operator op() { return op_; }
-	ExpressionNode* rhs() { return rhs_.get(); }
-
-protected:
-	std::unique_ptr<ExpressionNode> lhs_;
-	Operator op_;
-	std::unique_ptr<ExpressionNode> rhs_;
+	std::unique_ptr<ExpressionNode> lhs;
+	Operator op;
+	std::unique_ptr<ExpressionNode> rhs;
 };
 
 class NullaryNode : public ExpressionNode
 {
 public:
-	NullaryNode(const std::string& name) : name_(name), symbol_(nullptr) {}
+	NullaryNode(const std::string& name) : name(name), symbol(nullptr) {}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& name() { return name_; }
-
-	const Symbol* symbol() { return symbol_; }
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
-
-private:
-	std::string name_;
-	Symbol* symbol_;
+	std::string name;
+	Symbol* symbol;
 };
 
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(long value) : value_(value) {}
+	IntNode(long value) : value(value) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	long value() { return value_; }
-
-private:
-	long value_;
+	long value;
 };
 
 class BoolNode : public ExpressionNode
 {
 public:
-	BoolNode(bool value) : value_(value) {}
+	BoolNode(bool value) : value(value) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	bool value() { return value_; }
-
-private:
-	bool value_;
+	bool value;
 };
 
 // Syntactic sugar for list and string literals
@@ -187,32 +154,24 @@ FunctionCallNode* makeString(const std::string& s);
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(const std::string& target, ArgList* arguments)
-	: target_(target), symbol_(nullptr)
+	FunctionCallNode(const std::string& target, ArgList* args)
+	: target(target), symbol(nullptr)
 	{
-		arguments_.reset(arguments);
+		arguments.reset(args);
 	}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& target() { return target_; }
-	ArgList& arguments() { return *arguments_.get(); }
-
-	FunctionSymbol* symbol() { return symbol_; }
-	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
-
-private:
-	std::string target_;
-	std::unique_ptr<ArgList> arguments_;
-
-	FunctionSymbol* symbol_;
+	std::string target;
+	std::unique_ptr<ArgList> arguments;
+	FunctionSymbol* symbol;
 };
 
 class VariableNode : public AssignableNode
 {
 public:
 	VariableNode(const std::string& name)
-	: name_(name), symbol_(nullptr)
+	: name(name), symbol(nullptr)
 	{
 	}
 
@@ -220,17 +179,12 @@ public:
 
 	virtual VariableNode* clone() { return new VariableNode(*this); }
 
-	const std::string& name() { return name_; }
-
-	VariableSymbol* symbol() { return symbol_; }
-	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
-
-private:
-	std::string name_;
-	VariableSymbol* symbol_;
+	std::string name;
+	VariableSymbol* symbol;
 };
 
 ////// Statement nodes /////////////////////////////////////////////////////////
+
 class BlockNode : public StatementNode
 {
 public:
@@ -238,57 +192,41 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::list<std::unique_ptr<StatementNode>>& children() const { return children_; }
-
-private:
-	std::list<std::unique_ptr<StatementNode>> children_;
+	std::list<std::unique_ptr<StatementNode>> children;
 };
 
 class IfNode : public StatementNode
 {
 public:
-	IfNode(ExpressionNode* condition, StatementNode* body) : condition_(condition), body_(body) {}
+	IfNode(ExpressionNode* condition, StatementNode* body) : condition(condition), body(body) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* condition() { return condition_.get(); }
-	StatementNode* body() { return body_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> condition_;
-	std::unique_ptr<StatementNode> body_;
+	std::unique_ptr<ExpressionNode> condition;
+	std::unique_ptr<StatementNode> body;
 };
 
 class IfElseNode : public StatementNode
 {
 public:
 	IfElseNode(ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
-	: condition_(condition), body_(body), else_body_(else_body)
+	: condition(condition), body(body), else_body(else_body)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* condition() { return condition_.get(); }
-	StatementNode* body() { return body_.get(); }
-	StatementNode* else_body() { return else_body_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> condition_;
-	std::unique_ptr<StatementNode> body_;
-	std::unique_ptr<StatementNode> else_body_;
+	std::unique_ptr<ExpressionNode> condition;
+	std::unique_ptr<StatementNode> body;
+	std::unique_ptr<StatementNode> else_body;
 };
 
 class WhileNode : public StatementNode
 {
 public:
-	WhileNode(ExpressionNode* condition, StatementNode* body) : condition_(condition), body_(body) {}
+	WhileNode(ExpressionNode* condition, StatementNode* body) : condition(condition), body(body) {}
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* condition() { return condition_.get(); }
-	StatementNode* body() { return body_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> condition_;
-	std::unique_ptr<StatementNode> body_;
+	std::unique_ptr<ExpressionNode> condition;
+	std::unique_ptr<StatementNode> body;
 };
 
 // For loops are implemented as pure syntactic sugar
@@ -298,42 +236,29 @@ class AssignNode : public StatementNode
 {
 public:
 	AssignNode(AssignableNode* target, ExpressionNode* value)
-	: target_(target), value_(value)
+	: target(target), value(value)
 	{
 	}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	AssignableNode* target() { return target_.get(); }
-	ExpressionNode* value() { return value_.get(); }
-
-private:
-	std::unique_ptr<AssignableNode> target_;
-	std::unique_ptr<ExpressionNode> value_;
+	std::unique_ptr<AssignableNode> target;
+	std::unique_ptr<ExpressionNode> value;
 };
 
 class LetNode : public StatementNode
 {
 public:
 	LetNode(const std::string& target, TypeName* typeName, ExpressionNode* value)
-	: target_(target), typeName_(typeName), value_(value), symbol_(nullptr)
+	: target(target), typeName(typeName), value(value), symbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& target() { return target_; }
-	TypeName* typeName() { return typeName_.get(); }
-	ExpressionNode* value() { return value_.get(); }
-
-	VariableSymbol* symbol() { return symbol_; }
-	void attachSymbol(VariableSymbol* symbol) { symbol_ = symbol; }
-
-private:
-	std::string target_;
-	std::unique_ptr<TypeName> typeName_;
-	std::unique_ptr<ExpressionNode> value_;
-
-	VariableSymbol* symbol_;
+	std::string target;
+	std::unique_ptr<TypeName> typeName;
+	std::unique_ptr<ExpressionNode> value;
+	VariableSymbol* symbol;
 };
 
 class ParamListNode : public AstNode
@@ -343,67 +268,42 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::vector<std::string>& names() const { return names_; }
-
-private:
-	std::vector<std::string> names_;
+	std::vector<std::string> names;
 };
 
 class FunctionDefNode : public StatementNode
 {
 public:
 	FunctionDefNode(const std::string& name, StatementNode* body, ParamListNode* params, TypeDecl* typeDecl)
-	: name_(name), body_(body), params_(params), typeDecl_(typeDecl), symbol_(nullptr), scope_(new Scope)
+	: name(name), body(body), params(params), typeDecl(typeDecl), symbol(nullptr), scope(new Scope)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& name() { return name_; }
-	StatementNode* body() { return body_.get(); }
-	const std::vector<std::string>& params() { return params_->names(); }
-	TypeDecl* typeDecl() { return typeDecl_.get(); }
-
-	Scope* scope() { return scope_.get(); }
-
-	FunctionSymbol* symbol() { return symbol_; }
-	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
-
-private:
-	std::string name_;
-	std::unique_ptr<StatementNode> body_;
-	std::unique_ptr<ParamListNode> params_;
-	std::unique_ptr<TypeDecl> typeDecl_;
-
-	FunctionSymbol* symbol_;
-	std::unique_ptr<Scope> scope_;
+	std::string name;
+	std::unique_ptr<StatementNode> body;
+	std::unique_ptr<ParamListNode> params;
+	std::unique_ptr<TypeDecl> typeDecl;
+	FunctionSymbol* symbol;
+	std::unique_ptr<Scope> scope;
 };
 
 class MatchNode : public StatementNode
 {
 public:
 	MatchNode(const std::string& constructor, ParamListNode* params, ExpressionNode* body)
-	: constructor_(constructor), params_(params), body_(body), constructorSymbol_(nullptr)
+	: constructor(constructor), params(params), body(body), constructorSymbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& constructor() { return constructor_; }
-	ParamListNode* params() { return params_.get(); }
-	ExpressionNode* body() { return body_.get(); }
+	void attachSymbol(VariableSymbol* symbol) { symbols.push_back(symbol); }
 
-	const std::vector<VariableSymbol*>& symbols() { return symbols_; }
-	void attachSymbol(VariableSymbol* symbol) { symbols_.push_back(symbol); }
-
-	FunctionSymbol* constructorSymbol() { return constructorSymbol_; }
-	void attachConstructorSymbol(FunctionSymbol* symbol) { constructorSymbol_ = symbol; }
-
-private:
-	std::string constructor_;
-	std::unique_ptr<ParamListNode> params_;
-	std::unique_ptr<ExpressionNode> body_;
-
-	std::vector<VariableSymbol*> symbols_;
-	FunctionSymbol* constructorSymbol_;
+	std::string constructor;
+	std::unique_ptr<ParamListNode> params;
+	std::unique_ptr<ExpressionNode> body;
+	std::vector<VariableSymbol*> symbols;
+	FunctionSymbol* constructorSymbol;
 
 };
 
@@ -411,80 +311,53 @@ class DataDeclaration : public StatementNode
 {
 public:
 	DataDeclaration(const std::string& name, ConstructorSpec* constructor)
-	: name_(name), constructor_(constructor)
+	: name(name), constructor(constructor)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& name() { return name_; }
-	ConstructorSpec* constructor() { return constructor_.get(); }
-
-	void attachConstructor(ValueConstructor* valueConstructor) { valueConstructor_ = valueConstructor; }
-	ValueConstructor* valueConstructor() { return valueConstructor_; }
-
-private:
-	std::string name_;
-	std::unique_ptr<ConstructorSpec> constructor_;
-	ValueConstructor* valueConstructor_;
+	std::string name;
+	std::unique_ptr<ConstructorSpec> constructor;
+	ValueConstructor* valueConstructor;
 };
 
 class TypeAliasNode : public StatementNode
 {
 public:
 	TypeAliasNode(const std::string& name, TypeName* underlying)
-	: name_(name), underlying_(underlying)
+	: name(name), underlying(underlying)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& name() { return name_; }
-	TypeName* underlying() { return underlying_.get(); }
-
-private:
-	std::string name_;
-	std::unique_ptr<TypeName> underlying_;
+	std::string name;
+	std::unique_ptr<TypeName> underlying;
 };
 
 class ForeignDeclNode : public StatementNode
 {
 public:
 	ForeignDeclNode(const std::string& name, ParamListNode* params, TypeDecl* typeDecl)
-	: name_(name), params_(params), typeDecl_(typeDecl), symbol_(nullptr)
+	: name(name), params(params), typeDecl(typeDecl), symbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& name() { return name_; }
-	const std::vector<std::string>& params() { return params_->names(); }
-	TypeDecl* typeDecl() { return typeDecl_.get(); }
-
-	FunctionSymbol* symbol() { return symbol_; }
-	void attachSymbol(FunctionSymbol* symbol) { symbol_ = symbol; }
-
-	std::vector<const Type*> paramTypes() const { return paramTypes_; }
-	void setParamTypes(const std::vector<const Type*>& paramTypes) { paramTypes_ = paramTypes; }
-
-private:
-	std::string name_;
-	std::unique_ptr<ParamListNode> params_;
-	std::unique_ptr<TypeDecl> typeDecl_;
-
-	FunctionSymbol* symbol_;
-
-	std::vector<const Type*> paramTypes_;
+	std::string name;
+	std::unique_ptr<ParamListNode> params;
+	std::unique_ptr<TypeDecl> typeDecl;
+	FunctionSymbol* symbol;
+	std::vector<const Type*> paramTypes;
 };
 
 class ReturnNode : public StatementNode
 {
 public:
-	ReturnNode(ExpressionNode* expression) : expression_(expression) {}
+	ReturnNode(ExpressionNode* expression) : expression(expression) {}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	ExpressionNode* expression() { return expression_.get(); }
-
-private:
-	std::unique_ptr<ExpressionNode> expression_;
+	std::unique_ptr<ExpressionNode> expression;
 };
 
 //// Structures ////////////////////////////////////////////////////////////////
@@ -493,21 +366,14 @@ class MemberDefNode : public AstNode
 {
 public:
 	MemberDefNode(const std::string& name, TypeName* typeName)
-	: name_(name), typeName_(typeName)
+	: name(name), typeName(typeName)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& name() { return name_; }
-	TypeName* typeName() { return typeName_.get(); }
-
-	void attachType(std::shared_ptr<Type> type) { type_ = type; }
-	std::shared_ptr<Type> type() const { return type_; }
-
-private:
-	std::string name_;
-	std::unique_ptr<TypeName> typeName_;
-	std::shared_ptr<Type> type_;
+	std::string name;
+	std::unique_ptr<TypeName> typeName;
+	std::shared_ptr<Type> memberType;
 };
 
 typedef std::vector<std::unique_ptr<MemberDefNode>> MemberList;
@@ -516,64 +382,43 @@ class StructDefNode : public StatementNode
 {
 public:
 	StructDefNode(const std::string& name, MemberList* members)
-	: name_(name), members_(members)
+	: name(name), members(members)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& name() { return name_; }
-	MemberList& members() { return *(members_.get()); }
-
-	void attachStructType(std::shared_ptr<Type> type) { structType_ = type; }
-	std::shared_ptr<Type> structType() const { return structType_; }
-
-private:
-	std::string name_;
-	std::unique_ptr<MemberList> members_;
-	std::shared_ptr<Type> structType_;
+	std::string name;
+	std::unique_ptr<MemberList> members;
+	std::shared_ptr<Type> structType;
 };
 
 class StructInitNode : public ExpressionNode
 {
 public:
 	StructInitNode(const std::string& structName)
-	: structName_(structName)
+	: structName(structName)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	const std::string& structName() { return structName_; }
-
-private:
-	std::string structName_;
+	std::string structName;
 };
 
 class MemberAccessNode : public AssignableNode
 {
 public:
 	MemberAccessNode(const std::string& varName, const std::string& memberName)
-	: varName_(varName), memberName_(memberName)
+	: varName(varName), memberName(memberName)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	virtual MemberAccessNode* clone() { return new MemberAccessNode(*this); }
 
-	const std::string& varName() { return varName_; }
-	const std::string& memberName() { return memberName_; }
-
-	const Symbol* symbol() { return symbol_; }
-	void attachSymbol(Symbol* symbol) { symbol_ = symbol; }
-
-	size_t memberLocation() { return memberLocation_; }
-	void setMemberLocation(size_t memberLocation) { memberLocation_ = memberLocation; }
-
-private:
-	std::string varName_;
-	std::string memberName_;
-
-	Symbol* symbol_;
-	size_t memberLocation_;
+	std::string varName;
+	std::string memberName;
+	Symbol* symbol;
+	size_t memberLocation;
 };
 
 #endif

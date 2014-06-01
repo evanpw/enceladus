@@ -7,7 +7,7 @@
 using namespace std;
 
 AstNode::AstNode()
-: location_(new YYLTYPE(yylloc)), type_(nullptr)
+: location(new YYLTYPE(yylloc))
 {
 }
 
@@ -17,17 +17,17 @@ AstNode::~AstNode()
 
 void ProgramNode::append(AstNode* child)
 {
-	children_.emplace_back(child);
+	children.emplace_back(child);
 }
 
 void ParamListNode::append(const std::string& param)
 {
-    names_.emplace_back(param);
+    names.emplace_back(param);
 }
 
 void BlockNode::append(StatementNode* child)
 {
-	children_.emplace_back(child);
+	children.emplace_back(child);
 }
 
 BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, StatementNode* body)

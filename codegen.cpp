@@ -34,16 +34,16 @@ void CodeGen::getAddress(AssignableNode* node, const std::string& dest)
 	VariableNode* variableNode = dynamic_cast<VariableNode*>(node);
 	if (variableNode != nullptr)
 	{
-		EMIT("lea " << dest << ", " << access(variableNode->symbol()));
+		EMIT("lea " << dest << ", " << access(variableNode->symbol));
 		return;
 	}
 
 	MemberAccessNode* memberAccess = dynamic_cast<MemberAccessNode*>(node);
 	if (memberAccess != nullptr)
 	{
-		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(memberAccess->symbol());
+		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(memberAccess->symbol);
 		EMIT("mov " << dest << ", " << access(symbol));
-		EMIT("lea " << dest << ", [" << dest << " + " << 8 * (2 + memberAccess->memberLocation()) << "]");
+		EMIT("lea " << dest << ", [" << dest << " + " << 8 * (2 + memberAccess->memberLocation) << "]");
 		return;
 	}
 
@@ -69,10 +69,10 @@ std::string CodeGen::access(const VariableSymbol* symbol)
 			// Parameters should not be assigned a place among the local variables.
 			assert(symbol->offset == 0);
 
-			auto paramList = enclosingFunction->params();
+			auto& paramList = enclosingFunction->params;
 
 			size_t offset = 0;
-			for (const std::string& param : paramList)
+			for (const std::string& param : paramList->names)
 			{
 				if (param == symbol->name)
 				{
@@ -115,7 +115,7 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 {
 	std::vector<std::string> result;
 
-	for (auto& i : node->scope()->symbols())
+	for (auto& i : node->scope->symbols())
 	{
 		const std::string& name = i.first;
 		const Symbol* symbol = i.second.get();
@@ -199,16 +199,16 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 
 void CodeGen::createStructInit(StructDefNode* node)
 {
-	StructType* structType = node->structType()->get<StructType>();
-	MemberList& members = node->members();
+	StructType* structType = node->structType->get<StructType>();
+	auto& members = node->members;
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
 	// There is one extra qword for the reference count and one for the member
 	// counts (pointers and non-pointers)
-	size_t size = 8 * (members.size() + 2);
+	size_t size = 8 * (members->size() + 2);
 
 	EMIT_BLANK();
-	EMIT_LABEL("__init_" << mangle(node->name()));
+	EMIT_LABEL("__init_" << mangle(node->name));
 	EMIT("push rbp");
 	EMIT("mov rbp, rsp");
 
@@ -233,7 +233,7 @@ void CodeGen::createStructInit(StructDefNode* node)
 	EMIT("mov qword [rax + 8], rbx");
 
 	// Initialize all members to zero
-    for (size_t i = 0; i < members.size(); ++i)
+    for (size_t i = 0; i < members->size(); ++i)
     {
     	EMIT("mov qword [rax + " << 8 * (i + 2) << "], 0");
     }
@@ -295,15 +295,15 @@ void CodeGen::visit(ProgramNode* node)
 		referencedFunctions_.erase(referencedFunctions_.begin());
 		visitedFunctions_.insert(function);
 
-		currentFunction_ = function->name();
+		currentFunction_ = function->name;
 		EMIT_BLANK();
-		EMIT_LABEL("_" << mangle(function->name()));
+		EMIT_LABEL("_" << mangle(function->name));
 		EMIT("push rbp");
 		EMIT("mov rbp, rsp");
 
 		// Assign a location for all of the local variables and parameters.
 		int locals = 0;
-		for (auto& i : function->scope()->symbols())
+		for (auto& i : function->scope->symbols())
 		{
 			assert(i.second->kind == kVariable); // No locally functions yet
 
@@ -324,7 +324,7 @@ void CodeGen::visit(ProgramNode* node)
 		EMIT("rep stosq");
 
 		// We gain a reference to all of the parameters passed in
-		for (auto& i : function->scope()->symbols())
+		for (auto& i : function->scope->symbols())
 		{
 			assert(i.second->kind == kVariable);
 
@@ -339,11 +339,11 @@ void CodeGen::visit(ProgramNode* node)
 		// Recurse to children
 		AstVisitor::visit(function);
 
-		EMIT_LABEL("__end_" << function->name());
+		EMIT_LABEL("__end_" << function->name);
 		EMIT("push rax");
 
-		assert(function->symbol()->typeScheme->tag() == ttFunction);
-		FunctionType* functionType = function->symbol()->typeScheme->type()->get<FunctionType>();
+		assert(function->symbol->typeScheme->tag() == ttFunction);
+		FunctionType* functionType = function->symbol->typeScheme->type()->get<FunctionType>();
 
 		// Preserve the return value from being freed if it happens to be the
 		// same as one of the local variables.
@@ -354,7 +354,7 @@ void CodeGen::visit(ProgramNode* node)
 		}
 
 		// Going out of scope loses a reference to all of the local variables
-		for (auto& i : function->scope()->symbols())
+		for (auto& i : function->scope->symbols())
 		{
 			assert(i.second->kind == kVariable);
 
@@ -384,7 +384,7 @@ void CodeGen::visit(ProgramNode* node)
 
 	for (DataDeclaration* dataDeclaration : dataDeclarations_)
 	{
-		createConstructor(dataDeclaration->valueConstructor());
+		createConstructor(dataDeclaration->valueConstructor);
 	}
 
 	for (StructDefNode* structDef : structDeclarations_)
@@ -406,15 +406,15 @@ void CodeGen::visit(ProgramNode* node)
 
 void CodeGen::visit(ComparisonNode* node)
 {
-	node->lhs()->accept(this);
+	node->lhs->accept(this);
 	EMIT("push rax");
-	node->rhs()->accept(this);
+	node->rhs->accept(this);
 	EMIT("cmp qword [rsp], rax");
 
 	std::string trueBranch = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 
-	switch(node->op())
+	switch(node->op)
 	{
 		case ComparisonNode::kGreater:
 			EMIT("jg near " << trueBranch);
@@ -454,11 +454,11 @@ void CodeGen::visit(ComparisonNode* node)
 
 void CodeGen::visit(LogicalNode* node)
 {
-	node->lhs()->accept(this);
+	node->lhs->accept(this);
 	EMIT("push rax");
-	node->rhs()->accept(this);
+	node->rhs->accept(this);
 
-	switch (node->op())
+	switch (node->op)
 	{
 	case LogicalNode::kAnd:
 		EMIT("and rax, qword [rsp]");
@@ -474,16 +474,16 @@ void CodeGen::visit(LogicalNode* node)
 
 void CodeGen::visit(NullaryNode* node)
 {
-	assert(node->symbol()->kind == kVariable || node->symbol()->kind == kFunction);
+	assert(node->symbol->kind == kVariable || node->symbol->kind == kFunction);
 
-	if (node->symbol()->kind == kVariable)
+	if (node->symbol->kind == kVariable)
 	{
-		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol());
+		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol);
 		EMIT("mov rax, " << access(symbol));
 	}
 	else
 	{
-		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(node->symbol());
+		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(node->symbol);
 		if (functionSymbol->isForeign)
 		{
 			// Realign the stack to 16 bytes (may not be necessary on all platforms)
@@ -492,7 +492,7 @@ void CodeGen::visit(NullaryNode* node)
 		    EMIT("add rsp, -8");
 		    EMIT("push rbx");
 
-		    EMIT("call " << foreignName(mangle(node->name())));
+		    EMIT("call " << foreignName(mangle(node->name)));
 
 		    // Undo the stack alignment
 		    EMIT("pop rbx");
@@ -506,19 +506,19 @@ void CodeGen::visit(NullaryNode* node)
 				referencedFunctions_.insert(functionSymbol->definition);
 			}
 
-			EMIT("call _" << mangle(node->name()));
+			EMIT("call _" << mangle(node->name));
 		}
 	}
 }
 
 void CodeGen::visit(IntNode* node)
 {
-	EMIT("mov rax, " << (2 * node->value() + 1));
+	EMIT("mov rax, " << (2 * node->value + 1));
 }
 
 void CodeGen::visit(BoolNode* node)
 {
-	if (node->value())
+	if (node->value)
 	{
 		EMIT("mov rax, 11b");
 	}
@@ -530,7 +530,7 @@ void CodeGen::visit(BoolNode* node)
 
 void CodeGen::visit(BlockNode* node)
 {
-	for (auto& child : node->children())
+	for (auto& child : node->children)
 	{
 		child->accept(this);
 	}
@@ -538,29 +538,29 @@ void CodeGen::visit(BlockNode* node)
 
 void CodeGen::visit(IfNode* node)
 {
-	node->condition()->accept(this);
+	node->condition->accept(this);
 
 	std::string endLabel = uniqueLabel();
 
 	EMIT("and rax, 10b");
 	EMIT("jz near " << endLabel);
-	node->body()->accept(this);
+	node->body->accept(this);
 	EMIT_LABEL(endLabel);
 }
 
 void CodeGen::visit(IfElseNode* node)
 {
-	node->condition()->accept(this);
+	node->condition->accept(this);
 
 	std::string elseLabel = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 
 	EMIT("and rax, 10b");
 	EMIT("jz near " << elseLabel);
-	node->body()->accept(this);
+	node->body->accept(this);
 	EMIT("jmp " << endLabel);
 	EMIT_LABEL(elseLabel);
-	node->else_body()->accept(this);
+	node->else_body->accept(this);
 	EMIT_LABEL(endLabel);
 }
 
@@ -570,11 +570,11 @@ void CodeGen::visit(WhileNode* node)
 	std::string endLabel = uniqueLabel();
 
 	EMIT_LABEL(beginLabel);
-	node->condition()->accept(this);
+	node->condition->accept(this);
 
 	EMIT("and rax, 10b");
 	EMIT("jz near " << endLabel);
-	node->body()->accept(this);
+	node->body->accept(this);
 
 	EMIT("jmp " << beginLabel);
 	EMIT_LABEL(endLabel);
@@ -583,61 +583,61 @@ void CodeGen::visit(WhileNode* node)
 void CodeGen::visit(AssignNode* node)
 {
 	// Do NOT recurse into the target node, we will instead take its address
-	// node->target()->accept(this);
+	// node->target->accept(this);
 
-	node->value()->accept(this);
+	node->value->accept(this);
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->target()->type()->isBoxed())
+	if (node->target->type->isBoxed())
 	{
 		EMIT("push rax");
 
 		EMIT("mov rdi, rax");
 		EMIT("call " << foreignName("_incref"));
 
-		getAddress(node->target(), "rdi");
+		getAddress(node->target.get(), "rdi");
 		EMIT("mov qword [rdi], rdi");
 		EMIT("call " << foreignName("_decref"));
 
 		EMIT("pop rax");
 	}
 
-	getAddress(node->target(), "rbx");
+	getAddress(node->target.get(), "rbx");
 	EMIT("mov qword [rbx], rax");
 }
 
 void CodeGen::visit(LetNode* node)
 {
-	node->value()->accept(this);
+	node->value->accept(this);
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->symbol()->typeScheme->isBoxed())
+	if (node->symbol->typeScheme->isBoxed())
 	{
 		EMIT("push rax");
 
 		EMIT("mov rdi, rax");
 		EMIT("call " << foreignName("_incref"));
 
-		EMIT("mov rdi, " << access(node->symbol()));
+		EMIT("mov rdi, " << access(node->symbol));
 		EMIT("call " << foreignName("_decref"));
 
 		EMIT("pop rax");
 	}
 
-	EMIT("mov " << access(node->symbol()) << ", rax");
+	EMIT("mov " << access(node->symbol) << ", rax");
 }
 
 void CodeGen::visit(MatchNode* node)
 {
-	node->body()->accept(this);
+	node->body->accept(this);
 	EMIT("push rax");
 
 	// Decrement references to the existing variables
-	for (size_t i = 0; i < node->symbols().size(); ++i)
+	for (size_t i = 0; i < node->symbols.size(); ++i)
 	{
-		VariableSymbol* member = node->symbols().at(i);
+		VariableSymbol* member = node->symbols.at(i);
 
 		if (member->typeScheme->isBoxed())
 		{
@@ -648,13 +648,13 @@ void CodeGen::visit(MatchNode* node)
 
 	EMIT("pop rsi");
 
-	FunctionType* functionType = node->constructorSymbol()->typeScheme->type()->get<FunctionType>();
+	FunctionType* functionType = node->constructorSymbol->typeScheme->type()->get<FunctionType>();
 	auto& constructor = functionType->output()->valueConstructors().front();
 
 	// Copy over each of the members of the constructor pattern
-	for (size_t i = 0; i < node->symbols().size(); ++i)
+	for (size_t i = 0; i < node->symbols.size(); ++i)
 	{
-		VariableSymbol* member = node->symbols().at(i);
+		VariableSymbol* member = node->symbols.at(i);
 		size_t location = constructor->memberLocations().at(i);
 
 		EMIT("mov rdi, [rsi + " << 8 * (location + 2) << "]");
@@ -680,20 +680,20 @@ void CodeGen::visit(DataDeclaration* node)
 
 void CodeGen::visit(FunctionCallNode* node)
 {
-	for (auto i = node->arguments().rbegin(); i != node->arguments().rend(); ++i)
+	for (auto i = node->arguments->rbegin(); i != node->arguments->rend(); ++i)
 	{
 		(*i)->accept(this);
 		EMIT("push rax");
 	}
 
-	if (node->symbol()->isBuiltin)
+	if (node->symbol->isBuiltin)
 	{
-		if (node->target() == "not")
+		if (node->target == "not")
 		{
 			EMIT("pop rax");
 			EMIT("xor rax, 10b");
 		}
-		else if (node->target() == "head")
+		else if (node->target == "head")
 		{
 			EMIT("pop rax");
 
@@ -715,7 +715,7 @@ void CodeGen::visit(FunctionCallNode* node)
 			EMIT_LABEL(good);
 			EMIT("mov rax, qword [rax + 24]");
 		}
-		else if (node->target() == "tail")
+		else if (node->target == "tail")
 		{
 			EMIT("pop rax");
 
@@ -737,11 +737,11 @@ void CodeGen::visit(FunctionCallNode* node)
 			EMIT_LABEL(good);
 			EMIT("mov rax, qword [rax + 16]");
 		}
-		else if (node->target() == "Nil")
+		else if (node->target == "Nil")
 		{
 			EMIT("mov rax, 0");
 		}
-		else if (node->target() == "null")
+		else if (node->target == "null")
 		{
 			std::string finish = uniqueLabel();
 			EMIT("pop rax");
@@ -751,21 +751,21 @@ void CodeGen::visit(FunctionCallNode* node)
 			EMIT_LABEL(finish);
 			EMIT("xor rax, 10b");
 		}
-		else if (node->target() == "+")
+		else if (node->target == "+")
 		{
 			EMIT("pop rax");
 			EMIT("pop rbx");
 			EMIT("xor rbx, 1");
 			EMIT("add rax, rbx");
 		}
-		else if (node->target() == "-")
+		else if (node->target == "-")
 		{
 			EMIT("pop rax");
 			EMIT("pop rbx");
 			EMIT("xor rbx, 1");
 			EMIT("sub rax, rbx");
 		}
-		else if (node->target() == "*")
+		else if (node->target == "*")
 		{
 			EMIT("pop rax");
 			EMIT("pop rbx");
@@ -774,7 +774,7 @@ void CodeGen::visit(FunctionCallNode* node)
 			EMIT("imul rax, rbx");
 			EMIT("lea rax, [2 * rax + 1]");
 		}
-		else if (node->target() == "/")
+		else if (node->target == "/")
 		{
 			EMIT("pop rax");
 			EMIT("pop rbx");
@@ -784,7 +784,7 @@ void CodeGen::visit(FunctionCallNode* node)
 			EMIT("idiv rbx");
 			EMIT("lea rax, [2 * rax + 1]");
 		}
-		else if (node->target() == "%")
+		else if (node->target == "%")
 		{
 			EMIT("pop rax");
 			EMIT("pop rbx");
@@ -800,15 +800,15 @@ void CodeGen::visit(FunctionCallNode* node)
 			assert(false);
 		}
 	}
-	else if (node->symbol()->isForeign)
+	else if (node->symbol->isForeign)
 	{
 		// x86_64 calling convention for C puts the first 6 arguments in registers
-		if (node->arguments().size() >= 1) EMIT("pop rdi");
-		if (node->arguments().size() >= 2) EMIT("pop rsi");
-		if (node->arguments().size() >= 3) EMIT("pop rdx");
-		if (node->arguments().size() >= 4) EMIT("pop rcx");
-		if (node->arguments().size() >= 5) EMIT("pop r8");
-		if (node->arguments().size() >= 6) EMIT("pop r9");
+		if (node->arguments->size() >= 1) EMIT("pop rdi");
+		if (node->arguments->size() >= 2) EMIT("pop rsi");
+		if (node->arguments->size() >= 3) EMIT("pop rdx");
+		if (node->arguments->size() >= 4) EMIT("pop rcx");
+		if (node->arguments->size() >= 5) EMIT("pop r8");
+		if (node->arguments->size() >= 6) EMIT("pop r9");
 
 		// Realign the stack to 16 bytes (may not be necessary on all platforms)
 	    EMIT("mov rbx, rsp");
@@ -816,7 +816,7 @@ void CodeGen::visit(FunctionCallNode* node)
 	    EMIT("add rsp, -8");
 	    EMIT("push rbx");
 
-	    EMIT("call " << foreignName(mangle(node->target())));
+	    EMIT("call " << foreignName(mangle(node->target)));
 
 	    // Undo the stack alignment
 	    EMIT("pop rbx");
@@ -824,31 +824,31 @@ void CodeGen::visit(FunctionCallNode* node)
 	}
 	else
 	{
-		if (node->symbol()->definition &&
-			visitedFunctions_.find(node->symbol()->definition) == visitedFunctions_.end())
+		if (node->symbol->definition &&
+			visitedFunctions_.find(node->symbol->definition) == visitedFunctions_.end())
 		{
-			referencedFunctions_.insert(node->symbol()->definition);
+			referencedFunctions_.insert(node->symbol->definition);
 		}
 
-		EMIT("call _" << mangle(node->target()));
+		EMIT("call _" << mangle(node->target));
 
-		size_t args = node->arguments().size();
+		size_t args = node->arguments->size();
 		if (args > 0) EMIT("add rsp, " << 8 * args);
 	}
 }
 
 void CodeGen::visit(ReturnNode* node)
 {
-	node->expression()->accept(this);
+	node->expression->accept(this);
 
 	EMIT("jmp __end_" << currentFunction_);
 }
 
 void CodeGen::visit(VariableNode* node)
 {
-	assert(node->symbol()->kind == kVariable);
+	assert(node->symbol->kind == kVariable);
 
-	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol());
+	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol);
 	EMIT("mov rax, " << access(symbol));
 }
 
@@ -861,12 +861,12 @@ void CodeGen::visit(StructDefNode* node)
 
 void CodeGen::visit(StructInitNode* node)
 {
-	EMIT("call __init_" << mangle(node->structName()));
+	EMIT("call __init_" << mangle(node->structName));
 }
 
 void CodeGen::visit(MemberAccessNode* node)
 {
-	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol());
+	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol);
 	EMIT("mov rax, " << access(symbol));
-	EMIT("mov rax, qword [rax + " << 8 * (2 + node->memberLocation()) << "]");
+	EMIT("mov rax, qword [rax + " << 8 * (2 + node->memberLocation) << "]");
 }
