@@ -22,7 +22,6 @@ class MatchNode;
 class MemberAccessNode;
 class MemberDefNode;
 class NullaryNode;
-class ParamListNode;
 class ProgramNode;
 class ReturnNode;
 class StructDefNode;
@@ -60,7 +59,6 @@ public:
 	virtual void visit(MemberAccessNode* node) {}
 	virtual void visit(MemberDefNode* node) {}
 	virtual void visit(NullaryNode* node) {}
-	virtual void visit(ParamListNode* node) {}
 	virtual void visit(StructInitNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(VariableNode* node) {}

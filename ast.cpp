@@ -20,10 +20,6 @@ void ProgramNode::append(AstNode* child)
 	children.emplace_back(child);
 }
 
-void ParamListNode::append(const std::string& param)
-{
-    names.emplace_back(param);
-}
 
 void BlockNode::append(StatementNode* child)
 {

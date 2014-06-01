@@ -570,7 +570,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	if (node->typeDecl)
 	{
 		// Must have a type specified for each parameter + one for return type
-		if (node->typeDecl->size() != node->params->names.size() + 1)
+		if (node->typeDecl->size() != node->params->size() + 1)
 		{
 			std::stringstream msg;
 			msg << "number of types does not match parameter list";
@@ -607,7 +607,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	}
 	else
 	{
-		for (size_t i = 0; i < node->params->names.size(); ++i)
+		for (size_t i = 0; i < node->params->size(); ++i)
 		{
 			paramTypes.push_back(newVariable());
 		}
@@ -627,9 +627,9 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 	// Add symbols corresponding to the formal parameters to the
 	// function's scope
-	for (size_t i = 0; i < node->params->names.size(); ++i)
+	for (size_t i = 0; i < node->params->size(); ++i)
 	{
-		const std::string& param = node->params->names.at(i);
+		const std::string& param = node->params->at(i);
 
 		VariableSymbol* paramSymbol = new VariableSymbol(param, node, node);
 		paramSymbol->isParam = true;
@@ -673,8 +673,8 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 
 	// If parameters names are given, must have a type specified for
 	// each parameter + one for return type
-	if (node->params->names.size() != 0 &&
-		node->typeDecl->size() != node->params->names.size() + 1)
+	if (node->params->size() != 0 &&
+		node->typeDecl->size() != node->params->size() + 1)
 	{
 		std::stringstream msg;
 		msg << "number of types does not match parameter list";
@@ -684,7 +684,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 
 	// We currently only support 6 function arguments for foreign functions
 	// (so that we only have to pass arguments in registers)
-	if (node->params->names.size() > 6)
+	if (node->params->size() > 6)
 	{
 		std::stringstream msg;
 		msg << "a maximum of 6 arguments is supported for foreign functions.";
@@ -804,7 +804,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 		semanticError(node, msg.str());
 	}
 
-	if (functionType->inputs().size() != node->params->names.size())
+	if (functionType->inputs().size() != node->params->size())
 	{
 		std::stringstream msg;
 		msg << "constructor pattern \"" << symbol->name << "\" does not have the correct number of arguments.";
@@ -814,9 +814,9 @@ void SemanticAnalyzer::visit(MatchNode* node)
 	node->constructorSymbol = constructorSymbol;
 
 	// And create new variables for each of the members of the constructor
-	for (size_t i = 0; i < node->params->names.size(); ++i)
+	for (size_t i = 0; i < node->params->size(); ++i)
 	{
-		const std::string& name = node->params->names.at(i);
+		const std::string& name = node->params->at(i);
 
 		if (topScope()->find(name) != nullptr)
 		{

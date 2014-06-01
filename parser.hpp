@@ -44,7 +44,7 @@ StatementNode* variable_declaration();
 StatementNode* while_statement();
 AssignableNode* assignable();
 StatementNode* suite();
-ParamListNode* parameters();
+ParamList* parameters();
 TypeDecl* type_declaration();
 TypeName* type();
 ConstructorSpec* constructor_spec();

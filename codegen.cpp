@@ -72,7 +72,7 @@ std::string CodeGen::access(const VariableSymbol* symbol)
 			auto& paramList = enclosingFunction->params;
 
 			size_t offset = 0;
-			for (const std::string& param : paramList->names)
+			for (const std::string& param : *paramList)
 			{
 				if (param == symbol->name)
 				{

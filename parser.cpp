@@ -219,7 +219,7 @@ StatementNode* function_definition()
 
     expect(tDEF);
     std::string name = ident();
-    ParamListNode* params = parameters();
+    ParamList* params = parameters();
     TypeDecl* typeDecl = accept(tDCOLON) ? type_declaration() : nullptr;
     expect('=');
     StatementNode* body = suite();
@@ -247,7 +247,7 @@ StatementNode* foreign_declaration()
 
     expect(tFOREIGN);
     std::string name = ident();
-    ParamListNode* params = parameters();
+    ParamList* params = parameters();
     expect(tDCOLON);
     TypeDecl* typeDecl = type_declaration();
     expect(tEOL);
@@ -261,7 +261,7 @@ StatementNode* match_statement()
 
     expect(tLET);
     Token constructor = expect(tUIDENT);
-    ParamListNode* params = parameters();
+    ParamList* params = parameters();
     expect('=');
     ExpressionNode* body = expression();
     expect(tEOL);
@@ -431,16 +431,16 @@ StatementNode* suite()
     }
 }
 
-ParamListNode* parameters()
+ParamList* parameters()
 {
     //std::cerr << __func__ << std::endl;
 
-    ParamListNode* result = new ParamListNode;
+    ParamList* result = new ParamList;
     while (peekType() == tLIDENT)
     {
         Token param = expect(tLIDENT);
 
-        result->append(param.value.str);
+        result->push_back(param.value.str);
     }
 
     return result;

@@ -261,20 +261,12 @@ public:
 	VariableSymbol* symbol;
 };
 
-class ParamListNode : public AstNode
-{
-public:
-	void append(const std::string& param);
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	std::vector<std::string> names;
-};
+typedef std::vector<std::string> ParamList;
 
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const std::string& name, StatementNode* body, ParamListNode* params, TypeDecl* typeDecl)
+	FunctionDefNode(const std::string& name, StatementNode* body, ParamList* params, TypeDecl* typeDecl)
 	: name(name), body(body), params(params), typeDecl(typeDecl), symbol(nullptr), scope(new Scope)
 	{}
 
@@ -282,7 +274,7 @@ public:
 
 	std::string name;
 	std::unique_ptr<StatementNode> body;
-	std::unique_ptr<ParamListNode> params;
+	std::unique_ptr<ParamList> params;
 	std::unique_ptr<TypeDecl> typeDecl;
 	FunctionSymbol* symbol;
 	std::unique_ptr<Scope> scope;
@@ -291,7 +283,7 @@ public:
 class MatchNode : public StatementNode
 {
 public:
-	MatchNode(const std::string& constructor, ParamListNode* params, ExpressionNode* body)
+	MatchNode(const std::string& constructor, ParamList* params, ExpressionNode* body)
 	: constructor(constructor), params(params), body(body), constructorSymbol(nullptr)
 	{}
 
@@ -300,7 +292,7 @@ public:
 	void attachSymbol(VariableSymbol* symbol) { symbols.push_back(symbol); }
 
 	std::string constructor;
-	std::unique_ptr<ParamListNode> params;
+	std::unique_ptr<ParamList> params;
 	std::unique_ptr<ExpressionNode> body;
 	std::vector<VariableSymbol*> symbols;
 	FunctionSymbol* constructorSymbol;
@@ -337,14 +329,14 @@ public:
 class ForeignDeclNode : public StatementNode
 {
 public:
-	ForeignDeclNode(const std::string& name, ParamListNode* params, TypeDecl* typeDecl)
+	ForeignDeclNode(const std::string& name, ParamList* params, TypeDecl* typeDecl)
 	: name(name), params(params), typeDecl(typeDecl), symbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::string name;
-	std::unique_ptr<ParamListNode> params;
+	std::unique_ptr<ParamList> params;
 	std::unique_ptr<TypeDecl> typeDecl;
 	FunctionSymbol* symbol;
 	std::vector<const Type*> paramTypes;
