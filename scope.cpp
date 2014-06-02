@@ -6,9 +6,9 @@ using namespace std;
 
 Symbol* Scope::find(const std::string& name)
 {
-	auto i = symbols_.find(name);
+	auto i = symbols.find(name);
 
-	if (i == symbols_.end())
+	if (i == symbols.end())
 	{
 		return nullptr;
 	}
@@ -20,7 +20,7 @@ Symbol* Scope::find(const std::string& name)
 
 bool Scope::contains(const Symbol* symbol) const
 {
-	for (auto& i : symbols_)
+	for (auto& i : symbols)
 	{
 		if (i.second.get() == symbol) return true;
 	}
@@ -30,15 +30,15 @@ bool Scope::contains(const Symbol* symbol) const
 
 void Scope::insert(Symbol* symbol)
 {
-	assert(symbols_.find(symbol->name) == symbols_.end());
+	assert(symbols.find(symbol->name) == symbols.end());
 
-	symbols_[symbol->name].reset(symbol);
+	symbols[symbol->name].reset(symbol);
 }
 
 Symbol* Scope::release(const std::string& name)
 {
-	Symbol* symbol = symbols_[name].release();
-	symbols_.erase(name);
+	Symbol* symbol = symbols[name].release();
+	symbols.erase(name);
 
 	return symbol;
 }

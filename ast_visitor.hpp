@@ -33,8 +33,6 @@ class WhileNode;
 class AstVisitor
 {
 public:
-	AstVisitor() : typeTable_(nullptr) {}
-
 	// Default implementations do nothing but visit each child
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
@@ -62,16 +60,6 @@ public:
 	virtual void visit(StructInitNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(VariableNode* node) {}
-
-protected:
-	Scope* topScope() { return scopes_.back(); }
-	Symbol* searchScopes(const std::string& name);
-	void enterScope(Scope* scope) { scopes_.push_back(scope); }
-	void exitScope() { scopes_.pop_back(); }
-
-	std::vector<Scope*> scopes_;
-
-	TypeTable* typeTable_;
 };
 
 #endif

@@ -41,7 +41,7 @@ public:
 
 	// Generate a code fragment to access the symbol with the given name in the
 	// current scope.
-	std::string access(const VariableSymbol* symbol);
+	std::string access(const Symbol& symbol);
 
 	// Emit code to move the address of the given assignable location to the
 	// given register
@@ -58,7 +58,7 @@ public:
 	void createStructInit(StructDefNode* node);
 
 private:
-	void decref(const VariableSymbol* symbol);
+	void decref(const Symbol* symbol);
 
 	std::string foreignName(const std::string& name);
 

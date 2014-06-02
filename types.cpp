@@ -7,15 +7,17 @@
 #include <cassert>
 #include <sstream>
 
-std::ostream& operator<<(std::ostream& out, const TypeName& typeName)
+std::string TypeName::str() const
 {
-    out << typeName.name();
-    for (auto& param : typeName.parameters())
+    std::stringstream ss;
+
+    ss << name_;
+    for (auto& param : parameters())
     {
-        out << " " << *param;
+        ss << " " << param->str();
     }
 
-    return out;
+    return ss.str();
 }
 
 std::shared_ptr<Type> TypeTable::Int = BaseType::create("Int", true);
@@ -69,20 +71,20 @@ void TypeTable::insert(const std::string& name, std::shared_ptr<Type> baseType)
     baseTypes_.emplace(std::make_pair(name, baseType));
 }
 
-std::shared_ptr<Type> TypeTable::nameToType(const TypeName* typeName)
+std::shared_ptr<Type> TypeTable::nameToType(const TypeName& typeName)
 {
-    if (typeName->parameters().empty())
+    if (typeName.parameters().empty())
     {
-        return getBaseType(typeName->name());
+        return getBaseType(typeName.name());
     }
     else
     {
-        const TypeConstructor* typeConstructor = getTypeConstructor(typeName->name());
+        const TypeConstructor* typeConstructor = getTypeConstructor(typeName.name());
 
         std::vector<std::shared_ptr<Type>> typeParameters;
-        for (const std::unique_ptr<TypeName>& parameter : typeName->parameters())
+        for (const std::unique_ptr<TypeName>& parameter : typeName.parameters())
         {
-            std::shared_ptr<Type> parameterType = nameToType(parameter.get());
+            std::shared_ptr<Type> parameterType = nameToType(*parameter);
             if (!parameterType) return std::shared_ptr<Type>();
 
             typeParameters.push_back(parameterType);

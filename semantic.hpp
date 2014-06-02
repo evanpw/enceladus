@@ -60,13 +60,7 @@ public:
     virtual void visit(VariableNode* node);
 
 private:
-    void semanticError(AstNode* node, const std::string& msg);
-    void injectSymbols(ProgramNode* node);
-
-    ProgramNode* root_;
-    FunctionDefNode* _enclosingFunction;
-
-private:
+    //// Type Inference ////////////////////////////////////////////////////////
     std::shared_ptr<Type> newVariable();
     std::map<TypeVariable*, std::vector<std::shared_ptr<Type>>> _variables;
 
@@ -76,11 +70,27 @@ private:
     void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
     void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
 
-    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<Scope*>& scopes);
+    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<std::shared_ptr<Scope>>& scopes);
     std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);
     std::shared_ptr<Type> instantiate(TypeScheme* scheme);
 
-    static std::set<TypeVariable*> getFreeVars(Symbol* symbol);
+    static std::set<TypeVariable*> getFreeVars(Symbol& symbol);
+
+    //// General semantic analysis /////////////////////////////////////////////
+    template<typename... Args>
+    void semanticError(AstNode* node, const std::string& str, Args... args);
+
+    void injectSymbols(ProgramNode* node);
+
+    std::shared_ptr<Scope> topScope() { return _scopes.back(); }
+    Symbol* searchScopes(const std::string& name);
+    void enterScope(std::shared_ptr<Scope>& scope) { _scopes.push_back(scope); }
+    void exitScope() { _scopes.pop_back(); }
+
+    ProgramNode* _root;
+    FunctionDefNode* _enclosingFunction;
+    std::vector<std::shared_ptr<Scope>> _scopes;
+    TypeTable _typeTable;
 };
 
 class TypeInferenceError : public std::exception

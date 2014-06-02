@@ -23,14 +23,14 @@ public:
     const std::string& name() const { return name_; }
     const std::vector<std::unique_ptr<TypeName>>& parameters() const { return parameters_; }
 
+    std::string str() const;
+
     void append(TypeName* parameter) { parameters_.emplace_back(parameter); }
 
 private:
     const std::string name_;
     std::vector<std::unique_ptr<TypeName>> parameters_;
 };
-
-std::ostream& operator<<(std::ostream& out, const TypeName& typeName);
 
 class TypeConstructor
 {
@@ -61,7 +61,7 @@ public:
     void insert(const std::string& name, TypeConstructor* typeConstructor);
     void insert(const std::string& name, std::shared_ptr<Type> baseType);
 
-    std::shared_ptr<Type> nameToType(const TypeName* typeName);
+    std::shared_ptr<Type> nameToType(const TypeName& typeName);
 
     // Convenient access to frequently-referenced types
     static std::shared_ptr<Type> Int;

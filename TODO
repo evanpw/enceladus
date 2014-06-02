@@ -37,3 +37,4 @@ Todo
 * Remove integer print statement
 * Move ParamListNode to a non-node
 * Replace as many pointer parameters as possible to references
+* Add unit tests for all semantic checks

@@ -72,15 +72,13 @@ class ProgramNode : public AstNode
 public:
 	ProgramNode()
 	: scope(new Scope)
-	, typeTable(new TypeTable)
 	{}
 
 	void append(AstNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	std::unique_ptr<Scope> scope;
-	std::unique_ptr<TypeTable> typeTable;
+	std::shared_ptr<Scope> scope;
 	std::list<std::unique_ptr<AstNode>> children;
 };
 
@@ -164,7 +162,7 @@ public:
 
 	std::string target;
 	std::unique_ptr<ArgList> arguments;
-	FunctionSymbol* symbol;
+	Symbol* symbol;
 };
 
 class VariableNode : public AssignableNode
@@ -180,7 +178,7 @@ public:
 	virtual VariableNode* clone() { return new VariableNode(*this); }
 
 	std::string name;
-	VariableSymbol* symbol;
+	Symbol* symbol;
 };
 
 ////// Statement nodes /////////////////////////////////////////////////////////
@@ -258,7 +256,7 @@ public:
 	std::string target;
 	std::unique_ptr<TypeName> typeName;
 	std::unique_ptr<ExpressionNode> value;
-	VariableSymbol* symbol;
+	Symbol* symbol;
 };
 
 typedef std::vector<std::string> ParamList;
@@ -276,8 +274,8 @@ public:
 	std::unique_ptr<StatementNode> body;
 	std::unique_ptr<ParamList> params;
 	std::unique_ptr<TypeDecl> typeDecl;
-	FunctionSymbol* symbol;
-	std::unique_ptr<Scope> scope;
+	Symbol* symbol;
+	std::shared_ptr<Scope> scope;
 };
 
 class MatchNode : public StatementNode
@@ -289,13 +287,13 @@ public:
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	void attachSymbol(VariableSymbol* symbol) { symbols.push_back(symbol); }
+	void attachSymbol(Symbol* symbol) { symbols.push_back(symbol); }
 
 	std::string constructor;
 	std::unique_ptr<ParamList> params;
 	std::unique_ptr<ExpressionNode> body;
-	std::vector<VariableSymbol*> symbols;
-	FunctionSymbol* constructorSymbol;
+	std::vector<Symbol*> symbols;
+	Symbol* constructorSymbol;
 
 };
 
@@ -338,7 +336,7 @@ public:
 	std::string name;
 	std::unique_ptr<ParamList> params;
 	std::unique_ptr<TypeDecl> typeDecl;
-	FunctionSymbol* symbol;
+	Symbol* symbol;
 	std::vector<const Type*> paramTypes;
 };
 

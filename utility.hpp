@@ -2,7 +2,10 @@
 #define UTILITY_HPP
 
 #include <algorithm>
+#include <cassert>
+#include <memory>
 #include <set>
+#include <sstream>
 
 template <class T>
 std::set<T>& operator+=(std::set<T>& lhs, const std::set<T>& rhs)
@@ -24,6 +27,24 @@ template<class T, class... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
 {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+std::string format(const std::string& str);
+
+template<typename T, typename... Args>
+std::string format(const std::string& str, T value, Args... args)
+{
+    for (size_t i = 0; i < str.length(); ++i)
+    {
+        if (str[i] == '{' && i + 1 < str.length() && str[i + 1] == '}')
+        {
+            std::stringstream ss;
+            ss << str.substr(0, i) << value << format(str.substr(i + 2), args...);
+            return ss.str();
+        }
+    }
+
+    assert(false);
 }
 
 #endif

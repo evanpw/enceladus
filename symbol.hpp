@@ -1,11 +1,42 @@
 #ifndef SYMBOL_HPP
 #define SYMBOL_HPP
 
+#include <cassert>
 #include <vector>
 #include "types.hpp"
 
 class AstNode;
 class FunctionDefNode;
+struct Symbol;
+
+
+struct VariableData
+{
+    // Is this symbol a function parameter?
+    bool isParam;
+
+    // Used by the code generator to assign a place on the stack (relative to rbp) for all of
+    // the local variables.
+    int offset;
+};
+
+Symbol* makeVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction);
+
+
+struct FunctionData
+{
+    // C argument-passing style
+    bool isForeign;
+
+    bool isExternal;
+
+    bool isBuiltin;
+
+    FunctionDefNode* definition;
+};
+
+Symbol* makeFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
+
 
 enum Kind {kVariable = 0, kFunction = 1};
 
@@ -13,16 +44,12 @@ struct Symbol
 {
     Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction)
     : name(name)
-    , kind(kind)
     , node(node)
     , enclosingFunction(enclosingFunction)
-    , typeScheme(nullptr)
+    , kind(kind)
     {}
 
     std::string name;
-
-    // Variable, function, ...?
-    Kind kind;
 
     // The node at which this symbol is first declared.
     AstNode* node;
@@ -32,48 +59,28 @@ struct Symbol
 
     // Type (possibly polymorphic) of this variable or function
     std::shared_ptr<TypeScheme> typeScheme;
+    std::shared_ptr<Type> type;
 
-    std::shared_ptr<Type> type()
+    void setType(const std::shared_ptr<Type>& newType)
     {
-        assert(typeScheme->quantified().empty());
-        return typeScheme->type();
+        type = newType;
+        typeScheme = TypeScheme::trivial(newType);
     }
-};
 
-struct VariableSymbol : public Symbol
-{
-    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
-    : Symbol(name, kVariable, node, enclosingFunction)
-    , isParam(false)
-    , offset(0)
-    {}
+    void setTypeScheme(const std::shared_ptr<TypeScheme>& newTypeScheme)
+    {
+        type.reset();
+        typeScheme = newTypeScheme;
+    }
 
-    // Is this symbol a function parameter?
-    bool isParam;
+    // Variable, function, ...?
+    Kind kind;
 
-    // Used by the code generator to assign a place on the stack (relative to rbp) for all of
-    // the local variables.
-    int offset;
-};
-
-struct FunctionSymbol : public Symbol
-{
-    FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition)
-    : Symbol(name, kFunction, node, nullptr)
-    , isForeign(false)
-    , isExternal(false)
-    , isBuiltin(false)
-    , definition(definition)
-    {}
-
-    // C argument-passing style
-    bool isForeign;
-
-    bool isExternal;
-
-    bool isBuiltin;
-
-    FunctionDefNode* definition;
+    union
+    {
+        FunctionData asFunction;
+        VariableData asVariable;
+    };
 };
 
 #endif

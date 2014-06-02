@@ -34,15 +34,14 @@ void CodeGen::getAddress(AssignableNode* node, const std::string& dest)
 	VariableNode* variableNode = dynamic_cast<VariableNode*>(node);
 	if (variableNode != nullptr)
 	{
-		EMIT("lea " << dest << ", " << access(variableNode->symbol));
+		EMIT("lea " << dest << ", " << access(*variableNode->symbol));
 		return;
 	}
 
 	MemberAccessNode* memberAccess = dynamic_cast<MemberAccessNode*>(node);
 	if (memberAccess != nullptr)
 	{
-		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(memberAccess->symbol);
-		EMIT("mov " << dest << ", " << access(symbol));
+		EMIT("mov " << dest << ", " << access(*memberAccess->symbol));
 		EMIT("lea " << dest << ", [" << dest << " + " << 8 * (2 + memberAccess->memberLocation) << "]");
 		return;
 	}
@@ -50,31 +49,32 @@ void CodeGen::getAddress(AssignableNode* node, const std::string& dest)
 	assert(false);
 }
 
-std::string CodeGen::access(const VariableSymbol* symbol)
+std::string CodeGen::access(const Symbol& symbol)
 {
-	FunctionDefNode* enclosingFunction = symbol->enclosingFunction;
+	assert(symbol.kind == kVariable);
+	FunctionDefNode* enclosingFunction = symbol.enclosingFunction;
 
 	// Global symbol
-	if (symbol->enclosingFunction == nullptr)
+	if (symbol.enclosingFunction == nullptr)
 	{
 		std::stringstream result;
-		result << "[rel _" << mangle(symbol->name) << "]";
+		result << "[rel _" << mangle(symbol.name) << "]";
 
 		return result.str();
 	}
 	else
 	{
-		if (symbol->isParam)
+		if (symbol.asVariable.isParam)
 		{
 			// Parameters should not be assigned a place among the local variables.
-			assert(symbol->offset == 0);
+			assert(symbol.asVariable.offset == 0);
 
 			auto& paramList = enclosingFunction->params;
 
 			size_t offset = 0;
 			for (const std::string& param : *paramList)
 			{
-				if (param == symbol->name)
+				if (param == symbol.name)
 				{
 					std::stringstream result;
 					result << "[rbp + " << 8 * (offset + 2) << "]";
@@ -91,10 +91,10 @@ std::string CodeGen::access(const VariableSymbol* symbol)
 		else
 		{
 			// This local variable should have been assigned a location on the stack already.
-			assert(symbol->offset > 0);
+			assert(symbol.asVariable.offset > 0);
 
 			std::stringstream result;
-			result << "[rbp - " << symbol->offset << "]";
+			result << "[rbp - " << symbol.asVariable.offset << "]";
 			return result.str();
 		}
 	}
@@ -115,17 +115,16 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 {
 	std::vector<std::string> result;
 
-	for (auto& i : node->scope->symbols())
+	for (auto& i : node->scope->symbols)
 	{
 		const std::string& name = i.first;
 		const Symbol* symbol = i.second.get();
 
 		if (symbol->kind != kFunction) continue;
 
-		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(symbol);
-		if (functionSymbol->isExternal)
+		if (symbol->asFunction.isExternal)
 		{
-			if (!functionSymbol->isForeign)
+			if (!symbol->asFunction.isForeign)
 			{
 				result.push_back(name);
 			}
@@ -271,17 +270,15 @@ void CodeGen::visit(ProgramNode* node)
 
 	// Clean up all global variables before exiting, just to make valgrind
 	// happy
-	for (auto& i : topScope()->symbols())
+	for (auto& i : node->scope->symbols)
 	{
-		const Symbol* symbol = i.second.get();
+		const Symbol& symbol = *i.second;
 
-		if (symbol->kind != kVariable) continue;
+		if (symbol.kind != kVariable) continue;
 
-		const VariableSymbol* variableSymbol = static_cast<const VariableSymbol*>(symbol);
-
-		if (variableSymbol->typeScheme->isBoxed())
+		if (symbol.typeScheme->isBoxed())
 		{
-			EMIT("mov rdi, " << access(variableSymbol));
+			EMIT("mov rdi, " << access(symbol));
 			EMIT("call " << foreignName("_decref"));
 		}
 	}
@@ -303,14 +300,14 @@ void CodeGen::visit(ProgramNode* node)
 
 		// Assign a location for all of the local variables and parameters.
 		int locals = 0;
-		for (auto& i : function->scope->symbols())
+		for (auto& i : function->scope->symbols)
 		{
-			assert(i.second->kind == kVariable); // No locally functions yet
+			Symbol& symbol = *i.second;
+			assert(symbol.kind == kVariable); // No locally functions yet
 
-			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (!symbol->isParam)
+			if (!symbol.asVariable.isParam)
 			{
-				symbol->offset = 8 * (locals + 1);
+				symbol.asVariable.offset = 8 * (locals + 1);
 				++locals;
 			}
 		}
@@ -324,12 +321,12 @@ void CodeGen::visit(ProgramNode* node)
 		EMIT("rep stosq");
 
 		// We gain a reference to all of the parameters passed in
-		for (auto& i : function->scope->symbols())
+		for (auto& i : function->scope->symbols)
 		{
-			assert(i.second->kind == kVariable);
+			Symbol& symbol = *i.second;
+			assert(symbol.kind == kVariable);
 
-			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->isParam && symbol->typeScheme->isBoxed())
+			if (symbol.asVariable.isParam && symbol.typeScheme->isBoxed())
 			{
 				EMIT("mov rdi, " << access(symbol));
 				EMIT("call " << foreignName("_incref"));
@@ -354,12 +351,12 @@ void CodeGen::visit(ProgramNode* node)
 		}
 
 		// Going out of scope loses a reference to all of the local variables
-		for (auto& i : function->scope->symbols())
+		for (auto& i : function->scope->symbols)
 		{
-			assert(i.second->kind == kVariable);
+			const Symbol& symbol = *i.second;
+			assert(symbol.kind == kVariable);
 
-			VariableSymbol* symbol = static_cast<VariableSymbol*>(i.second.get());
-			if (symbol->typeScheme->isBoxed())
+			if (symbol.typeScheme->isBoxed())
 			{
 				EMIT("mov rdi, " << access(symbol));
 				EMIT("call " << foreignName("_decref"));
@@ -395,7 +392,7 @@ void CodeGen::visit(ProgramNode* node)
 	// Declare global variables and string literalsin the data segment
 	EMIT_BLANK();
 	EMIT_LEFT("section .data");
-	for (auto& i : topScope()->symbols())
+	for (auto& i : node->scope->symbols)
 	{
 		if (i.second->kind == kVariable)
 		{
@@ -478,13 +475,11 @@ void CodeGen::visit(NullaryNode* node)
 
 	if (node->symbol->kind == kVariable)
 	{
-		const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol);
-		EMIT("mov rax, " << access(symbol));
+		EMIT("mov rax, " << access(*node->symbol));
 	}
 	else
 	{
-		const FunctionSymbol* functionSymbol = static_cast<const FunctionSymbol*>(node->symbol);
-		if (functionSymbol->isForeign)
+		if (node->symbol->asFunction.isForeign)
 		{
 			// Realign the stack to 16 bytes (may not be necessary on all platforms)
 		    EMIT("mov rbx, rsp");
@@ -500,10 +495,10 @@ void CodeGen::visit(NullaryNode* node)
 		}
 		else
 		{
-			if (functionSymbol->definition &&
-				visitedFunctions_.find(functionSymbol->definition) == visitedFunctions_.end())
+			if (node->symbol->asFunction.definition &&
+				visitedFunctions_.find(node->symbol->asFunction.definition) == visitedFunctions_.end())
 			{
-				referencedFunctions_.insert(functionSymbol->definition);
+				referencedFunctions_.insert(node->symbol->asFunction.definition);
 			}
 
 			EMIT("call _" << mangle(node->name));
@@ -620,13 +615,13 @@ void CodeGen::visit(LetNode* node)
 		EMIT("mov rdi, rax");
 		EMIT("call " << foreignName("_incref"));
 
-		EMIT("mov rdi, " << access(node->symbol));
+		EMIT("mov rdi, " << access(*node->symbol));
 		EMIT("call " << foreignName("_decref"));
 
 		EMIT("pop rax");
 	}
 
-	EMIT("mov " << access(node->symbol) << ", rax");
+	EMIT("mov " << access(*node->symbol) << ", rax");
 }
 
 void CodeGen::visit(MatchNode* node)
@@ -637,9 +632,9 @@ void CodeGen::visit(MatchNode* node)
 	// Decrement references to the existing variables
 	for (size_t i = 0; i < node->symbols.size(); ++i)
 	{
-		VariableSymbol* member = node->symbols.at(i);
+		const Symbol& member = *node->symbols.at(i);
 
-		if (member->typeScheme->isBoxed())
+		if (member.typeScheme->isBoxed())
 		{
 			EMIT("mov rdi, " << access(member));
 			EMIT("call " << foreignName("_decref"));
@@ -654,7 +649,7 @@ void CodeGen::visit(MatchNode* node)
 	// Copy over each of the members of the constructor pattern
 	for (size_t i = 0; i < node->symbols.size(); ++i)
 	{
-		VariableSymbol* member = node->symbols.at(i);
+		const Symbol& member = *node->symbols.at(i);
 		size_t location = constructor->memberLocations().at(i);
 
 		EMIT("mov rdi, [rsi + " << 8 * (location + 2) << "]");
@@ -686,7 +681,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		EMIT("push rax");
 	}
 
-	if (node->symbol->isBuiltin)
+	if (node->symbol->asFunction.isBuiltin)
 	{
 		if (node->target == "not")
 		{
@@ -800,7 +795,7 @@ void CodeGen::visit(FunctionCallNode* node)
 			assert(false);
 		}
 	}
-	else if (node->symbol->isForeign)
+	else if (node->symbol->asFunction.isForeign)
 	{
 		// x86_64 calling convention for C puts the first 6 arguments in registers
 		if (node->arguments->size() >= 1) EMIT("pop rdi");
@@ -824,10 +819,10 @@ void CodeGen::visit(FunctionCallNode* node)
 	}
 	else
 	{
-		if (node->symbol->definition &&
-			visitedFunctions_.find(node->symbol->definition) == visitedFunctions_.end())
+		if (node->symbol->asFunction.definition &&
+			visitedFunctions_.find(node->symbol->asFunction.definition) == visitedFunctions_.end())
 		{
-			referencedFunctions_.insert(node->symbol->definition);
+			referencedFunctions_.insert(node->symbol->asFunction.definition);
 		}
 
 		EMIT("call _" << mangle(node->target));
@@ -848,8 +843,7 @@ void CodeGen::visit(VariableNode* node)
 {
 	assert(node->symbol->kind == kVariable);
 
-	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol);
-	EMIT("mov rax, " << access(symbol));
+	EMIT("mov rax, " << access(*node->symbol));
 }
 
 //// Structures ////////////////////////////////////////////////////////////////
@@ -866,7 +860,6 @@ void CodeGen::visit(StructInitNode* node)
 
 void CodeGen::visit(MemberAccessNode* node)
 {
-	const VariableSymbol* symbol = static_cast<const VariableSymbol*>(node->symbol);
-	EMIT("mov rax, " << access(symbol));
+	EMIT("mov rax, " << access(*node->symbol));
 	EMIT("mov rax, qword [rax + " << 8 * (2 + node->memberLocation) << "]");
 }

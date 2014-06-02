@@ -2,23 +2,8 @@
 #include "ast.hpp"
 #include "ast_visitor.hpp"
 
-Symbol* AstVisitor::searchScopes(const std::string& name)
-{
-	for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i)
-	{
-		Symbol* symbol = (*i)->find(name);
-		if (symbol != nullptr) return symbol;
-	}
-
-	return nullptr;
-}
-
 void AstVisitor::visit(ProgramNode* node)
 {
-	typeTable_ = node->typeTable.get();
-
-	scopes_.push_back(node->scope.get());
-
 	for (auto& child : node->children)
 	{
 		child->accept(this);
@@ -84,9 +69,7 @@ void AstVisitor::visit(LetNode* node)
 
 void AstVisitor::visit(FunctionDefNode* node)
 {
-	enterScope(node->scope.get());
 	node->body->accept(this);
-	exitScope();
 }
 
 void AstVisitor::visit(ReturnNode* node)
