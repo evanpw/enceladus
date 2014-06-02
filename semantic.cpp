@@ -11,6 +11,9 @@
 #include "parser.hpp"
 #include "utility.hpp"
 
+
+//// Utility functions /////////////////////////////////////////////////////////
+
 #define CHECK(p, ...) if (!(p)) { semanticError(node, __VA_ARGS__); }
 
 template<typename... Args>
@@ -172,6 +175,9 @@ void SemanticAnalyzer::injectSymbols(ProgramNode* node)
 	mallocFn->asFunction.isForeign = true;
 	scope->insert(mallocFn);
 }
+
+
+//// Type inference functions //////////////////////////////////////////////////
 
 std::shared_ptr<Type> SemanticAnalyzer::newVariable()
 {
@@ -449,6 +455,9 @@ void SemanticAnalyzer::unify(const std::shared_ptr<Type>& lhs, const std::shared
     ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
     inferenceError(node, ss.str());
 }
+
+
+//// Visitor functions /////////////////////////////////////////////////////////
 
 void SemanticAnalyzer::visit(ProgramNode* node)
 {
@@ -888,8 +897,6 @@ void SemanticAnalyzer::visit(VariableNode* node)
     node->symbol = symbol;
     node->type = symbol->type;
 }
-
-//// Structures ////////////////////////////////////////////////////////////////
 
 void SemanticAnalyzer::visit(StructDefNode* node)
 {
