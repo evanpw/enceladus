@@ -16,6 +16,19 @@
 
 #define CHECK(p, ...) if (!(p)) { semanticError(node, __VA_ARGS__); }
 
+#define CHECK_UNDEFINED(name) \
+    CHECK(!searchScopes(name), "symbol \"{}\" is already defined", name); \
+    CHECK(!_typeTable.getBaseType(name), "symbol \"{}\" is already defined", name); \
+    CHECK(!_typeTable.getTypeConstructor(name), "symbol \"{}\" is already defined", name)
+
+#define CHECK_UNDEFINED_IN_SCOPE(name) \
+    CHECK(!topScope()->find(name), "symbol \"{}\" is already defined in this scope", name); \
+    CHECK(!_typeTable.getBaseType(name), "symbol \"{}\" is already defined", name); \
+    CHECK(!_typeTable.getTypeConstructor(name), "symbol \"{}\" is already defined", name)
+
+#define CHECK_TOP_LEVEL(name) \
+    CHECK(!_enclosingFunction, "{} must be at top level", name)
+
 template<typename... Args>
 void SemanticAnalyzer::semanticError(AstNode* node, const std::string& str, Args... args)
 {
@@ -479,18 +492,14 @@ void SemanticAnalyzer::visit(ProgramNode* node)
 void SemanticAnalyzer::visit(DataDeclaration* node)
 {
 	// Data declarations cannot be local
-    CHECK(!_enclosingFunction, "data declarations must be at top level");
+    CHECK_TOP_LEVEL("data declaration");
 
 	// The data type and constructor name cannot have already been used for something
 	const std::string& typeName = node->name;
-    CHECK(!searchScopes(typeName), "symbol \"{}\" is already defined", typeName);
-    CHECK(!_typeTable.getBaseType(typeName), "symbol \"{}\" is already defined", typeName);
-    CHECK(!_typeTable.getTypeConstructor(typeName), "symbol \"{}\" is already defined", typeName);
+    CHECK_UNDEFINED(typeName);
 
 	const std::string& constructorName = node->constructor->name;
-    CHECK(!searchScopes(constructorName), "symbol \"{}\" is already defined", constructorName);
-    CHECK(!_typeTable.getBaseType(constructorName), "symbol \"{}\" is already defined", constructorName);
-    CHECK(!_typeTable.getTypeConstructor(constructorName), "symbol \"{}\" is already defined", constructorName);
+    CHECK_UNDEFINED(constructorName);
 
 	// All of the constructor members must refer to already-declared types
 	std::vector<std::shared_ptr<Type>> memberTypes;
@@ -522,13 +531,11 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 void SemanticAnalyzer::visit(TypeAliasNode* node)
 {
     // Type aliases cannot be local
-    CHECK(!_enclosingFunction, "type alias declarations must be at top level");
+    CHECK_TOP_LEVEL("type alias declaration");
 
     // The new type name cannot have already been used
     const std::string& typeName = node->name;
-    CHECK(!searchScopes(typeName), "symbol \"{}\" is already defined", typeName);
-    CHECK(!_typeTable.getBaseType(typeName), "symbol \"{}\" is already defined", typeName);
-    CHECK(!_typeTable.getTypeConstructor(typeName), "symbol \"{}\" is already defined", typeName);
+    CHECK_UNDEFINED(typeName);
 
     std::shared_ptr<Type> underlying = _typeTable.nameToType(*node->underlying);
     CHECK(underlying, "unknown type \"{}\"", node->underlying->name());
@@ -546,9 +553,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 	// The function name cannot have already been used as something else
 	const std::string& name = node->name;
-    CHECK(!searchScopes(name), "symbol \"{}\" is already defined", name);
-    CHECK(!_typeTable.getBaseType(name), "symbol \"{}\" is already defined", name);
-    CHECK(!_typeTable.getTypeConstructor(name), "symbol \"{}\" is already defined", name);
+    CHECK_UNDEFINED(name);
 
 	std::vector<std::shared_ptr<Type>> paramTypes;
 	std::shared_ptr<Type> returnType;
@@ -623,13 +628,11 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 void SemanticAnalyzer::visit(ForeignDeclNode* node)
 {
 	// Functions cannot be declared inside of another function
-    CHECK(!_enclosingFunction, "foreign function declarations must be at top level");
+    CHECK_TOP_LEVEL("foreign function declaration");
 
 	// The function name cannot have already been used as something else
 	const std::string& name = node->name;
-    CHECK(!searchScopes(name), "symbol \"{}\" is already defined", name);
-    CHECK(!_typeTable.getBaseType(name), "symbol \"{}\" is already defined", name);
-    CHECK(!_typeTable.getTypeConstructor(name), "symbol \"{}\" is already defined", name);
+    CHECK_UNDEFINED(name);
 
 	// If parameters names are given, must have a type specified for
 	// each parameter + one for return type
@@ -671,7 +674,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 	AstVisitor::visit(node);
 
 	const std::string& target = node->target;
-	CHECK(!topScope()->find(target), "symbol \"{}\" already declared in this scope", target);
+    CHECK_UNDEFINED_IN_SCOPE(target);
 
 	Symbol* symbol = makeVariableSymbol(target, node, _enclosingFunction);
 
@@ -719,7 +722,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 	for (size_t i = 0; i < node->params->size(); ++i)
 	{
 		const std::string& name = node->params->at(i);
-        CHECK(!topScope()->find(name), "symbol \"{}\" has already been defined", name);
+        CHECK_UNDEFINED_IN_SCOPE(name);
 
 		Symbol* member = makeVariableSymbol(name, node, _enclosingFunction);
 		member->setType(functionType->inputs().at(i));
@@ -900,16 +903,13 @@ void SemanticAnalyzer::visit(VariableNode* node)
 
 void SemanticAnalyzer::visit(StructDefNode* node)
 {
-    AstVisitor::visit(node);
+    CHECK_TOP_LEVEL("struct declaration");
 
-    // Data declarations cannot be local
-    CHECK(!_enclosingFunction, "struct declaration must be at top level");
+    AstVisitor::visit(node);
 
     // The struct name cannot have already been used for something
     const std::string& structName = node->name;
-    CHECK(!searchScopes(structName), "symbol \"{}\" is already defined", structName);
-    CHECK(!_typeTable.getBaseType(structName), "symbol \"{}\" is already defined", structName);
-    CHECK(!_typeTable.getTypeConstructor(structName), "symbol \"{}\" is already defined", structName);
+    CHECK_UNDEFINED(structName);
 
     // Actually create the type
     std::shared_ptr<Type> newType = StructType::create(structName, node);
