@@ -11,6 +11,6 @@ n := head ys
 zs := True : True : True : False : False : False : []
 us := mydrop n zs
 if head us then
-   echo "True"
+   print "True"
 else
-   echo "False"
+   print "False"

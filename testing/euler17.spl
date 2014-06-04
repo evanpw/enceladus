@@ -35,4 +35,4 @@ for i in range 1 1000 do
     s := numInWords i
     totalLength += length s
 
-print totalLength
+print $ show totalLength

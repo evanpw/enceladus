@@ -31,4 +31,4 @@ x := [1]
 for i in range 1 1000 do
     x = longSum x x
 
-print $ sum x
+print $ show $ sum x

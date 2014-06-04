@@ -1,1 +1,1 @@
-print 8 # This is a comment
+print $ show 8 # This is a comment

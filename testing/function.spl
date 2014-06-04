@@ -8,6 +8,6 @@ def myhead xs :: List -> Int =
     return head xs
 
 let xs :: List = 1 : 2 : 3 : []
-print (myhead xs)
+print $ show (myhead xs)
 
-if diff (half 2) (half 3) == 0 then print -1
+if diff (half 2) (half 3) == 0 then print $ show -1

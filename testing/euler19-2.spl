@@ -64,7 +64,7 @@ while current{year} <= 2000 do
 
     current = incrementDate current
 
-print dayCount
+print $ show dayCount
 
 
 

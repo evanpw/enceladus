@@ -32,5 +32,5 @@ def bestRouteFrom x y pyramid :: Int -> Int -> [[Int]] -> Int =
 
         return (max left right) + here
 
-print $ bestRouteFrom 0 0 readInput
+print $ show $ bestRouteFrom 0 0 readInput
 

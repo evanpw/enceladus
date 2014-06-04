@@ -23,9 +23,7 @@ Todo
 * Enhanced pattern matching for lists -> x : xs
 * Better I/O capabilities
 * Do some type lookups while parsing
-* Merge symbols tables: identifiers, base types, type constructors
 * Add mutable, fixed-length arrays
-* Remove integer print statement
 * Replace as many pointer parameters as possible to references
 * Add unit tests for all semantic checks
 * Add break statement

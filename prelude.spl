@@ -4,13 +4,11 @@
 type Char = Int
 type String = [Char]
 
-foreign echo :: String -> Unit
-foreign dieWithMessage :: String -> Unit
-
 -- I/O functions
 foreign read :: Int
 foreign readLine :: String
-foreign print :: Int -> Unit
+foreign print :: String -> Unit
+foreign dieWithMessage :: String -> Unit
 
 -- List functions
 -- foreign Cons :: Int -> [Int] -> [Int]
@@ -342,7 +340,7 @@ def stringToInt s :: String -> Int =
 
     return x
 
-def intToString x :: Int -> String =
+def show x :: Int -> String =
     if x == 0 then return "0"
 
     negative := (x < 0)

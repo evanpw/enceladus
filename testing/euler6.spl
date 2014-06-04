@@ -14,5 +14,5 @@ def squareOfSum n :: Int -> Int =
 
 	return sum * sum
 
-print $ squareOfSum 100 - sumOfSquares 100
+print $ show $ squareOfSum 100 - sumOfSquares 100
 

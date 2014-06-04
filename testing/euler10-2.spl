@@ -13,10 +13,10 @@ def crossOff p xs :: Int -> List -> List =
 def sieve ys :: List -> List =
     let p :: Int = head ys
     let xs :: List = tail ys
-    print p
+    print $ show p
     let zs :: List = crossOff p xs
 
     return p : sieve zs
 
-print $ sum $ sieve $ range 2 2000000
+print $ show $ sum $ sieve $ range 2 2000000
 

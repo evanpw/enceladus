@@ -16,4 +16,4 @@ def sumPrimes n :: Int -> Int =
 
     return total
 
-print $ sumPrimes 2000000
+print $ show $ sumPrimes 2000000

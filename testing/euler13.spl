@@ -39,7 +39,7 @@ n := 0
 for x in take 10 $ reverse xs do
     n = (n * 10) + x
 
-print n
+print $ show n
 
 
 

@@ -67,7 +67,7 @@ def printDate date =
     monthNames := ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-    return join "" [at m monthNames, " ", intToString d, ", ", intToString y, " (", at w dayNames, ")"]
+    return join "" [at m monthNames, " ", show d, ", ", show y, " (", at w dayNames, ")"]
 
 current := Date 1900 1 1 1
 
@@ -78,6 +78,6 @@ while (year current) <= 2000 do
 
     current = incrementDate current
 
-print dayCount
+print $ show dayCount
 
 

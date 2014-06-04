@@ -1,2 +1,2 @@
 let x :: Int = extern test 4
-print x
+print $ show x

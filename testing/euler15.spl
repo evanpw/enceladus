@@ -33,4 +33,4 @@ def countPaths p :: Pair -> Int =
     insertMemo p count
     return count
 
-print $ countPaths $ Pair 0 0
+print $ show $ countPaths $ Pair 0 0

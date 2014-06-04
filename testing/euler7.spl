@@ -14,6 +14,6 @@ while n < 10001 do
     if isPrime x then n += 1
 
     if n == 10001 then
-        print x
+        print $ show x
     else
         x += 1

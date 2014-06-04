@@ -4,4 +4,4 @@ def f =
     x := 2
     return x
 
-print $ x + f
+print $ show $ x + f

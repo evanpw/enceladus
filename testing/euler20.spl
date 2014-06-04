@@ -84,10 +84,10 @@ def printNumber xs :: BigInt -> Unit =
     for x in xs do
         result = x + '0' : result
 
-    echo result
+    print result
 
 x := [1]
 for i in range 2 100 do
     x = longProduct x $ intTolong i
 
-print $ sum x
+print $ show $ sum x

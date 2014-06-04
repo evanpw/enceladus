@@ -23,4 +23,4 @@ vertical := allRuns (range 0 19) (range 0 16) 0 1
 diagonal1 := allRuns (range 0 16) (range 0 16) 1 1
 diagonal2 := allRuns (range 0 16) (range 3 19) 1 -1
 
-print $ maximum $ horizontal ++ vertical ++ diagonal1 ++ diagonal2
+print $ show $ maximum $ horizontal ++ vertical ++ diagonal1 ++ diagonal2

@@ -14,4 +14,4 @@ while pair{current} < 4000000 do
     pair = Pair{last = pair{current},
                 current = pair{current} + pair{last}}
 
-print total
+print $ show total

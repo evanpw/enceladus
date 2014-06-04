@@ -25,4 +25,4 @@ while i * i <= n do
 
 	i += 1
 
-print biggest
+print $ show biggest

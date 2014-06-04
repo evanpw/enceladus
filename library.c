@@ -212,21 +212,6 @@ char* content(String* s)
     return str;
 }
 
-void echo(String* s)
-{
-    char* str = content(s);
-
-    printf("%s\n", str);
-
-    free(str);
-}
-
-void dieWithMessage(String* s)
-{
-    echo(s);
-    exit(1);
-}
-
 //// I/O ///////////////////////////////////////////////////////////////////////
 
 int64_t read()
@@ -257,9 +242,19 @@ String* readLine()
     }
 }
 
-void print(int64_t value)
+void print(String* s)
 {
-    printf("%lld\n", fromInt(value));
+    char* str = content(s);
+
+    printf("%s\n", str);
+
+    free(str);
+}
+
+void dieWithMessage(String* s)
+{
+    print(s);
+    exit(1);
 }
 
 //// Lists /////////////////////////////////////////////////////////////////////

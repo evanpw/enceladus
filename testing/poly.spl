@@ -2,10 +2,10 @@ xs := True : []
 ys := 4 : 3 : []
 
 if head xs then
-    print $ head ys
+    print $ show $ head ys
  else
     if null $ tail xs then
-        print $ head $ tail ys
+        print $ show $ head $ tail ys
     else
-        print -1
+        print $ show -1
 
