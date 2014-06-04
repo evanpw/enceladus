@@ -34,49 +34,49 @@ BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, Stateme
 
     std::string listVar = std::string("_for_list_") + boost::lexical_cast<std::string>(uniqueId++);
 
-    ArgList* headArgList = new ArgList;
-    headArgList->emplace_back(new NullaryNode(listVar.c_str()));
+    ArgList headArgList;
+    headArgList.emplace_back(new NullaryNode(listVar.c_str()));
 
     BlockNode* newBody = new BlockNode;
     newBody->append(
         new LetNode(loopVar, nullptr,
-            new FunctionCallNode("head", headArgList)));
+            new FunctionCallNode("head", std::move(headArgList))));
     newBody->append(body);
 
-    ArgList* tailArgList = new ArgList;
-    tailArgList->emplace_back(new NullaryNode(listVar.c_str()));
+    ArgList tailArgList;
+    tailArgList.emplace_back(new NullaryNode(listVar.c_str()));
     newBody->append(
         new AssignNode(
             new VariableNode(listVar),
-            new FunctionCallNode("tail", tailArgList)));
+            new FunctionCallNode("tail", std::move(tailArgList))));
 
     BlockNode* forNode = new BlockNode;
     forNode->append(new LetNode(listVar.c_str(), nullptr, list));
 
-    ArgList* argList = new ArgList;
-    argList->emplace_back(new NullaryNode(listVar.c_str()));
+    ArgList argList;
+    argList.emplace_back(new NullaryNode(listVar.c_str()));
 
-    ArgList* argList2 = new ArgList;
-    argList2->emplace_back(new FunctionCallNode("null", argList));
+    ArgList argList2;
+    argList2.emplace_back(new FunctionCallNode("null", std::move(argList)));
     forNode->append(
         new WhileNode(
-            new FunctionCallNode("not", argList2),
+            new FunctionCallNode("not", std::move(argList2)),
             newBody));
 
     return forNode;
 }
 
-FunctionCallNode* makeList(ArgList* elements)
+FunctionCallNode* makeList(ArgList& elements)
 {
-    FunctionCallNode* result = new FunctionCallNode("Nil", new ArgList);
+    FunctionCallNode* result = new FunctionCallNode("Nil", ArgList());
 
-    for (auto i = elements->rbegin(); i != elements->rend(); ++i)
+    for (auto i = elements.rbegin(); i != elements.rend(); ++i)
     {
-        ArgList* argList = new ArgList;
-        argList->emplace_back(std::move(*i));
-        argList->emplace_back(result);
+        ArgList argList;
+        argList.emplace_back(std::move(*i));
+        argList.emplace_back(result);
 
-        result = new FunctionCallNode("Cons", argList);
+        result = new FunctionCallNode("Cons", std::move(argList));
     }
 
     return result;
@@ -84,15 +84,15 @@ FunctionCallNode* makeList(ArgList* elements)
 
 FunctionCallNode* makeString(const std::string& s)
 {
-    FunctionCallNode* result = new FunctionCallNode("Nil", new ArgList);
+    FunctionCallNode* result = new FunctionCallNode("Nil", ArgList());
 
     for (auto i = s.rbegin(); i != s.rend(); ++i)
     {
-        ArgList* argList = new ArgList;
-        argList->emplace_back(new IntNode(*i));
-        argList->emplace_back(result);
+        ArgList argList;
+        argList.emplace_back(new IntNode(*i));
+        argList.emplace_back(result);
 
-        result = new FunctionCallNode("Cons", argList);
+        result = new FunctionCallNode("Cons", std::move(argList));
     }
 
     return result;

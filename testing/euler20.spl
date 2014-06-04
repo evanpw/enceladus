@@ -1,6 +1,8 @@
 -- Solves Project Euler 20
 
-def longSum xs ys :: [Int] -> [Int] -> [Int] =
+type BigInt = [Int]
+
+def longSum xs ys :: BigInt -> BigInt -> BigInt =
     carry := 0
     result := []
 
@@ -26,15 +28,15 @@ def longSum xs ys :: [Int] -> [Int] -> [Int] =
 
     return reverse result
 
-def sumAll xss :: [[Int]] -> [Int] =
-    result := 0 : []
+def sumAll xss :: [BigInt] -> BigInt =
+    result := [0]
 
     for xs in xss do
         result = longSum result xs
 
     return result
 
-def singleProduct xs y :: [Int] -> Int -> [Int] =
+def singleProduct xs y :: BigInt -> Int -> BigInt =
     carry := 0
     result := []
 
@@ -51,13 +53,13 @@ def singleProduct xs y :: [Int] -> Int -> [Int] =
 
     return reverse result
 
-def shift xs n :: [Int] -> Int -> [Int] =
+def shift xs n :: BigInt -> Int -> BigInt =
     if n == 0 then
         return xs
     else
         return shift (0 : xs) (n - 1)
 
-def longProduct xs ys :: [Int] -> [Int] -> [Int] =
+def longProduct xs ys :: BigInt -> BigInt -> BigInt =
     partialProducts := []
 
     for n in range 0 $ length ys - 1 do
@@ -68,7 +70,7 @@ def longProduct xs ys :: [Int] -> [Int] -> [Int] =
 
     return sumAll partialProducts
 
-def intTolong x :: Int -> [Int] =
+def intTolong x :: Int -> BigInt =
     result := []
 
     while x != 0 do
@@ -77,7 +79,7 @@ def intTolong x :: Int -> [Int] =
 
     return reverse result
 
-def printNumber xs :: [Int] -> Unit =
+def printNumber xs :: BigInt -> Unit =
     result := []
     for x in xs do
         result = x + '0' : result

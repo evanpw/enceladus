@@ -146,22 +146,29 @@ public:
 };
 
 // Syntactic sugar for list and string literals
-FunctionCallNode* makeList(ArgList* elements);
+FunctionCallNode* makeList(ArgList& elements);
 FunctionCallNode* makeString(const std::string& s);
 
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(const std::string& target, ArgList* args)
-	: target(target), symbol(nullptr)
-	{
-		arguments.reset(args);
-	}
+	FunctionCallNode(const std::string& target, ArgList&& arguments)
+	: target(target), arguments(std::move(arguments)), symbol(nullptr)
+	{}
+
+	FunctionCallNode(const std::string& target, std::initializer_list<ExpressionNode*> args)
+    : target(target), symbol(nullptr)
+    {
+    	for (auto& arg : args)
+    	{
+    		arguments.emplace_back(arg);
+    	}
+    }
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::string target;
-	std::unique_ptr<ArgList> arguments;
+	ArgList arguments;
 	Symbol* symbol;
 };
 

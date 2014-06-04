@@ -64,10 +64,10 @@ std::string CodeGen::access(const Symbol& symbol)
 	}
 	else
 	{
-		if (symbol.asVariable.isParam)
+		if (symbol.asVariable()->isParam)
 		{
 			// Parameters should not be assigned a place among the local variables.
-			assert(symbol.asVariable.offset == 0);
+			assert(symbol.asVariable()->offset == 0);
 
 			auto& paramList = enclosingFunction->params;
 
@@ -91,10 +91,10 @@ std::string CodeGen::access(const Symbol& symbol)
 		else
 		{
 			// This local variable should have been assigned a location on the stack already.
-			assert(symbol.asVariable.offset > 0);
+			assert(symbol.asVariable()->offset > 0);
 
 			std::stringstream result;
-			result << "[rbp - " << symbol.asVariable.offset << "]";
+			result << "[rbp - " << symbol.asVariable()->offset << "]";
 			return result.str();
 		}
 	}
@@ -115,16 +115,16 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 {
 	std::vector<std::string> result;
 
-	for (auto& i : node->scope->symbols)
+	for (auto& i : node->scope->symbols.symbols)
 	{
 		const std::string& name = i.first;
 		const Symbol* symbol = i.second.get();
 
 		if (symbol->kind != kFunction) continue;
 
-		if (symbol->asFunction.isExternal)
+		if (symbol->asFunction()->isExternal)
 		{
-			if (!symbol->asFunction.isForeign)
+			if (!symbol->asFunction()->isForeign)
 			{
 				result.push_back(name);
 			}
@@ -270,7 +270,7 @@ void CodeGen::visit(ProgramNode* node)
 
 	// Clean up all global variables before exiting, just to make valgrind
 	// happy
-	for (auto& i : node->scope->symbols)
+	for (auto& i : node->scope->symbols.symbols)
 	{
 		const Symbol& symbol = *i.second;
 
@@ -300,14 +300,14 @@ void CodeGen::visit(ProgramNode* node)
 
 		// Assign a location for all of the local variables and parameters.
 		int locals = 0;
-		for (auto& i : function->scope->symbols)
+		for (auto& i : function->scope->symbols.symbols)
 		{
 			Symbol& symbol = *i.second;
 			assert(symbol.kind == kVariable); // No locally functions yet
 
-			if (!symbol.asVariable.isParam)
+			if (!symbol.asVariable()->isParam)
 			{
-				symbol.asVariable.offset = 8 * (locals + 1);
+				symbol.asVariable()->offset = 8 * (locals + 1);
 				++locals;
 			}
 		}
@@ -321,12 +321,12 @@ void CodeGen::visit(ProgramNode* node)
 		EMIT("rep stosq");
 
 		// We gain a reference to all of the parameters passed in
-		for (auto& i : function->scope->symbols)
+		for (auto& i : function->scope->symbols.symbols)
 		{
 			Symbol& symbol = *i.second;
 			assert(symbol.kind == kVariable);
 
-			if (symbol.asVariable.isParam && symbol.typeScheme->isBoxed())
+			if (symbol.asVariable()->isParam && symbol.typeScheme->isBoxed())
 			{
 				EMIT("mov rdi, " << access(symbol));
 				EMIT("call " << foreignName("_incref"));
@@ -351,7 +351,7 @@ void CodeGen::visit(ProgramNode* node)
 		}
 
 		// Going out of scope loses a reference to all of the local variables
-		for (auto& i : function->scope->symbols)
+		for (auto& i : function->scope->symbols.symbols)
 		{
 			const Symbol& symbol = *i.second;
 			assert(symbol.kind == kVariable);
@@ -392,7 +392,7 @@ void CodeGen::visit(ProgramNode* node)
 	// Declare global variables and string literalsin the data segment
 	EMIT_BLANK();
 	EMIT_LEFT("section .data");
-	for (auto& i : node->scope->symbols)
+	for (auto& i : node->scope->symbols.symbols)
 	{
 		if (i.second->kind == kVariable)
 		{
@@ -479,7 +479,7 @@ void CodeGen::visit(NullaryNode* node)
 	}
 	else
 	{
-		if (node->symbol->asFunction.isForeign)
+		if (node->symbol->asFunction()->isForeign)
 		{
 			// Realign the stack to 16 bytes (may not be necessary on all platforms)
 		    EMIT("mov rbx, rsp");
@@ -495,10 +495,10 @@ void CodeGen::visit(NullaryNode* node)
 		}
 		else
 		{
-			if (node->symbol->asFunction.definition &&
-				visitedFunctions_.find(node->symbol->asFunction.definition) == visitedFunctions_.end())
+			if (node->symbol->asFunction()->definition &&
+				visitedFunctions_.find(node->symbol->asFunction()->definition) == visitedFunctions_.end())
 			{
-				referencedFunctions_.insert(node->symbol->asFunction.definition);
+				referencedFunctions_.insert(node->symbol->asFunction()->definition);
 			}
 
 			EMIT("call _" << mangle(node->name));
@@ -675,13 +675,13 @@ void CodeGen::visit(DataDeclaration* node)
 
 void CodeGen::visit(FunctionCallNode* node)
 {
-	for (auto i = node->arguments->rbegin(); i != node->arguments->rend(); ++i)
+	for (auto i = node->arguments.rbegin(); i != node->arguments.rend(); ++i)
 	{
 		(*i)->accept(this);
 		EMIT("push rax");
 	}
 
-	if (node->symbol->asFunction.isBuiltin)
+	if (node->symbol->asFunction()->isBuiltin)
 	{
 		if (node->target == "not")
 		{
@@ -795,15 +795,15 @@ void CodeGen::visit(FunctionCallNode* node)
 			assert(false);
 		}
 	}
-	else if (node->symbol->asFunction.isForeign)
+	else if (node->symbol->asFunction()->isForeign)
 	{
 		// x86_64 calling convention for C puts the first 6 arguments in registers
-		if (node->arguments->size() >= 1) EMIT("pop rdi");
-		if (node->arguments->size() >= 2) EMIT("pop rsi");
-		if (node->arguments->size() >= 3) EMIT("pop rdx");
-		if (node->arguments->size() >= 4) EMIT("pop rcx");
-		if (node->arguments->size() >= 5) EMIT("pop r8");
-		if (node->arguments->size() >= 6) EMIT("pop r9");
+		if (node->arguments.size() >= 1) EMIT("pop rdi");
+		if (node->arguments.size() >= 2) EMIT("pop rsi");
+		if (node->arguments.size() >= 3) EMIT("pop rdx");
+		if (node->arguments.size() >= 4) EMIT("pop rcx");
+		if (node->arguments.size() >= 5) EMIT("pop r8");
+		if (node->arguments.size() >= 6) EMIT("pop r9");
 
 		// Realign the stack to 16 bytes (may not be necessary on all platforms)
 	    EMIT("mov rbx, rsp");
@@ -819,15 +819,15 @@ void CodeGen::visit(FunctionCallNode* node)
 	}
 	else
 	{
-		if (node->symbol->asFunction.definition &&
-			visitedFunctions_.find(node->symbol->asFunction.definition) == visitedFunctions_.end())
+		if (node->symbol->asFunction()->definition &&
+			visitedFunctions_.find(node->symbol->asFunction()->definition) == visitedFunctions_.end())
 		{
-			referencedFunctions_.insert(node->symbol->asFunction.definition);
+			referencedFunctions_.insert(node->symbol->asFunction()->definition);
 		}
 
 		EMIT("call _" << mangle(node->target));
 
-		size_t args = node->arguments->size();
+		size_t args = node->arguments.size();
 		if (args > 0) EMIT("add rsp, " << 8 * args);
 	}
 }

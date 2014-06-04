@@ -7,38 +7,14 @@
 
 class AstNode;
 class FunctionDefNode;
-struct Symbol;
+
+struct VariableSymbol;
+struct FunctionSymbol;
+struct TypeSymbol;
+struct TypeConstructorSymbol;
 
 
-struct VariableData
-{
-    // Is this symbol a function parameter?
-    bool isParam;
-
-    // Used by the code generator to assign a place on the stack (relative to rbp) for all of
-    // the local variables.
-    int offset;
-};
-
-Symbol* makeVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction);
-
-
-struct FunctionData
-{
-    // C argument-passing style
-    bool isForeign;
-
-    bool isExternal;
-
-    bool isBuiltin;
-
-    FunctionDefNode* definition;
-};
-
-Symbol* makeFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
-
-
-enum Kind {kVariable = 0, kFunction = 1};
+enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3};
 
 struct Symbol
 {
@@ -48,6 +24,9 @@ struct Symbol
     , enclosingFunction(enclosingFunction)
     , kind(kind)
     {}
+
+    // This is just so that we can use dynamic_cast
+    virtual ~Symbol() {}
 
     std::string name;
 
@@ -76,11 +55,56 @@ struct Symbol
     // Variable, function, ...?
     Kind kind;
 
-    union
-    {
-        FunctionData asFunction;
-        VariableData asVariable;
-    };
+    VariableSymbol* asVariable();
+    FunctionSymbol* asFunction();
+    TypeSymbol* asType();
+    TypeConstructorSymbol* asTypeConstructor();
+
+    const VariableSymbol* asVariable() const;
+    const FunctionSymbol* asFunction() const;
+    const TypeSymbol* asType() const;
+    const TypeConstructorSymbol* asTypeConstructor() const;
 };
+
+
+struct VariableSymbol : public Symbol
+{
+    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction);
+
+    // Is this symbol a function parameter?
+    bool isParam;
+
+    // Used by the code generator to assign a place on the stack (relative to rbp) for all of
+    // the local variables.
+    int offset;
+};
+
+struct FunctionSymbol : public Symbol
+{
+    FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
+
+    // C argument-passing style
+    bool isForeign;
+
+    bool isExternal;
+
+    bool isBuiltin;
+
+    FunctionDefNode* definition;
+};
+
+struct TypeSymbol : public Symbol
+{
+    TypeSymbol(const std::string& name, AstNode* node, std::shared_ptr<Type> type);
+};
+
+struct TypeConstructorSymbol : public Symbol
+{
+    // Takes ownership of the pointer
+    TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
+
+    std::unique_ptr<TypeConstructor> typeConstructor;
+};
+
 
 #endif

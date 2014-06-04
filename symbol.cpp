@@ -1,23 +1,69 @@
 #include "symbol.hpp"
 
-Symbol* makeVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
+VariableSymbol* Symbol::asVariable()
 {
-    Symbol* symbol = new Symbol(name, kVariable, node, enclosingFunction);
-
-    symbol->asVariable.isParam = false;
-    symbol->asVariable.offset = 0;
-
-    return symbol;
+    return dynamic_cast<VariableSymbol*>(this);
 }
 
-Symbol* makeFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition)
+FunctionSymbol* Symbol::asFunction()
 {
-    Symbol* symbol = new Symbol(name, kFunction, node, nullptr);
+    return dynamic_cast<FunctionSymbol*>(this);
+}
 
-    symbol->asFunction.isForeign = false;
-    symbol->asFunction.isExternal = false;
-    symbol->asFunction.isBuiltin = false;
-    symbol->asFunction.definition = definition;
+TypeSymbol* Symbol::asType()
+{
+    return dynamic_cast<TypeSymbol*>(this);
+}
 
-    return symbol;
+TypeConstructorSymbol* Symbol::asTypeConstructor()
+{
+    return dynamic_cast<TypeConstructorSymbol*>(this);
+}
+
+const VariableSymbol* Symbol::asVariable() const
+{
+    return dynamic_cast<const VariableSymbol*>(this);
+}
+
+const FunctionSymbol* Symbol::asFunction() const
+{
+    return dynamic_cast<const FunctionSymbol*>(this);
+}
+
+const TypeSymbol* Symbol::asType() const
+{
+    return dynamic_cast<const TypeSymbol*>(this);
+}
+
+const TypeConstructorSymbol* Symbol::asTypeConstructor() const
+{
+    return dynamic_cast<const TypeConstructorSymbol*>(this);
+}
+
+VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
+: Symbol(name, kVariable, node, enclosingFunction)
+, isParam(false)
+, offset(0)
+{
+}
+
+FunctionSymbol::FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition)
+: Symbol(name, kFunction, node, nullptr)
+, isForeign(false)
+, isExternal(false)
+, isBuiltin(false)
+, definition(definition)
+{
+}
+
+TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, std::shared_ptr<Type> type)
+: Symbol(name, kType, node, nullptr)
+{
+    this->type = type;
+}
+
+TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
+: Symbol(name, kTypeConstructor, node, nullptr)
+, typeConstructor(typeConstructor)
+{
 }

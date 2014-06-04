@@ -4,11 +4,7 @@ Todo
 * Ability to ignore the result of a function call
 * Make semantic analysis more rigorous
 * Ability to import modules
-* Modify visitor pattern to have preVisit and postVisit methods, and do all of
-  the traversal code elsewhere, so that implementers don't have to remember to
-  do the recursion
 * Fix bug that causes bad line numbers and columns in error messages
-* Syntactic sugar for lists
 * Clean up the documentation
 * Handle the case where prelude does not end with a newline
 * Support for infix functions
@@ -26,15 +22,14 @@ Todo
 * Recursive pattern matching -> Memo (Pair x y) n
 * Enhanced pattern matching for lists -> x : xs
 * Better I/O capabilities
-* Unary minus
-* Convert strings to be just lists of Chars
-* Add explicit Char type
-* Type aliases (Char = Int, String = [Char])
 * Do some type lookups while parsing
-* Clean up semantic analysis using CHECK macro
 * Merge symbols tables: identifiers, base types, type constructors
 * Add mutable, fixed-length arrays
 * Remove integer print statement
-* Move ParamListNode to a non-node
 * Replace as many pointer parameters as possible to references
 * Add unit tests for all semantic checks
+* Add break statement
+* Allow pattern matching in function declaration
+* Merge struct and data types; struct should be syntactic sugar for
+  automatically defining accessors. Remove setting of struct parameters.
+* Make the syntax in euler2-2 work

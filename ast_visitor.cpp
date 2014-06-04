@@ -32,7 +32,7 @@ void AstVisitor::visit(BlockNode* node)
 
 void AstVisitor::visit(FunctionCallNode* node)
 {
-	for (auto& argument : *node->arguments)
+	for (auto& argument : node->arguments)
 	{
 		argument->accept(this);
 	}

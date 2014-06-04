@@ -47,32 +47,6 @@ private:
     size_t parameters_;
 };
 
-// Owns all type constructors used in the program, and keeps track of primitive
-// types as well.
-class Type;
-class TypeTable
-{
-public:
-    TypeTable();
-
-    const TypeConstructor* getTypeConstructor(const std::string& name);
-    std::shared_ptr<Type> getBaseType(const std::string& name);
-
-    void insert(const std::string& name, TypeConstructor* typeConstructor);
-    void insert(const std::string& name, std::shared_ptr<Type> baseType);
-
-    std::shared_ptr<Type> nameToType(const TypeName& typeName);
-
-    // Convenient access to frequently-referenced types
-    static std::shared_ptr<Type> Int;
-    static std::shared_ptr<Type> Bool;
-    static std::shared_ptr<Type> Unit;
-
-private:
-    std::unordered_map<std::string, std::unique_ptr<TypeConstructor>> typeConstructors_;
-    std::unordered_map<std::string, std::shared_ptr<Type>> baseTypes_;
-};
-
 enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed, ttStruct};
 
 class TypeImpl;
@@ -149,6 +123,11 @@ public:
     static std::shared_ptr<TypeScheme> trivial(const std::shared_ptr<Type>& type)
     {
         return std::shared_ptr<TypeScheme>(new TypeScheme(type, {}));
+    }
+
+    static std::shared_ptr<TypeScheme> make(const std::shared_ptr<Type>& type, std::initializer_list<TypeVariable*> quantified)
+    {
+        return std::shared_ptr<TypeScheme>(new TypeScheme(type, quantified));
     }
 
     std::string name() const;
