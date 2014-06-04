@@ -77,6 +77,7 @@ Symbol* SemanticAnalyzer::resolveTypeSymbol(const std::string& name)
 SemanticAnalyzer::SemanticAnalyzer(ProgramNode* root)
 : _root(root)
 , _enclosingFunction(nullptr)
+, _enclosingLoop(nullptr)
 {
 }
 
@@ -922,8 +923,23 @@ void SemanticAnalyzer::visit(WhileNode* node)
     node->condition->accept(this);
     unify(node->condition->type, Bool, node);
 
+    // Save the current inner-most loop so that we can restore it after
+    // visiting the children of this loop.
+    WhileNode* outerLoop = _enclosingLoop;
+
+    _enclosingLoop = node;
     node->body->accept(this);
+    _enclosingLoop = outerLoop;
+
     unify(node->body->type, Unit, node);
+
+    node->type = Unit;
+}
+
+void SemanticAnalyzer::visit(BreakNode* node)
+{
+    CHECK(_enclosingLoop, "break statement must be within a loop");
+    node->loop = _enclosingLoop;
 
     node->type = Unit;
 }

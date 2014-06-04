@@ -6,9 +6,10 @@
 enum TokenType : int
 {
     tNONE = -1,
-
     tEOF = 0,
+
     tAND = 256,
+    tBREAK,
     tCOLON_EQUAL,
     tCONCAT,
     tDATA,

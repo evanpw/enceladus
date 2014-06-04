@@ -7,6 +7,7 @@
 class AssignNode;
 class BlockNode;
 class BoolNode;
+class BreakNode;
 class ComparisonNode;
 class DataDeclaration;
 class ExternalFunctionCallNode;
@@ -51,6 +52,7 @@ public:
 
 	// Leaf nodes
 	virtual void visit(BoolNode* node) {}
+	virtual void visit(BreakNode* node) {}
 	virtual void visit(DataDeclaration* node) {}
 	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}

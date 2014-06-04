@@ -8,6 +8,8 @@ std::string tokenToString(TokenType t)
         return "tNONE";
     case tAND:
         return "tAND";
+    case tBREAK:
+        return "tBREAK";
     case tCOLON_EQUAL:
         return "tCOLON_EQUAL";
     case tCONCAT:

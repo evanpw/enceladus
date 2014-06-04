@@ -1,5 +1,13 @@
 -- Solves Project Euler 3
 
+def isPrime x =
+    i := 2
+    while i * i <= x do
+        if x mod i == 0 then return False
+        i += 1
+
+    return True
+
 n := 600851475143
 biggest := 0
 
@@ -7,21 +15,7 @@ biggest := 0
 i := 2
 while i * i <= n do
 
-	-- When we find a divisor, determine whether it is a prime number
-	if n mod i == 0 then
-		j := 2
-		isPrime := True
-		while j * j <= i do
-			if i mod j == 0 then
-				isPrime  = False
-
-				-- TODO: Add this syntax
-				-- break
-				j = i
-
-			j += 1
-
-		if isPrime then biggest = i
+	if n mod i == 0 and isPrime i then biggest = i
 
 	i += 1
 

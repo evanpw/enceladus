@@ -6,7 +6,7 @@ program
 
 statement
     : EOL
-    if_statement
+    | if_statement
     | assignment_statement
     | data_declaration
     | type_alias_declaration
@@ -18,6 +18,7 @@ statement
     | struct_declaration
     | variable_declaration
     | while_statement
+    | break_statement
     | expression EOL
 
 if_statement
@@ -65,6 +66,9 @@ variable_declaration
 
 while_statement
     : WHILE expression DO suite
+
+break_statement
+    : BREAK EOL
 
 
 //// Types /////////////////////////////////////////////////////////////////////

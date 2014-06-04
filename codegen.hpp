@@ -15,6 +15,7 @@ public:
 
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
+	virtual void visit(BreakNode* node);
 	virtual void visit(BoolNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(DataDeclaration* node);
@@ -66,8 +67,11 @@ private:
 	int labels_;
 	std::ostream& out_;
 
-	// The name of the function currently being generated
+	// The name of the function currently being generated (used by return statements)
 	std::string currentFunction_;
+
+	// The exit label of the current loop (used by break statements)
+	std::string currentLoopEnd_;
 
 	// Keep track of referenced and visited functions so that we generate code
 	// only for those functions referenced directly or indirectly by the main

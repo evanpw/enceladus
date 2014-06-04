@@ -234,6 +234,16 @@ public:
 	std::unique_ptr<StatementNode> body;
 };
 
+class BreakNode : public StatementNode
+{
+public:
+	BreakNode() {}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	WhileNode* loop;
+};
+
 // For loops are implemented as pure syntactic sugar
 BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, StatementNode* body);
 

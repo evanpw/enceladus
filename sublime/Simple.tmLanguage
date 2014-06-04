@@ -226,7 +226,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(deriving|where|data|type|case|of|let|in|newtype|default)\b</string>
+			<string>\b(deriving|where|data|type|case|of|let|in|newtype|default|def)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>
@@ -244,7 +244,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(do|if|then|else)\b</string>
+			<string>\b(do|if|then|else|while|for|return|break)\b</string>
 			<key>name</key>
 			<string>keyword.control.simple</string>
 		</dict>

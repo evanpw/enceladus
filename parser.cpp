@@ -140,6 +140,9 @@ StatementNode* statement()
     case tVAR:
         return variable_declaration();
 
+    case tBREAK:
+        return break_statement();
+
     case tLIDENT:
         if (peek2ndType() == '{' ||
             peek2ndType() == '=' ||
@@ -347,7 +350,6 @@ StatementNode* assignment_statement()
 
 StatementNode* variable_declaration()
 {
-
     if (peekType() == tLIDENT)
     {
         Token varName = expect(tLIDENT);
@@ -369,6 +371,14 @@ StatementNode* variable_declaration()
 
         return new LetNode(varName.value.str, varType, value);
     }
+}
+
+StatementNode* break_statement()
+{
+    expect(tBREAK);
+    expect(tEOL);
+
+    return new BreakNode();
 }
 
 //// Miscellaneous /////////////////////////////////////////////////////////////

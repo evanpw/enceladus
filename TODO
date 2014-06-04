@@ -31,3 +31,4 @@ Todo
 * Merge struct and data types; struct should be syntactic sugar for
   automatically defining accessors. Remove setting of struct parameters.
 * Make the syntax in euler2-2 work
+* Add a built-in map / dict type

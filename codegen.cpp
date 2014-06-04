@@ -567,12 +567,22 @@ void CodeGen::visit(WhileNode* node)
 	EMIT_LABEL(beginLabel);
 	node->condition->accept(this);
 
+	std::string prevLoopEnd = currentLoopEnd_;
+	currentLoopEnd_ = endLabel;
+
 	EMIT("and rax, 10b");
 	EMIT("jz near " << endLabel);
 	node->body->accept(this);
 
+	currentLoopEnd_ = prevLoopEnd;
+
 	EMIT("jmp " << beginLabel);
 	EMIT_LABEL(endLabel);
+}
+
+void CodeGen::visit(BreakNode* node)
+{
+	EMIT("jmp " << currentLoopEnd_);
 }
 
 void CodeGen::visit(AssignNode* node)

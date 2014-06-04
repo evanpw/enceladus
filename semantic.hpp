@@ -51,6 +51,7 @@ public:
 
     // Leaf nodes
     virtual void visit(BoolNode* node);
+    virtual void visit(BreakNode* node);
     virtual void visit(IntNode* node);
     virtual void visit(MemberAccessNode* node);
     virtual void visit(MemberDefNode* node);
@@ -103,6 +104,7 @@ private:
 
     ProgramNode* _root;
     FunctionDefNode* _enclosingFunction;
+    WhileNode* _enclosingLoop;
     std::vector<std::shared_ptr<Scope>> _scopes;
 };
 

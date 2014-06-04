@@ -118,6 +118,7 @@ int yycolumn = 1;
 "++"	{ return tCONCAT; }
 
  /* Keywords */
+"break"		{ return tBREAK; }
 "data"		{ return tDATA; }
 "def"		{ return tDEF; }
 "do"		{ return tDO; }
