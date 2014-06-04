@@ -126,7 +126,7 @@ void SemanticAnalyzer::injectSymbols()
     scope->types.insert(new TypeSymbol("Int", _root, Int));
     scope->types.insert(new TypeSymbol("Bool", _root, Bool));
     scope->types.insert(new TypeSymbol("Unit", _root, Unit));
-    scope->types.insert(new TypeSymbol("Tree", _root, BaseType::create("Tree", false)));
+    //scope->types.insert(new TypeSymbol("Tree", _root, BaseType::create("Tree", false)));
 
     TypeConstructor* List = new TypeConstructor("List", 1);
     scope->types.insert(new TypeConstructorSymbol("List", _root, List));
@@ -565,6 +565,10 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 	const std::string& constructorName = node->constructor->name;
     CHECK_UNDEFINED(constructorName);
 
+    // Actually create the type
+    std::shared_ptr<Type> newType = BaseType::create(node->name);
+    topScope()->types.insert(new TypeSymbol(typeName, node, newType));
+
 	// All of the constructor members must refer to already-declared types
 	std::vector<std::shared_ptr<Type>> memberTypes;
 	for (auto& memberTypeName : node->constructor->members())
@@ -575,10 +579,6 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 		memberTypes.push_back(memberType);
 	}
 	node->constructor->setMemberTypes(memberTypes);
-
-	// Actually create the type
-	std::shared_ptr<Type> newType = BaseType::create(node->name);
-    topScope()->types.insert(new TypeSymbol(typeName, node, newType));
 
 	ValueConstructor* valueConstructor = new ValueConstructor(node->constructor->name, memberTypes);
 	node->valueConstructor = valueConstructor;

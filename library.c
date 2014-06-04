@@ -277,74 +277,7 @@ List* Cons(void* value, List* next)
 
 //// Trees /////////////////////////////////////////////////////////////////////
 
-int64_t count(Tree*);
-
-Tree* Node(int64_t value, Tree* left, Tree* right)
-{
-    Tree* newTree = (Tree*)malloc(sizeof(Node));
-
-    newTree->refCount = 0;
-    newTree->numScalars = 2;
-    newTree->numPointers = 2;
-    newTree->left = left;
-    newTree->right = right;
-    newTree->value = value;
-
-    int64_t leftCount = fromInt(count(left));
-    int64_t rightCount = fromInt(count(right));
-    int64_t myCount = toInt(1 + leftCount + rightCount);
-    newTree->count = myCount;
-
-    Spl_INCREF(left);
-    Spl_INCREF(right);
-
-    return newTree;
-}
-
 Tree* Empty()
 {
     return NULL;
 }
-
-int64_t top(Tree* tree)
-{
-    if (tree == NULL)
-    {
-        _dieWithMessage("*** Exception: Called top on empty tree");
-    }
-
-    return tree->value;
-}
-
-Tree* left(Tree* tree)
-{
-    if (tree == NULL)
-    {
-        _dieWithMessage("*** Exception: Called left on empty tree");
-    }
-
-    return tree->left;
-}
-
-Tree* right(Tree* tree)
-{
-    if (tree == NULL)
-    {
-        _dieWithMessage("*** Exception: Called right on empty tree");
-    }
-
-    return tree->right;
-}
-
-int64_t count(Tree* tree)
-{
-    if (tree == NULL)
-    {
-        return 0;
-    }
-    else
-    {
-        return tree->count;
-    }
-}
-
