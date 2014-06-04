@@ -52,7 +52,6 @@ void CodeGen::getAddress(AssignableNode* node, const std::string& dest)
 std::string CodeGen::access(const Symbol& symbol)
 {
 	assert(symbol.kind == kVariable);
-	FunctionDefNode* enclosingFunction = symbol.enclosingFunction;
 
 	// Global symbol
 	if (symbol.enclosingFunction == nullptr)
@@ -67,26 +66,11 @@ std::string CodeGen::access(const Symbol& symbol)
 		if (symbol.asVariable()->isParam)
 		{
 			// Parameters should not be assigned a place among the local variables.
-			assert(symbol.asVariable()->offset == 0);
+			assert(symbol.asVariable()->offset >= 0);
 
-			auto& paramList = enclosingFunction->params;
-
-			size_t offset = 0;
-			for (const std::string& param : *paramList)
-			{
-				if (param == symbol.name)
-				{
-					std::stringstream result;
-					result << "[rbp + " << 8 * (offset + 2) << "]";
-					return result.str();
-				}
-
-				++offset;
-			}
-
-			// This symbol is supposed to be a parameter, but we can't find it in the
-			// parameter list of the function.
-			assert(false);
+			std::stringstream result;
+			result << "[rbp + " << 8 * (symbol.asVariable()->offset + 2) << "]";
+			return result.str();
 		}
 		else
 		{

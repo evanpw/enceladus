@@ -292,6 +292,7 @@ public:
 	std::unique_ptr<ParamList> params;
 	std::unique_ptr<TypeDecl> typeDecl;
 	Symbol* symbol;
+	std::vector<Symbol*> parameterSymbols;
 	std::shared_ptr<Scope> scope;
 };
 

@@ -252,6 +252,23 @@ std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName
     }
 }
 
+void SemanticAnalyzer::insertSymbol(Symbol* symbol)
+{
+    static unsigned long count = 0;
+
+    if (symbol->name == "_")
+    {
+        symbol->name = format("_unnamed{}", count++);
+    }
+
+    topScope()->symbols.insert(symbol);
+}
+
+void SemanticAnalyzer::releaseSymbol(Symbol* symbol)
+{
+    topScope()->symbols.release(symbol->name);
+}
+
 
 //// Type inference functions //////////////////////////////////////////////////
 
@@ -587,7 +604,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 	// Create a symbol for the constructor
 	Symbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
 	symbol->setType(FunctionType::create(memberTypes, newType));
-	topScope()->symbols.insert(symbol);
+	insertSymbol(symbol);
 
 	node->type = Unit;
 }
@@ -656,7 +673,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	// function.
 	Symbol* symbol = new FunctionSymbol(name, node, node);
 	symbol->setType(FunctionType::create(paramTypes, returnType));
-	topScope()->symbols.insert(symbol);
+	insertSymbol(symbol);
 	node->symbol = symbol;
 
 	enterScope(node->scope);
@@ -669,8 +686,11 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 		Symbol* paramSymbol = new VariableSymbol(param, node, node);
 		paramSymbol->asVariable()->isParam = true;
+        paramSymbol->asVariable()->offset = i;
 		paramSymbol->setType(paramTypes[i]);
-		topScope()->symbols.insert(paramSymbol);
+		insertSymbol(paramSymbol);
+
+        node->parameterSymbols.push_back(paramSymbol);
 	}
 
 	// Recurse
@@ -682,9 +702,9 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 	// Once we've looked through the body of the function and inferred whatever
 	// types we can, any remaining type variables can be generalized.
-	topScope()->symbols.release(name);
+	releaseSymbol(symbol);
 	symbol->setTypeScheme(generalize(symbol->typeScheme->type(), _scopes));
-	topScope()->symbols.insert(symbol);
+	insertSymbol(symbol);
 
     node->type = Unit;
 }
@@ -726,7 +746,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 	symbol->setType(FunctionType::create(paramTypes, returnType));
 	symbol->isForeign = true;
 	symbol->isExternal = true;
-	topScope()->symbols.insert(symbol);
+	insertSymbol(symbol);
 	node->symbol = symbol;
 
     node->type = Unit;
@@ -754,7 +774,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 		symbol->setType(newVariable());
 	}
 
-	topScope()->symbols.insert(symbol);
+	insertSymbol(symbol);
 	node->symbol = symbol;
 
 	unify(node->value->type, symbol->type, node);
@@ -790,7 +810,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 
 		Symbol* member = new VariableSymbol(name, node, _enclosingFunction);
 		member->setType(functionType->inputs().at(i));
-		topScope()->symbols.insert(member);
+		insertSymbol(member);
 		node->attachSymbol(member);
 	}
 
@@ -1032,6 +1052,7 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     StructType* structType = type->get<StructType>();
     CHECK(structType, "cannot access member of non-struct variable \"{}\"", name);
 
+    CHECK(node->memberName[0] != '_', "member access syntax cannot be used with unnamed members");
     auto i = structType->members().find(node->memberName);
     CHECK(i != structType->members().end(), "no such member \"{}\" of variable \"{}\"", node->memberName, name);
 

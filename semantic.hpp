@@ -91,6 +91,9 @@ private:
     TypeConstructor* getTypeConstructor(const std::string& name);
     std::shared_ptr<Type> resolveTypeName(const TypeName& typeName);
 
+    void insertSymbol(Symbol* symbol);
+    void releaseSymbol(Symbol* symbol);
+
     std::shared_ptr<Scope> topScope() { return _scopes.back(); }
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);

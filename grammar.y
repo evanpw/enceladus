@@ -1,3 +1,11 @@
+/*
+Format:
+|   alternation
+()  grouping
+[]  option (0 or 1 times)
+{}  repetition (0 to n times)
+*/
+
 program
     : /* empty */
     | program statement
@@ -52,7 +60,7 @@ foreign_declaration
     : FOREIGN ident parameters DCOLON type_declaration EOL
 
 match_statement
-    : LET UIDENT parameter_list '=' expression EOL
+    : LET UIDENT parameters '=' expression EOL
 
 return_statement
     : RETURN expression EOL
@@ -94,12 +102,7 @@ statement_list
     | statement_list statement
 
 parameters
-    : /* empty */
-    | parameter_list
-
-parameter_list
-    : LIDENT
-    | parameter_list LIDENT
+    : { LIDENT }
 
  //// Structures ///////////////////////////////////////////////////////////////
 

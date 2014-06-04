@@ -142,6 +142,7 @@ int yycolumn = 1;
 \'([^']|\\[nrt])\'		{ yylval.number = char_literal(yytext); return tINT_LIT; }
 
 [a-z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return tLIDENT; }
+"_"						{ yylval.str = StringTable::add(yytext); return tLIDENT; }
 [A-Z][a-zA-Z0-9.']*	 	{ yylval.str = StringTable::add(yytext); return tUIDENT; }
 \n						 { yycolumn = 1; return tEOL; }
 [ \t]+				     { yylval.number = count_whitespace(yytext, yyleng); return tWHITESPACE; }
