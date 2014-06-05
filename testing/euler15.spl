@@ -1,24 +1,24 @@
-data Pair = Pair Int Int
-data Memo = Memo Pair Int
+data MyPair = MyPair Int Int
+data Memo = Memo MyPair Int
 
 memo := []
-def searchMemo p :: Pair -> Int =
-    let Pair x y = p
+def searchMemo p :: MyPair -> Int =
+    let MyPair x y = p
 
     for m in memo do
         let Memo p' count = m
-        let Pair x' y' = p'
+        let MyPair x' y' = p'
 
         if x == x' and y == y' then
             return count
 
     return -1
 
-def insertMemo p count :: Pair -> Int -> Unit =
+def insertMemo p count :: MyPair -> Int -> Unit =
     memo = (Memo p count) : memo
 
-def countPaths p :: Pair -> Int =
-    let Pair x y = p
+def countPaths p :: MyPair -> Int =
+    let MyPair x y = p
 
     if x == 20 and y == 20 then return 1
     if x > 20 or y > 20 then return 0
@@ -27,10 +27,10 @@ def countPaths p :: Pair -> Int =
     if memoCount >= 0 then return memoCount
 
     count := 0
-    count += countPaths $ Pair (x + 1) y
-    count += countPaths $ Pair x (y + 1)
+    count += countPaths $ MyPair (x + 1) y
+    count += countPaths $ MyPair x (y + 1)
 
     insertMemo p count
     return count
 
-print $ show $ countPaths $ Pair 0 0
+print $ show $ countPaths $ MyPair 0 0

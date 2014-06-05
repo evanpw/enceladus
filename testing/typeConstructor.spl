@@ -1,10 +1,10 @@
-data Pair a = Pair a a
+data MyPair a = MyPair a a
 
-x := Pair 1 2
-y := Pair True False
+x := MyPair 1 2
+y := MyPair True False
 
-let Pair a b = x
-let Pair c d = y
+let MyPair a b = x
+let MyPair c d = y
 
 result := b
 if c then result += 1

@@ -302,6 +302,8 @@ def odd x :: Int -> Bool =
 
 --    return zs
 
+---- Strings ----
+
 def isSpace c :: Char -> Bool =
     if c == ' ' or c == '\n' or c == '\r' or c == '\t' then
         return True
@@ -326,6 +328,17 @@ def trim s :: String -> String =
 
     return reverse s2
 
+def trimChar c s :: Char -> String -> String =
+    s1 := s
+    while (not $ null s1) and (head s1 == c) do
+        s1 = tail s1
+
+    s2 := reverse s1
+    while (not $ null s2) and (head s2 == c) do
+        s2 = tail s2
+
+    return reverse s2
+
 def substring s start n :: String -> Int -> Int -> String =
     return take n (drop start s)
 
@@ -334,6 +347,24 @@ def split s :: String -> [String] =
     start := 0
     for i in range 0 (length s - 1) do
         if isSpace $ at i s then
+            if i != start then
+                piece := substring s start (i - start)
+                result = piece : result
+
+            start = i + 1
+
+    if start != length s then
+        n := length s - start
+        piece = substring s start n
+        result = piece : result
+
+    return reverse result
+
+def splitBy sep s :: Char -> String -> [String] =
+    result := []
+    start := 0
+    for i in range 0 (length s - 1) do
+        if at i s == sep then
             if i != start then
                 piece := substring s start (i - start)
                 result = piece : result
@@ -380,3 +411,15 @@ def show x :: Int -> String =
     if negative then s = '-' : s
 
     return s
+
+---- Pairs ----
+
+data Pair a = Pair a a
+
+def fst pair =
+    let Pair x _ = pair
+    return x
+
+def snd pair =
+    let Pair _ x = pair
+    return x

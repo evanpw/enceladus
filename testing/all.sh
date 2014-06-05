@@ -33,6 +33,7 @@ $platform/build.sh euler18 > /dev/null && value=$(cat testing/euler18.txt | buil
 
 testing/test.sh $platform euler19 171 || echo "Project Euler 19 failed!"
 testing/test.sh $platform euler20 648 || echo "Project Euler 20 failed!"
+testing/test.sh $platform euler21 31626 || echo "Project Euler 21 failed!"
 
 testing/test.sh $platform poly 4 || echo "Polymorphism test failed!"
 testing/test.sh $platform poly2 "False" || echo "Polymorphism test 2 failed!"
@@ -41,4 +42,4 @@ testing/test.sh $platform unaryMinus "-5" || echo "Unary minus test failed!"
 testing/test.sh $platform localVar "3" || echo "Local variable test failed!"
 testing/test.sh $platform unnamed "19" || echo "Unnamed variable test failed!"
 testing/test.sh $platform typeConstructor "7" || echo "Type constructor test failed!"
-
+testing/test.sh $platform associativity "10" || echo "Associativity test failed!"

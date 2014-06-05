@@ -48,6 +48,7 @@ StatementNode* suite();
 ParamList* parameters();
 TypeDecl* type_declaration();
 TypeName* type();
+TypeName* simple_type();
 ConstructorSpec* constructor_spec();
 MemberList* members();
 MemberDefNode* member_definition();

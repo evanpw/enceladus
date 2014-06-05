@@ -81,16 +81,19 @@ break_statement
 //// Types /////////////////////////////////////////////////////////////////////
 
 type_declaration
-    : type
-    | type_declaration RARROW type
+    : type { RARROW type }
 
 type
-    : UIDENT
+    : UIDENT { simple_type }
+    | simple_type
+
+simple_type
+    : LIDENT
+    | UIDENT
     | '[' type ']'
 
 constructor_spec
-    : UIDENT
-    | constructor_spec type
+    : UIDENT { simple_type }
 
 suite
     : statement
@@ -127,39 +130,25 @@ and_expression
     | equality_expression
 
 equality_expression
-    : relational_expression EQUALS equality_expression
-    | relational_expression NE equality_expression
-    | relational_expression
+    : relational_expression [ ( EQUALS | NE ) relational_expression ]
 
 relational_expression
-    : cons_expression '>' relational_expression
-    | cons_expression '<' relational_expression
-    | cons_expression GE relational_expression
-    | cons_expression LE relational_expression
-    | cons_expression
+    : cons_expression [ ( '>' | '<' | GE | LE ) cons_expression ]
 
 cons_expression
-    : additive_expression ':' cons_expression
-    | additive_expression
+    : additive_expression [ ':' cons_expression ]
 
 additive_expression
-    : multiplicative_expression '+' additive_expression
-    | multiplicative_expression '-' additive_expression
-    | multiplicative_expression
+    : multiplicative_expression { ( '+' | '-' ) multiplicative_expression }
 
 multiplicative_expression
-    : concat_expression '*' multiplicative_expression
-    | concat_expression '/' multiplicative_expression
-    | concat_expression MOD multiplicative_expression
-    | concat_expression
+    : concat_expression { ( '*' | '/' | MOD ) concat_expression }
 
 concat_expression
-    : negation_expression CONCAT concat_expression
-    | negation_expression
+    : negation_expression [ CONCAT concat_expression ]
 
 negation_expression
-    : '-' expression
-    | func_call_expression
+    : [ '-' ] func_call_expression
 
 func_call_expression
     : ident { unary_expression } [ '$' expression ]
@@ -181,8 +170,7 @@ inline_list
     | '[' ']'
 
 list_interior
-    : expression
-    | list_interior ',' expression
+    : expression { ',' expression }
 
 ident
     : LIDENT

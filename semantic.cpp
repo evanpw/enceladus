@@ -38,7 +38,7 @@ void SemanticAnalyzer::semanticError(AstNode* node, const std::string& str, Args
 
     ss << "Near line " << node->location->first_line << ", "
        << "column " << node->location->first_column << ": "
-       << "error: " << format(str, args...);
+       << format(str, args...);
 
     throw SemanticError(ss.str());
 }
@@ -48,7 +48,7 @@ void SemanticAnalyzer::semanticErrorNoNode(const std::string& str, Args... args)
 {
     std::stringstream ss;
 
-    ss << "error: " << format(str, args...);
+    ss << "" << format(str, args...);
 
     throw SemanticError(ss.str());
 }
@@ -260,6 +260,8 @@ TypeConstructor* SemanticAnalyzer::getTypeConstructor(const std::string& name)
 
 std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
 {
+    //std::cerr << "resolveTypeName: " << typeName.str() << std::endl;
+
     if (typeName.parameters().empty())
     {
         return getBaseType(typeName.name(), variables, createVariables);

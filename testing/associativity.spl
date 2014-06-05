@@ -1,0 +1,11 @@
+result := 0
+
+-- Associativity
+result += 1 - 2 + 2
+result +=  2 * 3 / 4
+result += -1 + 2
+
+-- Order of operations
+result += 1 + 2 * 3
+
+print $ show result
