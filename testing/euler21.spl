@@ -1,0 +1,33 @@
+-- Solves Project Euler #21
+
+def divisors n =
+    result := [1]
+
+    i := 2
+    while i * i <= n do
+        if n mod i == 0 then
+            if i * i == n then
+                result = i : result
+            else
+                result = i : (n / i) : result
+
+        i += 1
+
+    return result
+
+def isAmicable n =
+    n' := sum $ divisors n
+
+    if n == n' then return False
+
+    n'' := sum $ divisors n'
+
+    return n == n''
+
+total := 0
+for n in range 1 9999 do
+    if isAmicable n then
+        total += n
+
+print $ show total
+

@@ -14,4 +14,7 @@ def identity x :: a -> a =
 
 result += identity 3
 
+if not $ identity False then
+    result += 1
+
 print $ show result
