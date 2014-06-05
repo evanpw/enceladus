@@ -1,0 +1,17 @@
+data Pair a = Pair a a
+
+x := Pair 1 2
+y := Pair True False
+
+let Pair a b = x
+let Pair c d = y
+
+result := b
+if c then result += 1
+
+def identity x :: a -> a =
+    return x
+
+result += identity 3
+
+print $ show result

@@ -318,13 +318,14 @@ public:
 class DataDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(const std::string& name, ConstructorSpec* constructor)
-	: name(name), constructor(constructor)
+	DataDeclaration(const std::string& name, const std::vector<std::string>& typeParameters, ConstructorSpec* constructor)
+	: name(name), typeParameters(typeParameters), constructor(constructor)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::string name;
+	std::vector<std::string> typeParameters;
 	std::unique_ptr<ConstructorSpec> constructor;
 	ValueConstructor* valueConstructor;
 };

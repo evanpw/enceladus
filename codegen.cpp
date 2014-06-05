@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <iomanip>
 #include <map>
 #include "ast.hpp"
 #include "codegen.hpp"
@@ -124,6 +125,8 @@ std::vector<std::string> CodeGen::getExterns(ProgramNode* node)
 
 void CodeGen::createConstructor(ValueConstructor* constructor)
 {
+	//std::cerr << "createConstructor: " << constructor->name() << std::endl;
+
 	const std::vector<std::shared_ptr<Type>>& memberTypes = constructor->members();
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
@@ -152,7 +155,7 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 	EMIT("mov qword [rax], 0");
 
 	// Boxed & unboxed member counts
-	long memberCount = (constructor->boxedMembers() << 32) + constructor->boxedMembers();
+	long memberCount = (constructor->boxedMembers() << 32) + constructor->unboxedMembers();
 	EMIT("mov rbx, qword " << memberCount);
 	EMIT("mov qword [rax + 8], rbx");
 
@@ -166,12 +169,9 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
     	// Increment reference count of non-simple, non-null members
     	if (memberTypes[i]->isBoxed())
     	{
-    		std::string skipInc = uniqueLabel();
-
-    		EMIT("cmp rdi, 0");
-    		EMIT("je " << skipInc);
-    		EMIT("add qword [rdi], 1");
-    		EMIT_LABEL(skipInc);
+    		EMIT("push rax");
+			EMIT("call " << foreignName("_incref"));
+			EMIT("pop rax");
     	}
     }
 
@@ -211,7 +211,7 @@ void CodeGen::createStructInit(StructDefNode* node)
 	EMIT("mov qword [rax], 0");
 
 	// Boxed & unboxed member counts
-	long memberCount = (structType->boxedMembers() << 32) + structType->boxedMembers();
+	long memberCount = (structType->boxedMembers() << 32) + structType->unboxedMembers();
 	EMIT("mov rbx, qword " << memberCount);
 	EMIT("mov qword [rax + 8], rbx");
 

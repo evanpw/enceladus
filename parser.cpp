@@ -188,14 +188,21 @@ StatementNode* if_statement()
 
 StatementNode* data_declaration()
 {
-
     expect(tDATA);
     Token name = expect(tUIDENT);
+
+    std::vector<std::string> typeParameters;
+    while (peekType() == tLIDENT)
+    {
+        Token token = expect(tLIDENT);
+        typeParameters.push_back(token.value.str);
+    }
+
     expect('=');
     ConstructorSpec* constructorSpec = constructor_spec();
     expect(tEOL);
 
-    return new DataDeclaration(name.value.str, constructorSpec);
+    return new DataDeclaration(name.value.str, typeParameters, constructorSpec);
 }
 
 StatementNode* type_alias_declaration()
@@ -483,6 +490,11 @@ TypeName* type()
         Token typeName = expect(tUIDENT);
         return new TypeName(typeName.value.str);
     }
+    else if (peekType() == tLIDENT)
+    {
+        Token typeName = expect(tLIDENT);
+        return new TypeName(typeName.value.str);
+    }
     else
     {
         expect('[');
@@ -502,7 +514,7 @@ ConstructorSpec* constructor_spec()
     Token name = expect(tUIDENT);
 
     ConstructorSpec* constructorSpec = new ConstructorSpec(name.value.str);
-    while (peekType() == tUIDENT || peekType() == '[')
+    while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[')
     {
         constructorSpec->append(type());
     }

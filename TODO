@@ -26,9 +26,9 @@ Todo
 * Add mutable, fixed-length arrays
 * Replace as many pointer parameters as possible to references
 * Add unit tests for all semantic checks
-* Add break statement
 * Allow pattern matching in function declaration
 * Merge struct and data types; struct should be syntactic sugar for
   automatically defining accessors. Remove setting of struct parameters.
 * Make the syntax in euler2-2 work
 * Add a built-in map / dict type
+* Tuples

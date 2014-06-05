@@ -88,8 +88,10 @@ private:
     void injectSymbols();
 
     std::shared_ptr<Type> getBaseType(const std::string& name);
+    std::shared_ptr<Type> getBaseType(const std::string& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
     TypeConstructor* getTypeConstructor(const std::string& name);
     std::shared_ptr<Type> resolveTypeName(const TypeName& typeName);
+    std::shared_ptr<Type> resolveTypeName(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
 
     void insertSymbol(Symbol* symbol);
     void releaseSymbol(Symbol* symbol);

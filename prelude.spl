@@ -39,6 +39,9 @@ def top tree =
     let Node x _ _ _ = tree
     return x
 
+-- def top Empty = assertMessage (not $ null tree) "called top on empty set"
+-- def top (Node x _ _ _) = return x
+
 def left tree =
     assertMessage (not $ null tree) "called left on empty set"
 

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -214,13 +215,38 @@ void SemanticAnalyzer::injectSymbols()
     scope->symbols.insert(makeExternal("malloc"));
 }
 
+std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const std::string& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
+{
+    if (!islower(name[0]))
+    {
+        Symbol* symbol = resolveTypeSymbol(name);
+        CHECK_NO_NODE(symbol, "Base type \"{}\" is not defined", name);
+        CHECK_NO_NODE(symbol->kind == kType, "Symbol \"{}\" is not a base type", name);
+
+        return symbol->type;
+    }
+    else
+    {
+        auto i = variables.find(name);
+        CHECK_NO_NODE(createVariables || i != variables.end(), "No such type variable \"{}\"", name);
+
+        if (createVariables && i == variables.end())
+        {
+            std::shared_ptr<Type> var = TypeVariable::create();
+            variables[name] = var;
+            return var;
+        }
+        else
+        {
+            return i->second;
+        }
+    }
+}
+
 std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const std::string& name)
 {
-    Symbol* symbol = resolveTypeSymbol(name);
-    CHECK_NO_NODE(symbol, "Base type \"{}\" is not defined", name);
-    CHECK_NO_NODE(symbol->kind == kType, "Symbol \"{}\" is not a base type", name);
-
-    return symbol->type;
+    std::unordered_map<std::string, std::shared_ptr<Type>> variables;
+    return getBaseType(name, variables);
 }
 
 TypeConstructor* SemanticAnalyzer::getTypeConstructor(const std::string& name)
@@ -232,11 +258,11 @@ TypeConstructor* SemanticAnalyzer::getTypeConstructor(const std::string& name)
     return symbol->asTypeConstructor()->typeConstructor.get();
 }
 
-std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName)
+std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
 {
     if (typeName.parameters().empty())
     {
-        return getBaseType(typeName.name());
+        return getBaseType(typeName.name(), variables, createVariables);
     }
     else
     {
@@ -245,11 +271,17 @@ std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName
         std::vector<std::shared_ptr<Type>> typeParameters;
         for (auto& parameter : typeName.parameters())
         {
-            typeParameters.push_back(resolveTypeName(*parameter));
+            typeParameters.push_back(resolveTypeName(*parameter, variables, createVariables));
         }
 
         return ConstructedType::create(typeConstructor, typeParameters);
     }
+}
+
+std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName)
+{
+    std::unordered_map<std::string, std::shared_ptr<Type>> variables;
+    return resolveTypeName(typeName, variables);
 }
 
 void SemanticAnalyzer::insertSymbol(Symbol* symbol)
@@ -583,28 +615,68 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
     CHECK_UNDEFINED(constructorName);
 
     // Actually create the type
-    std::shared_ptr<Type> newType = BaseType::create(node->name);
-    topScope()->types.insert(new TypeSymbol(typeName, node, newType));
+    std::shared_ptr<Type> newType;
+    std::vector<std::shared_ptr<Type>> memberTypes;
+    if (node->typeParameters.empty())
+    {
+        newType = BaseType::create(node->name);
+        topScope()->types.insert(new TypeSymbol(typeName, node, newType));
 
-	// All of the constructor members must refer to already-declared types
-	std::vector<std::shared_ptr<Type>> memberTypes;
-	for (auto& memberTypeName : node->constructor->members())
-	{
-		std::shared_ptr<Type> memberType = resolveTypeName(*memberTypeName);
-        CHECK(memberType, "unknown member type \"{}\"", memberTypeName->str());
+        // All of the constructor members must refer to already-declared types
+        for (auto& memberTypeName : node->constructor->members())
+        {
+            std::shared_ptr<Type> memberType = resolveTypeName(*memberTypeName);
+            CHECK(memberType, "unknown member type \"{}\"", memberTypeName->str());
 
-		memberTypes.push_back(memberType);
-	}
-	node->constructor->setMemberTypes(memberTypes);
+            memberTypes.push_back(memberType);
+        }
+        node->constructor->setMemberTypes(memberTypes);
 
-	ValueConstructor* valueConstructor = new ValueConstructor(node->constructor->name, memberTypes);
-	node->valueConstructor = valueConstructor;
-	newType->addValueConstructor(valueConstructor);
+        ValueConstructor* valueConstructor = new ValueConstructor(node->constructor->name, memberTypes);
+        node->valueConstructor = valueConstructor;
+        newType->addValueConstructor(valueConstructor);
 
-	// Create a symbol for the constructor
-	Symbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
-	symbol->setType(FunctionType::create(memberTypes, newType));
-	insertSymbol(symbol);
+        // Create a symbol for the constructor
+        Symbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
+        symbol->setType(FunctionType::create(memberTypes, newType));
+        insertSymbol(symbol);
+    }
+    else
+    {
+        TypeConstructor* typeConstructor = new TypeConstructor(typeName, node->typeParameters.size());
+        topScope()->types.insert(new TypeConstructorSymbol(typeName, node, typeConstructor));
+
+        // Create type variables for each type parameter
+        std::unordered_map<std::string, std::shared_ptr<Type>> varMap;
+        std::vector<std::shared_ptr<Type>> variables;
+        for (auto& typeParameter : node->typeParameters)
+        {
+            std::shared_ptr<Type> var = TypeVariable::create();
+            varMap[typeParameter] = var;
+            variables.push_back(var);
+        }
+
+        // All of the constructor members must refer to already-declared types
+        for (auto& memberTypeName : node->constructor->members())
+        {
+            std::shared_ptr<Type> memberType = resolveTypeName(*memberTypeName, varMap);
+            CHECK(memberType, "unknown member type \"{}\"", memberTypeName->str());
+
+            memberTypes.push_back(memberType);
+        }
+        node->constructor->setMemberTypes(memberTypes);
+
+        ValueConstructor* valueConstructor = new ValueConstructor(node->constructor->name, memberTypes);
+        node->valueConstructor = valueConstructor;
+        typeConstructor->addValueConstructor(valueConstructor);
+
+        newType = ConstructedType::create(typeConstructor, variables);
+
+        // Create a symbol for the constructor
+        Symbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
+        symbol->setTypeScheme(generalize(FunctionType::create(memberTypes, newType), _scopes));
+        insertSymbol(symbol);
+    }
 
 	node->type = Unit;
 }
@@ -644,18 +716,19 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
         CHECK(node->typeDecl->size() == node->params->size() + 1, "number of types does not match parameter list");
 
 		// Parameter types must be valid
+        std::unordered_map<std::string, std::shared_ptr<Type>> variables;
 		for (size_t i = 0; i < node->typeDecl->size() - 1; ++i)
 		{
 			auto& typeName = node->typeDecl->at(i);
 
-			std::shared_ptr<Type> type = resolveTypeName(*typeName);
+			std::shared_ptr<Type> type = resolveTypeName(*typeName, variables, true);
             CHECK(type, "unknown parameter type \"{}\"", typeName->str());
 
 			paramTypes.push_back(type);
 		}
 
 		// Return type must be valid
-		returnType = resolveTypeName(*node->typeDecl->back());
+		returnType = resolveTypeName(*node->typeDecl->back(), variables, true);
         CHECK(returnType, "unknown return type \"{}\"", node->typeDecl->back()->name());
 	}
 	else
@@ -794,7 +867,8 @@ void SemanticAnalyzer::visit(MatchNode* node)
 	assert(constructorSymbol->kind == kFunction);
 
 	assert(constructorSymbol->typeScheme->tag() == ttFunction);
-	FunctionType* functionType = constructorSymbol->type->get<FunctionType>();
+    std::shared_ptr<Type> instantiatedType = instantiate(constructorSymbol->typeScheme.get());
+	FunctionType* functionType = instantiatedType->get<FunctionType>();
 	const std::shared_ptr<Type> constructedType = functionType->output();
 
     CHECK(constructedType->valueConstructors().size() == 1, "let statement pattern matching only applies to types with a single constructor");

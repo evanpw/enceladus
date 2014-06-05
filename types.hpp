@@ -32,6 +32,7 @@ private:
     std::vector<std::unique_ptr<TypeName>> parameters_;
 };
 
+class ValueConstructor;
 class TypeConstructor
 {
 public:
@@ -42,9 +43,13 @@ public:
     const std::string& name() const { return name_; }
     size_t parameters() const { return parameters_; }
 
+    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return valueConstructors_; }
+    void addValueConstructor(ValueConstructor* valueConstructor) { valueConstructors_.emplace_back(valueConstructor); }
+
 private:
     std::string name_;
     size_t parameters_;
+    std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
 };
 
 enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed, ttStruct};
@@ -66,7 +71,7 @@ public:
     bool isBoxed() const;
     std::string name() const;
 
-    const std::vector<std::unique_ptr<ValueConstructor>>& valueConstructors() const;
+    const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const;
     void addValueConstructor(ValueConstructor* valueConstructor);
 
     std::set<TypeVariable*> freeVars() const;
@@ -78,7 +83,6 @@ private:
     std::shared_ptr<TypeImpl> _impl;
 };
 
-// Represents a fully-instantiated value constructor, with no free type variables
 class ValueConstructor
 {
 public:
@@ -135,7 +139,7 @@ public:
     // Convenience redirections to the underlying type
     virtual TypeTag tag() const { return _type->tag(); }
     virtual bool isBoxed() const { return _type->isBoxed(); }
-    const std::vector<std::unique_ptr<ValueConstructor>>& valueConstructors() const { return _type->valueConstructors(); }
+    const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return _type->valueConstructors(); }
 
     const std::shared_ptr<Type>& type() const { return _type; }
     std::set<TypeVariable*> freeVars() const;
@@ -160,11 +164,11 @@ public:
     virtual std::string name() const = 0;
     virtual bool isBoxed() const = 0;
 
-    virtual const std::vector<std::unique_ptr<ValueConstructor>>& valueConstructors() const { return valueConstructors_; }
+    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return valueConstructors_; }
     void addValueConstructor(ValueConstructor* valueConstructor) { valueConstructors_.emplace_back(valueConstructor); }
 
 protected:
-    std::vector<std::unique_ptr<ValueConstructor>> valueConstructors_;
+    std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
 
 private:
     TypeTag _tag;
@@ -194,7 +198,7 @@ private:
 
     std::string name_;
     bool primitive_;
-    std::vector<std::unique_ptr<ValueConstructor>> valueConstructors_;
+    std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
 };
 
 class StructDefNode;
@@ -284,6 +288,11 @@ private:
         {
             _typeParameters.push_back(parameter);
         }
+
+        for (auto& valueConstructor : typeConstructor->valueConstructors())
+        {
+            valueConstructors_.push_back(valueConstructor);
+        }
     }
 
     // TODO: Build value constructors
@@ -294,11 +303,16 @@ private:
         {
             _typeParameters.push_back(parameter);
         }
+
+        for (auto& valueConstructor : typeConstructor->valueConstructors())
+        {
+            valueConstructors_.push_back(valueConstructor);
+        }
     }
 
     const TypeConstructor* _typeConstructor;
     std::vector<std::shared_ptr<Type>> _typeParameters;
-    std::vector<std::unique_ptr<ValueConstructor>> _valueConstructors;
+    std::vector<std::shared_ptr<ValueConstructor>> _valueConstructors;
 };
 
 // A variable which can be substituted with a type. Used for polymorphism.

@@ -35,7 +35,7 @@ bool Type::isBoxed() const
     return _impl->isBoxed();
 }
 
-const std::vector<std::unique_ptr<ValueConstructor>>& Type::valueConstructors() const
+const std::vector<std::shared_ptr<ValueConstructor>>& Type::valueConstructors() const
 {
     return _impl->valueConstructors();
 }
@@ -151,7 +151,7 @@ std::string ConstructedType::name() const
     }
     else
     {
-        ss << _typeConstructor;
+        ss << _typeConstructor->name();
         for (const std::shared_ptr<Type>& type : _typeParameters)
         {
             ss << " " << type->name();
@@ -202,6 +202,8 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<st
             memberLocations_.push_back(nextUnboxed++);
         }
     }
+
+    //std::cerr << "ValueConstructor: " << name << " " << boxedMembers_ << " " << unboxedMembers_ << std::endl;
 }
 
 StructType::StructType(const std::string& name, StructDefNode* node)

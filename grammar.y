@@ -7,8 +7,7 @@ Format:
 */
 
 program
-    : /* empty */
-    | program statement
+    : { statement }
 
 //// Statements ////////////////////////////////////////////////////////////////
 
@@ -45,7 +44,7 @@ assignable
     | LIDENT '{' LIDENT '}'
 
 data_declaration
-    : DATA UIDENT '=' constructor_spec EOL
+    : DATA UIDENT { LIDENT } '=' constructor_spec EOL
 
 type_alias_declaration
     : TYPE UIDENT '=' type EOL

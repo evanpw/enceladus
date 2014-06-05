@@ -40,3 +40,5 @@ testing/test.sh $platform fail "*** Exception: Called tail on empty list" || ech
 testing/test.sh $platform unaryMinus "-5" || echo "Unary minus test failed!"
 testing/test.sh $platform localVar "3" || echo "Local variable test failed!"
 testing/test.sh $platform unnamed "19" || echo "Unnamed variable test failed!"
+testing/test.sh $platform typeConstructor "6" || echo "Type constructor test failed!"
+
