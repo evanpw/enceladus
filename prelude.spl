@@ -218,10 +218,13 @@ def range a b :: Int -> Int -> [Int] =
 
 -- length :: [a] -> Int
 def length xs =
-    if null xs then
-        return 0
-    else
-        return 1 + length $ tail xs
+    result := 0
+
+    while not $ null xs do
+        xs = tail xs
+        result += 1
+
+    return result
 
 def sum xs :: [Int] -> Int =
     if null xs then
@@ -263,11 +266,11 @@ def maximum xs :: [Int] -> Int =
 
 -- at :: Int -> [a] -> a
 def at n xs =
-    if n == 0 then
-        return head xs
-    else
-        return at (n - 1) (tail xs)
+    while n > 0 do
+        xs = tail xs
+        n -= 1
 
+    return head xs
 
 -- reverse :: [a] -> [a]
 def reverse xs =

@@ -1,0 +1,68 @@
+-- Solves Project Euler #23
+
+def divisors n =
+    result := [1]
+
+    i := 2
+    while i * i <= n do
+        if n mod i == 0 then
+            if i * i == n then
+                result = i : result
+            else
+                result = i : (n / i) : result
+
+        i += 1
+
+    return result
+
+def isAbundant n =
+    return (sum $ divisors n) > n
+
+def splitList xs pivot :: [Int] -> Int -> Pair [Int] =
+    lhs := []
+    rhs := []
+
+    for x in xs do
+        if x < pivot then
+            lhs = x : lhs
+        else
+            rhs = x : rhs
+
+    return Pair lhs rhs
+
+def sort xs :: [Int] -> [Int] =
+    if length xs <= 1 then
+        return xs
+
+    pivot := head xs
+    let Pair lhs rhs = splitList (tail xs) pivot
+
+    return (sort lhs) ++ [pivot] ++ (sort rhs)
+
+def isSumOfTwo y xs zs =
+    while not (null xs or null zs) do
+        s := (head xs) + (head zs)
+
+        if s == y then
+            return True
+        else if s > y then
+            zs = tail zs
+        else
+            xs = tail xs
+
+    return False
+
+abundants := []
+for i in range 1 28123 do
+    if isAbundant i then
+        abundants = i : abundants
+
+abundants = sort abundants
+reversed := reverse abundants
+
+total := 0
+for j in range 1 28123 do
+    if not $ isSumOfTwo j abundants reversed then
+        total += j
+
+print $ show total

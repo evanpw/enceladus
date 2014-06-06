@@ -1,0 +1,38 @@
+-- Solves Project Euler #24
+
+def toInt xs =
+    result := 0
+    for x in xs do
+        result = (result * 10) + x
+
+    return result
+
+def delete x xs :: Int -> [Int] -> [Int] =
+    initial := []
+    xs' := xs
+
+    while not $ null xs' do
+        if head xs' == x then
+            return (reverse initial) ++ (tail xs')
+        else
+            initial = (head xs') : initial
+
+        xs' = tail xs'
+
+    return xs
+
+def permutations digits :: [Int] -> [[Int]] =
+    if length digits == 1 then
+        return [[head digits]]
+
+    result := []
+    for digit in digits do
+        ps := permutations $ delete digit digits
+        for p in ps do
+            result = (digit : p) : result
+
+    return reverse $ result
+
+allPermutations := permutations $ range 0 9
+
+print $ show $ toInt $ at 999999 allPermutations
