@@ -1,0 +1,63 @@
+-- Solves Project Euler #22
+
+def readNames :: [String] =
+    line := readLine
+
+    pieces := splitBy ',' line
+
+    result := []
+    for piece in pieces do
+        result = (trimChar '"' piece) : result
+
+    return result
+
+def stringLess lhs rhs :: String -> String -> Bool =
+    if null lhs then
+        return True
+    else if null rhs then
+        return False
+    else
+        if (head lhs) < (head rhs) then
+            return True
+        else if (head lhs) > (head rhs) then
+            return False
+        else
+            return stringLess (tail lhs) (tail rhs)
+
+def splitList xs pivot :: [String] -> String -> Pair [String] =
+    lhs := []
+    rhs := []
+
+    for x in xs do
+        if stringLess x pivot then
+            lhs = x : lhs
+        else
+            rhs = x : rhs
+
+    return Pair lhs rhs
+
+def sort xs :: [String] -> [String] =
+    if length xs <= 1 then
+        return xs
+
+    pivot := head xs
+    let Pair lhs rhs = splitList (tail xs) pivot
+
+    return (sort lhs) ++ [pivot] ++ (sort rhs)
+
+def score name :: String -> Int =
+    total := 0
+    for c in name do
+        total += (c - 'A') + 1
+
+    return total
+
+names := readNames
+names = sort names
+
+total := 0
+for i in range 1 (length names) do
+    name := at (i - 1) names
+    total += i * score name
+
+print $ show total

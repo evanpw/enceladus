@@ -344,37 +344,39 @@ def substring s start n :: String -> Int -> Int -> String =
 
 def split s :: String -> [String] =
     result := []
-    start := 0
-    for i in range 0 (length s - 1) do
-        if isSpace $ at i s then
-            if i != start then
-                piece := substring s start (i - start)
-                result = piece : result
+    piece := ""
 
-            start = i + 1
+    while not $ null s do
+        if isSpace $ head s then
+            if length piece > 0 then
+                result = (reverse piece) : result
 
-    if start != length s then
-        n := length s - start
-        piece = substring s start n
-        result = piece : result
+            piece = ""
+        else
+            piece = (head s) : piece
+
+        s = tail s
+
+    if length piece > 0 then result = (reverse piece) : result
 
     return reverse result
 
 def splitBy sep s :: Char -> String -> [String] =
     result := []
-    start := 0
-    for i in range 0 (length s - 1) do
-        if at i s == sep then
-            if i != start then
-                piece := substring s start (i - start)
-                result = piece : result
+    piece := ""
 
-            start = i + 1
+    while not $ null s do
+        if head s == sep then
+            if length piece > 0 then
+                result = (reverse piece) : result
 
-    if start != length s then
-        n := length s - start
-        piece = substring s start n
-        result = piece : result
+            piece = ""
+        else
+            piece = (head s) : piece
+
+        s = tail s
+
+    if length piece > 0 then result = (reverse piece) : result
 
     return reverse result
 
@@ -423,3 +425,6 @@ def fst pair =
 def snd pair =
     let Pair _ x = pair
     return x
+
+def splitAt n xs =
+    return Pair (take n xs) (drop n xs)

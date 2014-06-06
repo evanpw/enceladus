@@ -32,3 +32,4 @@ Todo
 * Make the syntax in euler2-2 work
 * Add a built-in map / dict type
 * Tuples
+* Fix global variables with apostrophes
