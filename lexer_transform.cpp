@@ -33,7 +33,6 @@ int yylex()
         }
 
         int token = yylex_raw();
-        //std::cerr << "yylex_raw() = " << tokenToString((TokenType)token) << std::endl;
 
         // Handle unfinished indentation blocks when EOF is reached
         if (token == 0)

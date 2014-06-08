@@ -15,6 +15,11 @@ std::string trim_quotes(const std::string& str)
 	return str.substr(1, str.length() - 2);
 }
 
+std::string trim_right(const std::string str)
+{
+	return str.substr(0, str.length() - 1);
+}
+
 int count_whitespace(const char* s, int length)
 {
 	int count = 0;
@@ -59,26 +64,28 @@ int yycolumn = 1;
 
 %option yylineno
 
+%x import
+
 %%
 
 					  /* It's easier to get rid of blank lines here than in the grammar. */
 ^[ \t]*("#".*|"--".*)?\n  { yycolumn = 1; }
 
--?[0-9][0-9]*	{
-					try
-	                {
-	                        yylval.number = boost::lexical_cast<long>(yytext);
-	                        return tINT_LIT;
-	                }
-	                catch (boost::bad_lexical_cast&)
-	                {
-	                        std::cerr << "Near line " << yylloc.first_line << ", "
-	                                  << "column " << yylloc.first_column << ": "
-	                                  << "error: integer literal out of range: " << yytext << std::endl;
+-?[0-9][0-9]* {
+	try
+    {
+            yylval.number = boost::lexical_cast<long>(yytext);
+            return tINT_LIT;
+    }
+    catch (boost::bad_lexical_cast&)
+    {
+            std::cerr << "Near line " << yylloc.first_line << ", "
+                      << "column " << yylloc.first_column << ": "
+                      << "error: integer literal out of range: " << yytext << std::endl;
 
-	                        return tNONE;
-	                 }
-	            }
+            return tNONE;
+     }
+}
 
 ("#"|"--").*			/* Python- and Haskell-style comments */
 
@@ -121,6 +128,7 @@ int yycolumn = 1;
 "break"		{ return tBREAK; }
 "data"		{ return tDATA; }
 "def"		{ return tDEF; }
+"import"	{ BEGIN(import); }
 "do"		{ return tDO; }
 "else"		{ return tELSE; }
 "False"		{ return tFALSE; }
@@ -136,6 +144,27 @@ int yycolumn = 1;
 "type"		{ return tTYPE; }
 "var"		{ return tVAR; }
 "while"		{ return tWHILE; }
+
+<import>[ \t]* 	/* Eat whitespace */
+
+<import>[^ \t\n]+\n { /* Import file name */
+
+	FILE* f = fopen((trim_right(yytext) + ".spl").c_str(), "r");
+	assert(f);
+
+	yypush_buffer_state(yy_create_buffer(f, YY_BUF_SIZE));
+
+	BEGIN(INITIAL);
+}
+
+<<EOF>> {
+	yypop_buffer_state();
+
+	if (!YY_CURRENT_BUFFER)
+	{
+		yyterminate();
+	}
+}
 
  /* String and char literals */
 \"[^"]*\"				{ yylval.str = StringTable::add(trim_quotes(yytext)); return tSTRING_LIT; }

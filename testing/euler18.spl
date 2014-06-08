@@ -1,5 +1,7 @@
 -- Solves Project Euler 18
 
+import String
+
 def readInput :: [[Int]] =
     pyramid := []
 

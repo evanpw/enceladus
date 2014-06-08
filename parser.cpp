@@ -27,8 +27,11 @@ void advance()
 {
     nextTokens[0] = nextTokens[1];
 
-    nextTokens[1].type = (TokenType)yylex();
-    nextTokens[1].value = yylval;
+    if (nextTokens[0].type != tEOF)
+    {
+        nextTokens[1].type = (TokenType)yylex();
+        nextTokens[1].value = yylval;
+    }
 }
 
 void initialize()

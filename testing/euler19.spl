@@ -1,5 +1,7 @@
 -- Solves Project Euler #19
 
+import String
+
 data Date = Date Int Int Int Int
 
 def year date =
