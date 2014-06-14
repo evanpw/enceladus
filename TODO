@@ -33,3 +33,4 @@ Todo
 * Add a built-in map / dict type
 * Tuples
 * Fix global variables with apostrophes
+* More sophisticated type aliases: type MyPair = Pair Int

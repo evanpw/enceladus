@@ -5,3 +5,14 @@
   divisible by 4), which is true at least for the gcc implementation of malloc.
 
 * True = 11b, False = 01b
+
+* Functions calls must have a name in the first slot, not an expression:
+    - Good: f 1 2
+            g := f
+            g 3 4
+    - Bad: (compose f g) 4
+
+* Nullary nodes:
+    - If a variable name, then evaluates to the value of the variable
+    - If a nullary function, then evaluates to the result of calling the fn
+    - If a non-nullary function, then evaluates to a closure around the fn

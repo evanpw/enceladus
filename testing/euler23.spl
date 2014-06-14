@@ -1,5 +1,7 @@
 -- Solves Project Euler #23
 
+import Sort
+
 def divisors n =
     result := [1]
 
@@ -18,26 +20,7 @@ def divisors n =
 def isAbundant n =
     return (sum $ divisors n) > n
 
-def splitList xs pivot :: [Int] -> Int -> Pair [Int] =
-    lhs := []
-    rhs := []
-
-    for x in xs do
-        if x < pivot then
-            lhs = x : lhs
-        else
-            rhs = x : rhs
-
-    return Pair lhs rhs
-
-def sort xs :: [Int] -> [Int] =
-    if length xs <= 1 then
-        return xs
-
-    pivot := head xs
-    let Pair lhs rhs = splitList (tail xs) pivot
-
-    return (sort lhs) ++ [pivot] ++ (sort rhs)
+def intCompare x y = return x - y
 
 def isSumOfTwo y xs zs =
     while not (null xs or null zs) do
@@ -57,7 +40,7 @@ for i in range 1 28123 do
     if isAbundant i then
         abundants = i : abundants
 
-abundants = sort abundants
+abundants = sort intCompare abundants
 reversed := reverse abundants
 
 total := 0

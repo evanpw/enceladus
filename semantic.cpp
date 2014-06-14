@@ -781,6 +781,8 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	symbol->setTypeScheme(generalize(symbol->typeScheme->type(), _scopes));
 	insertSymbol(symbol);
 
+    //std::cerr << name << " :: " << symbol->typeScheme->name() << std::endl;
+
     node->type = Unit;
 }
 
@@ -910,7 +912,7 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 	Symbol* symbol = resolveSymbol(name);
 
     CHECK(symbol, "function \"{}\" is not defined", name);
-    CHECK(symbol->kind == kFunction, "target of function call \"{}\" is not a function", symbol->name);
+    //CHECK(symbol->kind == kFunction, "target of function call \"{}\" is not a function", symbol->name);
 
 	std::vector<std::shared_ptr<Type>> paramTypes;
     for (size_t i = 0; i < node->arguments.size(); ++i)
@@ -947,12 +949,19 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 	else /* symbol->kind == kFunction */
 	{
 		node->symbol = symbol;
-
-        std::shared_ptr<Type> returnType = newVariable();
         std::shared_ptr<Type> functionType = instantiate(symbol->typeScheme.get());
-        unify(functionType, FunctionType::create({}, returnType), node);
 
-        node->type = returnType;
+        if (functionType->get<FunctionType>()->inputs().empty())
+        {
+            std::shared_ptr<Type> returnType = newVariable();
+            unify(functionType, FunctionType::create({}, returnType), node);
+
+            node->type = returnType;
+        }
+        else
+        {
+            node->type = functionType;
+        }
 	}
 }
 

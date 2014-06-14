@@ -135,6 +135,11 @@ std::string FunctionType::name() const
         ss << " -> ";
     }
 
+    if (_inputs.empty())
+    {
+        ss << "Unit -> ";
+    }
+
     ss << _output->name();
 
     return ss.str();

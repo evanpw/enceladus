@@ -2,7 +2,7 @@
 
 import String
 
-def readInput :: [[Int]] =
+def readInput :: [String] =
     pyramid := []
 
     keepGoing := True
@@ -22,7 +22,7 @@ def readInput :: [[Int]] =
 
     return reverse pyramid
 
-def bestRouteFrom x y pyramid :: Int -> Int -> [[Int]] -> Int =
+def bestRouteFrom x y pyramid =
     row := at y pyramid
     here := at x row
 

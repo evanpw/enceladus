@@ -1,11 +1,10 @@
 -- Solve Project Euler 4
 
-def reverseDigits x :: Int -> Int =
+def reverseDigits x =
     y := 0
 
     while x != 0 do
-        y = y * 10
-        y = y + (x mod 10)
+        y = y * 10 + (x mod 10)
         x /= 10
 
     return y

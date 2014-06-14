@@ -1,45 +1,21 @@
 -- Solves Project Euler 13
 
-def longSum xs ys :: [Int] -> [Int] -> [Int] =
-    carry := 0
-    result := []
+import BigInt
 
-    x := 0
-    y := 0
-    while not (null xs and null ys and carry == 0) do
-        if null xs then
-            x = 0
-        else
-            x = head xs
-            xs = tail xs
-
-        if null ys then
-            y = 0
-        else
-            y = head ys
-            ys = tail ys
-
-        z := x + y + carry
-
-        result = (z mod 10) : result
-        carry = z / 10
-
-    return reverse result
-
-xs := []
-
-for i in range 1 100 do
+def readNumber =
     ys := []
+
     for j in range 1 50 do
         ys = read : ys
 
-    xs = longSum xs ys
+    return ys
+
+xs := toBigInt 0
+for i in range 1 100 do
+    xs = bigSum xs readNumber
 
 n := 0
 for x in take 10 $ reverse xs do
     n = (n * 10) + x
 
 print $ show n
-
-
-

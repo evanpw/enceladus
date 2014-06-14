@@ -11,6 +11,15 @@
 #define EMIT_LEFT(x) out_ << x << std::endl;
 #define EMIT_LABEL(x) out_ << x << ":" << std::endl;
 #define EMIT(x) out_ << "\t" << x << std::endl;
+#define EMIT_MALLOC(size) \
+    EMIT("mov rbx, rsp"); \
+    EMIT("and rsp, -16"); \
+    EMIT("add rsp, -8"); \
+    EMIT("push rbx"); \
+    EMIT("mov rdi, " << size); \
+	EMIT("call " << foreignName("malloc")); \
+    EMIT("pop rbx"); \
+    EMIT("mov rsp, rbx");
 
 std::string CodeGen::mangle(const std::string& name)
 {
@@ -139,15 +148,7 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 	EMIT("push rbp");
 	EMIT("mov rbp, rsp");
 
-	// Align stack, allocate, unalign
-    EMIT("mov rbx, rsp");
-    EMIT("and rsp, -16");
-    EMIT("add rsp, -8");
-    EMIT("push rbx");
-    EMIT("mov rdi, " << size);
-	EMIT("call " << foreignName("malloc"));
-    EMIT("pop rbx");
-    EMIT("mov rsp, rbx");
+    EMIT_MALLOC(size);
 
 	//// Fill in the members with the constructor arguments
 
@@ -195,15 +196,7 @@ void CodeGen::createStructInit(StructDefNode* node)
 	EMIT("push rbp");
 	EMIT("mov rbp, rsp");
 
-	// Align stack, allocate, unalign
-    EMIT("mov rbx, rsp");
-    EMIT("and rsp, -16");
-    EMIT("add rsp, -8");
-    EMIT("push rbx");
-    EMIT("mov rdi, " << size);
-	EMIT("call " << foreignName("malloc"));
-    EMIT("pop rbx");
-    EMIT("mov rsp, rbx");
+    EMIT_MALLOC(size);
 
 	//// Zero out all of the members
 
@@ -485,7 +478,26 @@ void CodeGen::visit(NullaryNode* node)
 				referencedFunctions_.insert(node->symbol->asFunction()->definition);
 			}
 
-			EMIT("call _" << mangle(node->name));
+			if (node->type->tag() != ttFunction)
+			{
+				EMIT("call _" << mangle(node->name));
+			}
+			else
+			{
+				// If the function is not completely applied, then create a closure
+				size_t size = 8 * (2 + 1);
+				EMIT_MALLOC(size);
+
+			    // Reference count
+				EMIT("mov qword [rax], 0");
+
+				// 0 boxed members, 1 unboxed
+				EMIT("mov qword [rax + 8], 1");
+
+				// Address of the function as an unboxed member
+				EMIT("mov rbx, _" << mangle(node->name));
+				EMIT("mov qword [rax + 16], rbx");
+			}
 		}
 	}
 }
@@ -675,7 +687,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		EMIT("push rax");
 	}
 
-	if (node->symbol->asFunction()->isBuiltin)
+	if (node->symbol->kind == kFunction && node->symbol->asFunction()->isBuiltin)
 	{
 		if (node->target == "not")
 		{
@@ -789,7 +801,7 @@ void CodeGen::visit(FunctionCallNode* node)
 			assert(false);
 		}
 	}
-	else if (node->symbol->asFunction()->isForeign)
+	else if (node->symbol->kind == kFunction && node->symbol->asFunction()->isForeign)
 	{
 		// x86_64 calling convention for C puts the first 6 arguments in registers
 		if (node->arguments.size() >= 1) EMIT("pop rdi");
@@ -811,7 +823,7 @@ void CodeGen::visit(FunctionCallNode* node)
 	    EMIT("pop rbx");
 	    EMIT("mov rsp, rbx");
 	}
-	else
+	else if (node->symbol->kind == kFunction)
 	{
 		if (node->symbol->asFunction()->definition &&
 			visitedFunctions_.find(node->symbol->asFunction()->definition) == visitedFunctions_.end())
@@ -820,6 +832,17 @@ void CodeGen::visit(FunctionCallNode* node)
 		}
 
 		EMIT("call _" << mangle(node->target));
+
+		size_t args = node->arguments.size();
+		if (args > 0) EMIT("add rsp, " << 8 * args);
+	}
+	else /* node->symbol->kind == kVariable */
+	{
+		// The variable represents a closure, so extract the actual function
+		// address
+		EMIT("mov rax, " << access(*node->symbol));
+		EMIT("mov rax, qword [rax + 16]");
+		EMIT("call rax");
 
 		size_t args = node->arguments.size();
 		if (args > 0) EMIT("add rsp, " << 8 * args);

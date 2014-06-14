@@ -1,0 +1,16 @@
+-- Solves Project Euler #25
+
+import BigInt
+
+last := toBigInt 1
+current := toBigInt 1
+index := 2
+
+while length current < 1000 do
+    next := bigSum last current
+    last = current
+    current = next
+
+    index += 1
+
+print $ show index

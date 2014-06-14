@@ -13,7 +13,7 @@ def readNames :: [String] =
 
     return result
 
-def stringLess lhs rhs :: String -> String -> Bool =
+def stringLess lhs rhs =
     if null lhs then
         return True
     else if null rhs then

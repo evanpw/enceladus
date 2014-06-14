@@ -1,0 +1,79 @@
+type BigInt = [Int]
+
+def bigSum xs ys :: BigInt -> BigInt -> BigInt =
+    carry := 0
+    result := []
+
+    x := 0
+    y := 0
+    while not (null xs and null ys and carry == 0) do
+        if null xs then
+            x = 0
+        else
+            x = head xs
+            xs = tail xs
+
+        if null ys then
+            y = 0
+        else
+            y = head ys
+            ys = tail ys
+
+        z := x + y + carry
+
+        result = (z mod 10) : result
+        carry = z / 10
+
+    return reverse result
+
+def sumAll xss :: [BigInt] -> BigInt =
+    result := [0]
+
+    for xs in xss do
+        result = bigSum result xs
+
+    return result
+
+def singleProduct xs y :: BigInt -> Int -> BigInt =
+    carry := 0
+    result := []
+
+    while not (null xs and carry == 0) do
+        if null xs then
+            z := carry
+        else
+            x := head xs
+            z = x * y + carry
+            xs = tail xs
+
+        result = (z mod 10) : result
+        carry = z / 10
+
+    return reverse result
+
+def shift xs n :: BigInt -> Int -> BigInt =
+    if n == 0 then
+        return xs
+    else
+        return shift (0 : xs) (n - 1)
+
+def bigProduct xs ys :: BigInt -> BigInt -> BigInt =
+    partialProducts := []
+
+    for n in range 0 $ length ys - 1 do
+        y := at n ys
+        z1 := singleProduct xs y
+        z2 := shift z1 n
+        partialProducts = z2 : partialProducts
+
+    return sumAll partialProducts
+
+def toBigInt x :: Int -> BigInt =
+    result := []
+
+    while x != 0 do
+        result = (x mod 10) : result
+        x /= 10
+
+    return reverse result
+

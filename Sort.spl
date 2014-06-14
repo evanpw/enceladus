@@ -1,0 +1,20 @@
+def splitList compare xs pivot =
+    lhs := []
+    rhs := []
+
+    for x in xs do
+        if compare x pivot < 0 then
+            lhs = x : lhs
+        else
+            rhs = x : rhs
+
+    return Pair lhs rhs
+
+def sort compare xs =
+    if length xs <= 1 then
+        return xs
+
+    pivot := head xs
+    let Pair lhs rhs = splitList compare (tail xs) pivot
+
+    return (sort compare lhs) ++ [pivot] ++ (sort compare rhs)
