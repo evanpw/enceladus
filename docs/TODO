@@ -34,3 +34,5 @@ Todo
 * Tuples
 * Fix global variables with apostrophes
 * More sophisticated type aliases: type MyPair = Pair Int
+* Allow functions definitions to specify arguments with function types
+* Allow real closures with variable capture

@@ -1,0 +1,14 @@
+def addOne x =
+    return x + 1
+
+def applyToOne f =
+    return f 1
+
+result := 0
+
+f := addOne
+result += f 2
+result += applyToOne addOne
+result += applyToOne f
+
+print $ show result
