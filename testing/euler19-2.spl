@@ -1,5 +1,7 @@
 -- Solves Project Euler #19
 
+import String
+
 struct Date =
     year :: Int
     month :: Int
@@ -28,34 +30,31 @@ def daysInMonth date :: Date -> Int =
         return at date{month} nonLeap
 
 def incrementDate date :: Date -> Date =
-    result := Date{}
+    let Date y m d w = date
 
-    result{year} = date{year}
-    result{month} = date{month}
-    result{day} = date{day} + 1
-    result{dayOfWeek} = (date{dayOfWeek} + 1) mod 7
+    d += 1
+    w = (w + 1) mod 7
 
-    if result{day} > daysInMonth date then
-        result{day} = 1
-        result{month} += 1
+    if d > daysInMonth date then
+        d = 1
+        m += 1
 
-        if result{month} > 12 then
-            result{year} += 1
-            result{month} = 1
+        if m > 12 then
+            y += 1
+            m = 1
 
-    return result
+    return Date y m d w
 
 def printDate date :: Date -> String =
     monthNames := ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-    return join "" [at date{month} monthNames, " ", intToString date{day}, ", ", intToString date{year}, " (", at date{dayOfWeek} dayNames, ")"]
+    return join "" [at date{month} monthNames, " ", show date{day}, ", ", show date{year}, " (", at date{dayOfWeek} dayNames, ")"]
 
-current := Date{}
-current{year} = 1900
-current{month} = 1
-current{day} = 1
-current{dayOfWeek} = 1
+
+test := Date{}
+
+current := Date 1900 1 1 1
 
 dayCount := 0
 while current{year} <= 2000 do

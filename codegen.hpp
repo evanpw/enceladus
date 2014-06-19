@@ -56,7 +56,6 @@ public:
 
 	// Create the functions corresponding to a data type declaration
 	void createConstructor(ValueConstructor* constructor);
-	void createStructInit(StructDefNode* node);
 
 private:
 	void decref(const Symbol* symbol);

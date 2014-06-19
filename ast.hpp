@@ -399,6 +399,7 @@ public:
 	std::string name;
 	std::unique_ptr<MemberList> members;
 	std::shared_ptr<Type> structType;
+	ValueConstructor* valueConstructor;
 };
 
 class StructInitNode : public ExpressionNode

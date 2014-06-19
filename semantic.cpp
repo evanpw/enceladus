@@ -416,7 +416,6 @@ std::shared_ptr<Type> SemanticAnalyzer::instantiate(const std::shared_ptr<Type>&
     switch (type->tag())
     {
         case ttBase:
-        case ttStruct:
             return type;
 
         case ttVariable:
@@ -481,7 +480,6 @@ bool SemanticAnalyzer::occurs(TypeVariable* variable, const std::shared_ptr<Type
     switch (value->tag())
     {
         case ttBase:
-        case ttStruct:
             return false;
 
         case ttVariable:
@@ -524,11 +522,6 @@ void SemanticAnalyzer::unify(const std::shared_ptr<Type>& lhs, const std::shared
     if (lhs->tag() == ttBase && rhs->tag() == ttBase)
     {
         // Two base types can be unified only if equal (we don't have inheritance)
-        if (lhs->name() == rhs->name())
-            return;
-    }
-    else if (lhs->tag() == ttStruct && rhs->tag() == ttStruct)
-    {
         if (lhs->name() == rhs->name())
             return;
     }
@@ -1087,17 +1080,38 @@ void SemanticAnalyzer::visit(VariableNode* node)
 
 void SemanticAnalyzer::visit(StructDefNode* node)
 {
+    // Struct definitions cannot be local
     CHECK_TOP_LEVEL("struct declaration");
 
     AstVisitor::visit(node);
 
-    // The struct name cannot have already been used for something
-    const std::string& structName = node->name;
-    CHECK_UNDEFINED(structName);
+    // The type name cannot have already been used for something
+    const std::string& typeName = node->name;
+    CHECK_UNDEFINED(typeName);
 
-    // Actually create the type
-    std::shared_ptr<Type> newType = StructType::create(structName, node);
-    topScope()->types.insert(new TypeSymbol(structName, node, newType));
+    CHECK(!node->members->empty(), "structs cannot be empty");
+
+    std::vector<std::string> memberNames;
+    std::vector<std::shared_ptr<Type>> memberTypes;
+    for (auto& member : *node->members)
+    {
+        CHECK_UNDEFINED(member->name);
+
+        memberTypes.push_back(member->memberType);
+        memberNames.push_back(member->name);
+    }
+
+    std::shared_ptr<Type> newType = BaseType::create(node->name);
+    topScope()->types.insert(new TypeSymbol(typeName, node, newType));
+
+    ValueConstructor* valueConstructor = new ValueConstructor(typeName, memberTypes, memberNames);
+    node->valueConstructor = valueConstructor;
+    newType->addValueConstructor(valueConstructor);
+
+    // Create a symbol for the constructor
+    Symbol* symbol = new FunctionSymbol(typeName, node, nullptr);
+    symbol->setType(FunctionType::create(memberTypes, newType));
+    insertSymbol(symbol);
 
     node->structType = newType;
     node->type = Unit;
@@ -1117,10 +1131,10 @@ void SemanticAnalyzer::visit(StructInitNode* node)
 {
     std::shared_ptr<Type> type = getBaseType(node->structName);
     CHECK(type, "unknown type \"{}\"", node->structName);
-    CHECK(type->get<StructType>(), "cannot initialize non-struct type \"{}\"", node->structName);
 
     node->type = type;
 }
+
 
 void SemanticAnalyzer::visit(MemberAccessNode* node)
 {
@@ -1133,14 +1147,21 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     node->symbol = symbol;
 
     std::shared_ptr<Type> type = symbol->type;
-
-    StructType* structType = type->get<StructType>();
-    CHECK(structType, "cannot access member of non-struct variable \"{}\"", name);
+    CHECK(type->valueConstructors().size() == 1, "member access syntax only applies to types with a single constructor");
 
     CHECK(node->memberName[0] != '_', "member access syntax cannot be used with unnamed members");
-    auto i = structType->members().find(node->memberName);
-    CHECK(i != structType->members().end(), "no such member \"{}\" of variable \"{}\"", node->memberName, name);
 
-    node->memberLocation = i->second.location;
-    node->type = i->second.type;
+    std::shared_ptr<ValueConstructor> valueConstructor = type->valueConstructors().at(0);
+
+    auto i = valueConstructor->members().begin();
+    while (i != valueConstructor->members().end())
+    {
+        if (i->name == node->memberName) break;
+        ++i;
+    }
+
+    CHECK(i != valueConstructor->members().end(), "no such member \"{}\" of variable \"{}\"", node->memberName, name);
+
+    node->memberLocation = i->location;
+    node->type = i->type;
 }

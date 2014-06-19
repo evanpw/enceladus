@@ -52,7 +52,7 @@ private:
     std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
 };
 
-enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed, ttStruct};
+enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed};
 
 class TypeImpl;
 class TypeVariable;
@@ -83,6 +83,7 @@ private:
     std::shared_ptr<TypeImpl> _impl;
 };
 
+/*
 class ValueConstructor
 {
 public:
@@ -98,6 +99,37 @@ private:
     std::string name_;
     std::vector<std::shared_ptr<Type>> members_;
     std::vector<size_t> memberLocations_;
+    size_t boxedMembers_, unboxedMembers_;
+};
+*/
+
+class ValueConstructor
+{
+public:
+    ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames = {});
+
+    virtual std::string name() const { return name_; }
+
+    size_t boxedMembers() const { return boxedMembers_; }
+    size_t unboxedMembers() const { return unboxedMembers_; }
+
+    struct MemberDesc
+    {
+        MemberDesc(const std::string& name, std::shared_ptr<Type> type, size_t location)
+        : name(name), type(type), location(location)
+        {}
+
+        std::string name;
+        std::shared_ptr<Type> type;
+        size_t location;
+    };
+
+    std::vector<MemberDesc>& members() { return members_; }
+
+private:
+    std::string name_;
+    std::vector<MemberDesc> members_;
+
     size_t boxedMembers_, unboxedMembers_;
 };
 
@@ -199,40 +231,6 @@ private:
     std::string name_;
     bool primitive_;
     std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
-};
-
-class StructDefNode;
-
-// Represents a compound type (a struct)
-class StructType : public TypeImpl
-{
-public:
-    static std::shared_ptr<Type> create(const std::string& name, StructDefNode* node)
-    {
-        return std::make_shared<Type>(new StructType(name, node));
-    }
-
-    virtual std::string name() const { return name_; }
-    virtual bool isBoxed() const { return true; }
-
-    size_t boxedMembers() const { return boxedMembers_; }
-    size_t unboxedMembers() const { return unboxedMembers_; }
-
-    struct MemberDesc
-    {
-        std::shared_ptr<Type> type;
-        size_t location;
-    };
-
-    const std::unordered_map<std::string, MemberDesc>& members() { return members_; }
-
-private:
-    StructType(const std::string& name, StructDefNode* node);
-
-    std::string name_;
-    std::unordered_map<std::string, MemberDesc> members_;
-
-    size_t boxedMembers_, unboxedMembers_;
 };
 
 // The type of a function from one type to another

@@ -136,12 +136,12 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 {
 	//std::cerr << "createConstructor: " << constructor->name() << std::endl;
 
-	const std::vector<std::shared_ptr<Type>>& memberTypes = constructor->members();
+	const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
 	// There is one extra qword for the reference count and one for the member
 	// counts (pointers and non-pointers)
-	size_t size = 8 * (memberTypes.size() + 2);
+	size_t size = 8 * (members.size() + 2);
 
 	EMIT_BLANK();
 	EMIT_LABEL("_" << mangle(constructor->name()));
@@ -160,58 +160,21 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 	EMIT("mov rbx, qword " << memberCount);
 	EMIT("mov qword [rax + 8], rbx");
 
-    for (size_t i = 0; i < memberTypes.size(); ++i)
+    for (size_t i = 0; i < members.size(); ++i)
     {
-    	size_t location = constructor->memberLocations().at(i);
+    	auto& member = members[i];
+    	size_t location = member.location;
 
     	EMIT("mov rdi, qword [rbp + " << 8 * (i + 2) << "]");
     	EMIT("mov qword [rax + " << 8 * (location + 2) << "], rdi");
 
     	// Increment reference count of non-simple, non-null members
-    	if (memberTypes[i]->isBoxed())
+    	if (member.type->isBoxed())
     	{
     		EMIT("push rax");
 			EMIT("call " << foreignName("_incref"));
 			EMIT("pop rax");
     	}
-    }
-
-	EMIT("mov rsp, rbp");
-	EMIT("pop rbp");
-	EMIT("ret");
-}
-
-void CodeGen::createStructInit(StructDefNode* node)
-{
-	StructType* structType = node->structType->get<StructType>();
-	auto& members = node->members;
-
-	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
-	// There is one extra qword for the reference count and one for the member
-	// counts (pointers and non-pointers)
-	size_t size = 8 * (members->size() + 2);
-
-	EMIT_BLANK();
-	EMIT_LABEL("__init_" << mangle(node->name));
-	EMIT("push rbp");
-	EMIT("mov rbp, rsp");
-
-    EMIT_MALLOC(size);
-
-	//// Zero out all of the members
-
-    // Reference count
-	EMIT("mov qword [rax], 0");
-
-	// Boxed & unboxed member counts
-	long memberCount = (structType->boxedMembers() << 32) + structType->unboxedMembers();
-	EMIT("mov rbx, qword " << memberCount);
-	EMIT("mov qword [rax + 8], rbx");
-
-	// Initialize all members to zero
-    for (size_t i = 0; i < members->size(); ++i)
-    {
-    	EMIT("mov qword [rax + " << 8 * (i + 2) << "], 0");
     }
 
 	EMIT("mov rsp, rbp");
@@ -363,7 +326,7 @@ void CodeGen::visit(ProgramNode* node)
 
 	for (StructDefNode* structDef : structDeclarations_)
 	{
-		createStructInit(structDef);
+		createConstructor(structDef->valueConstructor);
 	}
 
 	// Declare global variables and string literalsin the data segment
@@ -656,7 +619,7 @@ void CodeGen::visit(MatchNode* node)
 	for (size_t i = 0; i < node->symbols.size(); ++i)
 	{
 		const Symbol& member = *node->symbols.at(i);
-		size_t location = constructor->memberLocations().at(i);
+		size_t location = constructor->members().at(i).location;
 
 		EMIT("mov rdi, [rsi + " << 8 * (location + 2) << "]");
 		EMIT("mov " << access(member) << ", rdi");
@@ -872,7 +835,7 @@ void CodeGen::visit(StructDefNode* node)
 
 void CodeGen::visit(StructInitNode* node)
 {
-	EMIT("call __init_" << mangle(node->structName));
+	EMIT("call _" << mangle(node->structName));
 }
 
 void CodeGen::visit(MemberAccessNode* node)

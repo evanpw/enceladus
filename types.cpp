@@ -52,7 +52,6 @@ std::set<TypeVariable*> Type::freeVars() const
     switch (_impl->tag())
     {
         case ttBase:
-        case ttStruct:
             break;
 
         case ttVariable:
@@ -175,6 +174,7 @@ std::string TypeVariable::name() const
     return ss.str();
 }
 
+/*
 ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& members)
 : name_(name), members_(members)
 {
@@ -210,17 +210,20 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<st
 
     //std::cerr << "ValueConstructor: " << name << " " << boxedMembers_ << " " << unboxedMembers_ << std::endl;
 }
+*/
 
-StructType::StructType(const std::string& name, StructDefNode* node)
-: TypeImpl(ttStruct), name_(name)
+ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames)
+: name_(name)
 {
+    assert(memberNames.empty() || (memberNames.size() == memberTypes.size()));
+
     boxedMembers_ = 0;
     unboxedMembers_ = 0;
 
     // First pass -> just count the number of boxed / unboxed members
-    for (auto& member : *node->members)
+    for (size_t i = 0; i < memberTypes.size(); ++i)
     {
-        if (member->memberType->isBoxed())
+        if (memberTypes[i]->isBoxed())
         {
             ++boxedMembers_;
         }
@@ -232,15 +235,16 @@ StructType::StructType(const std::string& name, StructDefNode* node)
 
     // Second pass -> determine the actual layout
     size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
-    for (auto& member : *node->members)
+    for (size_t i = 0; i < memberTypes.size(); ++i)
     {
-        if (member->memberType->isBoxed())
+        std::string memberName = memberNames.empty() ? "_" : memberNames[i];
+        if (memberTypes[i]->isBoxed())
         {
-            members_[member->name] = { member->memberType, nextBoxed++ };
+            members_.emplace_back(memberName, memberTypes[i], nextBoxed++);
         }
         else
         {
-            members_[member->name] = { member->memberType, nextUnboxed++ };
+            members_.emplace_back(memberName, memberTypes[i], nextUnboxed++);
         }
     }
 }
