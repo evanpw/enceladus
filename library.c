@@ -86,6 +86,8 @@ void _dieWithMessage(const char* str)
     uint32_t numScalars; \
     uint32_t numPointers; \
 
+#define IS_TAGGED(p) ((int64_t)p & 0x3)
+
 typedef struct SplObject
 {
     SplObject_HEAD
@@ -112,44 +114,50 @@ typedef List String;
 //// Reference counting ////////////////////////////////////////////////////////
 
 #define Spl_INCREF(p) _incref((SplObject*)(p))
-void _incref(SplObject* p)
-{
-    if (p == NULL || ((int64_t)p & 0x3)) return;
 
-    ++(p->refCount);
+void _incref(SplObject* object)
+{
+    if (object == NULL || IS_TAGGED(object)) return;
+
+    ++(object->refCount);
 }
 
-int64_t _decrefNoFree(int64_t* p)
+int64_t _decrefNoFree(SplObject* object)
 {
-    if (p == NULL || ((int64_t)p & 0x3)) return 1;
+    if (object == NULL || IS_TAGGED(object)) return 1;
 
-    --(*p);
+    --object->refCount;
 
-    if (*p < 0)
+    if (object->refCount < 0)
     {
         _dieWithMessage("*** Exception: Reference count is negative");
     }
 
-    return *p;
+    return object->refCount;
 }
 
-void _decref(int64_t* object)
+void _destroy(SplObject* object);
+
+void _decref(SplObject* object)
 {
-    if (object == NULL || ((int64_t)object & 0x3)) return;
+    if (object == NULL || IS_TAGGED(object)) return;
 
     if (_decrefNoFree(object) == 0)
     {
-        int64_t pointerCount = *(object + 1) >> 32;
-
-        int64_t* child = object + 2;
-        for (int i = 0; i < pointerCount; ++i)
-        {
-            _decref((int64_t*)*child);
-            ++child;
-        }
-
-        free(object);
+        _destroy(object);
     }
+}
+
+void _destroy(SplObject* object)
+{
+    SplObject** child = (SplObject**)(object + 1);
+    for (int i = 0; i < object->numPointers; ++i)
+    {
+        _decref(*child);
+        ++child;
+    }
+
+    free(object);
 }
 
 //// Ints //////////////////////////////////////////////////////////////////////
