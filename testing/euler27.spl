@@ -1,0 +1,43 @@
+-- Solves Project Euler #27
+
+data Quadratic = Quadratic Int Int
+
+def eval quad n =
+    let Quadratic a b = quad
+
+    return n * n + a * n + b
+
+def isPrime x =
+    if x <= 0 then return False
+
+    i := 2
+    while i * i <= x do
+        if x mod i == 0 then return False
+        i += 1
+
+    return True
+
+def numberOfPrimes q =
+    n := 0
+    while True do
+        p := eval q n
+
+        if not $ isPrime p then break
+
+        n += 1
+
+    return n
+
+
+best := 0
+bestProduct := 0
+for a in range -1000 1000 do
+    for b in range -1000 1000 do
+        q := Quadratic a b
+        count := numberOfPrimes q
+
+        if count > best then
+            best = count
+            bestProduct = a * b
+
+print $ show bestProduct
