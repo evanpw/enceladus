@@ -1,0 +1,14 @@
+-- Solves Project Euler #29
+import BigInt
+import List
+import String
+
+values := []
+for a in range 2 100 do
+    for b in range 2 100 do
+        n := bigPower a b
+
+        values = n : values
+
+values = uniquify cmpList values
+print $ show $ length values

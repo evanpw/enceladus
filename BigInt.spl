@@ -77,3 +77,19 @@ def toBigInt x :: Int -> BigInt =
 
     return reverse result
 
+def bigToString xs :: BigInt -> String =
+    s := []
+    for x in xs do
+        s = (x + '0') : s
+
+    return s
+
+-- Computes a^b
+def bigPower a b :: Int -> Int -> BigInt =
+    bigA := toBigInt a
+    result := toBigInt 1
+
+    for i in range 1 b do
+        result = bigProduct result bigA
+
+    return result

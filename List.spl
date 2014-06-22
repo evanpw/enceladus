@@ -1,0 +1,76 @@
+-- Equality
+def eqInt x y :: Int -> Int -> Bool =
+    return (x == y)
+
+def eqList xs ys :: [Int] -> [Int] -> Bool =
+    if null xs then return null ys
+    if null ys then return null xs
+
+    return (head xs == head ys) and (eqList (tail xs) (tail ys))
+
+-- Comparisons:
+---- x < y   =>  -1
+---- x > y   =>  +1
+---- x == y  =>   0
+def cmpInt x y :: Int -> Int -> Int =
+    return (x - y)
+
+def cmpList xs ys :: [Int] -> [Int] -> Int =
+    if null xs then
+        if null ys then
+            return 0
+        else
+            return -1
+    else if null ys then
+        return 1
+    else
+        if (head xs) < (head ys) then
+            return -1
+        else if (head xs) > (head ys) then
+            return 1
+        else
+            return cmpList (tail xs) (tail ys)
+
+-- List operations
+def isIn eq x ys =
+    for y in ys do
+        if eq x y then return True
+
+    return False
+
+def splitList cmp xs pivot =
+    lhs := []
+    rhs := []
+
+    for x in xs do
+        if cmp x pivot < 0 then
+            lhs = x : lhs
+        else
+            rhs = x : rhs
+
+    return Pair lhs rhs
+
+def sort cmp xs =
+    if length xs <= 1 then
+        return xs
+
+    pivot := head xs
+    let Pair lhs rhs = splitList cmp (tail xs) pivot
+
+    return (sort cmp lhs) ++ [pivot] ++ (sort cmp rhs)
+
+def uniquify cmp xs =
+    if null xs then return []
+
+    xs = sort cmp xs
+
+    result := [head xs]
+    last := head xs
+
+    for x in tail xs do
+        if cmp last x != 0 then
+            result = x : result
+
+        last = x
+
+    return result

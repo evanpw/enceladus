@@ -37,3 +37,4 @@ Todo
 * Allow functions definitions to specify arguments with function types
 * Allow real closures with variable capture
 * Struct type constructors
+* Check that programmer-specified type variables (rigid type variables) are not overwritten with concrete types: generate a type error otherwise

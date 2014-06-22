@@ -1,20 +1,20 @@
-def splitList compare xs pivot =
+def splitList cmp xs pivot =
     lhs := []
     rhs := []
 
     for x in xs do
-        if compare x pivot < 0 then
+        if cmp x pivot < 0 then
             lhs = x : lhs
         else
             rhs = x : rhs
 
     return Pair lhs rhs
 
-def sort compare xs =
+def sort cmp xs =
     if length xs <= 1 then
         return xs
 
     pivot := head xs
-    let Pair lhs rhs = splitList compare (tail xs) pivot
+    let Pair lhs rhs = splitList cmp (tail xs) pivot
 
-    return (sort compare lhs) ++ [pivot] ++ (sort compare rhs)
+    return (sort cmp lhs) ++ [pivot] ++ (sort cmp rhs)
