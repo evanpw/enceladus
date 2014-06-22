@@ -1,3 +1,7 @@
+// For non-standard getline
+#define _GNU_SOURCE
+
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -196,7 +200,7 @@ char* content(String* s)
 int64_t read()
 {
     int64_t result;
-    scanf("%lld", &result);
+    scanf("%" PRId64, &result);
 
     return toInt(result);
 }
