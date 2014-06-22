@@ -88,6 +88,8 @@ void _dieWithMessage(const char* str)
 //// Reference counting ////////////////////////////////////////////////////////
 
 #define Spl_INCREF(p) _incref((SplObject*)(p))
+#define Spl_DECREF(p) _decref((SplObject*)(p))
+#define Spl_DECREF_NO_FREE(p) _decrefNoFree((SplObject*)(p))
 
 void _incref(SplObject* object)
 {
@@ -166,6 +168,9 @@ String* makeString(const char* s)
 
 size_t get_length(String* s)
 {
+    String* original = s;
+    Spl_INCREF(original);
+
     size_t length = 0;
 
     while (s != NULL)
@@ -174,11 +179,15 @@ size_t get_length(String* s)
         s = s->next;
     }
 
+    Spl_DECREF(original);
     return length;
 }
 
+// Should only ever be called by print function
 char* content(String* s)
 {
+    String* original = s;
+
     char* str = (char*)malloc(get_length(s) + 1);
 
     char* out = str;
@@ -227,16 +236,22 @@ String* readLine()
 
 void print(String* s)
 {
+    Spl_INCREF(s);
     char* str = content(s);
 
     printf("%s\n", str);
 
     free(str);
+    Spl_DECREF(s);
 }
 
 void dieWithMessage(String* s)
 {
+    // Reference count can be elided because it's done in print
+    //Spl_INCREF(s);
     print(s);
+    //Spl_DECREF(s);
+
     exit(1);
 }
 

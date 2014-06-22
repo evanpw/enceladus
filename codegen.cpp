@@ -548,7 +548,7 @@ void CodeGen::visit(AssignNode* node)
 		EMIT("call " << foreignName("_incref"));
 
 		getAddress(node->target.get(), "rdi");
-		EMIT("mov qword [rdi], rdi");
+		EMIT("mov rdi, qword [rdi]");
 		EMIT("call " << foreignName("_decref"));
 
 		EMIT("pop rax");

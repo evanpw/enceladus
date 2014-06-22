@@ -11,47 +11,6 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "testing/test.spl",
-			"settings":
-			{
-				"buffer_size": 50,
-				"line_ending": "Unix",
-				"name": "def f x :: Int -> Int ="
-			}
-		},
-		{
-			"file": "lexer_transform.cpp",
-			"settings":
-			{
-				"buffer_size": 2897,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "ast.cpp",
-			"settings":
-			{
-				"buffer_size": 2195,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "prelude.spl",
-			"settings":
-			{
-				"buffer_size": 8809,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "simple.flex",
-			"settings":
-			{
-				"buffer_size": 3393,
-				"line_ending": "Unix"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -92,6 +51,15 @@
 	},
 	"file_history":
 	[
+		"/home/evanpw/Workspace/simple/library.c",
+		"/home/evanpw/Workspace/simple/testing/sqrt.spl",
+		"/home/evanpw/Workspace/simple/testing/test.sh",
+		"/home/evanpw/Workspace/simple/testing/type_errors.spl",
+		"/home/evanpw/Workspace/simple/tokens.cpp",
+		"/home/evanpw/Workspace/simple/lexer_transform.cpp",
+		"/home/evanpw/Workspace/simple/prelude.spl",
+		"/home/evanpw/Workspace/simple/simple.flex",
+		"/home/evanpw/Workspace/simple/testing/test.spl",
 		"/Users/evanpw/Workspace/simple/TODO",
 		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
 		"/Users/evanpw/Workspace/simple/testing/euler16.spl",
@@ -210,16 +178,7 @@
 		"/Users/evanpw/Workspace/simple/symbol_table.cpp",
 		"/Users/evanpw/Workspace/simple/symbol_table.hpp",
 		"/Users/evanpw/Workspace/mycraft/Makefile",
-		"/Users/evanpw/Workspace/simple/parser.cpp",
-		"/Users/evanpw/Workspace/simple/testing/read.spl",
-		"/Users/evanpw/Workspace/simple/build/function.asm",
-		"/Users/evanpw/Workspace/simple/memory_manager.cpp",
-		"/Users/evanpw/Workspace/raytracer/Makefile",
-		"/Users/evanpw/Workspace/simple/library.asm",
-		"/Users/evanpw/Workspace/simple/testing/euler4.spl.py",
-		"/Users/evanpw/Workspace/simple/hello.asm",
-		"/Users/evanpw/Workspace/simple/build/library-64.asm",
-		"/Users/evanpw/Workspace/simple/build/euler1-64.asm"
+		"/Users/evanpw/Workspace/simple/parser.cpp"
 	],
 	"find":
 	{
@@ -237,6 +196,7 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"%lld",
 			"yylloc",
 			"yylineno",
 			"Node*",
@@ -363,8 +323,7 @@
 			"UIDENT",
 			"ident",
 			"Pair",
-			"Match",
-			"ParamListNode"
+			"Match"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -382,157 +341,8 @@
 	"groups":
 	[
 		{
-			"selected": 4,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "testing/test.spl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 50,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								45,
-								45
-							]
-						],
-						"settings":
-						{
-							"auto_name": "def f x :: Int -> Int =",
-							"syntax": "Packages/Haskell/Haskell.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "lexer_transform.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2897,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1147,
-								1147
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "ast.cpp",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 2195,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								212,
-								212
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "prelude.spl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 8809,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2953,
-								2953
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Haskell/Haskell.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 1453.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "simple.flex",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3393,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								151,
-								151
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				}
 			]
 		}
 	],
@@ -582,6 +392,14 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"test.spl",
+				"testing/sqrt.spl"
+			],
+			[
+				"library.c",
+				"library.c"
+			],
 			[
 				"poly2.asm",
 				"build/poly2.asm"
