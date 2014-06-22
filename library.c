@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "library.h"
 
 #ifdef __APPLE__
 
@@ -80,37 +81,6 @@ void _dieWithMessage(const char* str)
     exit(1);
 }
 
-//// Various structs ///////////////////////////////////////////////////////////
-#define SplObject_HEAD \
-    int64_t refCount; \
-    uint32_t numScalars; \
-    uint32_t numPointers; \
-
-#define IS_TAGGED(p) ((int64_t)p & 0x3)
-
-typedef struct SplObject
-{
-    SplObject_HEAD
-} SplObject;
-
-typedef struct List
-{
-    SplObject_HEAD
-    struct List* next;
-    void* value;
-} List;
-
-typedef struct Tree
-{
-    SplObject_HEAD
-    struct Tree* left;
-    struct Tree* right;
-    int64_t value;
-    int64_t count;
-} Tree;
-
-typedef List String;
-
 //// Reference counting ////////////////////////////////////////////////////////
 
 #define Spl_INCREF(p) _incref((SplObject*)(p))
@@ -144,6 +114,7 @@ void _decref(SplObject* object)
 
     if (_decrefNoFree(object) == 0)
     {
+        //(object->destructor)(object);
         _destroy(object);
     }
 }

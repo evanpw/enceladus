@@ -1,9 +1,11 @@
 #include <cassert>
+#include <cstddef>
 #include <iostream>
 #include <iomanip>
 #include <map>
 #include "ast.hpp"
 #include "codegen.hpp"
+#include "library.h"
 #include "scope.hpp"
 #include "parser.hpp"
 
@@ -66,7 +68,7 @@ std::string CodeGen::access(const Symbol& symbol)
 			assert(symbol.asVariable()->offset >= 0);
 
 			std::stringstream result;
-			result << "[rbp + " << 8 * (symbol.asVariable()->offset + 2) << "]";
+			result << "[rbp + " << 8 * (2 + symbol.asVariable()->offset) << "]";
 			return result.str();
 		}
 		else
@@ -126,9 +128,7 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 	const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
 
 	// For now, every member takes up exactly 8 bytes (either directly or as a pointer).
-	// There is one extra qword for the reference count and one for the member
-	// counts (pointers and non-pointers)
-	size_t size = 8 * (members.size() + 2);
+	size_t size = sizeof(SplObject) + 8 * members.size();
 
 	EMIT_BLANK();
 	EMIT_LABEL("_" << mangle(constructor->name()));
@@ -152,8 +152,8 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
     	auto& member = members[i];
     	size_t location = member.location;
 
-    	EMIT("mov rdi, qword [rbp + " << 8 * (i + 2) << "]");
-    	EMIT("mov qword [rax + " << 8 * (location + 2) << "], rdi");
+    	EMIT("mov rdi, qword [rbp + " << 8 * (2 + i) << "]");
+    	EMIT("mov qword [rax + " << sizeof(SplObject) + 8 * location << "], rdi");
 
     	// Increment reference count of non-simple, non-null members
     	if (member.type->isBoxed())
@@ -435,7 +435,7 @@ void CodeGen::visit(NullaryNode* node)
 			else
 			{
 				// If the function is not completely applied, then create a closure
-				size_t size = 8 * (2 + 1);
+				size_t size = sizeof(SplObject) + 8;
 				EMIT_MALLOC(size);
 
 			    // Reference count
@@ -446,7 +446,7 @@ void CodeGen::visit(NullaryNode* node)
 
 				// Address of the function as an unboxed member
 				EMIT("mov rbx, _" << mangle(node->name));
-				EMIT("mov qword [rax + 16], rbx");
+				EMIT("mov qword [rax + " << sizeof(SplObject) << "], rbx");
 			}
 		}
 	}
@@ -608,14 +608,14 @@ void CodeGen::visit(MatchNode* node)
 		const Symbol& member = *node->symbols.at(i);
 		size_t location = constructor->members().at(i).location;
 
-		EMIT("mov rdi, [rsi + " << 8 * (location + 2) << "]");
+		EMIT("mov rdi, [rsi + " << sizeof(SplObject) + 8 * location << "]");
 		EMIT("mov " << access(member) << ", rdi");
 	}
 
 	// Increment references to the new variables
 	for (size_t i = 0; i < constructor->boxedMembers(); ++i)
 	{
-		EMIT("mov rdi, [rsi + " << 8 * (i + 2) << "]");
+		EMIT("mov rdi, [rsi + " << sizeof(SplObject) + 8 * i << "]");
 		EMIT("call " << foreignName("_incref"));
 	}
 }
@@ -664,7 +664,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		    EMIT("mov rsp, rbx");
 
 			EMIT_LABEL(good);
-			EMIT("mov rax, qword [rax + 24]");
+			EMIT("mov rax, qword [rax + "<< offsetof(List, value) << "]");
 		}
 		else if (node->target == "tail")
 		{
@@ -686,7 +686,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		    EMIT("mov rsp, rbx");
 
 			EMIT_LABEL(good);
-			EMIT("mov rax, qword [rax + 16]");
+			EMIT("mov rax, qword [rax + " << offsetof(List, next) << "]");
 		}
 		else if (node->target == "Nil")
 		{
@@ -791,7 +791,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		// The variable represents a closure, so extract the actual function
 		// address
 		EMIT("mov rax, " << access(*node->symbol));
-		EMIT("mov rax, qword [rax + 16]");
+		EMIT("mov rax, qword [rax + " << sizeof(SplObject) << "]");
 		EMIT("call rax");
 
 		size_t args = node->arguments.size();
@@ -824,5 +824,5 @@ void CodeGen::visit(StructDefNode* node)
 void CodeGen::visit(MemberAccessNode* node)
 {
 	EMIT("mov rax, " << access(*node->varSymbol));
-	EMIT("mov rax, qword [rax + " << 8 * (2 + node->memberLocation) << "]");
+	EMIT("mov rax, qword [rax + " << sizeof(SplObject) + 8 * node->memberLocation << "]");
 }
