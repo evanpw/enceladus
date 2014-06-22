@@ -1,0 +1,9 @@
+struct Test =
+    left :: Int
+    right :: Int
+
+def doSomething test =
+    return test{left} + test{right}
+
+test := Test 3 4
+print $ show $ doSomething test

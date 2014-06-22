@@ -12,9 +12,10 @@ struct VariableSymbol;
 struct FunctionSymbol;
 struct TypeSymbol;
 struct TypeConstructorSymbol;
+struct MemberSymbol;
 
 
-enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3};
+enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMember = 4};
 
 struct Symbol
 {
@@ -59,11 +60,13 @@ struct Symbol
     FunctionSymbol* asFunction();
     TypeSymbol* asType();
     TypeConstructorSymbol* asTypeConstructor();
+    MemberSymbol* asMember();
 
     const VariableSymbol* asVariable() const;
     const FunctionSymbol* asFunction() const;
     const TypeSymbol* asType() const;
     const TypeConstructorSymbol* asTypeConstructor() const;
+    const MemberSymbol* asMember() const;
 };
 
 
@@ -104,6 +107,13 @@ struct TypeConstructorSymbol : public Symbol
     TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 
     std::unique_ptr<TypeConstructor> typeConstructor;
+};
+
+struct MemberSymbol : public Symbol
+{
+    MemberSymbol(const std::string& name, AstNode* node);
+
+    size_t location;
 };
 
 

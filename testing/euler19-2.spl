@@ -51,9 +51,6 @@ def printDate date :: Date -> String =
 
     return join "" [at date{month} monthNames, " ", show date{day}, ", ", show date{year}, " (", at date{dayOfWeek} dayNames, ")"]
 
-
-test := Date{}
-
 current := Date 1900 1 1 1
 
 dayCount := 0

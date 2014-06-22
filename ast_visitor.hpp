@@ -26,7 +26,6 @@ class NullaryNode;
 class ProgramNode;
 class ReturnNode;
 class StructDefNode;
-class StructInitNode;
 class TypeAliasNode;
 class VariableNode;
 class WhileNode;
@@ -59,7 +58,6 @@ public:
 	virtual void visit(MemberAccessNode* node) {}
 	virtual void visit(MemberDefNode* node) {}
 	virtual void visit(NullaryNode* node) {}
-	virtual void visit(StructInitNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(VariableNode* node) {}
 };

@@ -42,21 +42,8 @@ std::string CodeGen::mangle(const std::string& name)
 void CodeGen::getAddress(AssignableNode* node, const std::string& dest)
 {
 	VariableNode* variableNode = dynamic_cast<VariableNode*>(node);
-	if (variableNode != nullptr)
-	{
-		EMIT("lea " << dest << ", " << access(*variableNode->symbol));
-		return;
-	}
-
-	MemberAccessNode* memberAccess = dynamic_cast<MemberAccessNode*>(node);
-	if (memberAccess != nullptr)
-	{
-		EMIT("mov " << dest << ", " << access(*memberAccess->symbol));
-		EMIT("lea " << dest << ", [" << dest << " + " << 8 * (2 + memberAccess->memberLocation) << "]");
-		return;
-	}
-
-	assert(false);
+	assert(variableNode);
+	EMIT("lea " << dest << ", " << access(*variableNode->symbol));
 }
 
 std::string CodeGen::access(const Symbol& symbol)
@@ -833,13 +820,9 @@ void CodeGen::visit(StructDefNode* node)
 	structDeclarations_.push_back(node);
 }
 
-void CodeGen::visit(StructInitNode* node)
-{
-	EMIT("call _" << mangle(node->structName));
-}
 
 void CodeGen::visit(MemberAccessNode* node)
 {
-	EMIT("mov rax, " << access(*node->symbol));
+	EMIT("mov rax, " << access(*node->varSymbol));
 	EMIT("mov rax, qword [rax + " << 8 * (2 + node->memberLocation) << "]");
 }

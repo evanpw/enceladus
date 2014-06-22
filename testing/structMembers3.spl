@@ -1,0 +1,5 @@
+struct Test1 =
+    x :: Int
+    y :: Int
+
+x := 4

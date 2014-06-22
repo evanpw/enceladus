@@ -1091,22 +1091,37 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 
     CHECK(!node->members->empty(), "structs cannot be empty");
 
+    std::shared_ptr<Type> newType = BaseType::create(node->name);
+    topScope()->types.insert(new TypeSymbol(typeName, node, newType));
+
     std::vector<std::string> memberNames;
     std::vector<std::shared_ptr<Type>> memberTypes;
+    std::vector<MemberSymbol*> memberSymbols;
     for (auto& member : *node->members)
     {
         CHECK_UNDEFINED(member->name);
 
         memberTypes.push_back(member->memberType);
         memberNames.push_back(member->name);
-    }
 
-    std::shared_ptr<Type> newType = BaseType::create(node->name);
-    topScope()->types.insert(new TypeSymbol(typeName, node, newType));
+        MemberSymbol* memberSymbol = new MemberSymbol(member->name, node);
+        memberSymbol->setType(FunctionType::create({newType}, member->memberType));
+        insertSymbol(memberSymbol);
+        memberSymbols.push_back(memberSymbol);
+    }
 
     ValueConstructor* valueConstructor = new ValueConstructor(typeName, memberTypes, memberNames);
     node->valueConstructor = valueConstructor;
     newType->addValueConstructor(valueConstructor);
+
+    assert(valueConstructor->members().size() == memberSymbols.size());
+    for (size_t i = 0; i < memberSymbols.size(); ++i)
+    {
+        ValueConstructor::MemberDesc& member = valueConstructor->members().at(i);
+        assert(member.name == memberNames[i]);
+
+        memberSymbols[i]->location = member.location;
+    }
 
     // Create a symbol for the constructor
     Symbol* symbol = new FunctionSymbol(typeName, node, nullptr);
@@ -1127,41 +1142,26 @@ void SemanticAnalyzer::visit(MemberDefNode* node)
     node->type = Unit;
 }
 
-void SemanticAnalyzer::visit(StructInitNode* node)
-{
-    std::shared_ptr<Type> type = getBaseType(node->structName);
-    CHECK(type, "unknown type \"{}\"", node->structName);
-
-    node->type = type;
-}
-
-
 void SemanticAnalyzer::visit(MemberAccessNode* node)
 {
     const std::string& name = node->varName;
 
-    Symbol* symbol = resolveSymbol(name);
-    CHECK(symbol, "symbol \"{}\" is not defined in this scope", name);
-    CHECK(symbol->kind == kVariable, "expected variable but got function name \"{}\"", name);
+    Symbol* varSymbol = resolveSymbol(name);
+    CHECK(varSymbol, "symbol \"{}\" is not defined in this scope", name);
+    CHECK(varSymbol->kind == kVariable, "\"{}\" is not the name of a variable", name);
+    node->varSymbol = varSymbol->asVariable();
 
-    node->symbol = symbol;
+    CHECK(node->memberName != "_", "member access syntax cannot be used with unnamed members");
+    Symbol* memberSymbol = resolveSymbol(node->memberName);
+    CHECK(memberSymbol, "symbol \"{}\" is not defined in this scope", name);
+    CHECK(memberSymbol->kind == kMember, "\"{}\" is not the name of a data type member", node->memberName);
+    node->memberSymbol = memberSymbol->asMember();
 
-    std::shared_ptr<Type> type = symbol->type;
-    CHECK(type->valueConstructors().size() == 1, "member access syntax only applies to types with a single constructor");
+    std::shared_ptr<Type> varType = varSymbol->type;
+    std::shared_ptr<Type> memberType = instantiate(memberSymbol->typeScheme.get());
+    std::shared_ptr<Type> returnType = newVariable();
+    unify(memberType, FunctionType::create({varType}, returnType), node);
 
-    CHECK(node->memberName[0] != '_', "member access syntax cannot be used with unnamed members");
-
-    std::shared_ptr<ValueConstructor> valueConstructor = type->valueConstructors().at(0);
-
-    auto i = valueConstructor->members().begin();
-    while (i != valueConstructor->members().end())
-    {
-        if (i->name == node->memberName) break;
-        ++i;
-    }
-
-    CHECK(i != valueConstructor->members().end(), "no such member \"{}\" of variable \"{}\"", node->memberName, name);
-
-    node->memberLocation = i->location;
-    node->type = i->type;
+    node->type = returnType;
+    node->memberLocation = memberSymbol->asMember()->location;
 }

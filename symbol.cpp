@@ -20,6 +20,11 @@ TypeConstructorSymbol* Symbol::asTypeConstructor()
     return dynamic_cast<TypeConstructorSymbol*>(this);
 }
 
+MemberSymbol* Symbol::asMember()
+{
+    return dynamic_cast<MemberSymbol*>(this);
+}
+
 const VariableSymbol* Symbol::asVariable() const
 {
     return dynamic_cast<const VariableSymbol*>(this);
@@ -38,6 +43,11 @@ const TypeSymbol* Symbol::asType() const
 const TypeConstructorSymbol* Symbol::asTypeConstructor() const
 {
     return dynamic_cast<const TypeConstructorSymbol*>(this);
+}
+
+const MemberSymbol* Symbol::asMember() const
+{
+    return dynamic_cast<const MemberSymbol*>(this);
 }
 
 VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
@@ -65,5 +75,10 @@ TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, std::shared_ptr<T
 TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
 : Symbol(name, kTypeConstructor, node, nullptr)
 , typeConstructor(typeConstructor)
+{
+}
+
+MemberSymbol::MemberSymbol(const std::string& name, AstNode* node)
+: Symbol(name, kMember, node, nullptr)
 {
 }

@@ -812,15 +812,7 @@ ExpressionNode* unary_expression()
 
     case tLIDENT:
     case tUIDENT:
-        if (peekType() == tUIDENT && peek2ndType() == '{')
-        {
-            Token name = expect(tUIDENT);
-            expect('{');
-            expect('}');
-
-            return new StructInitNode(name.value.str);
-        }
-        else if (peekType() == tLIDENT && peek2ndType() == '{')
+        if (peekType() == tLIDENT && peek2ndType() == '{')
         {
             Token varName = expect(tLIDENT);
             expect('{');

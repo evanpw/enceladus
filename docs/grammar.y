@@ -157,7 +157,6 @@ func_call_expression
 unary_expression
     | '(' expression ')'
     | ident
-    | UIDENT '{' '}'
     | LIDENT '{' LIDENT '}'
     | TRUE
     | FALSE

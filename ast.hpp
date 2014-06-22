@@ -402,17 +402,6 @@ public:
 	ValueConstructor* valueConstructor;
 };
 
-class StructInitNode : public ExpressionNode
-{
-public:
-	StructInitNode(const std::string& structName)
-	: structName(structName)
-	{}
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	std::string structName;
-};
 
 class MemberAccessNode : public AssignableNode
 {
@@ -427,7 +416,8 @@ public:
 
 	std::string varName;
 	std::string memberName;
-	Symbol* symbol;
+	VariableSymbol* varSymbol;
+	MemberSymbol* memberSymbol;
 	size_t memberLocation;
 };
 

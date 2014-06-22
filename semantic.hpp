@@ -57,7 +57,6 @@ public:
     virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);
     virtual void visit(ReturnNode* node);
-    virtual void visit(StructInitNode* node);
     virtual void visit(VariableNode* node);
 
 private:

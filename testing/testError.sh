@@ -4,7 +4,6 @@ platform=$1
 program=$2
 correct=$3
 
-$platform/build.sh $program || exit 1
-value=$(build/$program)
+value=$($platform/build.sh $program 2>&1)
 
 [ "x$value" == "x$correct" ]

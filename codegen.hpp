@@ -32,7 +32,6 @@ public:
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(StructDefNode* node);
-	virtual void visit(StructInitNode* node);
 	virtual void visit(VariableNode* node);
 	virtual void visit(WhileNode* node);
 
