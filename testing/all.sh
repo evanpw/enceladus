@@ -56,3 +56,4 @@ testing/testError.sh $platform structMembers1 'Error: Near line 5, column 1: sym
 testing/testError.sh $platform structMembers2 'Error: Near line 8, column 13: symbol "y" is already defined' || echo "Struct members test 2 failed!"
 testing/testError.sh $platform structMembers3 'Error: Near line 6, column 7: symbol "x" is already defined in this scope' || echo "Struct members test 3 failed!"
 testing/test.sh $platform structInference "7" || echo "Struct type inference test failed!"
+testing/test.sh $platform bigList "" || echo "Big list test failed!"

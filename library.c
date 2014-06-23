@@ -257,6 +257,30 @@ void dieWithMessage(String* s)
 
 //// Lists /////////////////////////////////////////////////////////////////////
 
+void _destroyList(List* list)
+{
+    if (list == NULL) return;
+
+    while (1)
+    {
+        List* next = list->next;
+        _decref(list->value);
+        free(list);
+
+        if (next == NULL) break;
+
+        --next->refCount;
+        if (next->refCount > 0)
+        {
+            break;
+        }
+        else
+        {
+            list = next;
+        }
+    }
+}
+
 List* Cons(void* value, List* next)
 {
     List* newCell = (List*)malloc(sizeof(List));
@@ -266,7 +290,7 @@ List* Cons(void* value, List* next)
     newCell->numPointers = 2;
     newCell->next = next;
     newCell->value = value;
-    newCell->destructor = _destroy;
+    newCell->destructor = (void (*)(SplObject*))_destroyList;
 
     Spl_INCREF(next);
     Spl_INCREF(value);
