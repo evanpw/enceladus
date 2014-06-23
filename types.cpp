@@ -174,77 +174,14 @@ std::string TypeVariable::name() const
     return ss.str();
 }
 
-/*
-ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& members)
-: name_(name), members_(members)
-{
-    boxedMembers_ = 0;
-    unboxedMembers_ = 0;
-
-    // First pass -> just count the number of boxed / unboxed members
-    for (size_t i = 0; i < members.size(); ++i)
-    {
-        if (members[i]->isBoxed())
-        {
-            ++boxedMembers_;
-        }
-        else
-        {
-            ++unboxedMembers_;
-        }
-    }
-
-    // Second pass -> determine the actual layout
-    size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
-    for (size_t i = 0; i < members.size(); ++i)
-    {
-        if (members[i]->isBoxed())
-        {
-            memberLocations_.push_back(nextBoxed++);
-        }
-        else
-        {
-            memberLocations_.push_back(nextUnboxed++);
-        }
-    }
-
-    //std::cerr << "ValueConstructor: " << name << " " << boxedMembers_ << " " << unboxedMembers_ << std::endl;
-}
-*/
-
 ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames)
 : name_(name)
 {
     assert(memberNames.empty() || (memberNames.size() == memberTypes.size()));
 
-    boxedMembers_ = 0;
-    unboxedMembers_ = 0;
-
-    // First pass -> just count the number of boxed / unboxed members
-    for (size_t i = 0; i < memberTypes.size(); ++i)
-    {
-        if (memberTypes[i]->isBoxed())
-        {
-            ++boxedMembers_;
-        }
-        else
-        {
-            ++unboxedMembers_;
-        }
-    }
-
-    // Second pass -> determine the actual layout
-    size_t nextBoxed = 0, nextUnboxed = boxedMembers_;
     for (size_t i = 0; i < memberTypes.size(); ++i)
     {
         std::string memberName = memberNames.empty() ? "_" : memberNames[i];
-        if (memberTypes[i]->isBoxed())
-        {
-            members_.emplace_back(memberName, memberTypes[i], nextBoxed++);
-        }
-        else
-        {
-            members_.emplace_back(memberName, memberTypes[i], nextUnboxed++);
-        }
+        members_.emplace_back(memberName, memberTypes[i], i);
     }
 }

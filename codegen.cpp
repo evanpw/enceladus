@@ -653,11 +653,17 @@ void CodeGen::visit(MatchNode* node)
 	}
 
 	// Increment references to the new variables
-	for (size_t i = 0; i < constructor->boxedMembers(); ++i)
-	{
-		EMIT("mov rdi, [rsi + " << sizeof(SplObject) + 8 * i << "]");
-		EMIT("call " << foreignName("_incref"));
-	}
+	for (size_t i = 0; i < constructor->members().size(); ++i)
+    {
+    	auto& member = constructor->members().at(i);
+    	size_t location = member.location;
+
+    	if (member.type->isBoxed())
+    	{
+    		EMIT("mov rdi, [rsi + " << sizeof(SplObject) + 8 * location << "]");
+			EMIT("call " << foreignName("_incref"));
+    	}
+    }
 }
 
 void CodeGen::visit(FunctionDefNode* node)

@@ -83,35 +83,12 @@ private:
     std::shared_ptr<TypeImpl> _impl;
 };
 
-/*
-class ValueConstructor
-{
-public:
-    ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& members);
-
-    const std::string& name() const { return name_; }
-    const std::vector<std::shared_ptr<Type>>& members() const { return members_; }
-    const std::vector<size_t>& memberLocations() const { return memberLocations_; }
-    size_t boxedMembers() const { return boxedMembers_; }
-    size_t unboxedMembers() const { return unboxedMembers_; }
-
-private:
-    std::string name_;
-    std::vector<std::shared_ptr<Type>> members_;
-    std::vector<size_t> memberLocations_;
-    size_t boxedMembers_, unboxedMembers_;
-};
-*/
-
 class ValueConstructor
 {
 public:
     ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames = {});
 
     virtual std::string name() const { return name_; }
-
-    size_t boxedMembers() const { return boxedMembers_; }
-    size_t unboxedMembers() const { return unboxedMembers_; }
 
     struct MemberDesc
     {
@@ -129,8 +106,6 @@ public:
 private:
     std::string name_;
     std::vector<MemberDesc> members_;
-
-    size_t boxedMembers_, unboxedMembers_;
 };
 
 class TypeVariable;
