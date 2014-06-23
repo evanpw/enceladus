@@ -1,0 +1,22 @@
+-- Solves Project Euler #30
+
+def digitPowerSum n =
+    result := 0
+    while n > 0 do
+        digit := n mod 10
+        result += pow digit 5
+        n /= 10
+
+    return result 
+
+
+-- Can't have any solutions above this value, because
+-- n * 9^5 < 10^n for all n >= 7
+top := 6 * pow 9 6
+
+total := 0
+for i in range 2 top do
+    if i == digitPowerSum i then
+        total += i
+
+print $ show total

@@ -117,6 +117,16 @@ def odd x :: Int -> Bool =
     if x mod 2 == 0 then return False
     else return True
 
+def pow a b :: Int -> Int -> Int =
+    r := 1
+    while True do
+        if b mod 2 == 1 then r *= a
+        b /= 2
+        if b == 0 then break
+        a *= a
+
+    return r
+
 -- TODO: Make this work (allow functions as parameters)
 --def filter f xs =
 --    let ys = []
