@@ -112,8 +112,6 @@ int64_t _decrefNoFree(SplObject* object)
     return object->refCount;
 }
 
-void _destroy(SplObject* object);
-
 void _decref(SplObject* object)
 {
     if (object == NULL || IS_TAGGED(object)) return;
@@ -121,20 +119,7 @@ void _decref(SplObject* object)
     if (_decrefNoFree(object) == 0)
     {
         (object->destructor)(object);
-        //_destroy(object);
     }
-}
-
-void _destroy(SplObject* object)
-{
-    SplObject** child = (SplObject**)(object + 1);
-    for (int i = 0; i < object->numPointers; ++i)
-    {
-        _decref(*child);
-        ++child;
-    }
-
-    free(object);
 }
 
 //// Ints //////////////////////////////////////////////////////////////////////

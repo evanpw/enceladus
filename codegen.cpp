@@ -188,36 +188,22 @@ void CodeGen::createDestructor(ValueConstructor* constructor)
 	EMIT("push rbp");
 	EMIT("mov rbp, rsp");
 
-    EMIT("push rdi");
+    for (size_t i = 0; i < members.size(); ++i)
+    {
+    	auto& member = members[i];
+    	size_t location = member.location;
 
-    EMIT("xor rcx, rcx");
-    EMIT("mov eax, dword [rdi + " << offsetof(SplObject, numPointers) << "]");
-    EMIT("mov rsi, rdi");
-    EMIT("add rsi, " << sizeof(SplObject));
+    	if (member.type->isBoxed())
+    	{
+    		EMIT("push rdi");
+    		EMIT("mov rdi, qword [rdi + " << sizeof(SplObject) + 8 * location << "]");
 
-    std::string loopLabel = uniqueLabel();
-    EMIT_LABEL(loopLabel);
+    		// TODO: Align the stack first?
+			EMIT("call " << foreignName("_decref"));
+			EMIT("pop rdi");
+		}
+    }
 
-    EMIT("cmp rcx, 0");
-    EMIT("je _end_" << destructorName);
-
-    EMIT("push rsi");
-    EMIT("push rcx");
-
-    // TODO: Align the stack first?
-    EMIT("mov rdi, qword [rsi]");
-	EMIT("call " << foreignName("_decref"));
-
-	EMIT("pop rcx");
-	EMIT("pop rsi");
-
-	EMIT("add rsi, 8");
-	EMIT("dec rcx");
-	EMIT("jmp " << loopLabel);
-
-	EMIT_LABEL("_end_" + destructorName);
-
-	EMIT("pop rdi");
 	EMIT_FOREIGN_CALL("free");
 
 	EMIT("mov rsp, rbp");
@@ -500,7 +486,7 @@ void CodeGen::visit(NullaryNode* node)
 				EMIT("mov qword [rax + " << offsetof(SplObject, refCount) << "], 0");
 				EMIT("mov dword [rax + " << offsetof(SplObject, numPointers) << "], 0");
 				EMIT("mov dword [rax + " << offsetof(SplObject, numScalars) << "], 1");
-				EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << mangle("_destroy"));
+				EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << foreignName("free"));
 
 				// Address of the function as an unboxed member
 				EMIT("mov rbx, _" << mangle(node->name));
@@ -877,7 +863,6 @@ void CodeGen::visit(StructDefNode* node)
 {
 	structDeclarations_.push_back(node);
 }
-
 
 void CodeGen::visit(MemberAccessNode* node)
 {

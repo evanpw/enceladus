@@ -16,3 +16,5 @@
     - If a variable name, then evaluates to the value of the variable
     - If a nullary function, then evaluates to the result of calling the fn
     - If a non-nullary function, then evaluates to a closure around the fn
+
+* Destructors are part of the run-time, so they use a C calling convention
