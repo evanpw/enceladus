@@ -214,6 +214,7 @@ void SemanticAnalyzer::injectSymbols()
     scope->symbols.insert(makeExternal("_decrefNoFree"));
     scope->symbols.insert(makeExternal("_destroy"));
     scope->symbols.insert(makeExternal("malloc"));
+    scope->symbols.insert(makeExternal("free"));
 }
 
 std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const std::string& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)

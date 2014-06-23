@@ -120,8 +120,8 @@ void _decref(SplObject* object)
 
     if (_decrefNoFree(object) == 0)
     {
-        //(object->destructor)(object);
-        _destroy(object);
+        (object->destructor)(object);
+        //_destroy(object);
     }
 }
 
@@ -266,6 +266,7 @@ List* Cons(void* value, List* next)
     newCell->numPointers = 2;
     newCell->next = next;
     newCell->value = value;
+    newCell->destructor = _destroy;
 
     Spl_INCREF(next);
     Spl_INCREF(value);

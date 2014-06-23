@@ -13,6 +13,7 @@
 #define EMIT_LEFT(x) out_ << x << std::endl;
 #define EMIT_LABEL(x) out_ << x << ":" << std::endl;
 #define EMIT(x) out_ << "\t" << x << std::endl;
+
 #define EMIT_MALLOC(size) \
     EMIT("mov rbx, rsp"); \
     EMIT("and rsp, -16"); \
@@ -20,6 +21,15 @@
     EMIT("push rbx"); \
     EMIT("mov rdi, " << size); \
 	EMIT("call " << foreignName("malloc")); \
+    EMIT("pop rbx"); \
+    EMIT("mov rsp, rbx");
+
+#define EMIT_FOREIGN_CALL(name) \
+    EMIT("mov rbx, rsp"); \
+    EMIT("and rsp, -16"); \
+    EMIT("add rsp, -8"); \
+    EMIT("push rbx"); \
+	EMIT("call " << foreignName(name)); \
     EMIT("pop rbx"); \
     EMIT("mov rsp, rbx");
 
@@ -139,13 +149,11 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 
 	//// Fill in the members with the constructor arguments
 
-    // Reference count
-	EMIT("mov qword [rax], 0");
-
-	// Boxed & unboxed member counts
-	long memberCount = (constructor->boxedMembers() << 32) + constructor->unboxedMembers();
-	EMIT("mov rbx, qword " << memberCount);
-	EMIT("mov qword [rax + 8], rbx");
+    // SplObject header fields
+	EMIT("mov qword [rax + " << offsetof(SplObject, refCount) << "], 0");
+	EMIT("mov dword [rax + " << offsetof(SplObject, numPointers) << "], " << constructor->boxedMembers());
+	EMIT("mov dword [rax + " << offsetof(SplObject, numScalars) << "], " << constructor->unboxedMembers());
+	EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << "_destroy" << mangle(constructor->name()));
 
     for (size_t i = 0; i < members.size(); ++i)
     {
@@ -163,6 +171,54 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 			EMIT("pop rax");
     	}
     }
+
+	EMIT("mov rsp, rbp");
+	EMIT("pop rbp");
+	EMIT("ret");
+}
+
+void CodeGen::createDestructor(ValueConstructor* constructor)
+{
+	const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
+
+	std::string destructorName = "_destroy" + mangle(constructor->name());
+
+	EMIT_BLANK();
+	EMIT_LABEL(destructorName);
+	EMIT("push rbp");
+	EMIT("mov rbp, rsp");
+
+    EMIT("push rdi");
+
+    EMIT("xor rcx, rcx");
+    EMIT("mov eax, dword [rdi + " << offsetof(SplObject, numPointers) << "]");
+    EMIT("mov rsi, rdi");
+    EMIT("add rsi, " << sizeof(SplObject));
+
+    std::string loopLabel = uniqueLabel();
+    EMIT_LABEL(loopLabel);
+
+    EMIT("cmp rcx, 0");
+    EMIT("je _end_" << destructorName);
+
+    EMIT("push rsi");
+    EMIT("push rcx");
+
+    // TODO: Align the stack first?
+    EMIT("mov rdi, qword [rsi]");
+	EMIT("call " << foreignName("_decref"));
+
+	EMIT("pop rcx");
+	EMIT("pop rsi");
+
+	EMIT("add rsi, 8");
+	EMIT("dec rcx");
+	EMIT("jmp " << loopLabel);
+
+	EMIT_LABEL("_end_" + destructorName);
+
+	EMIT("pop rdi");
+	EMIT_FOREIGN_CALL("free");
 
 	EMIT("mov rsp, rbp");
 	EMIT("pop rbp");
@@ -309,11 +365,13 @@ void CodeGen::visit(ProgramNode* node)
 	for (DataDeclaration* dataDeclaration : dataDeclarations_)
 	{
 		createConstructor(dataDeclaration->valueConstructor);
+		createDestructor(dataDeclaration->valueConstructor);
 	}
 
 	for (StructDefNode* structDef : structDeclarations_)
 	{
 		createConstructor(structDef->valueConstructor);
+		createDestructor(structDef->valueConstructor);
 	}
 
 	// Declare global variables and string literalsin the data segment
@@ -438,11 +496,11 @@ void CodeGen::visit(NullaryNode* node)
 				size_t size = sizeof(SplObject) + 8;
 				EMIT_MALLOC(size);
 
-			    // Reference count
-				EMIT("mov qword [rax], 0");
-
-				// 0 boxed members, 1 unboxed
-				EMIT("mov qword [rax + 8], 1");
+				// SplObject header fields
+				EMIT("mov qword [rax + " << offsetof(SplObject, refCount) << "], 0");
+				EMIT("mov dword [rax + " << offsetof(SplObject, numPointers) << "], 0");
+				EMIT("mov dword [rax + " << offsetof(SplObject, numScalars) << "], 1");
+				EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << mangle("_destroy"));
 
 				// Address of the function as an unboxed member
 				EMIT("mov rbx, _" << mangle(node->name));
@@ -664,7 +722,7 @@ void CodeGen::visit(FunctionCallNode* node)
 		    EMIT("mov rsp, rbx");
 
 			EMIT_LABEL(good);
-			EMIT("mov rax, qword [rax + "<< offsetof(List, value) << "]");
+			EMIT("mov rax, qword [rax + " << offsetof(List, value) << "]");
 		}
 		else if (node->target == "tail")
 		{
