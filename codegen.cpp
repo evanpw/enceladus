@@ -151,8 +151,6 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 
     // SplObject header fields
 	EMIT("mov qword [rax + " << offsetof(SplObject, refCount) << "], 0");
-	EMIT("mov dword [rax + " << offsetof(SplObject, numPointers) << "], " << constructor->boxedMembers());
-	EMIT("mov dword [rax + " << offsetof(SplObject, numScalars) << "], " << constructor->unboxedMembers());
 	EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << "_destroy" << mangle(constructor->name()));
 
     for (size_t i = 0; i < members.size(); ++i)
@@ -484,8 +482,6 @@ void CodeGen::visit(NullaryNode* node)
 
 				// SplObject header fields
 				EMIT("mov qword [rax + " << offsetof(SplObject, refCount) << "], 0");
-				EMIT("mov dword [rax + " << offsetof(SplObject, numPointers) << "], 0");
-				EMIT("mov dword [rax + " << offsetof(SplObject, numScalars) << "], 1");
 				EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << foreignName("free"));
 
 				// Address of the function as an unboxed member

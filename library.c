@@ -271,8 +271,6 @@ List* Cons(void* value, List* next)
     List* newCell = (List*)malloc(sizeof(List));
 
     newCell->refCount = 0;
-    newCell->numScalars = 0;
-    newCell->numPointers = 2;
     newCell->next = next;
     newCell->value = value;
     newCell->destructor = (void (*)(SplObject*))_destroyList;

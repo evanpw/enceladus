@@ -5,8 +5,6 @@ struct SplObject;
 
 #define SplObject_HEAD \
     int64_t refCount; \
-    uint32_t numScalars; \
-    uint32_t numPointers; \
     void (*destructor)(struct SplObject* object);
 
 #define IS_TAGGED(p) ((int64_t)p & 0x3)
