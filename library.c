@@ -122,6 +122,11 @@ void _decref(SplObject* object)
     }
 }
 
+void __destroyClosure(SplObject* object)
+{
+    free(object);
+}
+
 //// Ints //////////////////////////////////////////////////////////////////////
 
 int64_t toInt(int64_t n)

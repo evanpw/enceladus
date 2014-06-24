@@ -212,7 +212,7 @@ void SemanticAnalyzer::injectSymbols()
     scope->symbols.insert(makeExternal("_incref"));
     scope->symbols.insert(makeExternal("_decref"));
     scope->symbols.insert(makeExternal("_decrefNoFree"));
-    scope->symbols.insert(makeExternal("_destroy"));
+    scope->symbols.insert(makeExternal("__destroyClosure"));
     scope->symbols.insert(makeExternal("malloc"));
     scope->symbols.insert(makeExternal("free"));
 }

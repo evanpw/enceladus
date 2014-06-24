@@ -151,7 +151,10 @@ void CodeGen::createConstructor(ValueConstructor* constructor)
 
     // SplObject header fields
 	EMIT("mov qword [rax + " << offsetof(SplObject, refCount) << "], 0");
-	EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << "_destroy" << mangle(constructor->name()));
+
+	// Two-step move is necessary for OSX (no 32-bit absolute addresses in 64-bit Mach-O)
+	EMIT("mov rdi, _destroy" << mangle(constructor->name()));
+	EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], rdi");
 
     for (size_t i = 0; i < members.size(); ++i)
     {
@@ -482,9 +485,13 @@ void CodeGen::visit(NullaryNode* node)
 
 				// SplObject header fields
 				EMIT("mov qword [rax + " << offsetof(SplObject, refCount) << "], 0");
-				EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], " << foreignName("free"));
 
-				// Address of the function as an unboxed member
+				EMIT("mov rbx, " << foreignName("__destroyClosure"));
+				EMIT("mov qword [rax + " << offsetof(SplObject, destructor) << "], rbx");
+
+				// Address of the function as an unboxed member. We have to do
+				// this in two steps on OSX to avoid the error
+				// "Mach-O 64-bit format does not support 32-bit absolute addresses"
 				EMIT("mov rbx, _" << mangle(node->name));
 				EMIT("mov qword [rax + " << sizeof(SplObject) << "], rbx");
 			}
