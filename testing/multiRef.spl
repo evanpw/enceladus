@@ -1,0 +1,6 @@
+x := [1, 2]
+y := Pair x x
+
+let Pair a b = y
+
+print $ show $ sum a + sum b
