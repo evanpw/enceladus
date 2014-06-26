@@ -30,7 +30,7 @@ public:
 	std::shared_ptr<Type> type;
 
 	// For code generation
-	//std::unique_ptr<Address> address;
+	std::unique_ptr<Address> address;
 };
 
 class StatementNode : public AstNode {};
@@ -412,8 +412,6 @@ public:
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	virtual MemberAccessNode* clone() { return new MemberAccessNode(*this); }
 
 	std::string varName;
 	std::string memberName;

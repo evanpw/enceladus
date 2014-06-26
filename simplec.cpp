@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include "ast.hpp"
-#include "codegen.hpp"
+#include "codegen2.hpp"
 #include "scope.hpp"
 #include "semantic.hpp"
 
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 
 	if (semantic_success)
 	{
-		CodeGen codegen;
+		CodeGen2 codegen;
 		root->accept(&codegen);
 
 		return_value = 0;
