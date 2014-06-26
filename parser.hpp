@@ -43,7 +43,6 @@ StatementNode* assignment_statement();
 StatementNode* variable_declaration();
 StatementNode* while_statement();
 StatementNode* break_statement();
-AssignableNode* assignable();
 StatementNode* suite();
 ParamList* parameters();
 TypeDecl* type_declaration();

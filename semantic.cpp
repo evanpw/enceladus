@@ -893,10 +893,14 @@ void SemanticAnalyzer::visit(MatchNode* node)
 
 void SemanticAnalyzer::visit(AssignNode* node)
 {
-    node->target->accept(this);
+    Symbol* symbol = resolveSymbol(node->target);
+    CHECK(symbol != nullptr, "symbol \"{}\" is not defined in this scope", node->target);
+    CHECK(symbol->kind == kVariable, "symbol \"{}\" is not a variable", node->target);
+    node->symbol = symbol;
+
 	node->value->accept(this);
 
-    unify(node->value->type, node->target->type, node);
+    unify(node->value->type, node->symbol->type, node);
 
     node->type = Unit;
 }
@@ -907,7 +911,6 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 	Symbol* symbol = resolveSymbol(name);
 
     CHECK(symbol, "function \"{}\" is not defined", name);
-    //CHECK(symbol->kind == kFunction, "target of function call \"{}\" is not a function", symbol->name);
 
 	std::vector<std::shared_ptr<Type>> paramTypes;
     for (size_t i = 0; i < node->arguments.size(); ++i)

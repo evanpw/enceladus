@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 
+#include "address.hpp"
 #include "ast_visitor.hpp"
 #include "scope.hpp"
 #include "types.hpp"
@@ -22,17 +23,18 @@ public:
 	virtual ~AstNode();
 	virtual void accept(AstVisitor* visitor) = 0;
 
+	// For error reporting
 	YYLTYPE* location;
+
+	// For semantic analysis
 	std::shared_ptr<Type> type;
+
+	// For code generation
+	//std::unique_ptr<Address> address;
 };
 
 class StatementNode : public AstNode {};
 class ExpressionNode : public StatementNode {};
-class AssignableNode : public ExpressionNode
-{
-public:
-	virtual AssignableNode* clone() = 0;
-};
 
 ////// Utility classes other than AST nodes ////////////////////////////////////
 
@@ -172,7 +174,7 @@ public:
 	Symbol* symbol;
 };
 
-class VariableNode : public AssignableNode
+class VariableNode : public ExpressionNode
 {
 public:
 	VariableNode(const std::string& name)
@@ -181,8 +183,6 @@ public:
 	}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	virtual VariableNode* clone() { return new VariableNode(*this); }
 
 	std::string name;
 	Symbol* symbol;
@@ -250,15 +250,16 @@ BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, Stateme
 class AssignNode : public StatementNode
 {
 public:
-	AssignNode(AssignableNode* target, ExpressionNode* value)
+	AssignNode(const std::string& target, ExpressionNode* value)
 	: target(target), value(value)
 	{
 	}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
-	std::unique_ptr<AssignableNode> target;
+	std::string target;
 	std::unique_ptr<ExpressionNode> value;
+	Symbol* symbol;
 };
 
 class LetNode : public StatementNode
@@ -403,7 +404,7 @@ public:
 };
 
 
-class MemberAccessNode : public AssignableNode
+class MemberAccessNode : public ExpressionNode
 {
 public:
 	MemberAccessNode(const std::string& varName, const std::string& memberName)

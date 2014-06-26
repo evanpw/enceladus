@@ -295,7 +295,8 @@ StatementNode* while_statement()
 
 StatementNode* assignment_statement()
 {
-    AssignableNode* lhs = assignable();
+    Token token = expect(tLIDENT);
+    std::string lhs = token.value.str;
 
     if (accept((TokenType)'='))
     {
@@ -307,7 +308,7 @@ StatementNode* assignment_statement()
     }
 
     ArgList argList;
-    argList.emplace_back(lhs);
+    argList.emplace_back(new VariableNode(lhs));
 
     std::string functionName;
     switch (peekType())
@@ -343,7 +344,7 @@ StatementNode* assignment_statement()
 
     expect(tEOL);
 
-    return new AssignNode(lhs->clone(), new FunctionCallNode(functionName, std::move(argList)));
+    return new AssignNode(lhs, new FunctionCallNode(functionName, std::move(argList)));
 }
 
 StatementNode* variable_declaration()
@@ -380,22 +381,6 @@ StatementNode* break_statement()
 }
 
 //// Miscellaneous /////////////////////////////////////////////////////////////
-
-AssignableNode* assignable()
-{
-    Token token = expect(tLIDENT);
-
-    if (peekType() == '{')
-    {
-        expect('{');
-        Token memberName = expect(tLIDENT);
-        expect('}');
-
-        return new MemberAccessNode(token.value.str, memberName.value.str);
-    }
-
-    return new VariableNode(token.value.str);
-}
 
 StatementNode* suite()
 {

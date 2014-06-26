@@ -33,15 +33,11 @@ if_statement
     | IF expression THEN suite ELSE suite
 
 assignment_statement
-    : assignable '=' expression EOL
-    | assignable DIV_EQUAL expression EOL
-    | assignable MINUS_EQUAL expression EOL
-    | assignable PLUS_EQUAL expression EOL
-    | assignable TIMES_EQUAL expression EOL
-
-assignable
-    : LIDENT
-    | LIDENT '{' LIDENT '}'
+    : LIDENT '=' expression EOL
+    | LIDENT DIV_EQUAL expression EOL
+    | LIDENT MINUS_EQUAL expression EOL
+    | LIDENT PLUS_EQUAL expression EOL
+    | LIDENT TIMES_EQUAL expression EOL
 
 data_declaration
     : DATA UIDENT { LIDENT } '=' constructor_spec EOL

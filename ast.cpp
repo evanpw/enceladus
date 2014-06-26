@@ -47,7 +47,7 @@ BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, Stateme
     tailArgList.emplace_back(new NullaryNode(listVar.c_str()));
     newBody->append(
         new AssignNode(
-            new VariableNode(listVar),
+            listVar,
             new FunctionCallNode("tail", std::move(tailArgList))));
 
     BlockNode* forNode = new BlockNode;

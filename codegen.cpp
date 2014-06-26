@@ -51,13 +51,6 @@ std::string CodeGen::mangle(const std::string& name)
 	}
 }
 
-void CodeGen::getAddress(AssignableNode* node, const std::string& dest)
-{
-	VariableNode* variableNode = dynamic_cast<VariableNode*>(node);
-	assert(variableNode);
-	EMIT("lea " << dest << ", " << access(*variableNode->symbol));
-}
-
 std::string CodeGen::access(const Symbol& symbol)
 {
 	assert(symbol.kind == kVariable);
@@ -580,28 +573,25 @@ void CodeGen::visit(BreakNode* node)
 
 void CodeGen::visit(AssignNode* node)
 {
-	// Do NOT recurse into the target node, we will instead take its address
-	// node->target->accept(this);
-
 	node->value->accept(this);
 
 	// We lose a reference to the original contents, and gain a reference to the
 	// new rhs
-	if (node->target->type->isBoxed())
+	if (node->symbol->type->isBoxed())
 	{
 		EMIT("push rax");
 
 		EMIT("mov rdi, rax");
 		EMIT("call " << foreignName("_incref"));
 
-		getAddress(node->target.get(), "rdi");
+		EMIT("lea rdi, " << access(*node->symbol));
 		EMIT("mov rdi, qword [rdi]");
 		EMIT("call " << foreignName("_decref"));
 
 		EMIT("pop rax");
 	}
 
-	getAddress(node->target.get(), "rbx");
+	EMIT("lea rbx, " << access(*node->symbol));
 	EMIT("mov qword [rbx], rax");
 }
 

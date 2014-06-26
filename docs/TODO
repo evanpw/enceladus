@@ -36,3 +36,4 @@ Todo
 * Allow real closures with variable capture
 * Struct type constructors
 * Check that programmer-specified type variables (rigid type variables) are not overwritten with concrete types: generate a type error otherwise
+* Allow mutually recursive functions

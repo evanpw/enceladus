@@ -43,10 +43,6 @@ public:
 	// current scope.
 	std::string access(const Symbol& symbol);
 
-	// Emit code to move the address of the given assignable location to the
-	// given register
-	void getAddress(AssignableNode* node, const std::string& dest);
-
 	// Gets the list of all external symbols which are referenced in this module
 	std::vector<std::string> getExterns(ProgramNode* node);
 
