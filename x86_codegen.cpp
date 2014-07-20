@@ -580,9 +580,11 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
         {
             dest = getRegisterFor(inst->dest, false);
 
-            EMIT("sar " << lhs << ", 1");
+            freeRegister(rhs);
+            evictRegister(rhs);
             EMIT("sar " << rhs << ", 1");                           // Shift out tag bit
             EMIT("mov " << dest << ", " << lhs);
+            EMIT("sar " << dest << ", 1");
             EMIT("imul " << dest << ", " << rhs);
             EMIT("lea " << dest << ", [2 * " << dest << " + 1]");   // Re-insert tag bit
         }
@@ -596,9 +598,11 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
 
         assert(dest == "rax");
 
-        EMIT("sar " << lhs << ", 1");
+        freeRegister(rhs);
+        evictRegister(rhs);
         EMIT("sar " << rhs << ", 1");       // Shift out tag bit
         EMIT("mov rax, " << lhs);
+        EMIT("sar rax, 1");
         EMIT("cqo");
         EMIT("idiv " << rhs);
         EMIT("lea rax, [2 * rax + 1]");     // Re-insert tag bit
@@ -614,9 +618,11 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
 
         assert(dest == "rdx");
 
-        EMIT("sar " << lhs << ", 1");
+        freeRegister(rhs);
+        evictRegister(rhs);
         EMIT("sar " << rhs << ", 1");       // Shift out tag bit
         EMIT("mov rax, " << lhs);
+        EMIT("sar rax, 1");
         EMIT("cqo");
         EMIT("idiv " << rhs);
         EMIT("lea rdx, [2 * rdx + 1]");     // Re-insert tag bit
