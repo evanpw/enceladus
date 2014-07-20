@@ -57,6 +57,16 @@ void X86CodeGen::generateCode(const TACFunction& function)
     EMIT("push rbp");
     EMIT("mov rbp, rsp");
 
+    assert(function.regParams.size() <= 6);
+
+    // x86_64 calling convention for C puts the first 6 arguments in registers
+    std::string registerArgs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
+    for (size_t i = 0; i < function.regParams.size(); ++i)
+    {
+        assignRegister(function.regParams[i], registerArgs[i]);
+    }
+
     // Assign a location for all of the local vars and temporaries
     _localLocations.clear();
     for (size_t i = 0; i < function.locals.size(); ++i)
@@ -69,10 +79,12 @@ void X86CodeGen::generateCode(const TACFunction& function)
 
     // We have to zero out the local variables for the reference counting
     // to work correctly
+    evictRegister("rdi");   // rdi could contain a function parameter
     EMIT("mov rax, 0");
     EMIT("mov rcx, " << total);
     EMIT("mov rdi, rsp");
     EMIT("rep stosq");
+    freeRegister("rdi");
 
     for (auto& inst : function.instructions)
     {
@@ -323,6 +335,19 @@ std::string X86CodeGen::getSpecificRegisterFor(std::shared_ptr<Address> address,
 
     _registers[reg].isFree = false;
     _registers[reg].inUse = true;
+    _registers[reg].value = address;
+
+    return reg;
+}
+
+std::string X86CodeGen::assignRegister(std::shared_ptr<Address> address, std::string reg)
+{
+    assert(!_registers[reg].inUse);
+    assert(_registers[reg].isFree);
+
+    _registers[reg].isDirty = true;     // The value hasn't been stored yet
+    _registers[reg].isFree = false;
+    _registers[reg].inUse = false;
     _registers[reg].value = address;
 
     return reg;

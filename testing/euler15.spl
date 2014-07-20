@@ -30,6 +30,8 @@ def countPaths p =
     count += countPaths $ MyPair (x + 1) y
     count += countPaths $ MyPair x (y + 1)
 
+    --print $ (show x) ++ " " ++ (show y) ++ " -> " ++ (show count)
+
     insertMemo p count
     return count
 

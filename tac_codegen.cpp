@@ -31,6 +31,8 @@ void TACCodeGen::visit(ProgramNode* node)
     // other functions. Now generate code for those
     for (FunctionDefNode* funcDefNode : _functions)
     {
+        FunctionType* functionType = funcDefNode->symbol->typeScheme->type()->get<FunctionType>();
+
         _tacProgram.otherFunctions.emplace_back(funcDefNode->symbol->name);
 
         _currentFunction = &_tacProgram.otherFunctions.back();
@@ -63,8 +65,6 @@ void TACCodeGen::visit(ProgramNode* node)
         AstVisitor::visit(funcDefNode);
 
         emit(new TACLabel(_functionEnd));
-
-        FunctionType* functionType = funcDefNode->symbol->typeScheme->type()->get<FunctionType>();
 
         // Preserve the return value from being freed if it happens to be the
         // same as one of the local variables.
@@ -261,7 +261,7 @@ void TACCodeGen::visit(NullaryNode* node)
                 dest,
                 offsetof(SplObject, destructor),
                 std::make_shared<NameAddress>(
-                    FOREIGN_NAME("__destroyClosure"),
+                    FOREIGN_NAME("_destroyClosure"),
                     NameTag::Function)));
 
             // Address of the function as an unboxed member
@@ -630,7 +630,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
         offsetof(SplObject, destructor),
         std::make_shared<NameAddress>(destructor, NameTag::Function)));
 
-    std::shared_ptr<Address> t = makeTemp();
     for (size_t i = 0; i < members.size(); ++i)
     {
         auto& member = members[i];
@@ -639,7 +638,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
         std::shared_ptr<Address> param(new NameAddress(member.name, NameTag::Param));
         _currentFunction->params.push_back(param);
 
-        emit(new TACLeftIndexedAssignment(t, sizeof(SplObject) + 8 * location, param));
+        emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, sizeof(SplObject) + 8 * location, param));
 
         // Assigning into this structure gives a new reference to each member
         if (member.type->isBoxed())
@@ -655,8 +654,11 @@ void TACCodeGen::createDestructor(ValueConstructor* constructor)
 
     std::string destructorName = "_destroy" + mangle(constructor->name());
 
-    std::shared_ptr<Address> param(new NameAddress("object", NameTag::Param));
-    _currentFunction->params.push_back(param);
+    // This function is called by C code, so expect the argument in a register
+    // This is a bit of a hack
+    std::shared_ptr<Address> param(new NameAddress("object", NameTag::Local));
+    _currentFunction->regParams.push_back(param);
+    _currentFunction->locals.push_back(param);
 
     for (size_t i = 0; i < members.size(); ++i)
     {

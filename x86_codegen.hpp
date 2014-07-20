@@ -48,6 +48,12 @@ private:
     // specific register).
     std::string getSpecificRegisterFor(std::shared_ptr<Address> address, std::string reg, bool forRead);
 
+    // Similar to getSpecificRegisterFor, but just does the assignment without
+    // any moving. The register must be free to succeed. This function is used
+    // to map function parameters stored in registers to locations on the stack
+    // where they can be spilled.
+    std::string assignRegister(std::shared_ptr<Address> address, std::string reg);
+
     // Evict the current value of the given register, if any, and write back to
     // memory if necessary. This is used for registers which may be overwritten
     // by some operation, like rdx in division
