@@ -20,6 +20,7 @@ struct TACFunction
     long numberOfTemps = 0;
     std::vector<std::shared_ptr<Address>> locals;
     std::vector<std::shared_ptr<Address>> params;
+    std::shared_ptr<Address> returnValue;
 };
 
 struct TACProgram

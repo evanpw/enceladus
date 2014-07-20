@@ -284,22 +284,4 @@ struct TACBinaryOperation : public TACInstruction
     std::shared_ptr<Address> rhs;
 };
 
-struct TACReturn : public TACInstruction
-{
-    TACReturn(std::shared_ptr<Address> result)
-    : result(result)
-    {}
-
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
-
-    virtual std::string str() const override
-    {
-        std::stringstream ss;
-        ss << "return " << result->str();
-        return ss.str();
-    }
-
-    std::shared_ptr<Address> result;
-};
-
 #endif

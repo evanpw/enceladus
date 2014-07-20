@@ -28,7 +28,6 @@ public:
     void codeGen(const TACRightIndexedAssignment* inst);
     void codeGen(const TACLeftIndexedAssignment* inst);
     void codeGen(const TACBinaryOperation* inst);
-    void codeGen(const TACReturn* inst);
 
 private:
     void generateCode(const TACFunction& function);

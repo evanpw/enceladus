@@ -32,9 +32,10 @@ void TACCodeGen::visit(ProgramNode* node)
     for (FunctionDefNode* funcDefNode : _functions)
     {
         _tacProgram.otherFunctions.emplace_back(funcDefNode->symbol->name);
-        _currentFunction = &_tacProgram.otherFunctions.back();
 
-        AstVisitor::visit(funcDefNode);
+        _currentFunction = &_tacProgram.otherFunctions.back();
+        _currentFunction->returnValue = makeTemp();
+        _functionEnd.reset(new Label);
 
         // Collect all local variables
         for (auto& local : funcDefNode->scope->symbols.symbols)
@@ -51,7 +52,46 @@ void TACCodeGen::visit(ProgramNode* node)
         for (Symbol* param : funcDefNode->parameterSymbols)
         {
             assert(param->asVariable()->isParam);
-            _currentFunction->params.push_back(getNameAddress(param));
+            std::shared_ptr<Address> paramAddress = getNameAddress(param);
+            _currentFunction->params.push_back(paramAddress);
+
+            // We gain a reference to every parameter
+            emit(new TACCall(true, FOREIGN_NAME("_incref"), {paramAddress}));
+        }
+
+        // Generate code for the function body
+        AstVisitor::visit(funcDefNode);
+
+        emit(new TACLabel(_functionEnd));
+
+        FunctionType* functionType = funcDefNode->symbol->typeScheme->type()->get<FunctionType>();
+
+        // Preserve the return value from being freed if it happens to be the
+        // same as one of the local variables.
+        if (functionType->output()->isBoxed())
+        {
+            emit(new TACCall(true, FOREIGN_NAME("_incref"), {_currentFunction->returnValue}));
+        }
+
+        // Going out of scope loses a reference to all of the local variables
+        // and parameters
+        for (auto& i : funcDefNode->scope->symbols.symbols)
+        {
+            const Symbol* symbol = i.second.get();
+            assert(symbol->kind == kVariable);
+
+            if (symbol->typeScheme->isBoxed())
+            {
+                emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(symbol)}));
+            }
+        }
+
+        // But after the function returns, we don't have a reference to the
+        // return value, it's just in a temporary. The caller will have to
+        // assign it a reference.
+        if (functionType->output()->isBoxed())
+        {
+            emit(new TACCall(true, FOREIGN_NAME("_decrefNoFree"), {_currentFunction->returnValue}));
         }
     }
 
@@ -519,7 +559,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
 void TACCodeGen::visit(ReturnNode* node)
 {
     std::shared_ptr<Address> result = visitAndGet(*node->expression);
-    emit(new TACReturn(result));
+    emit(new TACAssign(_currentFunction->returnValue, result));
+    emit(new TACJump(_functionEnd));
 }
 
 void TACCodeGen::visit(VariableNode* node)
@@ -571,21 +612,21 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
     size_t size = sizeof(SplObject) + 8 * members.size();
 
     // Allocate room for the object
-    std::shared_ptr<Address> result = makeTemp();
+    _currentFunction->returnValue = makeTemp();
     emit(new TACCall(
         true,
-        result,
+        _currentFunction->returnValue,
         FOREIGN_NAME("malloc"),
         {std::make_shared<ConstAddress>(size)}));
 
     //// Fill in the members with the constructor arguments
 
     // SplObject header fields
-    emit(new TACLeftIndexedAssignment(result, offsetof(SplObject, refCount), ConstAddress::Zero));
+    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, refCount), ConstAddress::Zero));
 
     std::string destructor = "_destroy" + mangle(constructor->name());
     emit(new TACLeftIndexedAssignment(
-        result,
+        _currentFunction->returnValue,
         offsetof(SplObject, destructor),
         std::make_shared<NameAddress>(destructor, NameTag::Function)));
 
@@ -606,8 +647,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
             emit(new TACCall(true, FOREIGN_NAME("_incref"), {param}));
         }
     }
-
-    emit(new TACReturn(result));
 }
 
 void TACCodeGen::createDestructor(ValueConstructor* constructor)

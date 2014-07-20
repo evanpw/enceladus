@@ -79,7 +79,7 @@ void X86CodeGen::generateCode(const TACFunction& function)
         inst->accept(this);
     }
 
-    EMIT_LABEL("__end_" + function.name);
+    EMIT("mov rax, " << access(function.returnValue));
     EMIT("leave");
     EMIT("ret");
 
@@ -638,12 +638,4 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
     freeRegister(dest);
 }
 
-void X86CodeGen::codeGen(const TACReturn* inst)
-{
-    EMIT_COMMENT(inst->str());
-
-    std::string result = getSpecificRegisterFor(inst->result, "rax", true);
-    EMIT("jmp " << "__end_" + _currentFunction->name);
-    freeRegister(result);
-}
 

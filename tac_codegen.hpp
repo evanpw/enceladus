@@ -69,6 +69,8 @@ private:
 
     TACProgram _tacProgram;
     TACFunction* _currentFunction;
+    std::shared_ptr<Address> _returnValue;
+    std::shared_ptr<Label> _functionEnd;
 
     // Number of temporary variables used so far in the current function
     std::shared_ptr<Address> makeTemp() { return std::make_shared<TempAddress>(_currentFunction->numberOfTemps++); }

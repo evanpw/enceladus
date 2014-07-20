@@ -12,7 +12,6 @@ struct TACIndirectCall;
 struct TACRightIndexedAssignment;
 struct TACLeftIndexedAssignment;
 struct TACBinaryOperation;
-struct TACReturn;
 struct TACProgram;
 
 struct TargetCodeGen
@@ -32,7 +31,6 @@ struct TargetCodeGen
     virtual void codeGen(const TACRightIndexedAssignment* inst) = 0;
     virtual void codeGen(const TACLeftIndexedAssignment* inst) = 0;
     virtual void codeGen(const TACBinaryOperation* inst) = 0;
-    virtual void codeGen(const TACReturn* inst) = 0;
 };
 
 #endif
