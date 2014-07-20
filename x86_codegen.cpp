@@ -365,7 +365,7 @@ void X86CodeGen::evictRegister(std::string reg)
         EMIT("mov " << accessDirectly(_registers[reg].value) << ", " << reg);
     }
 
-    _registers[reg].isFree = true;
+    _registers[reg].isFree = false;
     _registers[reg].value.reset();
     _registers[reg].isDirty = false;
     _registers[reg].inUse = true;
@@ -614,6 +614,7 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
             EMIT("sar " << dest << ", 1");
             EMIT("imul " << dest << ", " << rhs);
             EMIT("lea " << dest << ", [2 * " << dest << " + 1]");   // Re-insert tag bit
+            freeRegister(rhs);
         }
     }
     else if (inst->op == "/")
@@ -635,6 +636,7 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
         EMIT("lea rax, [2 * rax + 1]");     // Re-insert tag bit
 
         freeRegister("rdx");
+        freeRegister(rhs);
     }
     else if (inst->op == "%")
     {
@@ -655,6 +657,7 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
         EMIT("lea rdx, [2 * rdx + 1]");     // Re-insert tag bit
 
         freeRegister("rax");
+        freeRegister(rhs);
     }
 
     freeRegister(lhs);

@@ -45,7 +45,7 @@ testing/test.sh $platform euler26 983 || echo "Project Euler 26 failed!"
 
 testing/test.sh $platform poly 4 || echo "Polymorphism test failed!"
 testing/test.sh $platform poly2 "False" || echo "Polymorphism test 2 failed!"
-testing/test.sh $platform fail "*** Exception: Called tail on empty list" || echo "Exception test failed!"
+testing/test.sh $platform fail "*** Exception: Called head on empty list" || echo "Exception test failed!"
 testing/test.sh $platform unaryMinus "-5" || echo "Unary minus test failed!"
 testing/test.sh $platform localVar "3" || echo "Local variable test failed!"
 testing/test.sh $platform unnamed "19" || echo "Unnamed variable test failed!"

@@ -58,7 +58,8 @@ void TACCodeGen::visit(ProgramNode* node)
             _currentFunction->params.push_back(paramAddress);
 
             // We gain a reference to every parameter
-            emit(new TACCall(true, FOREIGN_NAME("_incref"), {paramAddress}));
+            if (param->typeScheme->isBoxed())
+                emit(new TACCall(true, FOREIGN_NAME("_incref"), {paramAddress}));
         }
 
         // Generate code for the function body
@@ -81,9 +82,7 @@ void TACCodeGen::visit(ProgramNode* node)
             assert(symbol->kind == kVariable);
 
             if (symbol->typeScheme->isBoxed())
-            {
                 emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(symbol)}));
-            }
         }
 
         // But after the function returns, we don't have a reference to the
