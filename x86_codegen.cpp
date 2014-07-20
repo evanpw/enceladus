@@ -515,7 +515,6 @@ void X86CodeGen::codeGen(const TACCall* inst)
     {
         for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
         {
-            std::shared_ptr<Address> param = *i;
             EMIT("push qword " << access(*i));
         }
 
@@ -535,9 +534,9 @@ void X86CodeGen::codeGen(const TACIndirectCall* inst)
 {
     EMIT_COMMENT(inst->str());
 
-    for (auto& param : inst->params)
+    for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
     {
-        EMIT("push qword " << access(param));
+        EMIT("push qword " << access(*i));
     }
 
     spillAndClear();
