@@ -30,7 +30,7 @@ public:
 	std::shared_ptr<Type> type;
 
 	// For code generation
-	std::unique_ptr<Address> address;
+	std::shared_ptr<Address> address;
 };
 
 class StatementNode : public AstNode {};

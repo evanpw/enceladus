@@ -58,4 +58,4 @@ testing/testError.sh $platform structMembers3 'Error: Near line 6, column 7: sym
 testing/test.sh $platform structInference "7" || echo "Struct type inference test failed!"
 testing/test.sh $platform bigList "" || echo "Big list test failed!"
 testing/test.sh $platform multiRef "6" || echo "Multiple reference test failed!"
-
+testing/test.sh $platform shortCircuit "Hello" || echo "Short-circuit test failed!"

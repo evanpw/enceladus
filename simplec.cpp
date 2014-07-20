@@ -1,7 +1,9 @@
 #include <cstdio>
 #include <iostream>
 #include "ast.hpp"
-#include "codegen2.hpp"
+#include "codegen.hpp"
+#include "tac_codegen.hpp"
+#include "x86_codegen.hpp"
 #include "scope.hpp"
 #include "semantic.hpp"
 
@@ -44,18 +46,38 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	mainFile = fopen(argv[1], "r");
-	if (mainFile == nullptr)
+	if (strcmp(argv[1], "--noPrelude") == 0)
 	{
-		std::cerr << "File " << argv[1] << " not found" << std::endl;
-		return 1;
-	}
+		lastFile = true;
 
-	yyin = fopen("prelude.spl", "r");
-	if (yyin == nullptr)
+		if (argc < 2)
+		{
+			std::cerr << "Please specify a source file to compile." << std::endl;
+			return 1;
+		}
+
+		yyin = fopen(argv[2], "r");
+		if (yyin == nullptr)
+		{
+			std::cerr << "File " << argv[1] << " not found" << std::endl;
+			return 1;
+		}
+	}
+	else
 	{
-		std::cerr << "cannot find prelude.spl" << std::endl;
-		return 1;
+		mainFile = fopen(argv[1], "r");
+		if (mainFile == nullptr)
+		{
+			std::cerr << "File " << argv[1] << " not found" << std::endl;
+			return 1;
+		}
+
+		yyin = fopen("prelude.spl", "r");
+		if (yyin == nullptr)
+		{
+			std::cerr << "cannot find prelude.spl" << std::endl;
+			return 1;
+		}
 	}
 
 	int return_value = 1;
@@ -67,10 +89,13 @@ int main(int argc, char* argv[])
 
 	if (semantic_success)
 	{
-		CodeGen2 codegen;
-		root->accept(&codegen);
+		TACCodeGen tacGen;
+		root->accept(&tacGen);
 
 		return_value = 0;
+
+		X86CodeGen x86Gen;
+		x86Gen.generateCode(tacGen.getResult());
 	}
 
 	delete root;

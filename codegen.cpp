@@ -416,22 +416,46 @@ void CodeGen::visit(ComparisonNode* node)
 
 void CodeGen::visit(LogicalNode* node)
 {
-	node->lhs->accept(this);
-	EMIT("push rax");
-	node->rhs->accept(this);
+	std::string endLabel = uniqueLabel();
 
-	switch (node->op)
-	{
-	case LogicalNode::kAnd:
-		EMIT("and rax, qword [rsp]");
-		break;
+    if (node->op == LogicalNode::kAnd)
+    {
+    	std::string falseBranch = uniqueLabel();
 
-	case LogicalNode::kOr:
-		EMIT("or rax, qword [rsp]");
-		break;
-	}
+        node->lhs->accept(this);
+        EMIT("cmp rax, 11b");
+        EMIT("jne " << falseBranch);
+        node->rhs->accept(this);
+        EMIT("cmp rax, 11b");
+        EMIT("jne " << falseBranch);
+        EMIT("mov rax, 11b");
+        EMIT("jmp " << endLabel);
+        EMIT_LABEL(falseBranch);
+        EMIT("mov rax, 01b");
+        EMIT_LABEL(endLabel);
 
-	EMIT("pop rbx");
+        return;
+    }
+    else if (node->op == LogicalNode::kOr)
+    {
+    	std::string trueBranch = uniqueLabel();
+
+    	node->lhs->accept(this);
+        EMIT("cmp rax, 11b");
+        EMIT("je " << trueBranch);
+        node->rhs->accept(this);
+        EMIT("cmp rax, 11b");
+        EMIT("je " << trueBranch);
+        EMIT("mov rax, 01b");
+        EMIT("jmp " << endLabel);
+        EMIT_LABEL(trueBranch);
+        EMIT("mov rax, 11b");
+        EMIT_LABEL(endLabel);
+
+        return;
+    }
+
+    assert(false);
 }
 
 void CodeGen::visit(NullaryNode* node)
@@ -523,7 +547,7 @@ void CodeGen::visit(IfNode* node)
 
 	std::string endLabel = uniqueLabel();
 
-	EMIT("and rax, 10b");
+	EMIT("test rax, 10b");
 	EMIT("jz near " << endLabel);
 	node->body->accept(this);
 	EMIT_LABEL(endLabel);
@@ -536,7 +560,7 @@ void CodeGen::visit(IfElseNode* node)
 	std::string elseLabel = uniqueLabel();
 	std::string endLabel = uniqueLabel();
 
-	EMIT("and rax, 10b");
+	EMIT("test rax, 10b");
 	EMIT("jz near " << elseLabel);
 	node->body->accept(this);
 	EMIT("jmp " << endLabel);
@@ -556,7 +580,7 @@ void CodeGen::visit(WhileNode* node)
 	std::string prevLoopEnd = currentLoopEnd_;
 	currentLoopEnd_ = endLabel;
 
-	EMIT("and rax, 10b");
+	EMIT("test rax, 10b");
 	EMIT("jz near " << endLabel);
 	node->body->accept(this);
 
@@ -738,12 +762,13 @@ void CodeGen::visit(FunctionCallNode* node)
 		else if (node->target == "null")
 		{
 			std::string finish = uniqueLabel();
-			EMIT("pop rax");
-			EMIT("cmp rax, 0");
-			EMIT("je " << finish);
-			EMIT("mov rax, 11b");
-			EMIT_LABEL(finish);
-			EMIT("xor rax, 10b");
+			std::string nullBranch = uniqueLabel();
+
+			EMIT("pop rbx");
+			EMIT("mov rax, 01b");
+			EMIT("mov rcx, 11b");
+			EMIT("test rbx, rbx");
+			EMIT("cmovz rax, rcx");
 		}
 		else if (node->target == "+")
 		{

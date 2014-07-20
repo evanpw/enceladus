@@ -37,3 +37,9 @@ Todo
 * Struct type constructors
 * Check that programmer-specified type variables (rigid type variables) are not overwritten with concrete types: generate a type error otherwise
 * Allow mutually recursive functions
+* Merge AssignNode and LetNode -- use a flag to distinguish them
+* Namespaces / mangling is a huge mess
+* Get rid of symbol table references from TAC code and beyond
+* Have a separate class for per-function and per-program target codegen
+* Pass function arguments in registers internally
+* Should the TAC code know about the special representation of integers and bools?

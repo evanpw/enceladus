@@ -1,0 +1,9 @@
+def f =
+    print "Hello"
+    return True
+
+def g =
+    print "World"
+    return False
+
+x := f or g
