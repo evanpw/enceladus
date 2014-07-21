@@ -32,6 +32,10 @@ public:
 private:
     void generateCode(const TACFunction& function);
 
+    bool inRegister(std::shared_ptr<Address> address);
+    bool inMemory(std::shared_ptr<Address> address);
+    bool isConst(std::shared_ptr<Address> address);
+
     std::string access(std::shared_ptr<Address> address, bool forRead = true);
     std::string accessDirectly(std::shared_ptr<Address> address);
 

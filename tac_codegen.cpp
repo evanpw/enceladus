@@ -21,6 +21,7 @@ std::shared_ptr<Address> TACCodeGen::getNameAddress(const Symbol* symbol)
 void TACCodeGen::visit(ProgramNode* node)
 {
     _currentFunction = &_tacProgram.mainFunction;
+    _currentFunction->returnValue.reset();  // No return value
 
     for (auto& child : node->children)
     {
@@ -649,6 +650,9 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
 
 void TACCodeGen::createDestructor(ValueConstructor* constructor)
 {
+    // No return value
+    _currentFunction->returnValue.reset();
+
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
 
     std::string destructorName = "_destroy" + mangle(constructor->name());

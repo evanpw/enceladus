@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdint>
 
 #include "x86_codegen.hpp"
 #include "ast.hpp"
@@ -8,6 +9,8 @@
 #define EMIT_LABEL(x) std::cout << x << ":" << std::endl;
 #define EMIT(x) std::cout << "\t" << x << std::endl;
 #define EMIT_COMMENT(x) std::cout << "\t; " << x << std::endl;
+
+#define IS_DWORD(x) (INT32_MIN <= (x) && (x) <= INT32_MAX)
 
 void X86CodeGen::generateCode(const TACProgram& program)
 {
@@ -91,7 +94,9 @@ void X86CodeGen::generateCode(const TACFunction& function)
         inst->accept(this);
     }
 
-    EMIT("mov rax, " << access(function.returnValue));
+    if (function.returnValue)
+        EMIT("mov rax, " << access(function.returnValue));
+
     EMIT("leave");
     EMIT("ret");
 
@@ -100,7 +105,6 @@ void X86CodeGen::generateCode(const TACFunction& function)
 
 //// Helper functions //////////////////////////////////////////////////////////
 
-// TODO: Push/pop register state
 void X86CodeGen::clearRegisters()
 {
     _registers.clear();
@@ -134,14 +138,14 @@ std::string X86CodeGen::accessDirectly(std::shared_ptr<Address> address)
 
         if (nameAddress.nameTag == NameTag::Global)
         {
-            result << "[rel " << nameAddress.name << "]";
+            result << "qword [rel " << nameAddress.name << "]";
         }
         else if (nameAddress.nameTag == NameTag::Local)
         {
             auto i = _localLocations.find(address);
             assert(i != _localLocations.end());
 
-            result << "[rbp - " << i->second << "]";
+            result << "qword [rbp - " << i->second << "]";
         }
         else if (nameAddress.nameTag == NameTag::Param)
         {
@@ -151,7 +155,7 @@ std::string X86CodeGen::accessDirectly(std::shared_ptr<Address> address)
             assert (i != params.end());
 
             size_t index = i - params.begin();
-            result << "[rbp + " << 8 * (2 + index) << "]";
+            result << "qword [rbp + " << 8 * (2 + index) << "]";
         }
         else if (nameAddress.nameTag == NameTag::Function)
         {
@@ -171,13 +175,33 @@ std::string X86CodeGen::accessDirectly(std::shared_ptr<Address> address)
         int offset = (_localLocations.size() + 1 + tempAddress.number) * 8;
 
         std::stringstream result;
-        result << "[rbp - " << offset << "]";
+        result << "qword [rbp - " << offset << "]";
         return result.str();
+    }
+    else if (address->tag == AddressTag::Const)
+    {
+        return "qword " + address->str();
     }
     else
     {
-        return address->str();
+        assert(false);
     }
+}
+
+bool X86CodeGen::inRegister(std::shared_ptr<Address> address)
+{
+    std::string junk;
+    return getRegisterContaining(address, junk);
+}
+
+bool X86CodeGen::inMemory(std::shared_ptr<Address> address)
+{
+    return !isConst(address) && !inRegister(address);
+}
+
+bool X86CodeGen::isConst(std::shared_ptr<Address> address)
+{
+    return address->tag == AddressTag::Const;
 }
 
 bool X86CodeGen::getRegisterContaining(std::shared_ptr<Address> address, std::string& reg)
@@ -308,7 +332,6 @@ std::string X86CodeGen::getScratchRegister()
     return reg;
 }
 
-// TODO: If already in a register, exchange
 std::string X86CodeGen::getSpecificRegisterFor(std::shared_ptr<Address> address, std::string reg, bool forRead)
 {
     assert(!_registers[reg].inUse);
@@ -357,9 +380,7 @@ void X86CodeGen::evictRegister(std::string reg)
 {
     assert(!_registers[reg].inUse);
 
-    if (_registers[reg].isFree) return;
-
-    if (_registers[reg].isDirty)
+    if (!_registers[reg].isFree && _registers[reg].isDirty)
     {
         EMIT_COMMENT("Spill " << _registers[reg].value->str());
         EMIT("mov " << accessDirectly(_registers[reg].value) << ", " << reg);
@@ -382,12 +403,17 @@ void X86CodeGen::codeGen(const TACConditionalJump* inst)
 {
     EMIT_COMMENT(inst->str());
 
-    std::string lhs = getRegisterFor(inst->lhs, true);
-    std::string rhs = getRegisterFor(inst->rhs, true);
+    // If this would otherwise generate a mem, mem or imm, imm comparison
+    // (illegal), then load the lhs in a register first
+    if ((inMemory(inst->lhs) && inMemory(inst->rhs)) ||
+        (isConst(inst->lhs) && isConst(inst->rhs)))
+    {
+        getRegisterFor(inst->lhs, true);
+    }
+
+    EMIT("cmp " << access(inst->lhs) << ", " << access(inst->rhs));
 
     spillAndClear();
-
-    EMIT("cmp " << lhs << ", " << rhs);
 
     if (inst->op == ">")
     {
@@ -423,11 +449,18 @@ void X86CodeGen::codeGen(const TACJumpIf* inst)
 {
     EMIT_COMMENT(inst->str());
 
-    std::string lhs = getRegisterFor(inst->lhs, true);
+    std::string lhs;
+
+    // const-const comparisons should really be optimized out
+    if (inst->lhs->tag == AddressTag::Const)
+    {
+        lhs = getRegisterFor(inst->lhs, true);
+    }
+
+    EMIT("cmp " << access(inst->lhs) << ", 11b");
 
     spillAndClear();
 
-    EMIT("cmp " << lhs << ", 11b");
     EMIT("je " << inst->target->str());
 }
 
@@ -435,11 +468,18 @@ void X86CodeGen::codeGen(const TACJumpIfNot* inst)
 {
     EMIT_COMMENT(inst->str());
 
-    std::string lhs = getRegisterFor(inst->lhs, true);
+    std::string lhs;
+
+    // const-const comparisons should really be optimized out
+    if (inst->lhs->tag == AddressTag::Const)
+    {
+        lhs = getRegisterFor(inst->lhs, true);
+    }
+
+    EMIT("cmp " << access(inst->lhs) << ", 11b");
 
     spillAndClear();
 
-    EMIT("cmp " << lhs << ", 11b");
     EMIT("jne " << inst->target->str());
 }
 
@@ -447,10 +487,16 @@ void X86CodeGen::codeGen(const TACAssign* inst)
 {
     EMIT_COMMENT(inst->str());
 
-    std::string rhs = getRegisterFor(inst->rhs, true);
-    EMIT("mov " << access(inst->lhs, false) << ", " << rhs);
-
-    freeRegister(rhs);
+    if (inst->rhs->tag == AddressTag::Const && IS_DWORD(inst->rhs->asConst().value))
+    {
+        EMIT("mov " << access(inst->lhs, false) << ", " << access(inst->rhs));
+    }
+    else
+    {
+        std::string rhs = getRegisterFor(inst->rhs, true);
+        EMIT("mov " << access(inst->lhs, false) << ", " << rhs);
+        freeRegister(rhs);
+    }
 }
 
 void X86CodeGen::codeGen(const TACJump* inst)
@@ -503,11 +549,8 @@ void X86CodeGen::codeGen(const TACCall* inst)
             freeRegister("rax");
         }
 
-        stackSave = getScratchRegister();
-
         // Undo the stack alignment
-        EMIT("pop " << stackSave);
-        EMIT("mov rsp, " << stackSave);
+        EMIT("pop rsp");
 
         freeRegister(stackSave);
     }
@@ -515,7 +558,7 @@ void X86CodeGen::codeGen(const TACCall* inst)
     {
         for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
         {
-            EMIT("push qword " << access(*i));
+            EMIT("push " << access(*i));
         }
 
         spillAndClear();
@@ -536,7 +579,7 @@ void X86CodeGen::codeGen(const TACIndirectCall* inst)
 
     for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
     {
-        EMIT("push qword " << access(*i));
+        EMIT("push " << access(*i));
     }
 
     spillAndClear();
@@ -582,13 +625,12 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
 
     if (inst->op == "+" || inst->op == "-" || inst->op == "*")
     {
-        lhs = getRegisterFor(inst->lhs, true);
         rhs = getRegisterFor(inst->rhs, true);
         dest = getRegisterFor(inst->dest, false);
 
         if (inst->op == "+")
         {
-            EMIT("mov " << dest << ", " << lhs);
+            EMIT("mov " << dest << ", " << access(inst->lhs));
             EMIT("xor " << dest << ", " << 1);      // Clear tag bit
             EMIT("add " << dest << ", " << rhs);
         }
@@ -596,7 +638,7 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
         {
             dest = getRegisterFor(inst->dest, false);
 
-            EMIT("mov " << dest << ", " << lhs);
+            EMIT("mov " << dest << ", " << access(inst->lhs));
             EMIT("sub " << dest << ", " << rhs);
             EMIT("inc " << dest);                   // Restore tag bit
         }
@@ -605,7 +647,7 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
             dest = getRegisterFor(inst->dest, false);
 
             // Need to do this first, in case lhs == rhs
-            EMIT("mov " << dest << ", " << lhs);
+            EMIT("mov " << dest << ", " << access(inst->lhs));
 
             freeRegister(rhs);
             evictRegister(rhs);
@@ -621,10 +663,9 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
     {
         dest = getSpecificRegisterFor(inst->dest, "rax", false);
         evictRegister("rdx");
-        lhs = getRegisterFor(inst->lhs, true);
         rhs = getRegisterFor(inst->rhs, true);
 
-        EMIT("mov rax, " << lhs);
+        EMIT("mov rax, " << access(inst->lhs));
 
         freeRegister(rhs);
         evictRegister(rhs);
@@ -642,10 +683,9 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
     {
         dest = getSpecificRegisterFor(inst->dest, "rdx", false);
         evictRegister("rax");
-        lhs = getRegisterFor(inst->lhs, true);
         rhs = getRegisterFor(inst->rhs, true);
 
-        EMIT("mov rax, " << lhs);
+        EMIT("mov rax, " << access(inst->lhs));
 
         freeRegister(rhs);
         evictRegister(rhs);
