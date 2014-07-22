@@ -4,6 +4,7 @@
 #include "codegen.hpp"
 #include "tac_codegen.hpp"
 #include "x86_codegen.hpp"
+#include "tac_local_optimizer.hpp"
 #include "scope.hpp"
 #include "semantic.hpp"
 
@@ -94,8 +95,13 @@ int main(int argc, char* argv[])
 
 		return_value = 0;
 
+		TACProgram& intermediateCode = tacGen.getResult();
+
+		TACLocalOptimizer localOptimizer;
+		localOptimizer.optimizeCode(intermediateCode);
+
 		X86CodeGen x86Gen;
-		x86Gen.generateCode(tacGen.getResult());
+		x86Gen.generateCode(intermediateCode);
 	}
 
 	delete root;

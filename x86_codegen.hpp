@@ -4,7 +4,7 @@
 #include "address.hpp"
 #include "tac_instruction.hpp"
 #include "tac_program.hpp"
-#include "target_codegen.hpp"
+#include "tac_visitor.hpp"
 
 #include <deque>
 #include <string>
@@ -12,22 +12,22 @@
 #include <vector>
 #include <memory>
 
-class X86CodeGen : public TargetCodeGen
+class X86CodeGen : public TACVisitor
 {
 public:
     virtual void generateCode(const TACProgram& program);
 
-    void codeGen(const TACConditionalJump* inst);
-    void codeGen(const TACJumpIf* inst);
-    void codeGen(const TACJumpIfNot* inst);
-    void codeGen(const TACAssign* inst);
-    void codeGen(const TACJump* inst);
-    void codeGen(const TACLabel* inst);
-    void codeGen(const TACCall* inst);
-    void codeGen(const TACIndirectCall* inst);
-    void codeGen(const TACRightIndexedAssignment* inst);
-    void codeGen(const TACLeftIndexedAssignment* inst);
-    void codeGen(const TACBinaryOperation* inst);
+    void visit(const TACConditionalJump* inst);
+    void visit(const TACJumpIf* inst);
+    void visit(const TACJumpIfNot* inst);
+    void visit(const TACAssign* inst);
+    void visit(const TACJump* inst);
+    void visit(const TACLabel* inst);
+    void visit(const TACCall* inst);
+    void visit(const TACIndirectCall* inst);
+    void visit(const TACRightIndexedAssignment* inst);
+    void visit(const TACLeftIndexedAssignment* inst);
+    void visit(const TACBinaryOperation* inst);
 
 private:
     void generateCode(const TACFunction& function);

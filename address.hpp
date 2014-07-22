@@ -23,6 +23,10 @@ struct Address
     ConstAddress& asConst();
     TempAddress& asTemp();
 
+    bool isName() { return tag == AddressTag::Name; }
+    bool isConst() { return tag == AddressTag::Const; }
+    bool isTemp() { return tag == AddressTag::Temp; }
+
     virtual std::string str() const = 0;
 
     AddressTag tag;

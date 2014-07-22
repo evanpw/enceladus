@@ -60,7 +60,16 @@ NameAddress::NameAddress(const std::string& name, NameTag nameTag)
 std::string ConstAddress::str() const
 {
     std::stringstream ss;
-    ss << value;
+
+    if (value & 1)
+    {
+        ss << (value >> 1);
+    }
+    else
+    {
+        ss << value;
+    }
+
     return ss.str();
 }
 

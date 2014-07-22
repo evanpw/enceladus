@@ -3,7 +3,7 @@
 
 #include "address.hpp"
 #include "scope.hpp"
-#include "target_codegen.hpp"
+#include "tac_visitor.hpp"
 
 #include <string>
 
@@ -22,7 +22,7 @@ struct TACInstruction
 {
     virtual ~TACInstruction() {}
 
-    virtual void accept(TargetCodeGen* codegen) = 0;
+    virtual void accept(TACVisitor* visitor) = 0;
 
     virtual std::string str() const = 0;
 };
@@ -33,7 +33,7 @@ struct TACConditionalJump : public TACInstruction
     : lhs(lhs), op(op), rhs(rhs), target(target)
     {}
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -54,7 +54,7 @@ struct TACJumpIf : public TACInstruction
     : lhs(lhs), target(target)
     {}
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -73,7 +73,7 @@ struct TACJumpIfNot : public TACInstruction
     : lhs(lhs), target(target)
     {}
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -94,7 +94,7 @@ struct TACAssign : public TACInstruction
         assert(lhs->tag != AddressTag::Const);
     }
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -113,7 +113,7 @@ struct TACJump : public TACInstruction
     : target(target)
     {}
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -131,7 +131,7 @@ struct TACLabel : public TACInstruction
     : label(label)
     {}
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -162,7 +162,7 @@ struct TACCall : public TACInstruction
         for (auto& param : paramsList) params.push_back(param);
     }
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -197,7 +197,7 @@ struct TACIndirectCall : public TACInstruction
         assert(function->tag == AddressTag::Temp);
     }
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -227,7 +227,7 @@ struct TACRightIndexedAssignment : public TACInstruction
         assert(lhs->tag != AddressTag::Const && rhs->tag != AddressTag::Const);
     }
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -249,7 +249,7 @@ struct TACLeftIndexedAssignment : public TACInstruction
         assert(lhs->tag != AddressTag::Const);
     }
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {
@@ -269,7 +269,7 @@ struct TACBinaryOperation : public TACInstruction
     : dest(dest), lhs(lhs), op(op), rhs(rhs)
     {}
 
-    virtual void accept(TargetCodeGen* codegen) { codegen->codeGen(this); }
+    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
     virtual std::string str() const override
     {

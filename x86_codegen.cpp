@@ -180,7 +180,9 @@ std::string X86CodeGen::accessDirectly(std::shared_ptr<Address> address)
     }
     else if (address->tag == AddressTag::Const)
     {
-        return "qword " + address->str();
+        std::stringstream result;
+        result << "qword " << address->asConst().value;
+        return result.str();
     }
     else
     {
@@ -399,7 +401,7 @@ void X86CodeGen::freeRegister(std::string reg)
 
 //// Individual TAC Instruction Handlers ///////////////////////////////////////
 
-void X86CodeGen::codeGen(const TACConditionalJump* inst)
+void X86CodeGen::visit(const TACConditionalJump* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -445,7 +447,7 @@ void X86CodeGen::codeGen(const TACConditionalJump* inst)
     }
 }
 
-void X86CodeGen::codeGen(const TACJumpIf* inst)
+void X86CodeGen::visit(const TACJumpIf* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -464,7 +466,7 @@ void X86CodeGen::codeGen(const TACJumpIf* inst)
     EMIT("je " << inst->target->str());
 }
 
-void X86CodeGen::codeGen(const TACJumpIfNot* inst)
+void X86CodeGen::visit(const TACJumpIfNot* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -483,7 +485,7 @@ void X86CodeGen::codeGen(const TACJumpIfNot* inst)
     EMIT("jne " << inst->target->str());
 }
 
-void X86CodeGen::codeGen(const TACAssign* inst)
+void X86CodeGen::visit(const TACAssign* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -499,7 +501,7 @@ void X86CodeGen::codeGen(const TACAssign* inst)
     }
 }
 
-void X86CodeGen::codeGen(const TACJump* inst)
+void X86CodeGen::visit(const TACJump* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -507,7 +509,7 @@ void X86CodeGen::codeGen(const TACJump* inst)
     EMIT("jmp " << inst->target->str());
 }
 
-void X86CodeGen::codeGen(const TACLabel* inst)
+void X86CodeGen::visit(const TACLabel* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -515,7 +517,7 @@ void X86CodeGen::codeGen(const TACLabel* inst)
     EMIT_LABEL(inst->label->str());
 }
 
-void X86CodeGen::codeGen(const TACCall* inst)
+void X86CodeGen::visit(const TACCall* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -573,7 +575,7 @@ void X86CodeGen::codeGen(const TACCall* inst)
     }
 }
 
-void X86CodeGen::codeGen(const TACIndirectCall* inst)
+void X86CodeGen::visit(const TACIndirectCall* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -590,7 +592,7 @@ void X86CodeGen::codeGen(const TACIndirectCall* inst)
     freeRegister("rax");
 }
 
-void X86CodeGen::codeGen(const TACRightIndexedAssignment* inst)
+void X86CodeGen::visit(const TACRightIndexedAssignment* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -603,7 +605,7 @@ void X86CodeGen::codeGen(const TACRightIndexedAssignment* inst)
     freeRegister(rhs);
 }
 
-void X86CodeGen::codeGen(const TACLeftIndexedAssignment* inst)
+void X86CodeGen::visit(const TACLeftIndexedAssignment* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -616,7 +618,7 @@ void X86CodeGen::codeGen(const TACLeftIndexedAssignment* inst)
     freeRegister(rhs);
 }
 
-void X86CodeGen::codeGen(const TACBinaryOperation* inst)
+void X86CodeGen::visit(const TACBinaryOperation* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -625,30 +627,26 @@ void X86CodeGen::codeGen(const TACBinaryOperation* inst)
 
     if (inst->op == "+" || inst->op == "-" || inst->op == "*")
     {
-        rhs = getRegisterFor(inst->rhs, true);
         dest = getRegisterFor(inst->dest, false);
 
         if (inst->op == "+")
         {
             EMIT("mov " << dest << ", " << access(inst->lhs));
-            EMIT("xor " << dest << ", " << 1);      // Clear tag bit
-            EMIT("add " << dest << ", " << rhs);
+            EMIT("dec " << dest);  // Clear tag bit
+            EMIT("add " << dest << ", " << access(inst->rhs));
         }
         else if (inst->op == "-")
         {
-            dest = getRegisterFor(inst->dest, false);
-
             EMIT("mov " << dest << ", " << access(inst->lhs));
-            EMIT("sub " << dest << ", " << rhs);
+            EMIT("sub " << dest << ", " << access(inst->rhs));
             EMIT("inc " << dest);                   // Restore tag bit
         }
         else /* if (inst->op == "*") */
         {
-            dest = getRegisterFor(inst->dest, false);
-
             // Need to do this first, in case lhs == rhs
             EMIT("mov " << dest << ", " << access(inst->lhs));
 
+            rhs = getRegisterFor(inst->rhs, true);
             freeRegister(rhs);
             evictRegister(rhs);
             EMIT("sar " << rhs << ", 1");                           // Shift out tag bit
