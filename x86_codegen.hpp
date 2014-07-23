@@ -36,7 +36,10 @@ private:
     bool inMemory(std::shared_ptr<Address> address);
     bool isConst(std::shared_ptr<Address> address);
 
-    std::string access(std::shared_ptr<Address> address, bool forRead = true);
+    static const int READ = 1;
+    static const int WRITE = 2;
+
+    std::string access(std::shared_ptr<Address> address, int readWrite = READ);
     std::string accessDirectly(std::shared_ptr<Address> address);
 
     // Get a register to be used only inside of the code for a single TAC
@@ -45,12 +48,12 @@ private:
     std::string getScratchRegister();
 
     // Find a register for a given address. If forRead, then load it in.
-    std::string getRegisterFor(std::shared_ptr<Address> address, bool forRead);
+    std::string getRegisterFor(std::shared_ptr<Address> address, int readWrite = READ);
 
     // Load the given address into a specific register, evicting the previous
     // address if necessary. (This is for operations like division that use a
     // specific register).
-    std::string getSpecificRegisterFor(std::shared_ptr<Address> address, std::string reg, bool forRead);
+    std::string getSpecificRegisterFor(std::shared_ptr<Address> address, std::string reg, int readWrite = READ);
 
     // Similar to getSpecificRegisterFor, but just does the assignment without
     // any moving. The register must be free to succeed. This function is used

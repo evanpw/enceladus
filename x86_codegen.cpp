@@ -115,12 +115,12 @@ void X86CodeGen::clearRegisters()
     }
 }
 
-std::string X86CodeGen::access(std::shared_ptr<Address> address, bool forRead)
+std::string X86CodeGen::access(std::shared_ptr<Address> address, int readWrite)
 {
     std::string reg;
     if (getRegisterContaining(address, reg))
     {
-        if (!forRead) _registers[reg].isDirty = true;
+        if (readWrite & WRITE) _registers[reg].isDirty = true;
         return reg;
     }
     else
@@ -289,7 +289,7 @@ void X86CodeGen::spillAndClear()
     clearRegisters();
 }
 
-std::string X86CodeGen::getRegisterFor(std::shared_ptr<Address> address, bool forRead)
+std::string X86CodeGen::getRegisterFor(std::shared_ptr<Address> address, int readWrite)
 {
     std::string reg;
 
@@ -301,14 +301,14 @@ std::string X86CodeGen::getRegisterFor(std::shared_ptr<Address> address, bool fo
             reg = spillRegister();
         }
 
-        if (forRead)
+        if (readWrite & READ)
         {
             EMIT("mov " << reg << ", " << accessDirectly(address));
             _registers[reg].isDirty = false;
         }
     }
 
-    if (!forRead)
+    if (readWrite & WRITE)
         _registers[reg].isDirty = true;
 
     _registers[reg].isFree = false;
@@ -334,7 +334,7 @@ std::string X86CodeGen::getScratchRegister()
     return reg;
 }
 
-std::string X86CodeGen::getSpecificRegisterFor(std::shared_ptr<Address> address, std::string reg, bool forRead)
+std::string X86CodeGen::getSpecificRegisterFor(std::shared_ptr<Address> address, std::string reg, int readWrite)
 {
     assert(!_registers[reg].inUse);
 
@@ -348,14 +348,14 @@ std::string X86CodeGen::getSpecificRegisterFor(std::shared_ptr<Address> address,
             EMIT("mov " << accessDirectly(_registers[reg].value) << ", " << reg);
         }
 
-        if (forRead)
+        if (readWrite & READ)
         {
             EMIT("mov " << reg << ", " << access(address));
             _registers[reg].isDirty = false;
         }
     }
 
-    if (!forRead)
+    if (readWrite & WRITE)
         _registers[reg].isDirty = true;
 
     _registers[reg].isFree = false;
@@ -410,7 +410,7 @@ void X86CodeGen::visit(const TACConditionalJump* inst)
     if ((inMemory(inst->lhs) && inMemory(inst->rhs)) ||
         (isConst(inst->lhs) && isConst(inst->rhs)))
     {
-        getRegisterFor(inst->lhs, true);
+        getRegisterFor(inst->lhs, READ);
     }
 
     EMIT("cmp " << access(inst->lhs) << ", " << access(inst->rhs));
@@ -456,7 +456,7 @@ void X86CodeGen::visit(const TACJumpIf* inst)
     // const-const comparisons should really be optimized out
     if (inst->lhs->tag == AddressTag::Const)
     {
-        lhs = getRegisterFor(inst->lhs, true);
+        lhs = getRegisterFor(inst->lhs, READ);
     }
 
     EMIT("cmp " << access(inst->lhs) << ", 11b");
@@ -475,7 +475,7 @@ void X86CodeGen::visit(const TACJumpIfNot* inst)
     // const-const comparisons should really be optimized out
     if (inst->lhs->tag == AddressTag::Const)
     {
-        lhs = getRegisterFor(inst->lhs, true);
+        lhs = getRegisterFor(inst->lhs, READ);
     }
 
     EMIT("cmp " << access(inst->lhs) << ", 11b");
@@ -491,12 +491,12 @@ void X86CodeGen::visit(const TACAssign* inst)
 
     if (inst->rhs->tag == AddressTag::Const && IS_DWORD(inst->rhs->asConst().value))
     {
-        EMIT("mov " << access(inst->lhs, false) << ", " << access(inst->rhs));
+        EMIT("mov " << access(inst->lhs, WRITE) << ", " << access(inst->rhs));
     }
     else
     {
-        std::string rhs = getRegisterFor(inst->rhs, true);
-        EMIT("mov " << access(inst->lhs, false) << ", " << rhs);
+        std::string rhs = getRegisterFor(inst->rhs, READ);
+        EMIT("mov " << access(inst->lhs, WRITE) << ", " << rhs);
         freeRegister(rhs);
     }
 }
@@ -530,7 +530,7 @@ void X86CodeGen::visit(const TACCall* inst)
 
         for (size_t i = 0; i < inst->params.size(); ++i)
         {
-            getSpecificRegisterFor(inst->params[i], registerArgs[i], true);
+            getSpecificRegisterFor(inst->params[i], registerArgs[i], READ);
         }
 
         std::string stackSave = getScratchRegister();
@@ -547,7 +547,7 @@ void X86CodeGen::visit(const TACCall* inst)
 
         if (inst->dest)
         {
-            getSpecificRegisterFor(inst->dest, "rax", false);
+            getSpecificRegisterFor(inst->dest, "rax", WRITE);
             freeRegister("rax");
         }
 
@@ -569,7 +569,7 @@ void X86CodeGen::visit(const TACCall* inst)
 
         if (inst->dest)
         {
-            getSpecificRegisterFor(inst->dest, "rax", false);
+            getSpecificRegisterFor(inst->dest, "rax", WRITE);
             freeRegister("rax");
         }
     }
@@ -588,7 +588,7 @@ void X86CodeGen::visit(const TACIndirectCall* inst)
 
     EMIT("call " << access(inst->function));
 
-    getSpecificRegisterFor(inst->dest, "rax", false);
+    getSpecificRegisterFor(inst->dest, "rax", WRITE);
     freeRegister("rax");
 }
 
@@ -596,8 +596,8 @@ void X86CodeGen::visit(const TACRightIndexedAssignment* inst)
 {
     EMIT_COMMENT(inst->str());
 
-    std::string lhs = getRegisterFor(inst->lhs, false);
-    std::string rhs = getRegisterFor(inst->rhs, true);
+    std::string lhs = getRegisterFor(inst->lhs, WRITE);
+    std::string rhs = getRegisterFor(inst->rhs, READ);
 
     EMIT("mov " << lhs <<  ", [" << rhs << " + " << inst->offset << "]");
 
@@ -609,8 +609,8 @@ void X86CodeGen::visit(const TACLeftIndexedAssignment* inst)
 {
     EMIT_COMMENT(inst->str());
 
-    std::string lhs = getRegisterFor(inst->lhs, true);
-    std::string rhs = getRegisterFor(inst->rhs, true);
+    std::string lhs = getRegisterFor(inst->lhs, READ);
+    std::string rhs = getRegisterFor(inst->rhs, READ);
 
     EMIT("mov [" << lhs << " + " << inst->offset << "], " << rhs);
 
@@ -624,29 +624,30 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
 
     std::string lhs, rhs, dest;
 
-
     if (inst->op == "+" || inst->op == "-" || inst->op == "*")
     {
-        dest = getRegisterFor(inst->dest, false);
+        // Save these ahead of time in case one of the operands is also the
+        // destination. Otherwise, when we assign the destination to a register,
+        // we won't know where the find the actual value of the operand
+        lhs = access(inst->lhs);
+        rhs = access(inst->rhs);
+
+        dest = getRegisterFor(inst->dest, WRITE);
+        EMIT("mov " << dest << ", " << lhs);
 
         if (inst->op == "+")
         {
-            EMIT("mov " << dest << ", " << access(inst->lhs));
             EMIT("dec " << dest);  // Clear tag bit
-            EMIT("add " << dest << ", " << access(inst->rhs));
+            EMIT("add " << dest << ", " << rhs);
         }
         else if (inst->op == "-")
         {
-            EMIT("mov " << dest << ", " << access(inst->lhs));
-            EMIT("sub " << dest << ", " << access(inst->rhs));
+            EMIT("sub " << dest << ", " << rhs);
             EMIT("inc " << dest);                   // Restore tag bit
         }
         else /* if (inst->op == "*") */
         {
-            // Need to do this first, in case lhs == rhs
-            EMIT("mov " << dest << ", " << access(inst->lhs));
-
-            rhs = getRegisterFor(inst->rhs, true);
+            rhs = getRegisterFor(inst->rhs, READ);
             freeRegister(rhs);
             evictRegister(rhs);
             EMIT("sar " << rhs << ", 1");                           // Shift out tag bit
@@ -659,11 +660,13 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
     }
     else if (inst->op == "/")
     {
-        dest = getSpecificRegisterFor(inst->dest, "rax", false);
-        evictRegister("rdx");
-        rhs = getRegisterFor(inst->rhs, true);
+        lhs = access(inst->lhs);
 
-        EMIT("mov rax, " << access(inst->lhs));
+        dest = getSpecificRegisterFor(inst->dest, "rax", WRITE);
+        EMIT("mov rax, " << lhs);
+
+        evictRegister("rdx");
+        rhs = getRegisterFor(inst->rhs, READ);
 
         freeRegister(rhs);
         evictRegister(rhs);
@@ -679,11 +682,13 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
     }
     else if (inst->op == "%")
     {
-        dest = getSpecificRegisterFor(inst->dest, "rdx", false);
-        evictRegister("rax");
-        rhs = getRegisterFor(inst->rhs, true);
+        lhs = access(inst->lhs);
 
-        EMIT("mov rax, " << access(inst->lhs));
+        dest = getSpecificRegisterFor(inst->dest, "rdx", WRITE);
+        evictRegister("rax");
+        rhs = getRegisterFor(inst->rhs, READ);
+
+        EMIT("mov rax, " << lhs);
 
         freeRegister(rhs);
         evictRegister(rhs);

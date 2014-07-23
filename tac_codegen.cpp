@@ -186,7 +186,8 @@ void TACCodeGen::visit(ComparisonNode* node)
         default: assert(false);
     }
 
-    node->address = makeTemp();
+    if (!node->address)
+        node->address = makeTemp();
 
     emit(new TACAssign(node->address, ConstAddress::False));
     emit(new TACJump(endLabel));
@@ -197,7 +198,9 @@ void TACCodeGen::visit(ComparisonNode* node)
 
 void TACCodeGen::visit(LogicalNode* node)
 {
-    node->address = makeTemp();
+    if (!node->address)
+        node->address = makeTemp();
+
     std::shared_ptr<Address> result = node->address;
 
     std::shared_ptr<Label> endLabel(new Label);
@@ -240,7 +243,9 @@ void TACCodeGen::visit(NullaryNode* node)
     }
     else
     {
-        node->address = makeTemp();
+        if (!node->address)
+            node->address = makeTemp();
+
         std::shared_ptr<Address> dest = node->address;
 
         if (node->type->tag() != ttFunction)
@@ -359,15 +364,12 @@ void TACCodeGen::visit(BreakNode* node)
 
 void TACCodeGen::visit(AssignNode* node)
 {
-    std::shared_ptr<Address> value = visitAndGet(*node->value);
+    std::shared_ptr<Address> dest = getNameAddress(node->symbol);
 
-    node->address = getNameAddress(node->symbol);
-    std::shared_ptr<Address> dest = node->address;
-
-    // We lose a reference to the original contents, and gain a reference to the
-    // new rhs
     if (node->symbol->type->isBoxed())
     {
+        std::shared_ptr<Address> value = visitAndGet(*node->value);
+
         // Make sure to incref before decref in case dest currently has the
         // only reference to value
         emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
@@ -376,21 +378,28 @@ void TACCodeGen::visit(AssignNode* node)
     }
     else
     {
-        emit(new TACAssign(dest, value));
+        // Try to make the rhs of this assignment construct its result directly
+        // in the right spot
+        node->value->address = getNameAddress(node->symbol);
+        std::shared_ptr<Address> value = visitAndGet(*node->value);
+
+        // If it was stored somewhere else (for example, if no computation was
+        // done, in a statement like x = y), then actually do the assignment
+        if (value != getNameAddress(node->symbol))
+        {
+            emit(new TACAssign(dest, value));
+        }
     }
 }
 
 void TACCodeGen::visit(LetNode* node)
 {
-    std::shared_ptr<Address> value = visitAndGet(*node->value);
+    std::shared_ptr<Address> dest = getNameAddress(node->symbol);
 
-    node->address = getNameAddress(node->symbol);
-    std::shared_ptr<Address> dest = node->address;
-
-    // We lose a reference to the original contents, and gain a reference to the
-    // new rhs
     if (node->symbol->type->isBoxed())
     {
+        std::shared_ptr<Address> value = visitAndGet(*node->value);
+
         // Make sure to incref before decref in case dest currently has the
         // only reference to value
         emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
@@ -399,7 +408,17 @@ void TACCodeGen::visit(LetNode* node)
     }
     else
     {
-        emit(new TACAssign(dest, value));
+        // Try to make the rhs of this assignment construct its result directly
+        // in the right spot
+        node->value->address = getNameAddress(node->symbol);
+        std::shared_ptr<Address> value = visitAndGet(*node->value);
+
+        // If it was stored somewhere else (for example, if no computation was
+        // done, in a statement like x = y), then actually do the assignment
+        if (value != getNameAddress(node->symbol))
+        {
+            emit(new TACAssign(dest, value));
+        }
     }
 }
 
@@ -451,7 +470,9 @@ void TACCodeGen::visit(FunctionCallNode* node)
         arguments.push_back(i->address);
     }
 
-    node->address = makeTemp();
+    if (!node->address)
+        node->address = makeTemp();
+
     std::shared_ptr<Address> result = node->address;
 
     if (node->symbol->kind == kFunction && node->symbol->asFunction()->isBuiltin)
@@ -573,7 +594,9 @@ void TACCodeGen::visit(MemberAccessNode* node)
 {
     std::shared_ptr<Address> varAddress(getNameAddress(node->varSymbol));
 
-    node->address = makeTemp();
+    if (!node->address)
+        node->address = makeTemp();
+
     std::shared_ptr<Address> result = node->address;
 
     emit(new TACRightIndexedAssignment(result, varAddress, sizeof(SplObject) + 8 * node->memberLocation));
