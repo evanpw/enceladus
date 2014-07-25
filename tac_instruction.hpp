@@ -27,13 +27,15 @@ struct TACInstruction
     virtual std::string str() const = 0;
 };
 
+#define MAKE_VISITABLE() virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+
 struct TACConditionalJump : public TACInstruction
 {
     TACConditionalJump(std::shared_ptr<Address> lhs, const std::string& op, std::shared_ptr<Address> rhs, std::shared_ptr<Label> target)
     : lhs(lhs), op(op), rhs(rhs), target(target)
     {}
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -54,7 +56,7 @@ struct TACJumpIf : public TACInstruction
     : lhs(lhs), target(target)
     {}
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -73,7 +75,7 @@ struct TACJumpIfNot : public TACInstruction
     : lhs(lhs), target(target)
     {}
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -94,7 +96,7 @@ struct TACAssign : public TACInstruction
         assert(lhs->tag != AddressTag::Const);
     }
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -113,7 +115,7 @@ struct TACJump : public TACInstruction
     : target(target)
     {}
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -131,7 +133,7 @@ struct TACLabel : public TACInstruction
     : label(label)
     {}
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -162,7 +164,7 @@ struct TACCall : public TACInstruction
         for (auto& param : paramsList) params.push_back(param);
     }
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -197,7 +199,7 @@ struct TACIndirectCall : public TACInstruction
         assert(function->tag == AddressTag::Temp);
     }
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -227,7 +229,7 @@ struct TACRightIndexedAssignment : public TACInstruction
         assert(lhs->tag != AddressTag::Const && rhs->tag != AddressTag::Const);
     }
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -249,7 +251,7 @@ struct TACLeftIndexedAssignment : public TACInstruction
         assert(lhs->tag != AddressTag::Const);
     }
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {
@@ -272,7 +274,7 @@ struct TACBinaryOperation : public TACInstruction
     : dest(dest), lhs(lhs), op(op), rhs(rhs)
     {}
 
-    virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
+    MAKE_VISITABLE();
 
     virtual std::string str() const override
     {

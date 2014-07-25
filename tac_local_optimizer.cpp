@@ -18,9 +18,17 @@ void TACLocalOptimizer::optimizeCode(TACProgram& program)
 void TACLocalOptimizer::optimizeCode(TACFunction& function)
 {
     auto& instructions = function.instructions;
-    for (_here = instructions.begin(); _here != instructions.end(); ++_here)
+    for (_here = instructions.begin(); _here != instructions.end();)
     {
+        _deleteHere = false;
+
         (*_here)->accept(this);
+
+        auto prev = _here;
+        ++_here;
+
+        if (_deleteHere)
+            instructions.erase(prev);
     }
 }
 
@@ -100,14 +108,43 @@ void TACLocalOptimizer::visit(const TACBinaryOperation* inst)
     }
     else if (inst->op == BinaryOperation::BADD)
     {
-        // x + 0 or 0 + x => x
-        if (inst->lhs->isConst() && inst->lhs->asConst().value == BOX(0))
+        if (inst->lhs->isConst())
         {
-            (*_here).reset(new TACAssign(inst->dest, inst->rhs));
+            long value = inst->lhs->asConst().value;
+
+            // 0 + x => x
+            if (value == BOX(0))
+            {
+                (*_here).reset(new TACAssign(inst->dest, inst->rhs));
+            }
+            else
+            {
+                // Boxed a + x => Unboxed x + (a - 1)
+                (*_here).reset(new TACBinaryOperation(
+                    inst->dest,
+                    inst->rhs,
+                    BinaryOperation::UADD,
+                    std::make_shared<ConstAddress>(value - 1)));
+            }
         }
-        else if (inst->rhs->isConst() && inst->rhs->asConst().value == BOX(0))
+        else if (inst->rhs->isConst())
         {
-            (*_here).reset(new TACAssign(inst->dest, inst->lhs));
+            long value = inst->rhs->asConst().value;
+
+            // x + 0 => x
+            if (value == BOX(0))
+            {
+                (*_here).reset(new TACAssign(inst->dest, inst->lhs));
+            }
+            else
+            {
+                // Boxed a + x => Unboxed x + (a - 1)
+                (*_here).reset(new TACBinaryOperation(
+                    inst->dest,
+                    inst->lhs,
+                    BinaryOperation::UADD,
+                    std::make_shared<ConstAddress>(value - 1)));
+            }
         }
     }
     else if (inst->op == BinaryOperation::BSUB)
@@ -115,7 +152,7 @@ void TACLocalOptimizer::visit(const TACBinaryOperation* inst)
         // x - 0 => x
         if (inst->rhs->isConst() && inst->rhs->asConst().value == BOX(0))
         {
-            (*_here).reset(new TACAssign(inst->dest, inst->rhs));
+            (*_here).reset(new TACAssign(inst->dest, inst->lhs));
         }
     }
     else if (inst->op == BinaryOperation::BMUL)

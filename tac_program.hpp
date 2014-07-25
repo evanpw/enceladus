@@ -4,6 +4,7 @@
 #include "symbol.hpp"
 #include "tac_instruction.hpp"
 
+#include <list>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -15,7 +16,7 @@ struct TACFunction
     {}
 
     std::string name;
-    std::vector<std::unique_ptr<TACInstruction>> instructions;
+    std::list<std::unique_ptr<TACInstruction>> instructions;
 
     long numberOfTemps = 0;
     std::vector<std::shared_ptr<Address>> locals;

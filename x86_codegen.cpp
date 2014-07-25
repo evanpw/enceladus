@@ -12,6 +12,9 @@
 
 #define IS_DWORD(x) (INT32_MIN <= (x) && (x) <= INT32_MAX)
 
+#define SAFE_MOV(dest, src) \
+    if (dest != src) EMIT("mov " << dest << ", " << src);
+
 void X86CodeGen::generateCode(const TACProgram& program)
 {
     //// Program prefix
@@ -95,7 +98,7 @@ void X86CodeGen::generateCode(const TACFunction& function)
     }
 
     if (function.returnValue)
-        EMIT("mov rax, " << access(function.returnValue));
+        SAFE_MOV("rax", access(function.returnValue));
 
     EMIT("leave");
     EMIT("ret");
@@ -496,7 +499,7 @@ void X86CodeGen::visit(const TACAssign* inst)
     else
     {
         std::string rhs = getRegisterFor(inst->rhs, READ);
-        EMIT("mov " << access(inst->lhs, WRITE) << ", " << rhs);
+        SAFE_MOV(access(inst->lhs, WRITE), rhs);
         freeRegister(rhs);
     }
 }
@@ -636,14 +639,15 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
         rhs = access(inst->rhs);
 
         dest = getRegisterFor(inst->dest, WRITE);
-        EMIT("mov " << dest << ", " << lhs);
+        SAFE_MOV(dest, lhs);
 
-        if (inst->op == BinaryOperation::BADD ||
-            inst->op == BinaryOperation::UADD)
+        if (inst->op == BinaryOperation::BADD)
         {
-            if (inst->op == BinaryOperation::BADD)
-                EMIT("dec " << dest);  // Clear tag bit
-
+            EMIT("dec " << dest);  // Clear tag bit
+            EMIT("add " << dest << ", " << rhs);
+        }
+        else if (inst->op == BinaryOperation::UADD)
+        {
             EMIT("add " << dest << ", " << rhs);
         }
         else if (inst->op == BinaryOperation::BSUB)
@@ -669,7 +673,7 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
         lhs = access(inst->lhs);
 
         dest = getSpecificRegisterFor(inst->dest, "rax", WRITE);
-        EMIT("mov rax, " << lhs);
+        SAFE_MOV("rax", lhs);
 
         evictRegister("rdx");
         rhs = getRegisterFor(inst->rhs, READ);
@@ -694,7 +698,7 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
         evictRegister("rax");
         rhs = getRegisterFor(inst->rhs, READ);
 
-        EMIT("mov rax, " << lhs);
+        SAFE_MOV("rax", lhs);
 
         freeRegister(rhs);
         evictRegister(rhs);
@@ -714,7 +718,7 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
         rhs = access(inst->rhs);
 
         dest = getRegisterFor(inst->dest, WRITE);
-        EMIT("mov " << dest << ", " << lhs);
+        SAFE_MOV(dest, lhs);
         EMIT("and " << dest << ", " << rhs);
     }
 

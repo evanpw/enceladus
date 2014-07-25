@@ -28,8 +28,10 @@ public:
     void visit(const TACBinaryOperation* inst);
 
 private:
-    // Points to the current instruction, so that we can replace it;
-    std::vector<std::unique_ptr<TACInstruction>>::iterator _here;
+    bool _deleteHere = false;
+
+    // Points to the current instruction, so that we can replace it
+    std::list<std::unique_ptr<TACInstruction>>::iterator _here;
 };
 
 #endif
