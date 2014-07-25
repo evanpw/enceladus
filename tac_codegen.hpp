@@ -67,6 +67,8 @@ private:
     void createConstructor(ValueConstructor* constructor);
     void createDestructor(ValueConstructor* constructor);
 
+    void incref(std::shared_ptr<Address> operand);
+
     TACProgram _tacProgram;
     TACFunction* _currentFunction;
     std::shared_ptr<Address> _returnValue;

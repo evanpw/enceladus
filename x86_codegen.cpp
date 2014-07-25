@@ -624,7 +624,10 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
 
     std::string lhs, rhs, dest;
 
-    if (inst->op == "+" || inst->op == "-" || inst->op == "*")
+    if (inst->op == BinaryOperation::BADD ||
+        inst->op == BinaryOperation::BSUB ||
+        inst->op == BinaryOperation::BMUL ||
+        inst->op == BinaryOperation::UADD)
     {
         // Save these ahead of time in case one of the operands is also the
         // destination. Otherwise, when we assign the destination to a register,
@@ -635,17 +638,20 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
         dest = getRegisterFor(inst->dest, WRITE);
         EMIT("mov " << dest << ", " << lhs);
 
-        if (inst->op == "+")
+        if (inst->op == BinaryOperation::BADD ||
+            inst->op == BinaryOperation::UADD)
         {
-            EMIT("dec " << dest);  // Clear tag bit
+            if (inst->op == BinaryOperation::BADD)
+                EMIT("dec " << dest);  // Clear tag bit
+
             EMIT("add " << dest << ", " << rhs);
         }
-        else if (inst->op == "-")
+        else if (inst->op == BinaryOperation::BSUB)
         {
             EMIT("sub " << dest << ", " << rhs);
             EMIT("inc " << dest);                   // Restore tag bit
         }
-        else /* if (inst->op == "*") */
+        else /* if (inst->op == BinaryOperation::BMUL) */
         {
             rhs = getRegisterFor(inst->rhs, READ);
             freeRegister(rhs);
@@ -658,7 +664,7 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
             freeRegister(rhs);
         }
     }
-    else if (inst->op == "/")
+    else if (inst->op == BinaryOperation::BDIV)
     {
         lhs = access(inst->lhs);
 
@@ -680,7 +686,7 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
         freeRegister("rdx");
         freeRegister(rhs);
     }
-    else if (inst->op == "%")
+    else if (inst->op == BinaryOperation::BMOD)
     {
         lhs = access(inst->lhs);
 
@@ -701,6 +707,15 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
 
         freeRegister("rax");
         freeRegister(rhs);
+    }
+    else if (inst->op == BinaryOperation::UAND)
+    {
+        lhs = access(inst->lhs);
+        rhs = access(inst->rhs);
+
+        dest = getRegisterFor(inst->dest, WRITE);
+        EMIT("mov " << dest << ", " << lhs);
+        EMIT("and " << dest << ", " << rhs);
     }
 
     freeRegister(lhs);

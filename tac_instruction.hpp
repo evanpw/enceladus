@@ -263,9 +263,12 @@ struct TACLeftIndexedAssignment : public TACInstruction
     std::shared_ptr<Address> rhs;
 };
 
+enum class BinaryOperation {BADD, BSUB, BMUL, BDIV, BMOD, UAND, UADD};
+extern const char* binaryOperationNames[];
+
 struct TACBinaryOperation : public TACInstruction
 {
-    TACBinaryOperation(std::shared_ptr<Address> dest, std::shared_ptr<Address> lhs, const std::string& op, std::shared_ptr<Address> rhs)
+    TACBinaryOperation(std::shared_ptr<Address> dest, std::shared_ptr<Address> lhs, BinaryOperation op, std::shared_ptr<Address> rhs)
     : dest(dest), lhs(lhs), op(op), rhs(rhs)
     {}
 
@@ -274,13 +277,19 @@ struct TACBinaryOperation : public TACInstruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << dest->str() << " = " << lhs->str() << " " << op << " " << rhs->str();
+        ss << dest->str()
+           << " = "
+           << lhs->str()
+           << " "
+           << binaryOperationNames[int(op)]
+           << " "
+           << rhs->str();
         return ss.str();
     }
 
     std::shared_ptr<Address> dest;
     std::shared_ptr<Address> lhs;
-    std::string op;
+    BinaryOperation op;
     std::shared_ptr<Address> rhs;
 };
 

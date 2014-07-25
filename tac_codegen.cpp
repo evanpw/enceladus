@@ -60,7 +60,8 @@ void TACCodeGen::visit(ProgramNode* node)
 
             // We gain a reference to every parameter
             if (param->typeScheme->isBoxed())
-                emit(new TACCall(true, FOREIGN_NAME("_incref"), {paramAddress}));
+                incref(paramAddress);
+                //emit(new TACCall(true, FOREIGN_NAME("_incref"), {paramAddress}));
         }
 
         // Generate code for the function body
@@ -72,7 +73,8 @@ void TACCodeGen::visit(ProgramNode* node)
         // same as one of the local variables.
         if (functionType->output()->isBoxed())
         {
-            emit(new TACCall(true, FOREIGN_NAME("_incref"), {_currentFunction->returnValue}));
+            //emit(new TACCall(true, FOREIGN_NAME("_incref"), {_currentFunction->returnValue}));
+            incref(_currentFunction->returnValue);
         }
 
         // Going out of scope loses a reference to all of the local variables
@@ -260,7 +262,7 @@ void TACCodeGen::visit(NullaryNode* node)
             emit(new TACCall(true, dest, FOREIGN_NAME("malloc"), {std::make_shared<ConstAddress>(size)}));
 
             // SplObject header fields
-            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, refCount), ConstAddress::Zero));
+            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
 
             emit(new TACLeftIndexedAssignment(
                 dest,
@@ -284,11 +286,11 @@ void TACCodeGen::visit(BoolNode* node)
 {
     if (node->value)
     {
-        node->address.reset(new ConstAddress(3));
+        node->address = ConstAddress::True;
     }
     else
     {
-        node->address.reset(new ConstAddress(1));
+        node->address = ConstAddress::False;
     }
 }
 
@@ -372,7 +374,8 @@ void TACCodeGen::visit(AssignNode* node)
 
         // Make sure to incref before decref in case dest currently has the
         // only reference to value
-        emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
+        //emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
+        incref(value);
         emit(new TACCall(true, FOREIGN_NAME("_decref"), {dest}));
         emit(new TACAssign(dest, value));
     }
@@ -402,7 +405,8 @@ void TACCodeGen::visit(LetNode* node)
 
         // Make sure to incref before decref in case dest currently has the
         // only reference to value
-        emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
+        //emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
+        incref(value);
         emit(new TACCall(true, FOREIGN_NAME("_decref"), {dest}));
         emit(new TACAssign(dest, value));
     }
@@ -456,7 +460,8 @@ void TACCodeGen::visit(MatchNode* node)
 
         if (member->typeScheme->isBoxed())
         {
-            emit(new TACCall(true, FOREIGN_NAME("_incref"), {getNameAddress(member)}));
+            //emit(new TACCall(true, FOREIGN_NAME("_incref"), {getNameAddress(member)}));
+            incref(getNameAddress(member));
         }
     }
 }
@@ -497,8 +502,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
 
             std::shared_ptr<Label> good(new Label);
 
-            emit(new TACConditionalJump(arguments[0], "!=", ConstAddress::Zero, good));
-            emit(new TACCall(true, FOREIGN_NAME("_die"), {ConstAddress::Zero}));
+            emit(new TACConditionalJump(arguments[0], "!=", ConstAddress::UnboxedZero, good));
+            emit(new TACCall(true, FOREIGN_NAME("_die"), {ConstAddress::UnboxedZero}));
             emit(new TACLabel(good));
             emit(new TACRightIndexedAssignment(result, arguments[0], offsetof(List, value)));
         }
@@ -508,8 +513,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
 
             std::shared_ptr<Label> good(new Label);
 
-            emit(new TACConditionalJump(arguments[0], "!=", ConstAddress::Zero, good));
-            emit(new TACCall(true, FOREIGN_NAME("_die"), {ConstAddress::Zero}));
+            emit(new TACConditionalJump(arguments[0], "!=", ConstAddress::UnboxedZero, good));
+            emit(new TACCall(true, FOREIGN_NAME("_die"), {ConstAddress::UnboxedZero}));
             emit(new TACLabel(good));
             emit(new TACRightIndexedAssignment(result, arguments[0], offsetof(List, next)));
         }
@@ -517,7 +522,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         {
             assert(arguments.size() == 0);
 
-            emit(new TACAssign(result, ConstAddress::Zero));
+            emit(new TACAssign(result, ConstAddress::UnboxedZero));
         }
         else if (node->target == "null")
         {
@@ -526,7 +531,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
             std::shared_ptr<Label> endLabel(new Label);
             std::shared_ptr<Label> trueBranch(new Label);
 
-            emit(new TACConditionalJump(arguments[0], "==", ConstAddress::Zero, trueBranch));
+            emit(new TACConditionalJump(arguments[0], "==", ConstAddress::UnboxedZero, trueBranch));
             emit(new TACAssign(result, ConstAddress::False));
             emit(new TACJump(endLabel));
             emit(new TACLabel(trueBranch));
@@ -536,27 +541,27 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "+")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], "+", arguments[1]));
+            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::BADD, arguments[1]));
         }
         else if (node->target == "-")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], "-", arguments[1]));
+            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::BSUB, arguments[1]));
         }
         else if (node->target == "*")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], "*", arguments[1]));
+            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::BMUL, arguments[1]));
         }
         else if (node->target == "/")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], "/", arguments[1]));
+            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::BDIV, arguments[1]));
         }
         else if (node->target == "%")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], "%", arguments[1]));
+            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::BMOD, arguments[1]));
         }
         else
         {
@@ -645,7 +650,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
     //// Fill in the members with the constructor arguments
 
     // SplObject header fields
-    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, refCount), ConstAddress::Zero));
+    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
 
     std::string destructor = "_destroy" + mangle(constructor->name());
     emit(new TACLeftIndexedAssignment(
@@ -666,7 +671,8 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
         // Assigning into this structure gives a new reference to each member
         if (member.type->isBoxed())
         {
-            emit(new TACCall(true, FOREIGN_NAME("_incref"), {param}));
+            //emit(new TACCall(true, FOREIGN_NAME("_incref"), {param}));
+            incref(param);
         }
     }
 }
@@ -701,4 +707,23 @@ void TACCodeGen::createDestructor(ValueConstructor* constructor)
     }
 
     emit(new TACCall(true, FOREIGN_NAME("free"), {param}));
+}
+
+void TACCodeGen::incref(std::shared_ptr<Address> operand)
+{
+    std::shared_ptr<Label> endLabel(new Label);
+
+    emit(new TACConditionalJump(operand, "==", ConstAddress::UnboxedZero, endLabel));
+
+    std::shared_ptr<Address> mod4 = makeTemp();
+
+    emit(new TACBinaryOperation(mod4, operand, BinaryOperation::UAND, std::make_shared<ConstAddress>(3)));
+    emit(new TACConditionalJump(mod4, "!=", ConstAddress::UnboxedZero, endLabel));
+
+    std::shared_ptr<Address> refcount = makeTemp();
+    emit(new TACRightIndexedAssignment(refcount, operand, 0));
+    emit(new TACBinaryOperation(refcount, refcount, BinaryOperation::UADD, ConstAddress::UnboxedOne));
+    emit(new TACLeftIndexedAssignment(operand, 0, refcount));
+
+    emit(new TACLabel(endLabel));
 }

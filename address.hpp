@@ -58,8 +58,8 @@ struct ConstAddress : public Address
 
     static std::shared_ptr<ConstAddress> True;
     static std::shared_ptr<ConstAddress> False;
-    static std::shared_ptr<ConstAddress> Zero;
-    static std::shared_ptr<ConstAddress> One;
+    static std::shared_ptr<ConstAddress> UnboxedZero;
+    static std::shared_ptr<ConstAddress> UnboxedOne;
 };
 
 struct TempAddress : public Address

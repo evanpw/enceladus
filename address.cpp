@@ -60,16 +60,7 @@ NameAddress::NameAddress(const std::string& name, NameTag nameTag)
 std::string ConstAddress::str() const
 {
     std::stringstream ss;
-
-    if (value & 1)
-    {
-        ss << (value >> 1);
-    }
-    else
-    {
-        ss << value;
-    }
-
+    ss << value;
     return ss.str();
 }
 
@@ -82,5 +73,5 @@ std::string TempAddress::str() const
 
 std::shared_ptr<ConstAddress> ConstAddress::True(new ConstAddress(3));
 std::shared_ptr<ConstAddress> ConstAddress::False(new ConstAddress(1));
-std::shared_ptr<ConstAddress> ConstAddress::Zero(new ConstAddress(0));
-std::shared_ptr<ConstAddress> ConstAddress::One(new ConstAddress(1));
+std::shared_ptr<ConstAddress> ConstAddress::UnboxedZero(new ConstAddress(0));
+std::shared_ptr<ConstAddress> ConstAddress::UnboxedOne(new ConstAddress(1));
