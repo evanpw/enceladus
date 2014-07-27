@@ -9,9 +9,78 @@
 
 #include <boost/lexical_cast.hpp>
 
+#define UNSUPPORTED(T) virtual void visit(T* node) { assert(false); }
+
+class TACCodeGen;
+
+class TACConditionalCodeGen : public AstVisitor
+{
+public:
+    TACConditionalCodeGen(TACCodeGen* mainCodeGen)
+    : _mainCodeGen(mainCodeGen)
+    {}
+
+    UNSUPPORTED(AssignNode);
+    UNSUPPORTED(BlockNode);
+    UNSUPPORTED(BreakNode);
+    UNSUPPORTED(DataDeclaration);
+    UNSUPPORTED(FunctionDefNode);
+    UNSUPPORTED(IfElseNode);
+    UNSUPPORTED(IfNode);
+    UNSUPPORTED(IntNode);
+    UNSUPPORTED(LetNode);
+    UNSUPPORTED(MatchNode);
+    UNSUPPORTED(ProgramNode);
+    UNSUPPORTED(ReturnNode);
+    UNSUPPORTED(StructDefNode);
+    UNSUPPORTED(WhileNode);
+    UNSUPPORTED(MemberDefNode);
+    UNSUPPORTED(TypeAliasNode);
+
+    virtual void visit(BoolNode* node) { wrapper(*node); }
+    virtual void visit(FunctionCallNode* node) { wrapper(*node); }
+    virtual void visit(MemberAccessNode* node) { wrapper(*node); }
+    virtual void visit(NullaryNode* node) { wrapper(*node); }
+    virtual void visit(VariableNode* node) { wrapper(*node); }
+
+    virtual void visit(ComparisonNode* node);
+    virtual void visit(LogicalNode* node);
+
+    void visitCondition(AstNode& node, std::shared_ptr<Label> trueBranch, std::shared_ptr<Label> falseBranch)
+    {
+        std::shared_ptr<Label> saveTrueBranch = _trueBranch;
+        std::shared_ptr<Label> saveFalseBranch = _falseBranch;
+
+        _trueBranch = trueBranch;
+        _falseBranch = falseBranch;
+
+        node.accept(this);
+
+        _trueBranch = saveTrueBranch;
+        _falseBranch = saveFalseBranch;
+    }
+
+    void wrapper(AstNode& node)
+    {
+        std::shared_ptr<Address> address = visitAndGet(node);
+        emit(new TACJumpIf(address, _trueBranch));
+        emit(new TACJump(_falseBranch));
+    }
+
+private:
+    void emit(TACInstruction* inst);
+    std::shared_ptr<Address> visitAndGet(AstNode& node);
+
+    std::shared_ptr<Label> _trueBranch, _falseBranch;
+
+    TACCodeGen* _mainCodeGen;
+};
+
 class TACCodeGen : public AstVisitor
 {
 public:
+    TACCodeGen();
+
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(BreakNode* node);
@@ -74,11 +143,12 @@ private:
     std::shared_ptr<Address> _returnValue;
     std::shared_ptr<Label> _functionEnd;
 
-    //std::shared_ptr<Label> _trueBranch, _falseBranch;
+    TACConditionalCodeGen _conditionalCodeGen;
 
     // Number of temporary variables used so far in the current function
     std::shared_ptr<Address> makeTemp() { return std::make_shared<TempAddress>(_currentFunction->numberOfTemps++); }
 
+    friend class TACConditionalCodeGen;
     void emit(TACInstruction* inst) {  _currentFunction->instructions.emplace_back(inst); }
 };
 

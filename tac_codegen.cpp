@@ -4,6 +4,11 @@
 
 #include <iostream>
 
+TACCodeGen::TACCodeGen()
+: _conditionalCodeGen(this)
+{
+}
+
 std::shared_ptr<Address> TACCodeGen::getNameAddress(const Symbol* symbol)
 {
     auto i = _names.find(symbol);
@@ -16,6 +21,16 @@ std::shared_ptr<Address> TACCodeGen::getNameAddress(const Symbol* symbol)
         _names[symbol] = std::make_shared<NameAddress>(symbol);
         return _names[symbol];
     }
+}
+
+void TACConditionalCodeGen::emit(TACInstruction* inst)
+{
+    _mainCodeGen->emit(inst);
+}
+
+std::shared_ptr<Address> TACConditionalCodeGen::visitAndGet(AstNode& node)
+{
+    return _mainCodeGen->visitAndGet(node);
 }
 
 void TACCodeGen::visit(ProgramNode* node)
@@ -151,13 +166,49 @@ void TACCodeGen::visit(ProgramNode* node)
     }
 }
 
+void TACConditionalCodeGen::visit(ComparisonNode* node)
+{
+    std::shared_ptr<Address> lhs = visitAndGet(*node->lhs);
+    std::shared_ptr<Address> rhs = visitAndGet(*node->rhs);
+
+    switch(node->op)
+    {
+        case ComparisonNode::kGreater:
+            emit(new TACConditionalJump(lhs, ">", rhs, _trueBranch));
+            break;
+
+        case ComparisonNode::kLess:
+            emit(new TACConditionalJump(lhs, "<", rhs, _trueBranch));
+            break;
+
+        case ComparisonNode::kEqual:
+            emit(new TACConditionalJump(lhs, "==", rhs, _trueBranch));
+            break;
+
+        case ComparisonNode::kGreaterOrEqual:
+            emit(new TACConditionalJump(lhs, ">=", rhs, _trueBranch));
+            break;
+
+        case ComparisonNode::kLessOrEqual:
+            emit(new TACConditionalJump(lhs, "<=", rhs, _trueBranch));
+            break;
+
+        case ComparisonNode::kNotEqual:
+            emit(new TACConditionalJump(lhs, "!=", rhs, _trueBranch));
+            break;
+
+        default: assert(false);
+    }
+
+    emit(new TACJump(_falseBranch));
+}
+
 void TACCodeGen::visit(ComparisonNode* node)
 {
     std::shared_ptr<Address> lhs = visitAndGet(*node->lhs);
     std::shared_ptr<Address> rhs = visitAndGet(*node->rhs);
 
     std::shared_ptr<Label> trueBranch(new Label);
-    std::shared_ptr<Label> endLabel(new Label);
 
     switch(node->op)
     {
@@ -191,11 +242,37 @@ void TACCodeGen::visit(ComparisonNode* node)
     if (!node->address)
         node->address = makeTemp();
 
+    std::shared_ptr<Label> endLabel(new Label);
+
     emit(new TACAssign(node->address, ConstAddress::False));
     emit(new TACJump(endLabel));
     emit(new TACLabel(trueBranch));
     emit(new TACAssign(node->address, ConstAddress::True));
     emit(new TACLabel(endLabel));
+}
+
+void TACConditionalCodeGen::visit(LogicalNode* node)
+{
+    if (node->op == LogicalNode::kAnd)
+    {
+        std::shared_ptr<Label> firstTrue(new Label);
+        visitCondition(*node->lhs, firstTrue, _falseBranch);
+
+        emit(new TACLabel(firstTrue));
+        visitCondition(*node->rhs, _trueBranch, _falseBranch);
+    }
+    else if (node->op == LogicalNode::kOr)
+    {
+        std::shared_ptr<Label> firstFalse(new Label);
+        visitCondition(*node->lhs, _trueBranch, firstFalse);
+
+        emit(new TACLabel(firstFalse));
+        visitCondition(*node->rhs, _trueBranch, _falseBranch);
+    }
+    else
+    {
+        assert(false);
+    }
 }
 
 void TACCodeGen::visit(LogicalNode* node)
@@ -216,8 +293,6 @@ void TACCodeGen::visit(LogicalNode* node)
         emit(new TACJumpIfNot(rhs, endLabel));
         emit(new TACAssign(result, ConstAddress::True));
         emit(new TACLabel(endLabel));
-
-        return;
     }
     else if (node->op == LogicalNode::kOr)
     {
@@ -228,11 +303,11 @@ void TACCodeGen::visit(LogicalNode* node)
         emit(new TACJumpIf(rhs, endLabel));
         emit(new TACAssign(result, ConstAddress::False));
         emit(new TACLabel(endLabel));
-
-        return;
     }
-
-    assert(false);
+    else
+    {
+        assert (false);
+    }
 }
 
 void TACCodeGen::visit(NullaryNode* node)
@@ -304,32 +379,31 @@ void TACCodeGen::visit(BlockNode* node)
 
 void TACCodeGen::visit(IfNode* node)
 {
-    std::shared_ptr<Address> condition = visitAndGet(*node->condition);
+    std::shared_ptr<Label> trueBranch(new Label);
+    std::shared_ptr<Label> falseBranch(new Label);
 
-    std::shared_ptr<Label> endLabel(new Label);
+    _conditionalCodeGen.visitCondition(*node->condition, trueBranch, falseBranch);
 
-    emit(new TACJumpIfNot(condition, endLabel));
+    emit(new TACLabel(trueBranch));
 
     node->body->accept(this);
 
-    emit(new TACLabel(endLabel));
+    emit(new TACLabel(falseBranch));
 }
 
 void TACCodeGen::visit(IfElseNode* node)
 {
-    std::shared_ptr<Address> condition = visitAndGet(*node->condition);
-
-    std::shared_ptr<Label> elseLabel(new Label);
+    std::shared_ptr<Label> trueBranch(new Label);
+    std::shared_ptr<Label> falseBranch(new Label);
     std::shared_ptr<Label> endLabel(new Label);
 
-    emit(new TACJumpIfNot(condition, elseLabel));
+    _conditionalCodeGen.visitCondition(*node->condition, trueBranch, falseBranch);
 
+    emit(new TACLabel(trueBranch));
     node->body->accept(this);
-
     emit(new TACJump(endLabel));
 
-    emit(new TACLabel(elseLabel));
-
+    emit(new TACLabel(falseBranch));
     node->else_body->accept(this);
 
     emit(new TACLabel(endLabel));
@@ -342,13 +416,14 @@ void TACCodeGen::visit(WhileNode* node)
 
     emit(new TACLabel(beginLabel));
 
-    std::shared_ptr<Address> condition = visitAndGet(*node->condition);
+    std::shared_ptr<Label> trueBranch(new Label);
+    _conditionalCodeGen.visitCondition(*node->condition, trueBranch, endLabel);
+
+    emit(new TACLabel(trueBranch));
 
     // Push a new inner loop on the (implicit) stack
     std::shared_ptr<Label> prevLoopEnd = _currentLoopEnd;
     _currentLoopEnd = endLabel;
-
-    emit(new TACJumpIfNot(condition, endLabel));
 
     node->body->accept(this);
 
