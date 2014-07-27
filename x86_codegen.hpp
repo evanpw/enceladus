@@ -15,22 +15,22 @@
 class X86CodeGen : public TACVisitor
 {
 public:
-    virtual void generateCode(const TACProgram& program);
+    virtual void generateCode(TACProgram& program);
 
-    void visit(const TACConditionalJump* inst);
-    void visit(const TACJumpIf* inst);
-    void visit(const TACJumpIfNot* inst);
-    void visit(const TACAssign* inst);
-    void visit(const TACJump* inst);
-    void visit(const TACLabel* inst);
-    void visit(const TACCall* inst);
-    void visit(const TACIndirectCall* inst);
-    void visit(const TACRightIndexedAssignment* inst);
-    void visit(const TACLeftIndexedAssignment* inst);
-    void visit(const TACBinaryOperation* inst);
+    void visit(TACConditionalJump* inst);
+    void visit(TACJumpIf* inst);
+    void visit(TACJumpIfNot* inst);
+    void visit(TACAssign* inst);
+    void visit(TACJump* inst);
+    void visit(TACLabel* inst);
+    void visit(TACCall* inst);
+    void visit(TACIndirectCall* inst);
+    void visit(TACRightIndexedAssignment* inst);
+    void visit(TACLeftIndexedAssignment* inst);
+    void visit(TACBinaryOperation* inst);
 
 private:
-    void generateCode(const TACFunction& function);
+    void generateCode(TACFunction& function);
 
     bool inRegister(std::shared_ptr<Address> address);
     bool inMemory(std::shared_ptr<Address> address);

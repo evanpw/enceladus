@@ -15,7 +15,7 @@
 #define SAFE_MOV(dest, src) \
     if (dest != src) EMIT("mov " << dest << ", " << src);
 
-void X86CodeGen::generateCode(const TACProgram& program)
+void X86CodeGen::generateCode(TACProgram& program)
 {
     //// Program prefix
     EMIT_LEFT("bits 64");
@@ -52,7 +52,7 @@ void X86CodeGen::generateCode(const TACProgram& program)
     }
 }
 
-void X86CodeGen::generateCode(const TACFunction& function)
+void X86CodeGen::generateCode(TACFunction& function)
 {
     EMIT_COMMENT("begin " << function.name);
 
@@ -404,7 +404,7 @@ void X86CodeGen::freeRegister(std::string reg)
 
 //// Individual TAC Instruction Handlers ///////////////////////////////////////
 
-void X86CodeGen::visit(const TACConditionalJump* inst)
+void X86CodeGen::visit(TACConditionalJump* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -416,7 +416,18 @@ void X86CodeGen::visit(const TACConditionalJump* inst)
         getRegisterFor(inst->lhs, READ);
     }
 
-    EMIT("cmp " << access(inst->lhs) << ", " << access(inst->rhs));
+    if (!inMemory(inst->lhs) && isConst(inst->rhs) && inst->rhs->asConst().value == 0)
+    {
+        EMIT("test " << access(inst->lhs) << ", " << access(inst->lhs));
+    }
+    else if (!inMemory(inst->rhs) && isConst(inst->lhs) && inst->lhs->asConst().value == 0)
+    {
+        EMIT("test " << access(inst->rhs) << ", " << access(inst->rhs));
+    }
+    else
+    {
+        EMIT("cmp " << access(inst->lhs) << ", " << access(inst->rhs));
+    }
 
     spillAndClear();
 
@@ -450,7 +461,7 @@ void X86CodeGen::visit(const TACConditionalJump* inst)
     }
 }
 
-void X86CodeGen::visit(const TACJumpIf* inst)
+void X86CodeGen::visit(TACJumpIf* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -469,7 +480,7 @@ void X86CodeGen::visit(const TACJumpIf* inst)
     EMIT("je " << inst->target->str());
 }
 
-void X86CodeGen::visit(const TACJumpIfNot* inst)
+void X86CodeGen::visit(TACJumpIfNot* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -488,7 +499,7 @@ void X86CodeGen::visit(const TACJumpIfNot* inst)
     EMIT("jne " << inst->target->str());
 }
 
-void X86CodeGen::visit(const TACAssign* inst)
+void X86CodeGen::visit(TACAssign* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -504,7 +515,7 @@ void X86CodeGen::visit(const TACAssign* inst)
     }
 }
 
-void X86CodeGen::visit(const TACJump* inst)
+void X86CodeGen::visit(TACJump* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -512,7 +523,7 @@ void X86CodeGen::visit(const TACJump* inst)
     EMIT("jmp " << inst->target->str());
 }
 
-void X86CodeGen::visit(const TACLabel* inst)
+void X86CodeGen::visit(TACLabel* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -520,7 +531,7 @@ void X86CodeGen::visit(const TACLabel* inst)
     EMIT_LABEL(inst->label->str());
 }
 
-void X86CodeGen::visit(const TACCall* inst)
+void X86CodeGen::visit(TACCall* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -578,7 +589,7 @@ void X86CodeGen::visit(const TACCall* inst)
     }
 }
 
-void X86CodeGen::visit(const TACIndirectCall* inst)
+void X86CodeGen::visit(TACIndirectCall* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -595,7 +606,7 @@ void X86CodeGen::visit(const TACIndirectCall* inst)
     freeRegister("rax");
 }
 
-void X86CodeGen::visit(const TACRightIndexedAssignment* inst)
+void X86CodeGen::visit(TACRightIndexedAssignment* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -608,7 +619,7 @@ void X86CodeGen::visit(const TACRightIndexedAssignment* inst)
     freeRegister(rhs);
 }
 
-void X86CodeGen::visit(const TACLeftIndexedAssignment* inst)
+void X86CodeGen::visit(TACLeftIndexedAssignment* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -621,7 +632,7 @@ void X86CodeGen::visit(const TACLeftIndexedAssignment* inst)
     freeRegister(rhs);
 }
 
-void X86CodeGen::visit(const TACBinaryOperation* inst)
+void X86CodeGen::visit(TACBinaryOperation* inst)
 {
     EMIT_COMMENT(inst->str());
 
@@ -648,7 +659,18 @@ void X86CodeGen::visit(const TACBinaryOperation* inst)
         }
         else if (inst->op == BinaryOperation::UADD)
         {
-            EMIT("add " << dest << ", " << rhs);
+            if (inst->rhs->isConst() && inst->rhs->asConst().value == 1)
+            {
+                EMIT("inc " << dest);
+            }
+            else if (inst->rhs->isConst() && inst->rhs->asConst().value == -1)
+            {
+                EMIT("dec " << dest);
+            }
+            else
+            {
+                EMIT("add " << dest << ", " << rhs);
+            }
         }
         else if (inst->op == BinaryOperation::BSUB)
         {

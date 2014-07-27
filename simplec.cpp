@@ -97,6 +97,13 @@ int main(int argc, char* argv[])
 
 		TACProgram& intermediateCode = tacGen.getResult();
 
+		/*
+		for (auto& inst : intermediateCode.mainFunction.instructions)
+		{
+			std::cerr << inst->str() << std::endl;
+		}
+		*/
+
 		TACLocalOptimizer localOptimizer;
 		localOptimizer.optimizeCode(intermediateCode);
 

@@ -18,17 +18,17 @@ struct TACVisitor
 {
     virtual ~TACVisitor() {}
 
-    virtual void visit(const TACConditionalJump* inst) = 0;
-    virtual void visit(const TACJumpIf* inst) = 0;
-    virtual void visit(const TACJumpIfNot* inst) = 0;
-    virtual void visit(const TACAssign* inst) = 0;
-    virtual void visit(const TACJump* inst) = 0;
-    virtual void visit(const TACLabel* inst) = 0;
-    virtual void visit(const TACCall* inst) = 0;
-    virtual void visit(const TACIndirectCall* inst) = 0;
-    virtual void visit(const TACRightIndexedAssignment* inst) = 0;
-    virtual void visit(const TACLeftIndexedAssignment* inst) = 0;
-    virtual void visit(const TACBinaryOperation* inst) = 0;
+    virtual void visit(TACConditionalJump* inst) = 0;
+    virtual void visit(TACJumpIf* inst) = 0;
+    virtual void visit(TACJumpIfNot* inst) = 0;
+    virtual void visit(TACAssign* inst) = 0;
+    virtual void visit(TACJump* inst) = 0;
+    virtual void visit(TACLabel* inst) = 0;
+    virtual void visit(TACCall* inst) = 0;
+    virtual void visit(TACIndirectCall* inst) = 0;
+    virtual void visit(TACRightIndexedAssignment* inst) = 0;
+    virtual void visit(TACLeftIndexedAssignment* inst) = 0;
+    virtual void visit(TACBinaryOperation* inst) = 0;
 };
 
 #endif
