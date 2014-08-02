@@ -541,6 +541,30 @@ void TACCodeGen::visit(MatchNode* node)
     }
 }
 
+void TACConditionalCodeGen::visit(FunctionCallNode* node)
+{
+    if (node->symbol->kind == kFunction && node->symbol->asFunction()->isBuiltin)
+    {
+        if (node->target == "not")
+        {
+            assert(node->arguments.size() == 1);
+            visitCondition(*node->arguments[0], _falseBranch, _trueBranch);
+            return;
+        }
+        else if (node->target == "null")
+        {
+            assert(node->arguments.size() == 1);
+            std::shared_ptr<Address> arg = visitAndGet(*node->arguments[0]);
+
+            emit(new TACConditionalJump(arg, "==", ConstAddress::UnboxedZero, _trueBranch));
+            emit(new TACJump(_falseBranch));
+            return;
+        }
+    }
+
+    wrapper(*node);
+}
+
 void TACCodeGen::visit(FunctionCallNode* node)
 {
     std::vector<std::shared_ptr<Address>> arguments;

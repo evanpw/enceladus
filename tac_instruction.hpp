@@ -29,6 +29,22 @@ struct TACInstruction
 
 #define MAKE_VISITABLE() virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
+struct TACComment : public TACInstruction
+{
+    TACComment(const std::string& text)
+    : text(text)
+    {}
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        return "comment " + text;
+    }
+
+    std::string text;
+};
+
 struct TACConditionalJump : public TACInstruction
 {
     TACConditionalJump(std::shared_ptr<Address> lhs, const std::string& op, std::shared_ptr<Address> rhs, std::shared_ptr<Label> target)

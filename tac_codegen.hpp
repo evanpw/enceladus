@@ -38,11 +38,11 @@ public:
     UNSUPPORTED(TypeAliasNode);
 
     virtual void visit(BoolNode* node) { wrapper(*node); }
-    virtual void visit(FunctionCallNode* node) { wrapper(*node); }
     virtual void visit(MemberAccessNode* node) { wrapper(*node); }
     virtual void visit(NullaryNode* node) { wrapper(*node); }
     virtual void visit(VariableNode* node) { wrapper(*node); }
 
+    virtual void visit(FunctionCallNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(LogicalNode* node);
 

@@ -1,6 +1,7 @@
 #ifndef TAC_VISITOR_HPP
 #define TAC_VISITOR_HPP
 
+struct TACComment;
 struct TACConditionalJump;
 struct TACJumpIf;
 struct TACJumpIfNot;
@@ -18,6 +19,7 @@ struct TACVisitor
 {
     virtual ~TACVisitor() {}
 
+    virtual void visit(TACComment* inst) {}
     virtual void visit(TACConditionalJump* inst) = 0;
     virtual void visit(TACJumpIf* inst) = 0;
     virtual void visit(TACJumpIfNot* inst) = 0;

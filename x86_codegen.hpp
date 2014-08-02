@@ -17,6 +17,7 @@ class X86CodeGen : public TACVisitor
 public:
     virtual void generateCode(TACProgram& program);
 
+    void visit(TACComment* inst);
     void visit(TACConditionalJump* inst);
     void visit(TACJumpIf* inst);
     void visit(TACJumpIfNot* inst);

@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <iostream>
 #include "ast.hpp"
-#include "codegen.hpp"
 #include "tac_codegen.hpp"
 #include "x86_codegen.hpp"
 #include "tac_local_optimizer.hpp"

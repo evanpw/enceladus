@@ -404,6 +404,11 @@ void X86CodeGen::freeRegister(std::string reg)
 
 //// Individual TAC Instruction Handlers ///////////////////////////////////////
 
+void X86CodeGen::visit(TACComment* inst)
+{
+    EMIT_COMMENT(inst->str());
+}
+
 void X86CodeGen::visit(TACConditionalJump* inst)
 {
     EMIT_COMMENT(inst->str());
