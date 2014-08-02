@@ -51,134 +51,134 @@
 	},
 	"file_history":
 	[
-		"/Users/evanpw/Workspace/simple/x86_codegen.cpp",
-		"/Users/evanpw/Workspace/simple/tac_instruction.hpp",
-		"/Users/evanpw/Workspace/simple/ast.hpp",
-		"/Users/evanpw/Workspace/simple/scope.hpp",
-		"/Users/evanpw/Workspace/simple/symbol_table.hpp",
-		"/Users/evanpw/Workspace/simple/tac_codegen.cpp",
-		"/Users/evanpw/Workspace/simple/build/test.asm",
-		"/Users/evanpw/Workspace/simple/codegen.cpp",
-		"/Users/evanpw/Workspace/simple/symbol_table.cpp",
-		"/Users/evanpw/Workspace/simple/symbol.hpp",
-		"/Users/evanpw/Workspace/simple/testing/shortCircuit.spl",
-		"/Users/evanpw/Workspace/simple/target_codegen.hpp",
-		"/Users/evanpw/Workspace/simple/docs/TODO",
-		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
-		"/Users/evanpw/Workspace/simple/x86_codegen.hpp",
-		"/Users/evanpw/Workspace/simple/address.hpp",
-		"/Users/evanpw/Workspace/simple/address.cpp",
-		"/Users/evanpw/Workspace/simple/euler1.asm",
-		"/Users/evanpw/Workspace/simple/testing/test.spl",
 		"/Users/evanpw/Workspace/simple/prelude.spl",
-		"/Users/evanpw/Workspace/simple/euler1-2.asm",
+		"/Users/evanpw/Workspace/simple/tac_codegen.cpp",
+		"/Users/evanpw/Workspace/simple/build/euler24.asm",
+		"/Users/evanpw/Workspace/simple/linux/build.sh",
+		"/Users/evanpw/Workspace/simple/osx/build.sh",
+		"/Users/evanpw/Workspace/simple/testing/all.sh",
+		"/Users/evanpw/Workspace/simple/testing/testError.sh",
+		"/Users/evanpw/Workspace/simple/testing/structMembers1.spl",
 		"/Users/evanpw/Workspace/simple/simplec.cpp",
 		"/Users/evanpw/Workspace/simple/tac_codegen.hpp",
-		"/Users/evanpw/Workspace/simple/semantic.cpp",
+		"/Users/evanpw/Workspace/simple/build/test.asm",
+		"/Users/evanpw/Workspace/simple/BigInt.spl",
+		"/Users/evanpw/Workspace/simple/build/euler24",
+		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
+		"/Users/evanpw/Workspace/simple/build/euler1.ir",
 		"/Users/evanpw/Workspace/simple/build/poly2.asm",
+		"/Users/evanpw/Workspace/simple/build/shortCircuit.asm",
+		"/Users/evanpw/Workspace/simple/docs/TODO",
+		"/Users/evanpw/Workspace/simple/build/test.ir",
+		"/Users/evanpw/Workspace/simple/testing/test.spl",
+		"/Users/evanpw/Workspace/simple/scope.hpp",
+		"/Users/evanpw/Workspace/simple/build/structMembers1.asm",
+		"/Users/evanpw/Workspace/simple/build/structInference",
+		"/Users/evanpw/Workspace/simple/String.spl",
+		"/Users/evanpw/Workspace/simple/build/associativity.asm",
+		"/Users/evanpw/Workspace/simple/tac_instruction.hpp",
+		"/Users/evanpw/Workspace/simple/tac_local_optimizer.cpp",
+		"/Users/evanpw/Workspace/simple/tac_local_optimizer.hpp",
+		"/Users/evanpw/Workspace/simple/ast.cpp",
+		"/Users/evanpw/Workspace/simple/build/euler15.asm",
+		"/Users/evanpw/Workspace/simple/types.hpp",
+		"/Users/evanpw/Workspace/simple/build/euler23.asm",
+		"/Users/evanpw/Workspace/simple/build/localopt.asm",
+		"/Users/evanpw/Workspace/simple/build/euler1.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler1.spl",
+		"/Users/evanpw/Workspace/simple/x86_codegen.cpp",
+		"/Users/evanpw/Workspace/simple/ast.hpp",
+		"/Users/evanpw/Workspace/simple/build/euler23",
+		"/Users/evanpw/Workspace/simple/testing/associativity.spl",
+		"/Users/evanpw/Workspace/simple/List.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler15.spl",
+		"/Users/evanpw/Workspace/simple/x86_codegen.hpp",
+		"/Users/evanpw/Workspace/simple/tac_visitor.hpp",
+		"/Users/evanpw/Workspace/simple/build/associativitiy.asm",
+		"/Users/evanpw/Workspace/simple/build/typeConstructor.asm",
+		"/Users/evanpw/Workspace/simple/tac_program.hpp",
+		"/Users/evanpw/Workspace/simple/testing/localopt.spl",
+		"/Users/evanpw/Workspace/simple/build/euler10.asm",
+		"/Users/evanpw/Workspace/simple/tac_instruction.cpp",
+		"/Users/evanpw/Workspace/simple/address.hpp",
+		"/Users/evanpw/Workspace/simple/address.cpp",
+		"/Users/evanpw/Workspace/simple/library.s",
+		"/Users/evanpw/Workspace/simple/build/euler10",
+		"/Users/evanpw/Workspace/simple/test.cpp",
+		"/Users/evanpw/Workspace/simple/build/unnamed.asm",
+		"/Users/evanpw/Workspace/simple/build/fail.asm",
+		"/Users/evanpw/Workspace/simple/build/unaryMinus.asm",
+		"/Users/evanpw/Workspace/simple/testing/unaryMinus.spl",
+		"/Users/evanpw/Workspace/simple/library.c",
+		"/Users/evanpw/Workspace/simple/build/unaryMinus",
+		"/Users/evanpw/Workspace/simple/build/unnamed",
+		"/Users/evanpw/Workspace/simple/utility.cpp",
+		"/Users/evanpw/Workspace/simple/testing/bigList.spl",
+		"/Users/evanpw/Workspace/simple/testing/sqrt.spl",
+		"/Users/evanpw/Workspace/simple/testing/test.sh",
+		"/Users/evanpw/Workspace/simple/build/test.d",
+		"/Users/evanpw/Workspace/simple/testing/type_errors.spl",
+		"/Users/evanpw/Workspace/simple/test.s",
+		"/Users/evanpw/Workspace/simple/build/localVar",
+		"/Users/evanpw/Workspace/simple/test.c",
+		"/Users/evanpw/Workspace/simple/build/euler3.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
+		"/Users/evanpw/Workspace/simple/target_codegen.hpp",
+		"/Users/evanpw/Workspace/simple/build/localopt",
+		"/Users/evanpw/Workspace/simple/library.h",
+		"/Users/evanpw/Workspace/simple/build/euler4.asm",
+		"/Users/evanpw/Workspace/simple/codegen.cpp",
+		"/Users/evanpw/Workspace/simple/build/euler9.asm",
+		"/Users/evanpw/Workspace/simple/test.spl",
+		"/Users/evanpw/Workspace/simple/build/euler9",
+		"/Users/evanpw/Workspace/simple/testing/euler22.spl",
+		"/Users/evanpw/Workspace/simple/testing/fail.spl",
+		"/Users/evanpw/Workspace/simple/testing/test2.spl",
+		"/Users/evanpw/Workspace/simple/build/associativity",
+		"/Users/evanpw/Workspace/simple/build/fail",
+		"/Users/evanpw/Workspace/simple/build/test2.asm",
+		"/Users/evanpw/Workspace/simple/test2.spl",
+		"/Users/evanpw/Workspace/simple/testing/names.txt",
+		"/Users/evanpw/Workspace/simple/docs/NOTES",
+		"/Users/evanpw/Workspace/simple/build/euler22.asm",
+		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
+		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
+		"/Users/evanpw/Dropbox/Progress/Accomplishments.tex",
+		"/Users/evanpw/Workspace/simple/build/euler8.asm",
+		"/Users/evanpw/Workspace/simple/build/euler8",
+		"/Users/evanpw/Workspace/simple/build/euler6.asm",
+		"/Users/evanpw/Workspace/simple/build/euler6",
+		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
+		"/Users/evanpw/Workspace/simple/build/test.spl.asm",
+		"/Users/evanpw/Workspace/simple/build/test.spl",
+		"/Users/evanpw/Workspace/simple/build/euler2.asm",
+		"/Users/evanpw/Workspace/simple/build/euler4",
+		"/Users/evanpw/Workspace/simple/build/test3.asm",
+		"/Users/evanpw/Workspace/simple/build/test4.asm",
+		"/Users/evanpw/Workspace/simple/build/test4",
+		"/Users/evanpw/Workspace/simple/build/test3",
 		"/Users/evanpw/Workspace/simple/testing/read.spl",
+		"/Users/evanpw/Workspace/simple/build/euler1",
+		"/Users/evanpw/Workspace/simple/types.cpp",
+		"/Users/evanpw/Workspace/simple/codegen.hpp",
+		"/Users/evanpw/Workspace/simple/symbol.hpp",
+		"/Users/evanpw/Workspace/simple/semantic.cpp",
+		"/Users/evanpw/Workspace/simple/platform.hpp",
+		"/Users/evanpw/Workspace/simple/sublime/Comments.tmPreferences",
+		"/Users/evanpw/Workspace/simple/symbol_table.hpp",
+		"/Users/evanpw/Workspace/simple/symbol_table.cpp",
+		"/Users/evanpw/Workspace/simple/testing/shortCircuit.spl",
+		"/Users/evanpw/Workspace/simple/euler1.asm",
+		"/Users/evanpw/Workspace/simple/euler1-2.asm",
 		"/Users/evanpw/Workspace/simple/codegen2.cpp",
 		"/Users/evanpw/Workspace/simple/codegen2.hpp",
 		"/Users/evanpw/Workspace/simple/simplec",
 		"/Users/evanpw/Workspace/simple/simple.flex",
-		"/Users/evanpw/Workspace/simple/String.spl",
-		"/Users/evanpw/Workspace/simple/tac_instruction.cpp",
-		"/Users/evanpw/Workspace/simple/testing/test2.spl",
-		"/Users/evanpw/Workspace/simple/build/test2.asm",
-		"/Users/evanpw/Workspace/simple/build/euler22.asm",
 		"/Users/evanpw/Workspace/simple/testing/euler13.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler22.spl",
-		"/Users/evanpw/Workspace/simple/BigInt.spl",
 		"/Users/evanpw/Workspace/simple/build/euler13.asm",
-		"/Users/evanpw/Workspace/simple/build/shortCircuit.asm",
-		"/Users/evanpw/Workspace/simple/testing/all.sh",
-		"/Users/evanpw/Workspace/simple/build/euler1.asm",
 		"/Users/evanpw/Workspace/simple/build/test2",
 		"/Users/evanpw/Workspace/simple/string_table.cpp",
-		"/Users/evanpw/Workspace/simple/build/euler1",
-		"/Users/evanpw/Workspace/simple/build/shortCircuit",
-		"/Users/evanpw/Workspace/simple/build/euler13",
-		"/Users/evanpw/Workspace/simple/codegen.hpp",
-		"/Users/evanpw/Workspace/simple/tokens.cpp",
-		"/Users/evanpw/Workspace/simple/symbol.cpp",
-		"/Users/evanpw/Workspace/simple/ast.cpp",
-		"/Users/evanpw/Workspace/simple/docs/grammar.y",
-		"/Users/evanpw/Workspace/simple/parser.hpp",
-		"/Users/evanpw/Workspace/simple/parser.cpp",
-		"/Users/evanpw/Workspace/simple/testing/test.sh",
-		"/Users/evanpw/Workspace/simple/library.c",
-		"/Users/evanpw/Workspace/simple/library.h",
-		"/Users/evanpw/Workspace/simple/testing/multiRef.spl",
-		"/Users/evanpw/Workspace/simple/build/euler2",
-		"/Users/evanpw/Workspace/simple/build/test",
-		"/Users/evanpw/Workspace/simple/testing/type_errors.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler19-2.spl",
-		"/Users/evanpw/Workspace/simple/ast_visitor.hpp",
-		"/Users/evanpw/Workspace/simple/semantic.hpp",
-		"/Users/evanpw/Workspace/simple/testing/structMembers1.spl",
-		"/Users/evanpw/Workspace/simple/testing/structMembers2.spl",
-		"/Users/evanpw/Workspace/simple/testing/structMembers3.spl",
-		"/Users/evanpw/Workspace/simple/testing/structInference.spl",
-		"/Users/evanpw/Workspace/simple/testing/testError.sh",
-		"/Users/evanpw/Workspace/simple/build/euler11",
-		"/Users/evanpw/Dropbox/Progress/june_2014_address_change",
-		"/Users/evanpw/Dropbox/Progress/Abby.csv",
-		"/Users/evanpw/Workspace/simple/types.hpp",
-		"/Users/evanpw/Workspace/simple/types.cpp",
-		"/Users/evanpw/Workspace/simple/closure.spl",
-		"/Users/evanpw/Dropbox/Archive/logins",
-		"/Users/evanpw/Workspace/simple/grammar.y",
-		"/Users/evanpw/Workspace/simple/TODO",
-		"/Users/evanpw/Workspace/simple/NOTES",
-		"/Users/evanpw/Workspace/simple/testing/euler15.spl",
-		"/Users/evanpw/Workspace/simple/testing/closure.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler23.spl",
-		"/Users/evanpw/Workspace/simple/Sort.spl",
-		"/Users/evanpw/Workspace/simple/testing/Sort.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler26.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler24.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler18.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler17.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler14.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler12.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler11.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler10.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler8.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler4.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler16.spl",
-		"/Users/evanpw/Workspace/simple/testing/test.hs",
-		"/Users/evanpw/Workspace/simple/testing/euler25.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler20.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler19.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler2.spl",
-		"/Users/evanpw/Workspace/simple/Set.spl",
-		"/Users/evanpw/Workspace/simple/lexer_transform.cpp",
-		"/Users/evanpw/Workspace/simple/lex.yy.c",
-		"/Users/evanpw/Workspace/simple/Hello.spl",
-		"/Users/evanpw/Workspace/simple/testing/associativity.spl",
-		"/Users/evanpw/Workspace/simple/testing/typeConstructor.spl",
-		"/Users/evanpw/Workspace/simple/testing/unnamed.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler21.spl",
-		"/Users/evanpw/Workspace/simple/testing/orderOfOps.spl",
-		"/Users/evanpw/Workspace/simple/testing/type_constructor.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler7-2.spl",
-		"/Users/evanpw/Workspace/simple/tokens.hpp",
-		"/Users/evanpw/Workspace/simple/sublime/Simple.tmLanguage",
-		"/Users/evanpw/Workspace/simple/testing/euler3.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler5.spl",
-		"/Users/evanpw/Workspace/simple/testing/euler6.spl",
-		"/Users/evanpw/Workspace/simple/testing/poly2.spl",
-		"/Users/evanpw/Workspace/simple/scope.cpp",
-		"/Users/evanpw/Workspace/simple/testing/euler2-2.spl",
-		"/Users/evanpw/Workspace/simple/utility.cpp",
-		"/Users/evanpw/Workspace/simple/utility.hpp",
-		"/Users/evanpw/Workspace/simple/ast_visitor.cpp",
-		"/Users/evanpw/Workspace/simple/testing/localVar.spl",
-		"/Users/evanpw/Workspace/simple/testing/unary_minus.spl",
-		"/Users/evanpw/Workspace/simple/testing/unaryMinus.spl",
-		"/Users/evanpw/Workspace/simple/lexer.py",
-		"/Users/evanpw/Workspace/simple/prelude.spl.bak",
-		"/Users/evanpw/Workspace/simple/Makefile"
+		"/Users/evanpw/Workspace/simple/build/shortCircuit"
 	],
 	"find":
 	{
@@ -196,134 +196,134 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"decref",
-			"_main",
-			"show",
-			"print",
-			"access",
-			"Spill",
-			"_t0",
-			"mangle",
-			"_currentFunction",
-			"EMIT",
-			"makeTemp()()",
-			"_numberOfTemps",
-			"new TempAddress",
-			"TempAddress",
-			"_instructions",
-			"TACReturn",
-			"->str()",
-			"getRegisterContaining",
-			".address",
-			"_usedRegisters",
-			"virtual std::string str()",
-			"CodeGen2",
-			"codegen->visit",
-			"TAC\\S+\\*",
-			":",
-			"struct",
-			"offset",
-			"->offset",
-			"offset",
-			"TempAddress",
-			"TACJumpIf",
-			"incref",
-			"TACIndexedAssignment",
-			"})",
-			"{",
-			"TACExternalCall",
-			"soporific",
-			"TACExternalCall",
-			"member.",
-			"NameAddress",
-			"TACFakeCall",
-			"die",
-			"resolveSymbol",
-			"Symbol",
-			"_currentFunctionEnd",
-			"_current",
-			"_currentLoopEnd",
-			".str()",
-			"Label",
-			"const Label&",
-			"b\"",
-			"trimChar",
-			"null",
-			"cmp qword [rsp], rax",
-			"BigSum",
-			"die",
-			"_currentFunctionResult",
-			"const std::string&",
-			"TACConditionalJump",
-			"*arguments[",
-			"{&",
-			"&",
-			"dest.str()",
-			".tag",
-			"Address*",
-			".str()",
-			"rhs.str()",
-			"lhs.str()",
-			"new",
-			"NameAddress",
-			"*node->address",
-			"Address&",
-			"const std::shared_ptr",
-			"Address&",
-			"TACFakeCall",
-			"TACCondJump",
-			"no",
-			"TACAssignment",
-			"emit_call",
-			"emit_indexed_assignment",
-			"emit_call",
-			"NameAddress",
-			"emit_call",
-			"resolveSymbol",
-			"NameAddress",
-			"emit_cond_jump",
-			".str()",
+			"_permutations",
+			"_mainCodeGen",
+			"_trueBranch",
+			"visitCondition",
+			"label",
+			";",
+			"_show:",
+			"label",
+			"std::shared_ptr<Label>",
+			"_trueBranch",
+			"Bool",
+			"cmp",
+			"_t1",
+			"_deleteHere",
+			"erase",
+			"(*_here).reset",
+			"(const ",
+			"const ",
+			"mov",
+			"virtual void accept(TACVisitor* visitor) { visitor->visit(this); }",
 			"void",
-			"CodeGen",
-			"::visit",
-			"Assignable",
-			"AssignNode",
-			"Assignable",
-			"AssignNode",
-			"assignable",
-			"Assignable",
-			"class",
-			"free",
-			"match",
-			"offsetof",
-			"+ 2",
-			"Spl_INCREF",
-			"StructDefNode",
-			"MemberAccessNode",
-			"Assignable",
-			"StructInitNode",
-			"StructInit",
-			"unary_expression",
-			"Struct",
-			"StructTyp",
-			"ValueConstructor",
-			"MatchNode",
-			"StructType",
-			"Struct",
-			"members()",
-			"StructDefNode",
-			"ValueConstructor",
-			"MatchNode",
-			"valueConstructor",
-			"MemberDesc",
-			"StructInitNode",
-			"StructDefNode",
-			"StructInitNode",
-			"createStructInit",
-			"intToString",
-			"join",
-			"Struct",
-			"struct"
+			"Return",
+			"incref",
+			"mov r15, r15",
+			"mov rcx, rcx",
+			"mov rbx, rbx",
+			"mov rax, rax",
+			"call __incref",
+			"ConstAddress",
+			"BOXED",
+			"incref",
+			"Const",
+			"ConstAddress",
+			"ConstAddress::One",
+			"ConstAddress::Zero",
+			"incref",
+			"_show",
+			"Binary",
+			"access",
+			"getSpecificRegister",
+			"getRegisterFor",
+			"if (!node->address)",
+			"node->address",
+			"makeTemp",
+			"assert",
+			"node->address",
+			"inst->op",
+			"X86CodeGen::codeGen",
+			"codeGen",
+			"codegen->codeGen",
+			"codeGen",
+			"TACVisitor* codegen",
+			"TargetCodeGen",
+			"xor",
+			"add",
+			"inMemory",
+			"access",
+			"incref",
+			"cmp",
+			"evictRegister",
+			"push",
+			"qword",
+			"Const",
+			"qword",
+			"TACAssign",
+			"\"ret",
+			"ret",
+			"xchg",
+			"evictRegister",
+			"_140",
+			",",
+			"__destroy",
+			"evictRegister",
+			"returnValue",
+			"_returnValue",
+			"assignRegister",
+			"_destroy_MyPair",
+			"countPaths",
+			"_143:",
+			"makeTemp",
+			"_MyPair",
+			"result",
+			"TACREturn",
+			"_returnValue",
+			"TACReturn",
+			"_functionEnd",
+			"returnValue",
+			"TACReturn",
+			"__23:",
+			"_xs",
+			"_take:",
+			"destroyRegister",
+			"_Cons",
+			"_die",
+			"_decref",
+			"test.sp",
+			"_range:",
+			"print",
+			"_range:",
+			"access",
+			"_range:",
+			"spillAndClear",
+			"_range",
+			"spillAndClear",
+			"spillAllDirtyRegisters()",
+			"_range",
+			".size()",
+			"_dieWithMessage",
+			"__destroy",
+			"__decref",
+			"_malloc",
+			"__incref",
+			"__die",
+			"__26",
+			"getRegisterFor(nullptr",
+			"mov rdi,",
+			"TACCall",
+			"Pair",
+			"mangle",
+			"destroy",
+			"Param",
+			"get_length",
+			"makeTemp",
+			"createConstructor",
+			"incref",
+			"Param",
+			"mainFunction",
+			"function.symbol->name"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -393,6 +393,246 @@
 		"selected_items":
 		[
 			[
+				"build.sh",
+				"osx/build.sh"
+			],
+			[
+				"euler24.asm",
+				"build/euler24.asm"
+			],
+			[
+				"prelude.spl",
+				"prelude.spl"
+			],
+			[
+				"testerror.sh",
+				"testing/testError.sh"
+			],
+			[
+				"structmembers1.spl",
+				"testing/structMembers1.spl"
+			],
+			[
+				"alls.h",
+				"testing/all.sh"
+			],
+			[
+				"test.asm",
+				"build/test.asm"
+			],
+			[
+				"tac_codegen.cpp",
+				"tac_codegen.cpp"
+			],
+			[
+				"test.ir",
+				"build/test.ir"
+			],
+			[
+				"euler1.spl",
+				"testing/euler1.spl"
+			],
+			[
+				"euler1.asm",
+				"build/euler1.asm"
+			],
+			[
+				"ast.cpp",
+				"ast.cpp"
+			],
+			[
+				"euler1.ir",
+				"build/euler1.ir"
+			],
+			[
+				"euler23.asm",
+				"build/euler23.asm"
+			],
+			[
+				"euler15.asm",
+				"build/euler15.asm"
+			],
+			[
+				"associativity.asm",
+				"build/associativity.asm"
+			],
+			[
+				"localopt.asm",
+				"build/localopt.asm"
+			],
+			[
+				"euler15.spl",
+				"testing/euler15.spl"
+			],
+			[
+				"associ",
+				"build/associativity.asm"
+			],
+			[
+				"associat",
+				"testing/associativity.spl"
+			],
+			[
+				"tac_instruction.hpp",
+				"tac_instruction.hpp"
+			],
+			[
+				"euler10.asm",
+				"build/euler10.asm"
+			],
+			[
+				"localopt.spl",
+				"testing/localopt.spl"
+			],
+			[
+				"library.s",
+				"library.s"
+			],
+			[
+				"unaryminus.spl",
+				"testing/unaryMinus.spl"
+			],
+			[
+				"unaryminus.asm",
+				"build/unaryMinus.asm"
+			],
+			[
+				"test.s",
+				"test.s"
+			],
+			[
+				"tac_program.hpp",
+				"tac_program.hpp"
+			],
+			[
+				"tac_visitor",
+				"tac_visitor.hpp"
+			],
+			[
+				"x86_codgen.hpp",
+				"x86_codegen.hpp"
+			],
+			[
+				"euler3.spl",
+				"testing/euler3.spl"
+			],
+			[
+				"library.c",
+				"library.c"
+			],
+			[
+				"euler3.asm",
+				"build/euler3.asm"
+			],
+			[
+				"euler4.asm",
+				"build/euler4.asm"
+			],
+			[
+				"codegen.cpp",
+				"codegen.cpp"
+			],
+			[
+				"test.spl",
+				"testing/test.spl"
+			],
+			[
+				"euler9.asm",
+				"build/euler9.asm"
+			],
+			[
+				"associativity.spl",
+				"testing/associativity.spl"
+			],
+			[
+				"fail.asm",
+				"build/fail.asm"
+			],
+			[
+				"fail.spl",
+				"testing/fail.spl"
+			],
+			[
+				"all.sh",
+				"testing/all.sh"
+			],
+			[
+				"test2.spl",
+				"testing/test2.spl"
+			],
+			[
+				"list.spl",
+				"List.spl"
+			],
+			[
+				"names.txt",
+				"testing/names.txt"
+			],
+			[
+				"euler22.spl",
+				"testing/euler22.spl"
+			],
+			[
+				"taccodgen.cpp",
+				"tac_codegen.cpp"
+			],
+			[
+				"library.h",
+				"library.h"
+			],
+			[
+				"euler8.spl",
+				"testing/euler8.spl"
+			],
+			[
+				"euler6.spl",
+				"testing/euler6.spl"
+			],
+			[
+				"x86_codegen.cpp",
+				"x86_codegen.cpp"
+			],
+			[
+				"euler2.spl",
+				"testing/euler2.spl"
+			],
+			[
+				"euler4.spl",
+				"testing/euler4.spl"
+			],
+			[
+				"test4.asm",
+				"build/test4.asm"
+			],
+			[
+				"test3.asm",
+				"build/test3.asm"
+			],
+			[
+				"test2.asm",
+				"build/test2.asm"
+			],
+			[
+				"euelr1.asm",
+				"build/euler1.asm"
+			],
+			[
+				"types.hpp",
+				"types.hpp"
+			],
+			[
+				"semantic.cpp",
+				"semantic.cpp"
+			],
+			[
+				"symbol.hpp",
+				"symbol.hpp"
+			],
+			[
+				"ast.hpp",
+				"ast.hpp"
+			],
+			[
 				"symbol_table.hpp",
 				"symbol_table.hpp"
 			],
@@ -401,56 +641,24 @@
 				"scope.hpp"
 			],
 			[
-				"ast.hpp",
-				"ast.hpp"
-			],
-			[
 				"tac_instru",
 				"tac_instruction.hpp"
-			],
-			[
-				"test.asm",
-				"build/test.asm"
 			],
 			[
 				"tac_codgen.cpp",
 				"tac_codegen.cpp"
 			],
 			[
-				"codegen.cpp",
-				"codegen.cpp"
-			],
-			[
 				"x86",
 				"x86_codegen.cpp"
-			],
-			[
-				"semantic.cpp",
-				"semantic.cpp"
 			],
 			[
 				"target_",
 				"target_codegen.hpp"
 			],
 			[
-				"euler1.spl",
-				"testing/euler1.spl"
-			],
-			[
-				"prelude.spl",
-				"prelude.spl"
-			],
-			[
-				"symbol.hpp",
-				"symbol.hpp"
-			],
-			[
 				"address.hpp",
 				"address.hpp"
-			],
-			[
-				"tac_codegen.cpp",
-				"tac_codegen.cpp"
 			],
 			[
 				"tac_codegen.hpp",
@@ -465,10 +673,6 @@
 				"address.cpp"
 			],
 			[
-				"tac_instruction.hpp",
-				"tac_instruction.hpp"
-			],
-			[
 				"codegen2.cpp",
 				"codegen2.cpp"
 			],
@@ -481,16 +685,8 @@
 				"build/euler22.asm"
 			],
 			[
-				"test2.asm",
-				"build/test2.asm"
-			],
-			[
 				"string.spl",
 				"String.spl"
-			],
-			[
-				"euler22.spl",
-				"testing/euler22.spl"
 			],
 			[
 				"shortcircuit.asm",
@@ -517,24 +713,12 @@
 				"codegen.hpp"
 			],
 			[
-				"ast.cpp",
-				"ast.cpp"
-			],
-			[
 				"parser.hpp",
 				"parser.hpp"
 			],
 			[
 				"grammar.y",
 				"docs/grammar.y"
-			],
-			[
-				"test.spl",
-				"testing/test.spl"
-			],
-			[
-				"euler1.asm",
-				"build/euler1.asm"
 			],
 			[
 				"simple.flex",
@@ -549,28 +733,12 @@
 				"testing/poly2.spl"
 			],
 			[
-				"euler15.spl",
-				"testing/euler15.spl"
-			],
-			[
 				"type_inference.cpp",
 				"type_inference.cpp"
 			],
 			[
 				"makefile",
 				"Makefile"
-			],
-			[
-				"build.sh",
-				"build.sh"
-			],
-			[
-				"euler3.asm",
-				"build/euler3.asm"
-			],
-			[
-				"euler3.spl",
-				"testing/euler3.spl"
 			]
 		],
 		"width": 0.0
