@@ -20,11 +20,14 @@ struct Label
 
 struct TACInstruction
 {
-    virtual ~TACInstruction() {}
+    virtual ~TACInstruction() { delete next; }
 
     virtual void accept(TACVisitor* visitor) = 0;
 
     virtual std::string str() const = 0;
+
+    // Instructions in a single functions form an instrusive linked list
+    TACInstruction* next = 0;
 };
 
 #define MAKE_VISITABLE() virtual void accept(TACVisitor* visitor) { visitor->visit(this); }

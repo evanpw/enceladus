@@ -144,12 +144,13 @@ private:
     std::shared_ptr<Label> _functionEnd;
 
     TACConditionalCodeGen _conditionalCodeGen;
+    friend class TACConditionalCodeGen;
 
     // Number of temporary variables used so far in the current function
     std::shared_ptr<Address> makeTemp() { return std::make_shared<TempAddress>(_currentFunction->numberOfTemps++); }
 
-    friend class TACConditionalCodeGen;
-    void emit(TACInstruction* inst) {  _currentFunction->instructions.emplace_back(inst); }
+    TACInstruction* _currentInstruction = nullptr;
+    void emit(TACInstruction* inst);
 };
 
 #endif

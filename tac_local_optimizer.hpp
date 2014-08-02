@@ -29,10 +29,14 @@ public:
     void visit(TACBinaryOperation* inst);
 
 private:
-    bool _deleteHere = false;
+    void replace(TACInstruction* newInst);
+    void deleteCurrent();
 
-    // Points to the current instruction, so that we can replace it
-    std::list<std::unique_ptr<TACInstruction>>::iterator _here;
+    // This points to the next pointer of the previous instruction. In other
+    // worse, **_here is the instruction we're currently working on. This is
+    // so that by setting *_here, we can replace or delete the current
+    // instruction
+    TACInstruction** _here;
 
     // Keep track of locals / temporaries which are guaranteed to have given
     // constant values at this point in the execution. Needs to be cleared at

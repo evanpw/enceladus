@@ -28,6 +28,20 @@ void TACConditionalCodeGen::emit(TACInstruction* inst)
     _mainCodeGen->emit(inst);
 }
 
+void TACCodeGen::emit(TACInstruction* inst)
+{
+    if (!_currentInstruction)
+    {
+        _currentFunction->instructions = inst;
+    }
+    else
+    {
+        _currentInstruction->next = inst;
+    }
+
+    _currentInstruction = inst;
+}
+
 std::shared_ptr<Address> TACConditionalCodeGen::visitAndGet(AstNode& node)
 {
     return _mainCodeGen->visitAndGet(node);
@@ -37,6 +51,7 @@ void TACCodeGen::visit(ProgramNode* node)
 {
     _currentFunction = &_tacProgram.mainFunction;
     _currentFunction->returnValue.reset();  // No return value
+    _currentInstruction = nullptr;
 
     for (auto& child : node->children)
     {
@@ -54,6 +69,7 @@ void TACCodeGen::visit(ProgramNode* node)
         _currentFunction = &_tacProgram.otherFunctions.back();
         _currentFunction->returnValue = makeTemp();
         _functionEnd.reset(new Label);
+        _currentInstruction = nullptr;
 
         // Collect all local variables
         for (auto& local : funcDefNode->scope->symbols.symbols)
@@ -118,11 +134,13 @@ void TACCodeGen::visit(ProgramNode* node)
 
         _tacProgram.otherFunctions.emplace_back(constructor->name());
         _currentFunction = &_tacProgram.otherFunctions.back();
+        _currentInstruction = nullptr;
 
         createConstructor(dataDeclaration->valueConstructor);
 
         _tacProgram.otherFunctions.emplace_back("_destroy" + mangle(constructor->name()));
         _currentFunction = &_tacProgram.otherFunctions.back();
+        _currentInstruction = nullptr;
 
         createDestructor(dataDeclaration->valueConstructor);
     }
@@ -133,11 +151,13 @@ void TACCodeGen::visit(ProgramNode* node)
 
         _tacProgram.otherFunctions.emplace_back(constructor->name());
         _currentFunction = &_tacProgram.otherFunctions.back();
+        _currentInstruction = nullptr;
 
         createConstructor(structDeclaration->valueConstructor);
 
         _tacProgram.otherFunctions.emplace_back("_destroy" + mangle(constructor->name()));
         _currentFunction = &_tacProgram.otherFunctions.back();
+        _currentInstruction = nullptr;
 
         createDestructor(structDeclaration->valueConstructor);
     }

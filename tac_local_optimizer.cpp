@@ -3,9 +3,7 @@
 #define BOX(x) (((x) << 1) + 1)
 #define UNBOX(x) ((x) >> 1)
 
-#define REPLACE(x) (*_here).reset(x); (*_here)->accept(this);
-
-#define CHECK_DEAD() if (_isDead) { _deleteHere = true; return; }
+#define CHECK_DEAD() if (_isDead) { deleteCurrent(); return; }
 
 void TACLocalOptimizer::optimizeCode(TACProgram& program)
 {
@@ -19,20 +17,57 @@ void TACLocalOptimizer::optimizeCode(TACProgram& program)
     }
 }
 
+// While working on instruction b:
+// a.next = &b
+// b.next = &c
+// c.next = &d
+// _here = &(a.next)
+
+void TACLocalOptimizer::deleteCurrent()
+{
+    // We want to delete b and remove it from the list by setting
+    // a.next to &c
+    TACInstruction* removed = *_here;
+    *_here = (*_here)->next;
+
+    // Break the link before deleting, or it will try to delete the rest
+    // of the list
+    removed->next = nullptr;
+    delete removed;
+
+    // Try optimizing this new instruction
+    (*_here)->accept(this);
+}
+
+void TACLocalOptimizer::replace(TACInstruction* newInst)
+{
+    // Set newInst->next to &c
+    newInst->next = (*_here)->next;
+
+    // Delete b (breaking the link first to avoid deleting the rest of the list)
+    (*_here)->next = nullptr;
+    delete *_here;
+
+    // Point a.next to &newInst
+    *_here = newInst;
+
+    // Try optimizing this new instruction
+    (*_here)->accept(this);
+}
+
 void TACLocalOptimizer::optimizeCode(TACFunction& function)
 {
-    auto& instructions = function.instructions;
-    for (_here = instructions.begin(); _here != instructions.end();)
-    {
-        _deleteHere = false;
+    _here = &function.instructions;
 
+    while (*_here)
+    {
         (*_here)->accept(this);
 
-        auto prev = _here;
-        ++_here;
-
-        if (_deleteHere)
-            instructions.erase(prev);
+        // In the terminology above,
+        // *_here == a.next == &b
+        // =>    (*_here)->next == (&b)->next == b.next
+        // =>    &((*_here)->next) == &(b.next)
+        _here = &((*_here)->next);
     }
 }
 
@@ -88,11 +123,11 @@ void TACLocalOptimizer::visit(TACConditionalJump* inst)
 
         if (result)
         {
-            REPLACE(new TACJump(inst->target));
+            replace(new TACJump(inst->target));
         }
         else
         {
-            _deleteHere = true;
+            deleteCurrent();
         }
     }
 }
@@ -210,7 +245,7 @@ void TACLocalOptimizer::visit(TACBinaryOperation* inst)
             assert(false);
         }
 
-        REPLACE(new TACAssign(inst->dest, std::make_shared<ConstAddress>(result)));
+        replace(new TACAssign(inst->dest, std::make_shared<ConstAddress>(result)));
     }
     else if (inst->op == BinaryOperation::BADD)
     {
@@ -221,12 +256,12 @@ void TACLocalOptimizer::visit(TACBinaryOperation* inst)
             // 0 + x => x
             if (value == BOX(0))
             {
-                REPLACE(new TACAssign(inst->dest, inst->rhs));
+                replace(new TACAssign(inst->dest, inst->rhs));
             }
             else
             {
                 // Boxed a + x => Unboxed x + (a - 1)
-                REPLACE(new TACBinaryOperation(
+                replace(new TACBinaryOperation(
                     inst->dest,
                     inst->rhs,
                     BinaryOperation::UADD,
@@ -240,12 +275,12 @@ void TACLocalOptimizer::visit(TACBinaryOperation* inst)
             // x + 0 => x
             if (value == BOX(0))
             {
-                REPLACE(new TACAssign(inst->dest, inst->lhs));
+                replace(new TACAssign(inst->dest, inst->lhs));
             }
             else
             {
                 // Boxed a + x => Unboxed x + (a - 1)
-                REPLACE(new TACBinaryOperation(
+                replace(new TACBinaryOperation(
                     inst->dest,
                     inst->lhs,
                     BinaryOperation::UADD,
@@ -258,7 +293,7 @@ void TACLocalOptimizer::visit(TACBinaryOperation* inst)
         // x - 0 => x
         if (inst->rhs->isConst() && inst->rhs->asConst().value == BOX(0))
         {
-            REPLACE(new TACAssign(inst->dest, inst->lhs));
+            replace(new TACAssign(inst->dest, inst->lhs));
         }
     }
     else if (inst->op == BinaryOperation::BMUL)
@@ -267,17 +302,17 @@ void TACLocalOptimizer::visit(TACBinaryOperation* inst)
         if ((inst->lhs->isConst() && inst->lhs->asConst().value == BOX(0)) ||
             (inst->rhs->isConst() && inst->rhs->asConst().value == BOX(0)))
         {
-            REPLACE(new TACAssign(inst->dest, std::make_shared<ConstAddress>(BOX(0))));
+            replace(new TACAssign(inst->dest, std::make_shared<ConstAddress>(BOX(0))));
         }
 
         // x * 1 or 1 * x => x
         else if (inst->lhs->isConst() && inst->lhs->asConst().value == BOX(1))
         {
-            REPLACE(new TACAssign(inst->dest, inst->rhs));
+            replace(new TACAssign(inst->dest, inst->rhs));
         }
         else if (inst->rhs->isConst() && inst->rhs->asConst().value == BOX(1))
         {
-            REPLACE(new TACAssign(inst->dest, inst->lhs));
+            replace(new TACAssign(inst->dest, inst->lhs));
         }
     }
 }

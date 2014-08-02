@@ -15,8 +15,25 @@ struct TACFunction
     : name(name)
     {}
 
+    ~TACFunction()
+    {
+        delete instructions;
+    }
+
+    TACFunction(TACFunction&& rhs)
+    {
+        name = rhs.name;
+        instructions = rhs.instructions;
+        rhs.instructions = 0;
+        numberOfTemps = rhs.numberOfTemps;
+        locals = std::move(rhs.locals);
+        params = std::move(rhs.params);
+        regParams = std::move(rhs.regParams);
+        returnValue = std::move(rhs.returnValue);
+    }
+
     std::string name;
-    std::list<std::unique_ptr<TACInstruction>> instructions;
+    TACInstruction* instructions = nullptr;
 
     long numberOfTemps = 0;
     std::vector<std::shared_ptr<Address>> locals;

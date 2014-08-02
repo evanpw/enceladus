@@ -92,7 +92,7 @@ void X86CodeGen::generateCode(TACFunction& function)
     EMIT("rep stosq");
     freeRegister("rdi");
 
-    for (auto& inst : function.instructions)
+    for (TACInstruction* inst = function.instructions; inst != nullptr; inst = inst->next)
     {
         inst->accept(this);
     }
