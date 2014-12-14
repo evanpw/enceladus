@@ -7,5 +7,4 @@ mkdir -p build
 nasm -felf64 build/$1.asm -o build/$1.o
 #nasm -felf64 linux/library.asm -o build/library.o
 gcc -std=c99 -c library.c -o build/library.o
-#gcc build/$1.o build/library.o -o build/$1
 gcc build/$1.o build/library.o -o build/$1
