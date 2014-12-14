@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		yyin = fopen("prelude.spl", "r");
+		yyin = fopen("lib/prelude.spl", "r");
 		if (yyin == nullptr)
 		{
 			std::cerr << "cannot find prelude.spl" << std::endl;

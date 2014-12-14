@@ -1,6 +1,6 @@
 #include "platform.hpp"
 #include "tac_codegen.hpp"
-#include "library.h"
+#include "lib/library.h"
 
 #include <iostream>
 

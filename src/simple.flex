@@ -149,7 +149,7 @@ int yycolumn = 1;
 
 <import>[^ \t\n]+\n { /* Import file name */
 
-	FILE* f = fopen((trim_right(yytext) + ".spl").c_str(), "r");
+	FILE* f = fopen((std::string("lib/") + trim_right(yytext) + ".spl").c_str(), "r");
 	assert(f);
 
 	yypush_buffer_state(yy_create_buffer(f, YY_BUF_SIZE));
