@@ -46,10 +46,10 @@ public:
     virtual void visit(ComparisonNode* node);
     virtual void visit(LogicalNode* node);
 
-    void visitCondition(AstNode& node, std::shared_ptr<Label> trueBranch, std::shared_ptr<Label> falseBranch)
+    void visitCondition(AstNode& node, TACLabel* trueBranch, TACLabel* falseBranch)
     {
-        std::shared_ptr<Label> saveTrueBranch = _trueBranch;
-        std::shared_ptr<Label> saveFalseBranch = _falseBranch;
+        TACLabel* saveTrueBranch = _trueBranch;
+        TACLabel* saveFalseBranch = _falseBranch;
 
         _trueBranch = trueBranch;
         _falseBranch = falseBranch;
@@ -71,7 +71,8 @@ private:
     void emit(TACInstruction* inst);
     std::shared_ptr<Address> visitAndGet(AstNode& node);
 
-    std::shared_ptr<Label> _trueBranch, _falseBranch;
+    TACLabel* _trueBranch;
+    TACLabel* _falseBranch;
 
     TACCodeGen* _mainCodeGen;
 };
@@ -118,7 +119,7 @@ private:
     std::string mangle(const std::string& name) { return std::string("_") + name; }
 
     // The exit label of the current loop (used by break statements)
-    std::shared_ptr<Label> _currentLoopEnd;
+    TACLabel* _currentLoopEnd;
 
     // Visit the given node and return its address
     std::shared_ptr<Address> visitAndGet(AstNode& node)
@@ -141,7 +142,7 @@ private:
     TACProgram _tacProgram;
     TACFunction* _currentFunction;
     std::shared_ptr<Address> _returnValue;
-    std::shared_ptr<Label> _functionEnd;
+    TACLabel* _functionEnd;
 
     TACConditionalCodeGen _conditionalCodeGen;
     friend class TACConditionalCodeGen;

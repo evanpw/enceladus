@@ -533,7 +533,7 @@ void X86CodeGen::visit(TACLabel* inst)
     EMIT_COMMENT(inst->str());
 
     spillAndClear();
-    EMIT_LABEL(inst->label->str());
+    EMIT_LABEL(inst->str());
 }
 
 void X86CodeGen::visit(TACCall* inst)

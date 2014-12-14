@@ -7,17 +7,6 @@
 
 #include <string>
 
-struct Label
-{
-    Label();
-
-    long number;
-
-    std::string str() const;
-
-    static long labelCount;
-};
-
 struct TACInstruction
 {
     virtual ~TACInstruction() { delete next; }
@@ -48,9 +37,26 @@ struct TACComment : public TACInstruction
     std::string text;
 };
 
+struct TACLabel : public TACInstruction
+{
+    TACLabel();
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        std::stringstream ss;
+        ss << "__" << number;
+        return ss.str();
+    }
+
+    long number;
+    static long labelCount;
+};
+
 struct TACConditionalJump : public TACInstruction
 {
-    TACConditionalJump(std::shared_ptr<Address> lhs, const std::string& op, std::shared_ptr<Address> rhs, std::shared_ptr<Label> target)
+    TACConditionalJump(std::shared_ptr<Address> lhs, const std::string& op, std::shared_ptr<Address> rhs, TACLabel* target)
     : lhs(lhs), op(op), rhs(rhs), target(target)
     {}
 
@@ -66,12 +72,12 @@ struct TACConditionalJump : public TACInstruction
     std::shared_ptr<Address> lhs;
     std::string op;
     std::shared_ptr<Address> rhs;
-    std::shared_ptr<Label> target;
+    TACLabel* target;
 };
 
 struct TACJumpIf : public TACInstruction
 {
-    TACJumpIf(std::shared_ptr<Address> lhs, std::shared_ptr<Label> target)
+    TACJumpIf(std::shared_ptr<Address> lhs, TACLabel* target)
     : lhs(lhs), target(target)
     {}
 
@@ -85,12 +91,12 @@ struct TACJumpIf : public TACInstruction
     }
 
     std::shared_ptr<Address> lhs;
-    std::shared_ptr<Label> target;
+    TACLabel* target;
 };
 
 struct TACJumpIfNot : public TACInstruction
 {
-    TACJumpIfNot(std::shared_ptr<Address> lhs, std::shared_ptr<Label> target)
+    TACJumpIfNot(std::shared_ptr<Address> lhs, TACLabel* target)
     : lhs(lhs), target(target)
     {}
 
@@ -104,7 +110,7 @@ struct TACJumpIfNot : public TACInstruction
     }
 
     std::shared_ptr<Address> lhs;
-    std::shared_ptr<Label> target;
+    TACLabel* target;
 };
 
 struct TACAssign : public TACInstruction
@@ -130,7 +136,7 @@ struct TACAssign : public TACInstruction
 
 struct TACJump : public TACInstruction
 {
-    TACJump(std::shared_ptr<Label> target)
+    TACJump(TACLabel* target)
     : target(target)
     {}
 
@@ -143,25 +149,7 @@ struct TACJump : public TACInstruction
         return ss.str();
     }
 
-    std::shared_ptr<Label> target;
-};
-
-struct TACLabel : public TACInstruction
-{
-    TACLabel(std::shared_ptr<Label> label)
-    : label(label)
-    {}
-
-    MAKE_VISITABLE();
-
-    virtual std::string str() const override
-    {
-        std::stringstream ss;
-        ss << "label " << label->str();
-        return ss.str();
-    }
-
-    std::shared_ptr<Label> label;
+    TACLabel* target;
 };
 
 struct TACCall : public TACInstruction
