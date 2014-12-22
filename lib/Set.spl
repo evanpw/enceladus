@@ -11,8 +11,10 @@ def top tree =
     let Node x _ _ _ = tree
     return x
 
+
 -- def top Empty = assertMessage (not $ null tree) "called top on empty set"
 -- def top (Node x _ _ _) = return x
+
 
 def left tree =
     assertMessage (not $ null tree) "called left on empty set"
@@ -20,11 +22,13 @@ def left tree =
     let Node _ l _ _ = tree
     return l
 
+
 def right tree =
     assertMessage (not $ null tree) "called right on empty set"
 
     let Node _ _ r _ = tree
     return r
+
 
 def count tree =
     if null tree then
@@ -33,10 +37,12 @@ def count tree =
         let Node _ _ _ c = tree
         return c
 
+
 def makeNode x l r :: Int -> Tree -> Tree -> Tree =
     myCount := (count l) + (count r)
 
     return Node x l r myCount
+
 
 -- Rotations
 
@@ -45,10 +51,12 @@ def Set.singleL a x r :: Int -> Tree -> Tree -> Tree =
 
     return makeNode b (makeNode a x y) z
 
+
 def Set.singleR b l z :: Int -> Tree -> Tree -> Tree =
     let Node a x y _ = l
 
     return makeNode a x (makeNode b y z)
+
 
 def Set.doubleL a x r :: Int -> Tree -> Tree -> Tree =
     let Node c lr _ _ = r
@@ -58,11 +66,13 @@ def Set.doubleL a x r :: Int -> Tree -> Tree -> Tree =
 
     return makeNode b (makeNode a x y1) (makeNode c y2 z)
 
+
 def Set.doubleR c l z :: Int -> Tree -> Tree -> Tree =
     let Node a x rl _ = l
     let Node b y1 y2 _ = rl
 
     return makeNode b (makeNode a x y1) (makeNode c y2 z)
+
 
 -- Special constructor for self-balancing trees
 def Set.balancedNode v l r :: Int -> Tree -> Tree -> Tree =
@@ -95,9 +105,11 @@ def Set.balancedNode v l r :: Int -> Tree -> Tree -> Tree =
     else
         return makeNode v l r
 
+
 -- Actual Set functions
 def Set.empty :: Tree =
     return Empty
+
 
 def Set.insert x set :: Int -> Tree -> Tree =
     if null set then
@@ -111,6 +123,7 @@ def Set.insert x set :: Int -> Tree -> Tree =
     else -- x > head
         return Set.balancedNode current (left set) (Set.insert x (right set))
 
+
 def Set.findMin set :: Tree -> Int =
     assertMessage (not $ null set) "Set.findMin: set is empty"
 
@@ -118,6 +131,7 @@ def Set.findMin set :: Tree -> Int =
         return top set
     else
         return Set.findMin $ left set
+
 
 def Set.deleteMin set :: Tree -> Tree =
     assertMessage (not $ null set) "Set.deleteMin: set is empty"
@@ -127,6 +141,7 @@ def Set.deleteMin set :: Tree -> Tree =
     else
         return Set.balancedNode (top set) (Set.deleteMin $ left set) (right set)
 
+
 def Set.findMax set :: Tree -> Int =
     assertMessage (not $ null set) "Set.findMax: set is empty"
 
@@ -135,6 +150,7 @@ def Set.findMax set :: Tree -> Int =
     else
         return Set.findMax $ right set
 
+
 def Set.deleteMax set :: Tree -> Tree =
     assertMessage (not $ null set) "Set.deleteMax: set is empty"
 
@@ -142,6 +158,7 @@ def Set.deleteMax set :: Tree -> Tree =
         return left set
     else
         return Set.balancedNode (top set) (left set) (Set.deleteMax $ right set)
+
 
 def Set.delete x set :: Int -> Tree -> Tree =
     if null set then
@@ -163,6 +180,7 @@ def Set.delete x set :: Int -> Tree -> Tree =
             newHead := Set.findMin $ right set
             return Set.balancedNode newHead (left set) (Set.deleteMin $ right set)
 
+
 def Set.fromList xs :: [Int] -> Tree =
     result := Set.empty
     while not $ null xs do
@@ -170,6 +188,7 @@ def Set.fromList xs :: [Int] -> Tree =
         xs = tail xs
 
     return result
+
 
 def Set.toList set :: Tree -> [Int] =
     if null set then

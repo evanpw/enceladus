@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include "ast.hpp"
+#include "exceptions.hpp"
 #include "tac_codegen.hpp"
 #include "x86_codegen.hpp"
 #include "tac_local_optimizer.hpp"
@@ -82,7 +83,17 @@ int main(int argc, char* argv[])
 
 	int return_value = 1;
 
-	ProgramNode* root = parse();
+	ProgramNode* root;
+	try
+	{
+		root = parse();
+	}
+	catch (LexerError& e)
+	{
+		std::cerr << "ERROR: " << e.what() << std::endl;
+		fclose(yyin);
+		return 1;
+	}
 
 	SemanticAnalyzer semant(root);
 	bool semantic_success = semant.analyze();

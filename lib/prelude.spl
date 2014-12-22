@@ -20,11 +20,14 @@ def concat xs ys =
     else
         return head xs : concat (tail xs) ys
 
+
 def assert b :: Bool -> Unit =
     if not b then dieWithMessage "Assertion failed!"
 
+
 def assertMessage b err :: Bool -> String -> Unit =
     if not b then dieWithMessage $ "Assertion failed: " ++ err
+
 
 -- Miscellanous functions
 def range a b :: Int -> Int -> [Int] =
@@ -37,6 +40,7 @@ def range a b :: Int -> Int -> [Int] =
 
     return xs
 
+
 -- length :: [a] -> Int
 def length xs =
     result := 0
@@ -47,17 +51,20 @@ def length xs =
 
     return result
 
+
 def sum xs :: [Int] -> Int =
     if null xs then
         return 0
     else
         return head xs + sum $ tail xs
 
+
 def product xs :: [Int] -> Int =
     if null xs then
         return 1
     else
         return head xs * product $ tail xs
+
 
 -- take :: Int -> [a] -> [a]
 def take n xs =
@@ -66,6 +73,7 @@ def take n xs =
     else
         return head xs : take (n - 1) (tail xs)
 
+
 -- drop :: Int -> [a] -> [a]
 def drop n xs =
     if n == 0 then
@@ -73,17 +81,20 @@ def drop n xs =
     else
         return drop (n - 1) (tail xs)
 
+
 def max a b :: Int -> Int -> Int =
     if a > b then
         return a
     else
         return b
 
+
 def maximum xs :: [Int] -> Int =
     if length xs == 1 then
         return head xs
     else
         return max (head xs) (maximum $ tail xs)
+
 
 -- at :: Int -> [a] -> a
 def at n xs =
@@ -93,6 +104,7 @@ def at n xs =
 
     return head xs
 
+
 -- reverse :: [a] -> [a]
 def reverse xs =
     ys := []
@@ -100,6 +112,7 @@ def reverse xs =
         ys = x : ys
 
     return ys
+
 
 -- map :: (a -> b) -> [a] -> [b]
 def map f xs =
@@ -109,13 +122,25 @@ def map f xs =
 
     return reverse result
 
+
+-- filter :: (a -> Bool) -> [a] -> [a]
+def filter f xs =
+    ys := []
+    for x in xs do
+        if f x then ys = x : ys
+
+    return reverse ys
+
+
 def even x :: Int -> Bool =
     if x mod 2 == 0 then return True
     else return False
 
+
 def odd x :: Int -> Bool =
     if x mod 2 == 0 then return False
     else return True
+
 
 def pow a b :: Int -> Int -> Int =
     r := 1
@@ -127,13 +152,6 @@ def pow a b :: Int -> Int -> Int =
 
     return r
 
--- TODO: Make this work (allow functions as parameters)
---def filter f xs =
---    let ys = []
---    for x in xs do
---        if f x then ys = x : ys
-
---    return reverse ys
 
 -- Non stack-destroying version
 --def concat xs ys :: [Int] -> [Int] -> [Int] =
@@ -143,6 +161,7 @@ def pow a b :: Int -> Int -> Int =
 --        zs = x : zs
 
 --    return zs
+
 
 ---- Strings ----
 
@@ -162,17 +181,21 @@ def show x :: Int -> String =
 
     return s
 
+
 ---- Pairs ----
 
 data Pair a = Pair a a
+
 
 def fst pair =
     let Pair x _ = pair
     return x
 
+
 def snd pair =
     let Pair _ x = pair
     return x
+
 
 def splitAt n xs =
     return Pair (take n xs) (drop n xs)
