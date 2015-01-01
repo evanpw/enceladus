@@ -4,11 +4,8 @@
 #include <boost/lexical_cast.hpp>
 #include "ast.hpp"
 #include "exceptions.hpp"
-#include "parser.hpp"
 #include "tokens.hpp"
 #include "string_table.hpp"
-
-extern YYSTYPE yylval;
 
 #define YY_DECL int yylex_raw()
 
@@ -150,7 +147,7 @@ int yycolumn = 1;
 "while"     { return tWHILE; }
 
  /* Eat whitespace */
-<import>[ \t]*  
+<import>[ \t]*
 
  /* Import file name */
 <import>[^ \t\n]+\n {

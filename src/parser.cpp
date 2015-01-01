@@ -6,22 +6,11 @@
 
 //// Lexing machinery //////////////////////////////////////////////////////////
 
-YYSTYPE yylval;
-
-struct Token
-{
-    TokenType type;
-    YYSTYPE value;
-};
-
 // Two tokens of look-ahead
-Token nextTokens[2] = { {tNONE, {""}}, {tNONE, {""}} };
-
-// Location of the current token
-YYLTYPE yylloc;
+Token nextTokens[2];
 
 // Calls the lexer
-int yylex();
+Token yylex();
 
 void advance()
 {
@@ -29,8 +18,7 @@ void advance()
 
     if (nextTokens[0].type != tEOF)
     {
-        nextTokens[1].type = (TokenType)yylex();
-        nextTokens[1].value = yylval;
+        nextTokens[1] = yylex();
     }
 }
 
@@ -41,6 +29,11 @@ void initialize()
 }
 
 //// Parsing machinery /////////////////////////////////////////////////////////
+
+YYLTYPE getLocation()
+{
+    return nextTokens[0].location;
+}
 
 bool accept(TokenType t)
 {
@@ -94,7 +87,7 @@ ProgramNode* parse()
 
 ProgramNode* program()
 {
-    ProgramNode* node = new ProgramNode;
+    ProgramNode* node = new ProgramNode(getLocation());
 
     while (!accept(tEOF))
     {
@@ -170,6 +163,8 @@ StatementNode* statement()
 
 StatementNode* if_statement()
 {
+    YYLTYPE location = getLocation();
+
     expect(tIF);
     ExpressionNode* condition = expression();
     expect(tTHEN);
@@ -178,16 +173,18 @@ StatementNode* if_statement()
     if (accept(tELSE))
     {
         StatementNode* elseBody = suite();
-        return new IfElseNode(condition, ifBody, elseBody);
+        return new IfElseNode(location, condition, ifBody, elseBody);
     }
     else
     {
-        return new IfNode(condition, ifBody);
+        return new IfNode(location, condition, ifBody);
     }
 }
 
 StatementNode* data_declaration()
 {
+    YYLTYPE location = getLocation();
+
     expect(tDATA);
     Token name = expect(tUIDENT);
 
@@ -202,22 +199,26 @@ StatementNode* data_declaration()
     ConstructorSpec* constructorSpec = constructor_spec();
     expect(tEOL);
 
-    return new DataDeclaration(name.value.str, typeParameters, constructorSpec);
+    return new DataDeclaration(location, name.value.str, typeParameters, constructorSpec);
 }
 
 StatementNode* type_alias_declaration()
 {
+    YYLTYPE location = getLocation();
+
     expect(tTYPE);
     Token name = expect(tUIDENT);
     expect('=');
     TypeName* typeName = type();
     expect(tEOL);
 
-    return new TypeAliasNode(name.value.str, typeName);
+    return new TypeAliasNode(location, name.value.str, typeName);
 }
 
 StatementNode* function_definition()
 {
+    YYLTYPE location = getLocation();
+
     expect(tDEF);
     std::string name = ident();
     ParamList* params = parameters();
@@ -225,11 +226,13 @@ StatementNode* function_definition()
     expect('=');
     StatementNode* body = suite();
 
-    return new FunctionDefNode(name, body, params, typeDecl);
+    return new FunctionDefNode(location, name, body, params, typeDecl);
 }
 
 StatementNode* for_statement()
 {
+    YYLTYPE location = getLocation();
+
     expect(tFOR);
     Token loopVar = expect(tLIDENT);
     expect(tIN);
@@ -237,11 +240,13 @@ StatementNode* for_statement()
     expect(tDO);
     StatementNode* body = suite();
 
-    return makeForNode(loopVar.value.str, listExpression, body);
+    return makeForNode(location, loopVar.value.str, listExpression, body);
 }
 
 StatementNode* foreign_declaration()
 {
+    YYLTYPE location = getLocation();
+
     expect(tFOREIGN);
     std::string name = ident();
     ParamList* params = parameters();
@@ -249,11 +254,13 @@ StatementNode* foreign_declaration()
     TypeDecl* typeDecl = type_declaration();
     expect(tEOL);
 
-    return new ForeignDeclNode(name, params, typeDecl);
+    return new ForeignDeclNode(location, name, params, typeDecl);
 }
 
 StatementNode* match_statement()
 {
+    YYLTYPE location = getLocation();
+
     expect(tLET);
     Token constructor = expect(tUIDENT);
     ParamList* params = parameters();
@@ -261,40 +268,48 @@ StatementNode* match_statement()
     ExpressionNode* body = expression();
     expect(tEOL);
 
-    return new MatchNode(constructor.value.str, params, body);
+    return new MatchNode(location, constructor.value.str, params, body);
 }
 
 StatementNode* return_statement()
 {
+    YYLTYPE location = getLocation();
+
     expect(tRETURN);
     ExpressionNode* value = expression();
     expect(tEOL);
 
-    return new ReturnNode(value);
+    return new ReturnNode(location, value);
 }
 
 StatementNode* struct_declaration()
 {
+    YYLTYPE location = getLocation();
+
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
     expect('=');
     MemberList* memberList = members();
 
-    return new StructDefNode(name.value.str, memberList);
+    return new StructDefNode(location, name.value.str, memberList);
 }
 
 StatementNode* while_statement()
 {
+    YYLTYPE location = getLocation();
+
     expect(tWHILE);
     ExpressionNode* condition = expression();
     expect(tDO);
     StatementNode* body = suite();
 
-    return new WhileNode(condition, body);
+    return new WhileNode(location, condition, body);
 }
 
 StatementNode* assignment_statement()
 {
+    YYLTYPE location = getLocation();
+
     Token token = expect(tLIDENT);
     std::string lhs = token.value.str;
 
@@ -304,11 +319,11 @@ StatementNode* assignment_statement()
 
         expect(tEOL);
 
-        return new AssignNode(lhs, rhs);
+        return new AssignNode(location, lhs, rhs);
     }
 
     ArgList argList;
-    argList.emplace_back(new VariableNode(lhs));
+    argList.emplace_back(new VariableNode(location, lhs));
 
     std::string functionName;
     switch (peekType())
@@ -344,11 +359,13 @@ StatementNode* assignment_statement()
 
     expect(tEOL);
 
-    return new AssignNode(lhs, new FunctionCallNode(functionName, std::move(argList)));
+    return new AssignNode(location, lhs, new FunctionCallNode(location, functionName, std::move(argList)));
 }
 
 StatementNode* variable_declaration()
 {
+    YYLTYPE location = getLocation();
+
     if (peekType() == tLIDENT)
     {
         Token varName = expect(tLIDENT);
@@ -357,7 +374,7 @@ StatementNode* variable_declaration()
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(varName.value.str, varType, value);
+        return new LetNode(location, varName.value.str, varType, value);
     }
     else
     {
@@ -368,16 +385,18 @@ StatementNode* variable_declaration()
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(varName.value.str, varType, value);
+        return new LetNode(location, varName.value.str, varType, value);
     }
 }
 
 StatementNode* break_statement()
 {
+    YYLTYPE location = getLocation();
+
     expect(tBREAK);
     expect(tEOL);
 
-    return new BreakNode();
+    return new BreakNode(location);
 }
 
 //// Miscellaneous /////////////////////////////////////////////////////////////
@@ -388,7 +407,7 @@ StatementNode* suite()
     {
         expect(tINDENT);
 
-        BlockNode* block = new BlockNode;
+        BlockNode* block = new BlockNode(getLocation());
         while (peekType() != tDEDENT)
         {
             block->append(statement());
@@ -537,12 +556,14 @@ MemberList* members()
 
 MemberDefNode* member_definition()
 {
+    YYLTYPE location = getLocation();
+
     Token name = expect(tLIDENT);
     expect(tDCOLON);
     TypeName* typeName = type();
     expect(tEOL);
 
-    return new MemberDefNode(name.value.str, typeName);
+    return new MemberDefNode(location, name.value.str, typeName);
 }
 
 //// Expressions ///////////////////////////////////////////////////////////////
@@ -553,7 +574,7 @@ ExpressionNode* expression()
 
     if (accept(tOR))
     {
-        return new LogicalNode(lhs, LogicalNode::kOr, expression());
+        return new LogicalNode(getLocation(), lhs, LogicalNode::kOr, expression());
     }
     else
     {
@@ -567,7 +588,7 @@ ExpressionNode* and_expression()
 
     if (accept(tAND))
     {
-        return new LogicalNode(lhs, LogicalNode::kAnd, and_expression());
+        return new LogicalNode(getLocation(), lhs, LogicalNode::kAnd, and_expression());
     }
     else
     {
@@ -581,11 +602,11 @@ ExpressionNode* equality_expression()
 
     if (accept(tEQUALS))
     {
-        return new ComparisonNode(lhs, ComparisonNode::kEqual, relational_expression());
+        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kEqual, relational_expression());
     }
     else if (accept(tNE))
     {
-        return new ComparisonNode(lhs, ComparisonNode::kNotEqual, relational_expression());
+        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kNotEqual, relational_expression());
     }
     else
     {
@@ -599,19 +620,19 @@ ExpressionNode* relational_expression()
 
     if (accept((TokenType)'>'))
     {
-        return new ComparisonNode(lhs, ComparisonNode::kGreater, cons_expression());
+        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kGreater, cons_expression());
     }
     else if (accept((TokenType)'<'))
     {
-        return new ComparisonNode(lhs, ComparisonNode::kLess, cons_expression());
+        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kLess, cons_expression());
     }
     else if (accept(tGE))
     {
-        return new ComparisonNode(lhs, ComparisonNode::kGreaterOrEqual, cons_expression());
+        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kGreaterOrEqual, cons_expression());
     }
     else if (accept(tLE))
     {
-        return new ComparisonNode(lhs, ComparisonNode::kLessOrEqual, cons_expression());
+        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kLessOrEqual, cons_expression());
     }
     else
     {
@@ -625,7 +646,7 @@ ExpressionNode* cons_expression()
 
     if (accept((TokenType)':'))
     {
-        return new FunctionCallNode("Cons", {lhs, cons_expression()});
+        return new FunctionCallNode(getLocation(), "Cons", {lhs, cons_expression()});
     }
     else
     {
@@ -641,12 +662,12 @@ ExpressionNode* additive_expression()
     {
         if (accept('+'))
         {
-            result = new FunctionCallNode("+", {result, multiplicative_expression()});
+            result = new FunctionCallNode(getLocation(), "+", {result, multiplicative_expression()});
         }
         else
         {
             expect('-');
-            result = new FunctionCallNode("-", {result, multiplicative_expression()});
+            result = new FunctionCallNode(getLocation(), "-", {result, multiplicative_expression()});
         }
     }
 
@@ -661,16 +682,16 @@ ExpressionNode* multiplicative_expression()
     {
         if (accept('*'))
         {
-            result = new FunctionCallNode("*", {result, concat_expression()});
+            result = new FunctionCallNode(getLocation(), "*", {result, concat_expression()});
         }
         else if (accept('/'))
         {
-            result = new FunctionCallNode("/", {result, concat_expression()});
+            result = new FunctionCallNode(getLocation(), "/", {result, concat_expression()});
         }
         else
         {
             expect(tMOD);
-            result = new FunctionCallNode("%", {result, concat_expression()});
+            result = new FunctionCallNode(getLocation(), "%", {result, concat_expression()});
         }
     }
 
@@ -683,7 +704,7 @@ ExpressionNode* concat_expression()
 
     if (accept(tCONCAT))
     {
-        return new FunctionCallNode("concat", {lhs, concat_expression()});
+        return new FunctionCallNode(getLocation(), "concat", {lhs, concat_expression()});
     }
     else
     {
@@ -695,7 +716,7 @@ ExpressionNode* negation_expression()
 {
     if (accept('-'))
     {
-        return new FunctionCallNode("-", {new IntNode(0), func_call_expression()});
+        return new FunctionCallNode(getLocation(), "-", {new IntNode(getLocation(), 0), func_call_expression()});
     }
     else
     {
@@ -733,7 +754,7 @@ ExpressionNode* func_call_expression()
             argList.emplace_back(expression());
         }
 
-        return new FunctionCallNode(functionName, std::move(argList));
+        return new FunctionCallNode(getLocation(), functionName, std::move(argList));
     }
     else
     {
@@ -756,17 +777,17 @@ ExpressionNode* unary_expression()
 
     case tTRUE:
         expect(tTRUE);
-        return new BoolNode(true);
+        return new BoolNode(getLocation(), true);
 
     case tFALSE:
         expect(tFALSE);
-        return new BoolNode(false);
+        return new BoolNode(getLocation(), false);
 
     case '[':
         expect('[');
         if (accept((TokenType)']'))
         {
-            return new FunctionCallNode("Nil", ArgList());
+            return new FunctionCallNode(getLocation(), "Nil", ArgList());
         }
         else
         {
@@ -780,19 +801,19 @@ ExpressionNode* unary_expression()
 
             expect(']');
 
-            return makeList(argList);
+            return makeList(getLocation(), argList);
         }
 
     case tINT_LIT:
     {
         Token token = expect(tINT_LIT);
-        return new IntNode(token.value.number);
+        return new IntNode(getLocation(), token.value.number);
     }
 
     case tSTRING_LIT:
     {
         Token token = expect(tSTRING_LIT);
-        return makeString(token.value.str);
+        return makeString(getLocation(), token.value.str);
     }
 
     case tLIDENT:
@@ -804,11 +825,11 @@ ExpressionNode* unary_expression()
             Token memberName = expect(tLIDENT);
             expect('}');
 
-            return new MemberAccessNode(varName.value.str, memberName.value.str);
+            return new MemberAccessNode(getLocation(), varName.value.str, memberName.value.str);
         }
         else
         {
-            return new NullaryNode(ident());
+            return new NullaryNode(getLocation(), ident());
         }
 
     default:

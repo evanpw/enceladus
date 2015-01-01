@@ -9,7 +9,7 @@
 
 #include "scope.hpp"
 #include "semantic.hpp"
-#include "parser.hpp"
+#include "tokens.hpp"
 #include "utility.hpp"
 
 
@@ -17,12 +17,18 @@
 
 #define CHECK(p, ...) if (!(p)) { semanticError(node, __VA_ARGS__); }
 
+#define CHECK_IN(node, p, ...) if (!(p)) { semanticError((node), __VA_ARGS__); }
+
 // TODO: Get rid of this; always report a location
 #define CHECK_NO_NODE(p, ...) if (!(p)) { semanticErrorNoNode(__VA_ARGS__); }
 
 #define CHECK_UNDEFINED(name) \
     CHECK(!resolveSymbol(name), "symbol \"{}\" is already defined", name); \
     CHECK(!resolveTypeSymbol(name), "symbol \"{}\" is already defined", name)
+
+#define CHECK_UNDEFINED_IN(name, node) \
+    CHECK_IN((node), !resolveSymbol(name), "symbol \"{}\" is already defined", name); \
+    CHECK_IN((node), !resolveTypeSymbol(name), "symbol \"{}\" is already defined", name)
 
 #define CHECK_UNDEFINED_IN_SCOPE(name) \
     CHECK(!topScope()->symbols.find(name), "symbol \"{}\" is already defined in this scope", name); \
@@ -36,8 +42,8 @@ void SemanticAnalyzer::semanticError(AstNode* node, const std::string& str, Args
 {
     std::stringstream ss;
 
-    ss << "Near line " << node->location->first_line << ", "
-       << "column " << node->location->first_column << ": "
+    ss << "Near line " << node->location.first_line << ", "
+       << "column " << node->location.first_column << ": "
        << format(str, args...);
 
     throw SemanticError(ss.str());
@@ -364,8 +370,8 @@ void SemanticAnalyzer::inferenceError(AstNode* node, const std::string& msg)
 {
     std::stringstream ss;
 
-    ss << "Near line " << node->location->first_line << ", "
-       << "column " << node->location->first_column << ": "
+    ss << "Near line " << node->location.first_line << ", "
+       << "column " << node->location.first_column << ": "
        << "error: " << msg;
 
     throw TypeInferenceError(ss.str());
@@ -1106,7 +1112,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     std::vector<MemberSymbol*> memberSymbols;
     for (auto& member : *node->members)
     {
-        CHECK_UNDEFINED(member->name);
+        CHECK_UNDEFINED_IN(member->name, member.get());
 
         memberTypes.push_back(member->memberType);
         memberNames.push_back(member->name);

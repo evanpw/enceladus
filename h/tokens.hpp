@@ -53,4 +53,31 @@ enum TokenType : int
 
 std::string tokenToString(TokenType t);
 
+struct YYLTYPE
+{
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+};
+
+extern YYLTYPE yylloc;
+
+union YYSTYPE
+{
+    const char* str;
+    long number;
+};
+
+extern YYSTYPE yylval;
+
+struct Token
+{
+    Token(TokenType type = tNONE) : type(type) {}
+
+    TokenType type;
+    YYSTYPE value;
+    YYLTYPE location;
+};
+
 #endif

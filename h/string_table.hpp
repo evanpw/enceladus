@@ -12,11 +12,14 @@
 class StringTable
 {
 public:
+    ~StringTable();
+
 	static const char* add(const std::string& str);
 
 private:
-	StringTable();
-	static std::vector<std::string> strings_;
+    static StringTable& getInstance();
+
+	std::vector<const char*> _strings;
 };
 
 #endif

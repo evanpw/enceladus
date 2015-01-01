@@ -3,28 +3,6 @@
 
 #include "ast.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
-
-struct YYLTYPE
-{
-    int first_line;
-    int first_column;
-    int last_line;
-    int last_column;
-};
-
-extern YYLTYPE yylloc;
-
-union YYSTYPE
-{
-    const char* str;
-    long number;
-};
-
-extern YYSTYPE yylval;
-
-////////////////////////////////////////////////////////////////////////////////
-
 ProgramNode* parse();
 
 ProgramNode* program();

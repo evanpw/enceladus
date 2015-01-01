@@ -10,21 +10,20 @@
 #include "address.hpp"
 #include "ast_visitor.hpp"
 #include "scope.hpp"
+#include "tokens.hpp"
 #include "types.hpp"
-
-struct YYLTYPE;
 
 ////// Abstract base nodes /////////////////////////////////////////////////////
 
 class AstNode
 {
 public:
-	AstNode();
+	AstNode(const YYLTYPE& location);
 	virtual ~AstNode();
 	virtual void accept(AstVisitor* visitor) = 0;
 
 	// For error reporting
-	YYLTYPE* location;
+	YYLTYPE location;
 
 	// For semantic analysis
 	std::shared_ptr<Type> type;
@@ -33,8 +32,21 @@ public:
 	std::shared_ptr<Address> address;
 };
 
-class StatementNode : public AstNode {};
-class ExpressionNode : public StatementNode {};
+class StatementNode : public AstNode
+{
+public:
+	StatementNode(const YYLTYPE& location)
+	: AstNode(location)
+	{}
+};
+
+class ExpressionNode : public StatementNode
+{
+public:
+	ExpressionNode(const YYLTYPE& location)
+	: StatementNode(location)
+	{}
+};
 
 ////// Utility classes other than AST nodes ////////////////////////////////////
 
@@ -72,8 +84,8 @@ private:
 class ProgramNode : public AstNode
 {
 public:
-	ProgramNode()
-	: scope(new Scope)
+	ProgramNode(const YYLTYPE& location)
+	: AstNode(location), scope(new Scope)
 	{}
 
 	void append(AstNode* child);
@@ -91,8 +103,8 @@ class LogicalNode : public ExpressionNode
 public:
 	enum Operator {kAnd, kOr};
 
-	LogicalNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: lhs(lhs), op(op), rhs(rhs)
+	LogicalNode(const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	: ExpressionNode(location), lhs(lhs), op(op), rhs(rhs)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -107,8 +119,8 @@ class ComparisonNode : public ExpressionNode
 public:
 	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual, kNotEqual };
 
-	ComparisonNode(ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: lhs(lhs), op(op), rhs(rhs)
+	ComparisonNode(const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	: ExpressionNode(location), lhs(lhs), op(op), rhs(rhs)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -121,7 +133,9 @@ public:
 class NullaryNode : public ExpressionNode
 {
 public:
-	NullaryNode(const std::string& name) : name(name), symbol(nullptr) {}
+	NullaryNode(const YYLTYPE& location, const std::string& name)
+	: ExpressionNode(location), name(name), symbol(nullptr)
+	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
@@ -132,7 +146,10 @@ public:
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(long value) : value(value) {}
+	IntNode(const YYLTYPE& location, long value)
+	: ExpressionNode(location), value(value)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	long value;
@@ -141,25 +158,28 @@ public:
 class BoolNode : public ExpressionNode
 {
 public:
-	BoolNode(bool value) : value(value) {}
+	BoolNode(const YYLTYPE& location, bool value)
+	: ExpressionNode(location), value(value)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	bool value;
 };
 
 // Syntactic sugar for list and string literals
-FunctionCallNode* makeList(ArgList& elements);
-FunctionCallNode* makeString(const std::string& s);
+FunctionCallNode* makeList(const YYLTYPE& location, ArgList& elements);
+FunctionCallNode* makeString(const YYLTYPE& location, const std::string& s);
 
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(const std::string& target, ArgList&& arguments)
-	: target(target), arguments(std::move(arguments)), symbol(nullptr)
+	FunctionCallNode(const YYLTYPE& location, const std::string& target, ArgList&& arguments)
+	: ExpressionNode(location), target(target), arguments(std::move(arguments)), symbol(nullptr)
 	{}
 
-	FunctionCallNode(const std::string& target, std::initializer_list<ExpressionNode*> args)
-    : target(target), symbol(nullptr)
+	FunctionCallNode(const YYLTYPE& location, const std::string& target, std::initializer_list<ExpressionNode*> args)
+    : ExpressionNode(location), target(target), symbol(nullptr)
     {
     	for (auto& arg : args)
     	{
@@ -177,8 +197,8 @@ public:
 class VariableNode : public ExpressionNode
 {
 public:
-	VariableNode(const std::string& name)
-	: name(name), symbol(nullptr)
+	VariableNode(const YYLTYPE& location, const std::string& name)
+	: ExpressionNode(location), name(name), symbol(nullptr)
 	{
 	}
 
@@ -193,6 +213,10 @@ public:
 class BlockNode : public StatementNode
 {
 public:
+	BlockNode(const YYLTYPE& location)
+	: StatementNode(location)
+	{}
+
 	void append(StatementNode* child);
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -203,7 +227,10 @@ public:
 class IfNode : public StatementNode
 {
 public:
-	IfNode(ExpressionNode* condition, StatementNode* body) : condition(condition), body(body) {}
+	IfNode(const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
+	: StatementNode(location), condition(condition), body(body)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::unique_ptr<ExpressionNode> condition;
@@ -213,8 +240,8 @@ public:
 class IfElseNode : public StatementNode
 {
 public:
-	IfElseNode(ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
-	: condition(condition), body(body), else_body(else_body)
+	IfElseNode(const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
+	: StatementNode(location), condition(condition), body(body), else_body(else_body)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -227,7 +254,10 @@ public:
 class WhileNode : public StatementNode
 {
 public:
-	WhileNode(ExpressionNode* condition, StatementNode* body) : condition(condition), body(body) {}
+	WhileNode(const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
+	: StatementNode(location), condition(condition), body(body)
+	{}
+
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::unique_ptr<ExpressionNode> condition;
@@ -237,7 +267,9 @@ public:
 class BreakNode : public StatementNode
 {
 public:
-	BreakNode() {}
+	BreakNode(const YYLTYPE& location)
+	: StatementNode(location)
+	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
@@ -245,13 +277,13 @@ public:
 };
 
 // For loops are implemented as pure syntactic sugar
-BlockNode* makeForNode(const std::string& loopVar, ExpressionNode* list, StatementNode* body);
+BlockNode* makeForNode(const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body);
 
 class AssignNode : public StatementNode
 {
 public:
-	AssignNode(const std::string& target, ExpressionNode* value)
-	: target(target), value(value)
+	AssignNode(const YYLTYPE& location, const std::string& target, ExpressionNode* value)
+	: StatementNode(location), target(target), value(value)
 	{
 	}
 
@@ -265,8 +297,8 @@ public:
 class LetNode : public StatementNode
 {
 public:
-	LetNode(const std::string& target, TypeName* typeName, ExpressionNode* value)
-	: target(target), typeName(typeName), value(value), symbol(nullptr)
+	LetNode(const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* value)
+	: StatementNode(location), target(target), typeName(typeName), value(value), symbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -282,8 +314,8 @@ typedef std::vector<std::string> ParamList;
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const std::string& name, StatementNode* body, ParamList* params, TypeDecl* typeDecl)
-	: name(name), body(body), params(params), typeDecl(typeDecl), symbol(nullptr), scope(new Scope)
+	FunctionDefNode(const YYLTYPE& location, const std::string& name, StatementNode* body, ParamList* params, TypeDecl* typeDecl)
+	: StatementNode(location), name(name), body(body), params(params), typeDecl(typeDecl), symbol(nullptr), scope(new Scope)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -300,8 +332,8 @@ public:
 class MatchNode : public StatementNode
 {
 public:
-	MatchNode(const std::string& constructor, ParamList* params, ExpressionNode* body)
-	: constructor(constructor), params(params), body(body), constructorSymbol(nullptr)
+	MatchNode(const YYLTYPE& location, const std::string& constructor, ParamList* params, ExpressionNode* body)
+	: StatementNode(location), constructor(constructor), params(params), body(body), constructorSymbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -319,8 +351,8 @@ public:
 class DataDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(const std::string& name, const std::vector<std::string>& typeParameters, ConstructorSpec* constructor)
-	: name(name), typeParameters(typeParameters), constructor(constructor)
+	DataDeclaration(const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, ConstructorSpec* constructor)
+	: StatementNode(location), name(name), typeParameters(typeParameters), constructor(constructor)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -334,8 +366,8 @@ public:
 class TypeAliasNode : public StatementNode
 {
 public:
-	TypeAliasNode(const std::string& name, TypeName* underlying)
-	: name(name), underlying(underlying)
+	TypeAliasNode(const YYLTYPE& location, const std::string& name, TypeName* underlying)
+	: StatementNode(location), name(name), underlying(underlying)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -347,8 +379,8 @@ public:
 class ForeignDeclNode : public StatementNode
 {
 public:
-	ForeignDeclNode(const std::string& name, ParamList* params, TypeDecl* typeDecl)
-	: name(name), params(params), typeDecl(typeDecl), symbol(nullptr)
+	ForeignDeclNode(const YYLTYPE& location, const std::string& name, ParamList* params, TypeDecl* typeDecl)
+	: StatementNode(location), name(name), params(params), typeDecl(typeDecl), symbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -363,7 +395,9 @@ public:
 class ReturnNode : public StatementNode
 {
 public:
-	ReturnNode(ExpressionNode* expression) : expression(expression) {}
+	ReturnNode(const YYLTYPE& location, ExpressionNode* expression)
+	: StatementNode(location), expression(expression)
+	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
@@ -375,8 +409,8 @@ public:
 class MemberDefNode : public AstNode
 {
 public:
-	MemberDefNode(const std::string& name, TypeName* typeName)
-	: name(name), typeName(typeName)
+	MemberDefNode(const YYLTYPE& location, const std::string& name, TypeName* typeName)
+	: AstNode(location), name(name), typeName(typeName)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -391,8 +425,8 @@ typedef std::vector<std::unique_ptr<MemberDefNode>> MemberList;
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(const std::string& name, MemberList* members)
-	: name(name), members(members)
+	StructDefNode(const YYLTYPE& location, const std::string& name, MemberList* members)
+	: StatementNode(location), name(name), members(members)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -407,8 +441,8 @@ public:
 class MemberAccessNode : public ExpressionNode
 {
 public:
-	MemberAccessNode(const std::string& varName, const std::string& memberName)
-	: varName(varName), memberName(memberName)
+	MemberAccessNode(const YYLTYPE& location, const std::string& varName, const std::string& memberName)
+	: ExpressionNode(location), varName(varName), memberName(memberName)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
