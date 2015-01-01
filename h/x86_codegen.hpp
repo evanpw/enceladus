@@ -103,7 +103,6 @@ private:
     std::unordered_map<std::string, RegisterDescriptor> _registers;
 
     const TACFunction* _currentFunction = nullptr;
-    int _numberOfLocals = 0;
     std::unordered_map<std::shared_ptr<Address>, size_t> _localLocations;
 };
 

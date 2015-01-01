@@ -15,7 +15,7 @@ struct Token
 };
 
 // Two tokens of look-ahead
-Token nextTokens[2] = { {tNONE, ""}, {tNONE, ""} };
+Token nextTokens[2] = { {tNONE, {""}}, {tNONE, {""}} };
 
 // Location of the current token
 YYLTYPE yylloc;
