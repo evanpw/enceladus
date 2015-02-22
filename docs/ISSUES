@@ -1,0 +1,2 @@
+* Mismatches in expected and actual type parameters to a type constructor result
+  in an assert error rather than a semantic-analysis error
