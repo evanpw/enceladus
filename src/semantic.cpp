@@ -138,6 +138,9 @@ void SemanticAnalyzer::injectSymbols()
     TypeConstructor* List = new TypeConstructor("List", 1);
     scope->types.insert(new TypeConstructorSymbol("List", _root, List));
 
+    TypeConstructor* Function = new TypeConstructor("Function", 1);
+    scope->types.insert(new TypeConstructorSymbol("Function", _root, Function));
+
 	//// Create symbols for built-in functions
     FunctionSymbol* notFn = makeBuiltin("not");
 	notFn->setType(FunctionType::create({Bool}, Bool));
@@ -270,30 +273,43 @@ TypeConstructor* SemanticAnalyzer::getTypeConstructor(const std::string& name)
 
 std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
 {
-    //std::cerr << "resolveTypeName: " << typeName.str() << std::endl;
-
     if (typeName.parameters().empty())
     {
         return getBaseType(typeName.name(), variables, createVariables);
     }
     else
     {
-        const TypeConstructor* typeConstructor = getTypeConstructor(typeName.name());
-
         std::vector<std::shared_ptr<Type>> typeParameters;
         for (auto& parameter : typeName.parameters())
         {
             typeParameters.push_back(resolveTypeName(*parameter, variables, createVariables));
         }
 
-        return ConstructedType::create(typeConstructor, typeParameters);
+        if (typeName.name() == "Function")
+        {
+            // With no type paramters, the return value should be Unit
+            if (typeParameters.empty())
+            {
+                typeParameters.push_back(Unit);
+            }
+
+            std::shared_ptr<Type> resultType = typeParameters.back();
+            typeParameters.pop_back();
+
+            return FunctionType::create(typeParameters, resultType);
+        }
+        else
+        {
+            const TypeConstructor* typeConstructor = getTypeConstructor(typeName.name());
+            return ConstructedType::create(typeConstructor, typeParameters);
+        }
     }
 }
 
-std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName)
+std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName, bool createVariables)
 {
     std::unordered_map<std::string, std::shared_ptr<Type>> variables;
-    return resolveTypeName(typeName, variables);
+    return resolveTypeName(typeName, variables, createVariables);
 }
 
 void SemanticAnalyzer::insertSymbol(Symbol* symbol)
@@ -391,6 +407,11 @@ std::set<TypeVariable*> SemanticAnalyzer::getFreeVars(Symbol& symbol)
 
     if (symbol.kind == kFunction)
     {
+        if (symbol.typeScheme->tag() != ttFunction)
+        {
+            std::cerr << symbol.name << std::endl;
+        }
+
         assert(symbol.typeScheme->tag() == ttFunction);
         FunctionType* functionType = symbol.typeScheme->type()->get<FunctionType>();
         for (auto& type : functionType->inputs())
@@ -713,44 +734,36 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	const std::string& name = node->name;
     CHECK_UNDEFINED(name);
 
-	std::vector<std::shared_ptr<Type>> paramTypes;
-	std::shared_ptr<Type> returnType;
-	if (node->typeDecl)
+    std::shared_ptr<Type> functionType;
+	if (node->typeName)
 	{
+        functionType = resolveTypeName(*node->typeName, true);
+
 		// Must have a type specified for each parameter + one for return type
-        CHECK(node->typeDecl->size() == node->params->size() + 1, "number of types does not match parameter list");
-
-		// Parameter types must be valid
-        std::unordered_map<std::string, std::shared_ptr<Type>> variables;
-		for (size_t i = 0; i < node->typeDecl->size() - 1; ++i)
-		{
-			auto& typeName = node->typeDecl->at(i);
-
-			std::shared_ptr<Type> type = resolveTypeName(*typeName, variables, true);
-            CHECK(type, "unknown parameter type \"{}\"", typeName->str());
-
-			paramTypes.push_back(type);
-		}
-
-		// Return type must be valid
-		returnType = resolveTypeName(*node->typeDecl->back(), variables, true);
-        CHECK(returnType, "unknown return type \"{}\"", node->typeDecl->back()->name());
+        CHECK(functionType->get<FunctionType>()->inputs().size() == node->params->size(), "number of types does not match parameter list");
 	}
 	else
 	{
+        // If no type is specified for the function, then infer the types of
+        // all parameters and the return value
+        std::vector<std::shared_ptr<Type>> paramTypes;
 		for (size_t i = 0; i < node->params->size(); ++i)
 		{
 			paramTypes.push_back(newVariable());
 		}
 
-		returnType = newVariable();
+		std::shared_ptr<Type> returnType = newVariable();
+
+        functionType = FunctionType::create(paramTypes, returnType);
 	}
+
+    const std::vector<std::shared_ptr<Type>>& paramTypes = functionType->get<FunctionType>()->inputs();
 
 	// The type scheme of this function is temporarily not generalized. We
 	// want to infer whatever concrete types we can within the body of the
 	// function.
 	Symbol* symbol = new FunctionSymbol(name, node, node);
-	symbol->setType(FunctionType::create(paramTypes, returnType));
+	symbol->setType(functionType);
 	insertSymbol(symbol);
 	node->symbol = symbol;
 
@@ -798,32 +811,18 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 	const std::string& name = node->name;
     CHECK_UNDEFINED(name);
 
-	// If parameters names are given, must have a type specified for
-	// each parameter + one for return type
-    CHECK(node->params->size() == 0 || node->typeDecl->size() == node->params->size() + 1, "number of types does not match parameter list");
-
 	// We currently only support 6 function arguments for foreign functions
 	// (so that we only have to pass arguments in registers)
     CHECK(node->params->size() <= 6, "a maximum of 6 arguments is supported for foreign functions");
 
-	// Parameter types must be valid
-	std::vector<std::shared_ptr<Type>> paramTypes;
-	for (size_t i = 0; i < node->typeDecl->size() - 1; ++i)
-	{
-		auto& typeName = node->typeDecl->at(i);
+    std::shared_ptr<Type> functionType = resolveTypeName(*node->typeName, true);
 
-		std::shared_ptr<Type> type = resolveTypeName(*typeName);
-        CHECK(type, "unknown parameter type \"{}\"", typeName->str());
-
-		paramTypes.push_back(type);
-	}
-
-	// Return type must be valid
-	std::shared_ptr<Type> returnType = resolveTypeName(*node->typeDecl->back());
-    CHECK(returnType, "unknown return type \"{}\"", node->typeDecl->back()->name());
+    // If parameters names are given, must have a type specified for
+    // each parameter + one for return type
+    CHECK(node->params->size() == 0 || functionType->get<FunctionType>()->inputs().size() == node->params->size(), "number of types does not match parameter list");
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
-	symbol->setType(FunctionType::create(paramTypes, returnType));
+	symbol->setType(functionType);
 	symbol->isForeign = true;
 	symbol->isExternal = true;
 	insertSymbol(symbol);

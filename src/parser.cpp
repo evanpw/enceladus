@@ -222,11 +222,11 @@ StatementNode* function_definition()
     expect(tDEF);
     std::string name = ident();
     ParamList* params = parameters();
-    TypeDecl* typeDecl = accept(tDCOLON) ? type_declaration() : nullptr;
+    TypeName* typeName = accept(tDCOLON) ? function_type() : nullptr;
     expect('=');
     StatementNode* body = suite();
 
-    return new FunctionDefNode(location, name, body, params, typeDecl);
+    return new FunctionDefNode(location, name, body, params, typeName);
 }
 
 StatementNode* for_statement()
@@ -251,10 +251,10 @@ StatementNode* foreign_declaration()
     std::string name = ident();
     ParamList* params = parameters();
     expect(tDCOLON);
-    TypeDecl* typeDecl = type_declaration();
+    TypeName* typeName = function_type();
     expect(tEOL);
 
-    return new ForeignDeclNode(location, name, params, typeDecl);
+    return new ForeignDeclNode(location, name, params, typeName);
 }
 
 StatementNode* match_statement()
@@ -458,17 +458,17 @@ std::string ident()
 
 //// Types /////////////////////////////////////////////////////////////////////
 
-TypeDecl* type_declaration()
+TypeName* function_type()
 {
-    TypeDecl* typeDecl = new TypeDecl;
-    typeDecl->emplace_back(type());
+    TypeName* typeName = new TypeName("Function");
+    typeName->append(type());
 
     while (accept(tRARROW))
     {
-        typeDecl->emplace_back(type());
+        typeName->append(type());
     }
 
-     return typeDecl;
+    return typeName;
 }
 
 TypeName* type()
@@ -502,6 +502,14 @@ TypeName* simple_type()
     {
         Token typeName = expect(tLIDENT);
         return new TypeName(typeName.value.str);
+    }
+    else if (peekType() == '(')
+    {
+        expect('(');
+        TypeName* internalType = function_type();
+        expect(')');
+
+        return internalType;
     }
     else
     {

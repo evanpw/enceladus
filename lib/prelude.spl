@@ -13,8 +13,7 @@ foreign dieWithMessage :: String -> Unit
 
 ---- Native-language standard library
 
--- concat :: [a] -> [a] -> [a]
-def concat xs ys =
+def concat xs ys :: [a] -> [a] -> [a] =
     if null xs then
         return ys
     else
@@ -41,8 +40,7 @@ def range a b :: Int -> Int -> [Int] =
     return xs
 
 
--- length :: [a] -> Int
-def length xs =
+def length xs :: [a] -> Int =
     result := 0
 
     while not $ null xs do
@@ -66,16 +64,14 @@ def product xs :: [Int] -> Int =
         return head xs * product $ tail xs
 
 
--- take :: Int -> [a] -> [a]
-def take n xs =
+def take n xs :: Int -> [a] -> [a] =
     if n == 0 then
         return []
     else
         return head xs : take (n - 1) (tail xs)
 
 
--- drop :: Int -> [a] -> [a]
-def drop n xs =
+def drop n xs :: Int -> [a] -> [a] =
     if n == 0 then
         return xs
     else
@@ -96,8 +92,7 @@ def maximum xs :: [Int] -> Int =
         return max (head xs) (maximum $ tail xs)
 
 
--- at :: Int -> [a] -> a
-def at n xs =
+def at n xs :: Int -> [a] -> a =
     while n > 0 do
         xs = tail xs
         n -= 1
@@ -105,8 +100,7 @@ def at n xs =
     return head xs
 
 
--- reverse :: [a] -> [a]
-def reverse xs =
+def reverse xs :: [a] -> [a] =
     ys := []
     for x in xs do
         ys = x : ys
@@ -114,8 +108,7 @@ def reverse xs =
     return ys
 
 
--- map :: (a -> b) -> [a] -> [b]
-def map f xs =
+def map f xs :: (a -> b) -> [a] -> [b] =
     result := []
     for x in xs do
         result = f x : result
@@ -123,8 +116,7 @@ def map f xs =
     return reverse result
 
 
--- filter :: (a -> Bool) -> [a] -> [a]
-def filter f xs =
+def filter f xs :: (a -> Bool) -> [a] -> [a] =
     ys := []
     for x in xs do
         if f x then ys = x : ys
@@ -187,15 +179,15 @@ def show x :: Int -> String =
 data Pair a = Pair a a
 
 
-def fst pair =
+def fst pair :: Pair a -> a =
     let Pair x _ = pair
     return x
 
 
-def snd pair =
+def snd pair :: Pair a -> a =
     let Pair _ x = pair
     return x
 
 
-def splitAt n xs =
+def splitAt n xs :: Int -> [a] -> Pair [a] =
     return Pair (take n xs) (drop n xs)

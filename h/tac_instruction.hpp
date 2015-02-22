@@ -15,7 +15,7 @@ struct TACInstruction
 
     virtual std::string str() const = 0;
 
-    // Instructions in a single functions form an instrusive linked list
+    // Instructions in a single function form an instrusive linked list
     TACInstruction* next = 0;
 };
 

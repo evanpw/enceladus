@@ -23,7 +23,7 @@ StatementNode* while_statement();
 StatementNode* break_statement();
 StatementNode* suite();
 ParamList* parameters();
-TypeDecl* type_declaration();
+TypeName* function_type();
 TypeName* type();
 TypeName* simple_type();
 ConstructorSpec* constructor_spec();

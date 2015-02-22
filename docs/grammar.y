@@ -46,13 +46,13 @@ type_alias_declaration
     : TYPE UIDENT '=' type EOL
 
 function_definition
-    : DEF ident parameters [ DCOLON type_declaration ] '=' suite
+    : DEF ident parameters [ DCOLON function_type ] '=' suite
 
 for_statement
     : FOR LIDENT IN expression DO suite
 
 foreign_declaration
-    : FOREIGN ident parameters DCOLON type_declaration EOL
+    : FOREIGN ident parameters DCOLON function_type EOL
 
 match_statement
     : LET UIDENT parameters '=' expression EOL
@@ -76,7 +76,7 @@ break_statement
 
 //// Types /////////////////////////////////////////////////////////////////////
 
-type_declaration
+function_type
     : type { RARROW type }
 
 type
@@ -87,6 +87,7 @@ simple_type
     : LIDENT
     | UIDENT
     | '[' type ']'
+    | '(' function_type ')'
 
 constructor_spec
     : UIDENT { simple_type }

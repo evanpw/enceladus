@@ -51,7 +51,6 @@ public:
 ////// Utility classes other than AST nodes ////////////////////////////////////
 
 typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
-typedef std::vector<std::unique_ptr<TypeName>> TypeDecl;
 
 class ConstructorSpec
 {
@@ -314,8 +313,8 @@ typedef std::vector<std::string> ParamList;
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const YYLTYPE& location, const std::string& name, StatementNode* body, ParamList* params, TypeDecl* typeDecl)
-	: StatementNode(location), name(name), body(body), params(params), typeDecl(typeDecl), symbol(nullptr), scope(new Scope)
+	FunctionDefNode(const YYLTYPE& location, const std::string& name, StatementNode* body, ParamList* params, TypeName* typeName)
+	: StatementNode(location), name(name), body(body), params(params), typeName(typeName), symbol(nullptr), scope(new Scope)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -323,7 +322,7 @@ public:
 	std::string name;
 	std::unique_ptr<StatementNode> body;
 	std::unique_ptr<ParamList> params;
-	std::unique_ptr<TypeDecl> typeDecl;
+	std::unique_ptr<TypeName> typeName;
 	Symbol* symbol;
 	std::vector<Symbol*> parameterSymbols;
 	std::shared_ptr<Scope> scope;
@@ -379,15 +378,15 @@ public:
 class ForeignDeclNode : public StatementNode
 {
 public:
-	ForeignDeclNode(const YYLTYPE& location, const std::string& name, ParamList* params, TypeDecl* typeDecl)
-	: StatementNode(location), name(name), params(params), typeDecl(typeDecl), symbol(nullptr)
+	ForeignDeclNode(const YYLTYPE& location, const std::string& name, ParamList* params, TypeName* typeName)
+	: StatementNode(location), name(name), params(params), typeName(typeName), symbol(nullptr)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::string name;
 	std::unique_ptr<ParamList> params;
-	std::unique_ptr<TypeDecl> typeDecl;
+	std::unique_ptr<TypeName> typeName;
 	Symbol* symbol;
 	std::vector<const Type*> paramTypes;
 };
