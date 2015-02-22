@@ -1,4 +1,4 @@
--- Solves Project Euler 16
+# Solves Project Euler 16
 
 import BigInt
 

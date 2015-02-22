@@ -4,23 +4,23 @@ import String
 
 data Date = Date Int Int Int Int
 
-def year date =
+def year (date: Date) -> Int =
     let Date y m d w = date
     return y
 
-def month date =
+def month (date: Date) -> Int =
     let Date y m d w = date
     return m
 
-def day date =
+def day (date: Date) -> Int =
     let Date y m d w = date
     return d
 
-def dayOfWeek date =
+def dayOfWeek (date: Date) -> Int =
     let Date y m d w = date
     return w
 
-def isLeapYear date =
+def isLeapYear (date: Date) -> Bool =
     let Date y m d w = date
 
     if y mod 4 == 0 then
@@ -32,7 +32,7 @@ def isLeapYear date =
         else
             return True
 
-def daysInMonth date =
+def daysInMonth (date: Date) -> Int =
     let Date y m d w = date
 
     nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -43,7 +43,7 @@ def daysInMonth date =
     else
         return at m nonLeap
 
-def incrementDate date =
+def incrementDate (date: Date) -> Date =
     let Date y m d w = date
 
     y' := y
@@ -63,7 +63,7 @@ def incrementDate date =
 
     return Date y' m' d' w'
 
-def printDate date =
+def printDate (date: Date) -> String =
     let Date y m d w = date
 
     monthNames := ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -81,5 +81,3 @@ while (year current) <= 2000 do
     current = incrementDate current
 
 print $ show dayCount
-
-

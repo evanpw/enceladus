@@ -1,12 +1,12 @@
--- Solves Project Euler #28
+# Solves Project Euler #28
 
--- Final result
+# Final result
 total := 0
 
--- Number the locations based on the order visited
+# Number the locations based on the order visited
 i := 1
 
-def isDiagonal x y =
+def isDiagonal (x: Int, y: Int) -> Bool =
     return (x == y) or (x == -y)
 
 def check x y =

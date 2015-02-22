@@ -1,8 +1,0 @@
-#1 IF
-#1 IDENT: n
-#1 ERROR: Unknown character: <
-#1 INT_LIT: 4
-#1 THEN
-#1 PRINT
-#1 INT_LIT: 4
-#1 EOL

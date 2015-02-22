@@ -1,6 +1,6 @@
--- Solves Project Euler 12
+# Solves Project Euler 12
 
-def countGroups xs =
+def countGroups (xs: [Int]) -> [Int] =
     if null xs then return []
 
     result := []
@@ -20,7 +20,7 @@ def countGroups xs =
 
     return reverse $ count : result
 
-def factor n =
+def factor (n: Int) -> [Int] =
     if n == 1 then return []
 
     factors := []
@@ -35,7 +35,7 @@ def factor n =
 
     return reverse factors
 
-def countDivisors x =
+def countDivisors (x: Int) -> Int =
     if x == 1 then return 1
 
     primeCounts := countGroups $ factor x
@@ -46,7 +46,7 @@ def countDivisors x =
 
     return count
 
-def firstNumber m =
+def firstNumber (m: Int) -> Int =
     n := 0
     i := 1
     while True do

@@ -1,6 +1,6 @@
 -- Solve Project Euler 4
 
-def reverseDigits x =
+def reverseDigits (x: Int) -> Int =
     y := 0
 
     while x != 0 do

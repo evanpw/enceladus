@@ -1,8 +1,8 @@
 struct Just =
-    value :: Int
-    _ :: Int
+    value: Int
+    _: Int
 
-def f x _ = return x
+def f (x: a, _: b) -> a = return x
 
 x := f 3 4
 

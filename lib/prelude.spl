@@ -1,35 +1,35 @@
----- Declarations for built-in functions written in C
+## Declarations for built-in functions written in C
 
--- String functions
+# String functions
 type Char = Int
 type String = [Char]
 
--- I/O functions
-foreign read :: Int
-foreign readLine :: String
-foreign print :: String -> Unit
-foreign dieWithMessage :: String -> Unit
+# I/O functions
+foreign read () -> Int
+foreign readLine () -> String
+foreign print (msg: String) -> Unit
+foreign dieWithMessage (msg: String) -> Unit
 
 
----- Native-language standard library
+## Native-language standard library
 
-def concat xs ys :: [a] -> [a] -> [a] =
+def concat (xs: [a], ys: [a]) -> [a] =
     if null xs then
         return ys
     else
         return head xs : concat (tail xs) ys
 
 
-def assert b :: Bool -> Unit =
+def assert (b: Bool) -> Unit =
     if not b then dieWithMessage "Assertion failed!"
 
 
-def assertMessage b err :: Bool -> String -> Unit =
+def assertMessage (b: Bool, err: String) -> Unit =
     if not b then dieWithMessage $ "Assertion failed: " ++ err
 
 
--- Miscellanous functions
-def range a b :: Int -> Int -> [Int] =
+# Miscellanous functions
+def range (a: Int, b: Int) -> [Int] =
     xs := []
 
     i := b
@@ -40,7 +40,7 @@ def range a b :: Int -> Int -> [Int] =
     return xs
 
 
-def length xs :: [a] -> Int =
+def length (xs: [a]) -> Int =
     result := 0
 
     while not $ null xs do
@@ -50,49 +50,49 @@ def length xs :: [a] -> Int =
     return result
 
 
-def sum xs :: [Int] -> Int =
+def sum (xs: [Int]) -> Int =
     if null xs then
         return 0
     else
         return head xs + sum $ tail xs
 
 
-def product xs :: [Int] -> Int =
+def product (xs: [Int]) -> Int =
     if null xs then
         return 1
     else
         return head xs * product $ tail xs
 
 
-def take n xs :: Int -> [a] -> [a] =
+def take (n: Int, xs: [a]) -> [a] =
     if n == 0 then
         return []
     else
         return head xs : take (n - 1) (tail xs)
 
 
-def drop n xs :: Int -> [a] -> [a] =
+def drop (n: Int, xs: [a]) -> [a] =
     if n == 0 then
         return xs
     else
         return drop (n - 1) (tail xs)
 
 
-def max a b :: Int -> Int -> Int =
+def max (a: Int, b: Int) -> Int =
     if a > b then
         return a
     else
         return b
 
 
-def maximum xs :: [Int] -> Int =
+def maximum (xs: [Int]) -> Int =
     if length xs == 1 then
         return head xs
     else
         return max (head xs) (maximum $ tail xs)
 
 
-def at n xs :: Int -> [a] -> a =
+def at (n: Int, xs: [a]) -> a =
     while n > 0 do
         xs = tail xs
         n -= 1
@@ -100,7 +100,7 @@ def at n xs :: Int -> [a] -> a =
     return head xs
 
 
-def reverse xs :: [a] -> [a] =
+def reverse (xs: [a]) -> [a] =
     ys := []
     for x in xs do
         ys = x : ys
@@ -108,7 +108,7 @@ def reverse xs :: [a] -> [a] =
     return ys
 
 
-def map f xs :: (a -> b) -> [a] -> [b] =
+def map (f: a -> b, xs: [a]) -> [b] =
     result := []
     for x in xs do
         result = f x : result
@@ -116,7 +116,7 @@ def map f xs :: (a -> b) -> [a] -> [b] =
     return reverse result
 
 
-def filter f xs :: (a -> Bool) -> [a] -> [a] =
+def filter (f: a -> Bool, xs: [a]) -> [a] =
     ys := []
     for x in xs do
         if f x then ys = x : ys
@@ -124,17 +124,17 @@ def filter f xs :: (a -> Bool) -> [a] -> [a] =
     return reverse ys
 
 
-def even x :: Int -> Bool =
+def even (x: Int) -> Bool =
     if x mod 2 == 0 then return True
     else return False
 
 
-def odd x :: Int -> Bool =
+def odd (x: Int) -> Bool =
     if x mod 2 == 0 then return False
     else return True
 
 
-def pow a b :: Int -> Int -> Int =
+def pow (a: Int, b: Int) -> Int =
     r := 1
     while True do
         if b mod 2 == 1 then r *= a
@@ -145,19 +145,19 @@ def pow a b :: Int -> Int -> Int =
     return r
 
 
--- Non stack-destroying version
---def concat xs ys :: [Int] -> [Int] -> [Int] =
---    let zs :: [Int] = ys
+# Non stack-destroying version
+#def concat xs ys :: [Int] -> [Int] -> [Int] =
+#    let zs :: [Int] = ys
 
---    for x in reverse xs do
---        zs = x : zs
+#    for x in reverse xs do
+#        zs = x : zs
 
---    return zs
+#    return zs
 
 
----- Strings ----
+## Strings ##
 
-def show x :: Int -> String =
+def show (x: Int) -> String =
     if x == 0 then return "0"
 
     negative := (x < 0)
@@ -174,20 +174,20 @@ def show x :: Int -> String =
     return s
 
 
----- Pairs ----
+## Pairs ##
 
 data Pair a = Pair a a
 
 
-def fst pair :: Pair a -> a =
+def fst (pair: Pair a) -> a =
     let Pair x _ = pair
     return x
 
 
-def snd pair :: Pair a -> a =
+def snd (pair: Pair a) -> a =
     let Pair _ x = pair
     return x
 
 
-def splitAt n xs :: Int -> [a] -> Pair [a] =
+def splitAt (n: Int, xs: [a]) -> Pair [a] =
     return Pair (take n xs) (drop n xs)

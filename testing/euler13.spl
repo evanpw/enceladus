@@ -1,8 +1,8 @@
--- Solves Project Euler 13
+# Solves Project Euler 13
 
 import BigInt
 
-def readNumber =
+def readNumber () -> [Int] =
     ys := []
 
     for j in range 1 50 do

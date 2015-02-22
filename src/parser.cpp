@@ -147,7 +147,7 @@ StatementNode* statement()
         {
             return assignment_statement();
         }
-        else if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == tDCOLON)
+        else if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == ':')
         {
             return variable_declaration();
         }
@@ -221,12 +221,23 @@ StatementNode* function_definition()
 
     expect(tDEF);
     std::string name = ident();
-    ParamList* params = parameters();
-    TypeName* typeName = accept(tDCOLON) ? function_type() : nullptr;
+    std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
     expect('=');
     StatementNode* body = suite();
 
-    return new FunctionDefNode(location, name, body, params, typeName);
+    return new FunctionDefNode(location, name, body, paramsAndTypes.first, paramsAndTypes.second);
+}
+
+StatementNode* foreign_declaration()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tFOREIGN);
+    std::string name = ident();
+    std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
+    expect(tEOL);
+
+    return new ForeignDeclNode(location, name, paramsAndTypes.first, paramsAndTypes.second);
 }
 
 StatementNode* for_statement()
@@ -241,20 +252,6 @@ StatementNode* for_statement()
     StatementNode* body = suite();
 
     return makeForNode(location, loopVar.value.str, listExpression, body);
-}
-
-StatementNode* foreign_declaration()
-{
-    YYLTYPE location = getLocation();
-
-    expect(tFOREIGN);
-    std::string name = ident();
-    ParamList* params = parameters();
-    expect(tDCOLON);
-    TypeName* typeName = function_type();
-    expect(tEOL);
-
-    return new ForeignDeclNode(location, name, params, typeName);
 }
 
 StatementNode* match_statement()
@@ -369,7 +366,7 @@ StatementNode* variable_declaration()
     if (peekType() == tLIDENT)
     {
         Token varName = expect(tLIDENT);
-        TypeName* varType = accept(tDCOLON) ? type() : nullptr;
+        TypeName* varType = accept(':') ? type() : nullptr;
         expect(tCOLON_EQUAL);
         ExpressionNode* value = expression();
         expect(tEOL);
@@ -380,7 +377,7 @@ StatementNode* variable_declaration()
     {
         expect(tVAR);
         Token varName = expect(tLIDENT);
-        TypeName* varType = accept(tDCOLON) ? type() : nullptr;
+        TypeName* varType = accept(':') ? type() : nullptr;
         expect('=');
         ExpressionNode* value = expression();
         expect(tEOL);
@@ -458,20 +455,57 @@ std::string ident()
 
 //// Types /////////////////////////////////////////////////////////////////////
 
-TypeName* function_type()
+/// type
+///     : '|' [ arrow_type { ',' arrow_type } ] '|' RARROW constructed_type
+///     | arrow_type
+TypeName* type()
 {
-    TypeName* typeName = new TypeName("Function");
-    typeName->append(type());
+    if (!accept('|')) return arrow_type();
 
-    while (accept(tRARROW))
+    TypeName* typeName = new TypeName("Function");
+
+    if (peekType() != '|')
     {
-        typeName->append(type());
+        typeName->append(arrow_type());
+
+        while (accept(','))
+        {
+            typeName->append(arrow_type());
+        }
     }
+
+    expect('|');
+    expect(tRARROW);
+
+    // Return type
+    typeName->append(constructed_type());
 
     return typeName;
 }
 
-TypeName* type()
+/// arrow_type
+///     : constructed_type [ RARROW constructed_type ]
+TypeName* arrow_type()
+{
+    TypeName* firstType = constructed_type();
+    if (accept(tRARROW))
+    {
+        TypeName* functionType = new TypeName("Function");
+        functionType->append(firstType);
+        functionType->append(constructed_type());
+
+        return functionType;
+    }
+    else
+    {
+        return firstType;
+    }
+}
+
+/// constructed_type
+///     : UIDENT { simple_type }
+///     | simple_type
+TypeName* constructed_type()
 {
     if (peekType() == tUIDENT)
     {
@@ -491,6 +525,11 @@ TypeName* type()
     }
 }
 
+/// simple_type
+///     : LIDENT
+///     | UIDENT
+///     | '[' type ']'
+///     | '(' type ')'
 TypeName* simple_type()
 {
     if (peekType() == tUIDENT)
@@ -506,7 +545,7 @@ TypeName* simple_type()
     else if (peekType() == '(')
     {
         expect('(');
-        TypeName* internalType = function_type();
+        TypeName* internalType = type();
         expect(')');
 
         return internalType;
@@ -535,6 +574,47 @@ ConstructorSpec* constructor_spec()
     }
 
     return constructorSpec;
+}
+
+std::pair<std::string, TypeName*> param_and_type()
+{
+    Token param = expect(tLIDENT);
+    expect(':');
+    TypeName* typeName = type();
+
+    return {param.value.str, typeName};
+}
+
+/// type_declaration
+///     : '(' [ LIDENT ':' type { ',' LIDENT ':' type } ] ')' RARROW constructed_type
+std::pair<ParamList*, TypeName*> params_and_types()
+{
+    expect('(');
+
+    ParamList* params = new ParamList;
+    TypeName* typeName = new TypeName("Function");
+
+    if (peekType() == tLIDENT)
+    {
+        std::pair<std::string, TypeName*> param_type = param_and_type();
+        params->push_back(param_type.first);
+        typeName->append(param_type.second);
+
+        while (accept(','))
+        {
+            param_type = param_and_type();
+            params->push_back(param_type.first);
+            typeName->append(param_type.second);
+        }
+    }
+
+    expect(')');
+    expect(tRARROW);
+
+    // Return type
+    typeName->append(constructed_type());
+
+    return {params, typeName};
 }
 
  //// Structures ///////////////////////////////////////////////////////////////
@@ -567,7 +647,7 @@ MemberDefNode* member_definition()
     YYLTYPE location = getLocation();
 
     Token name = expect(tLIDENT);
-    expect(tDCOLON);
+    expect(':');
     TypeName* typeName = type();
     expect(tEOL);
 

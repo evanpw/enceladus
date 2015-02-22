@@ -1,1 +1,1 @@
-let xs :: List = 1 : xs
+xs := 1 : xs

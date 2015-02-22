@@ -2,12 +2,12 @@
 
 data Quadratic = Quadratic Int Int
 
-def eval quad n =
+def eval (quad: Quadratic, n: Int) -> Int =
     let Quadratic a b = quad
 
     return n * n + a * n + b
 
-def isPrime x =
+def isPrime (x: Int) -> Bool =
     if x <= 0 then return False
 
     i := 2
@@ -17,7 +17,7 @@ def isPrime x =
 
     return True
 
-def numberOfPrimes q =
+def numberOfPrimes (q: Quadratic) -> Int =
     n := 0
     while True do
         p := eval q n

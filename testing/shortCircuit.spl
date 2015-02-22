@@ -1,8 +1,8 @@
-def f =
+def f () -> Bool =
     print "Hello"
     return True
 
-def g =
+def g () -> Bool =
     print "World"
     return False
 

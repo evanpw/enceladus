@@ -60,4 +60,5 @@ testing/test.sh $platform bigList "" || echo "Big list test failed!"
 testing/test.sh $platform multiRef "6" || echo "Multiple reference test failed!"
 testing/test.sh $platform shortCircuit "Hello" || echo "Short-circuit test failed!"
 testing/test.sh $platform localopt "22" || echo "Local optimization test failed!"
-
+testing/test.sh $platform functionArg "12" || echo "Function argument test failed!"
+testing/test.sh $platform functionArg2 "12" || echo "Function argument test 2 failed!"

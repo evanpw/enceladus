@@ -1,2 +1,4 @@
-let x :: Int = extern test 4
+foreign test (x: Int) -> Int
+
+x := test 4
 print $ show x

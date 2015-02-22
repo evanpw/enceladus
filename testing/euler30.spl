@@ -1,13 +1,13 @@
 -- Solves Project Euler #30
 
-def digitPowerSum n =
+def digitPowerSum (n: Int) -> Int =
     result := 0
     while n > 0 do
         digit := n mod 10
         result += pow digit 5
         n /= 10
 
-    return result 
+    return result
 
 
 -- Can't have any solutions above this value, because

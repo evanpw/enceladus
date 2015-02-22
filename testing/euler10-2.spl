@@ -1,20 +1,20 @@
--- Solves Project Euler 10
+# Solves Project Euler 10
 
-def crossOff p xs :: Int -> List -> List =
+def crossOff (p: Int, xs: [Int]) -> Int =
     if null xs then
         return []
     else
-        let x :: Int = head xs
+        x := head xs
         if x mod p != 0 then
             return x : crossOff p (tail xs)
         else
             return crossOff p (tail xs)
 
-def sieve ys :: List -> List =
-    let p :: Int = head ys
-    let xs :: List = tail ys
+def sieve (ys: [Int]) -> [Int] =
+    p := head ys
+    xs := tail ys
     print $ show p
-    let zs :: List = crossOff p xs
+    zs := crossOff p xs
 
     return p : sieve zs
 

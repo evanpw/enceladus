@@ -1,2 +1,17 @@
 * Mismatches in expected and actual type parameters to a type constructor result
   in an assert error rather than a semantic-analysis error
+
+* Trailing -> Unit in function definitions should be optional
+
+* Syntax errors should give line and column numbers
+
+* Line numbers in semantic errors should work correctly when importing other
+  files
+
+* Comparisons should return something other than an Int (like a special Ordering
+  type), they should be a part of the standard library, they should be easier to
+  create, and the comparison operators should call them
+
+* It should be enforced that all paths through a function return a value
+
+* Make it possible to detect EOF when reading stdin through a pipe

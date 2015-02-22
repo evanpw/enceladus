@@ -1,12 +1,12 @@
 -- Solves Project Euler 2
 
 struct Pair =
-    last :: Int
-    current :: Int
+    last: Int
+    current: Int
 
 total := 0
 
-pair := Pair{last = 1, current = 2}
+pair := Pair{last: 1, current: 2}
 while pair{current} < 4000000 do
     if pair{current} mod 2 == 0 then
         total += pair{current}

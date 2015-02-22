@@ -1,4 +1,4 @@
 struct Test =
-    x :: Int
-    x :: Int
+    x: Int
+    x: Int
 

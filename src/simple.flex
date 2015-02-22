@@ -108,6 +108,7 @@ int yycolumn = 1;
 "]"     { return ']'; }
 "{"     { return '{'; }
 "}"     { return '}'; }
+"|"     { return '|'; }
 "mod"   { return tMOD; }
 "->"    { return tRARROW; }
 "<="    { return tLE; }

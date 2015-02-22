@@ -46,13 +46,13 @@ type_alias_declaration
     : TYPE UIDENT '=' type EOL
 
 function_definition
-    : DEF ident parameters [ DCOLON function_type ] '=' suite
+    : DEF ident params_and_types '=' suite
+
+foreign_declaration
+    : FOREIGN ident params_and_types EOL
 
 for_statement
     : FOR LIDENT IN expression DO suite
-
-foreign_declaration
-    : FOREIGN ident parameters DCOLON function_type EOL
 
 match_statement
     : LET UIDENT parameters '=' expression EOL
@@ -64,8 +64,8 @@ struct_declaration
     : STRUCT UIDENT '=' members
 
 variable_declaration
-    : LIDENT [ type ] COLON_EQUAL expression EOL
-    | VAR LIDENT [ type ] '=' expression EOL
+    : LIDENT [ ':' type ] COLON_EQUAL expression EOL
+    | VAR LIDENT [ ':' type ] '=' expression EOL
 
 while_statement
     : WHILE expression DO suite
@@ -76,10 +76,14 @@ break_statement
 
 //// Types /////////////////////////////////////////////////////////////////////
 
-function_type
-    : type { RARROW type }
-
 type
+    : '|' [ arrow_type { ',' arrow_type } ] '|' RARROW constructed_type
+    | arrow_type
+
+arrow_type
+    : constructed_type [ RARROW constructed_type ]
+
+constructed_type
     : UIDENT { simple_type }
     | simple_type
 
@@ -87,7 +91,9 @@ simple_type
     : LIDENT
     | UIDENT
     | '[' type ']'
-    | '(' function_type ')'
+    | '(' type ')'
+
+//// Miscellaneous /////////////////////////////////////////////////////////////
 
 constructor_spec
     : UIDENT { simple_type }
@@ -103,6 +109,12 @@ statement_list
 parameters
     : { LIDENT }
 
+param_and_type
+    : LIDENT ':' type
+
+params_and_types
+    : '(' [ param_and_type { ',' param_and_type } ] ')' RARROW constructed_type
+
  //// Structures ///////////////////////////////////////////////////////////////
 
 members
@@ -110,7 +122,7 @@ members
     | EOL INDENT member_list DEDENT
 
 member_definition
-    : LIDENT DCOLON type EOL
+    : LIDENT ':' type EOL
 
 member_list
     : member_definition

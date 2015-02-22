@@ -1,2 +1,0 @@
-i <- 3
-if i > 5 then print $ show 1 else print 0

@@ -1,1 +1,0 @@
-if n < 4 then print $ show 4

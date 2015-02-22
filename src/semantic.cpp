@@ -734,28 +734,10 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	const std::string& name = node->name;
     CHECK_UNDEFINED(name);
 
-    std::shared_ptr<Type> functionType;
-	if (node->typeName)
-	{
-        functionType = resolveTypeName(*node->typeName, true);
+    assert(node->typeName);
+    std::shared_ptr<Type> functionType = resolveTypeName(*node->typeName, true);
 
-		// Must have a type specified for each parameter + one for return type
-        CHECK(functionType->get<FunctionType>()->inputs().size() == node->params->size(), "number of types does not match parameter list");
-	}
-	else
-	{
-        // If no type is specified for the function, then infer the types of
-        // all parameters and the return value
-        std::vector<std::shared_ptr<Type>> paramTypes;
-		for (size_t i = 0; i < node->params->size(); ++i)
-		{
-			paramTypes.push_back(newVariable());
-		}
-
-		std::shared_ptr<Type> returnType = newVariable();
-
-        functionType = FunctionType::create(paramTypes, returnType);
-	}
+    assert(functionType->get<FunctionType>()->inputs().size() == node->params->size());
 
     const std::vector<std::shared_ptr<Type>>& paramTypes = functionType->get<FunctionType>()->inputs();
 
@@ -816,10 +798,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     CHECK(node->params->size() <= 6, "a maximum of 6 arguments is supported for foreign functions");
 
     std::shared_ptr<Type> functionType = resolveTypeName(*node->typeName, true);
-
-    // If parameters names are given, must have a type specified for
-    // each parameter + one for return type
-    CHECK(node->params->size() == 0 || functionType->get<FunctionType>()->inputs().size() == node->params->size(), "number of types does not match parameter list");
+    assert(functionType->get<FunctionType>()->inputs().size() == node->params->size());
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
 	symbol->setType(functionType);
