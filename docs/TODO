@@ -43,3 +43,8 @@ Todo
 * Have a separate class for per-function and per-program target codegen
 * Pass function arguments in registers internally
 * Should the TAC code know about the special representation of integers and bools?
+* Trailing -> Unit in function definitions should be optional
+* Comparisons should return something other than an Int (like a special Ordering
+  type), they should be a part of the standard library, they should be easier to
+  create, and the comparison operators should call them
+* Make it possible to detect EOF when reading stdin through a pipe

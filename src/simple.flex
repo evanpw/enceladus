@@ -1,6 +1,7 @@
 %{
 #include <iostream>
 #include <sstream>
+#include <stack>
 #include <boost/lexical_cast.hpp>
 #include "ast.hpp"
 #include "exceptions.hpp"
@@ -54,6 +55,8 @@ int char_literal(const char* s)
         return '\0';
     }
 }
+
+std::stack<std::pair<int, int>> locationStack;
 
 int yycolumn = 1;
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
@@ -157,12 +160,21 @@ int yycolumn = 1;
     assert(f);
 
     yypush_buffer_state(yy_create_buffer(f, YY_BUF_SIZE));
+    locationStack.push({yylineno, yycolumn});
 
     BEGIN(INITIAL);
 }
 
 <<EOF>> {
     yypop_buffer_state();
+
+    if (!locationStack.empty())
+    {
+        std::pair<int, int> prevLocation = locationStack.top();
+        locationStack.pop();
+        yylineno = prevLocation.first;
+        yycolumn = prevLocation.second;
+    }
 
     if (!YY_CURRENT_BUFFER)
     {

@@ -1,0 +1,7 @@
+def apply (f: |Int, Int| -> Int, a: Int, b: Int) -> Int =
+    return f a b
+
+def add (a: Int, b: Int) -> Int =
+    return a + b
+
+print $ show $ apply add 7 5
