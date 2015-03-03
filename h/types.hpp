@@ -269,22 +269,27 @@ private:
 class TypeVariable : public TypeImpl
 {
 public:
-    static std::shared_ptr<Type> create()
+    static std::shared_ptr<Type> create(bool rigid=false)
     {
-        return std::make_shared<Type>(new TypeVariable);
+        return std::make_shared<Type>(new TypeVariable(rigid));
     }
 
     virtual bool isBoxed() const { return true; }
     virtual std::string name() const;
 
     int index() const { return _index; }
+    bool rigid() const { return _rigid; }
 
 private:
-    TypeVariable()
-    : TypeImpl(ttVariable), _index(_count++)
+    TypeVariable(bool rigid)
+    : TypeImpl(ttVariable)
+    , _index(_count++)
+    , _rigid(rigid)
     {}
 
     int _index;
+    bool _rigid;
+
     static int _count;
 };
 

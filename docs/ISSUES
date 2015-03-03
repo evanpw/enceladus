@@ -1,5 +1,4 @@
 * It should be enforced that all paths through a function return a value
   (see noReturn.spl)
 
-* Type inference should not be able to make type variables which are explicitly
-  specified in the function declaration concrete (see overrideType.spl)
+* Type errors should be more informative

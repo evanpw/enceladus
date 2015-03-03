@@ -246,7 +246,7 @@ std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const TypeName& typeName, st
 
         if (createVariables && i == variables.end())
         {
-            std::shared_ptr<Type> var = TypeVariable::create();
+            std::shared_ptr<Type> var = TypeVariable::create(true);
             variables[name] = var;
             return var;
         }
@@ -565,10 +565,34 @@ void SemanticAnalyzer::unify(const std::shared_ptr<Type>& lhs, const std::shared
     }
     else if (lhs->tag() == ttVariable)
     {
-        bindVariable(lhs, rhs, node);
-        return;
+        // Non-rigid type variables can always be bound
+        if (!lhs->get<TypeVariable>()->rigid())
+        {
+            bindVariable(lhs, rhs, node);
+            return;
+        }
+        else
+        {
+            // Trying to unify a rigid type variable with a type that is not a
+            // variable is always an error
+            if (rhs->tag() == ttVariable)
+            {
+                // A rigid type variable unifies with itself
+                if (lhs->get<TypeVariable>() == rhs->get<TypeVariable>())
+                {
+                    return;
+                }
+
+                // And non-rigid type variables can be bound to rigid ones
+                else if (!rhs->get<TypeVariable>()->rigid())
+                {
+                    bindVariable(rhs, lhs, node);
+                    return;
+                }
+             }
+        }
     }
-    else if (rhs->tag() == ttVariable)
+    else if (rhs->tag() == ttVariable && !rhs->get<TypeVariable>()->rigid())
     {
         bindVariable(rhs, lhs, node);
         return;
@@ -743,6 +767,8 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
     assert(node->typeName);
     std::shared_ptr<Type> functionType = resolveTypeName(*node->typeName, true);
+
+    //std::cerr << name << " :: " << functionType->name() << std::endl;
 
     assert(functionType->get<FunctionType>()->inputs().size() == node->params->size());
 

@@ -65,3 +65,4 @@ testing/test.sh $platform functionArg2 "12" || echo "Function argument test 2 fa
 testing/testError.sh $platform importSemantic 'Error: Near line 4, column 1: error: cannot unify types Bool and Int' || echo "Import + semantic error test failed!"
 testing/testError.sh $platform syntaxError 'Error: Near line 1, column 2: expected tEOL, but got =' || echo "Syntax error test failed!"
 testing/testError.sh $platform constructorMismatch 'Error: Near line 3, column 11: Expected 1 parameter(s) to type constructor MyPair, but got 2' || echo "Constructor mismatch test failed!"
+testing/testError.sh $platform overrideType 'Error: Near line 2, column 16: error: cannot unify types Int and a246' || echo "Rigid type variable test failed!"
