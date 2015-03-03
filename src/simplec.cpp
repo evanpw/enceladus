@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	}
 	catch (LexerError& e)
 	{
-		std::cerr << "ERROR: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		fclose(yyin);
 		return 1;
 	}

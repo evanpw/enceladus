@@ -2,8 +2,6 @@
   in an assert error rather than a semantic-analysis error
   (see constructorMismatch.spl)
 
-* Syntax errors should give line and column numbers (see syntaxError.spl)
-
 * It should be enforced that all paths through a function return a value
   (see noReturn.spl)
 

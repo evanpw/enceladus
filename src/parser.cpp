@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include "exceptions.hpp"
 #include "tokens.hpp"
 
 #include <iostream>
@@ -57,8 +58,16 @@ Token expect(TokenType t)
         return token;
     }
 
-    std::cerr << "ERROR: Expected " << tokenToString(t) << ", but got " << tokenToString(nextTokens[0].type) << std::endl;
-    exit(1);
+    YYLTYPE location = getLocation();
+
+    std::stringstream ss;
+
+    ss << "Near line " << location.first_line << ", "
+       << "column " << location.first_column << ": "
+       << "expected " << tokenToString(t) << ", but got "
+       << tokenToString(nextTokens[0].type);
+
+    throw LexerError(ss.str());
 }
 
 Token expect(char c) { return expect((TokenType)c); }
