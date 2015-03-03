@@ -78,7 +78,7 @@ private:
 
     //// General semantic analysis /////////////////////////////////////////////
     template<typename... Args>
-    void semanticError(AstNode* node, const std::string& str, Args... args);
+    void semanticError(const YYLTYPE& location, const std::string& str, Args... args);
     template<typename... Args>
     void semanticErrorNoNode(const std::string& str, Args... args);
 
@@ -86,9 +86,8 @@ private:
     FunctionSymbol* makeExternal(const std::string& name);
     void injectSymbols();
 
-    std::shared_ptr<Type> getBaseType(const std::string& name);
-    std::shared_ptr<Type> getBaseType(const std::string& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
-    TypeConstructor* getTypeConstructor(const std::string& name);
+    std::shared_ptr<Type> getBaseType(const TypeName& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
+    TypeConstructor* getTypeConstructor(const TypeName& name);
     std::shared_ptr<Type> resolveTypeName(const TypeName& typeName, bool createVariables=false);
     std::shared_ptr<Type> resolveTypeName(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
 

@@ -16,6 +16,19 @@ AstNode::~AstNode()
 {
 }
 
+std::string TypeName::str() const
+{
+    std::stringstream ss;
+
+    ss << _name;
+    for (auto& param : _parameters)
+    {
+        ss << " " << param->str();
+    }
+
+    return ss.str();
+}
+
 void ProgramNode::append(AstNode* child)
 {
 	children.emplace_back(child);

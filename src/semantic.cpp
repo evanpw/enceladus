@@ -15,12 +15,11 @@
 
 //// Utility functions /////////////////////////////////////////////////////////
 
-#define CHECK(p, ...) if (!(p)) { semanticError(node, __VA_ARGS__); }
+#define CHECK(p, ...) if (!(p)) { semanticError(node->location, __VA_ARGS__); }
 
-#define CHECK_IN(node, p, ...) if (!(p)) { semanticError((node), __VA_ARGS__); }
+#define CHECK_IN(node, p, ...) if (!(p)) { semanticError((node)->location, __VA_ARGS__); }
 
-// TODO: Get rid of this; always report a location
-#define CHECK_NO_NODE(p, ...) if (!(p)) { semanticErrorNoNode(__VA_ARGS__); }
+#define CHECK_AT(location, p, ...) if (!(p)) { semanticError((location), __VA_ARGS__); }
 
 #define CHECK_UNDEFINED(name) \
     CHECK(!resolveSymbol(name), "symbol \"{}\" is already defined", name); \
@@ -38,12 +37,12 @@
     CHECK(!_enclosingFunction, "{} must be at top level", name)
 
 template<typename... Args>
-void SemanticAnalyzer::semanticError(AstNode* node, const std::string& str, Args... args)
+void SemanticAnalyzer::semanticError(const YYLTYPE& location, const std::string& str, Args... args)
 {
     std::stringstream ss;
 
-    ss << "Near line " << node->location.first_line << ", "
-       << "column " << node->location.first_column << ": "
+    ss << "Near line " << location.first_line << ", "
+       << "column " << location.first_column << ": "
        << format(str, args...);
 
     throw SemanticError(ss.str());
@@ -228,20 +227,22 @@ void SemanticAnalyzer::injectSymbols()
     scope->symbols.insert(new FunctionSymbol("_main", _root, nullptr));
 }
 
-std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const std::string& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
+std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
 {
+    const std::string& name = typeName.name();
+
     if (!islower(name[0]))
     {
         Symbol* symbol = resolveTypeSymbol(name);
-        CHECK_NO_NODE(symbol, "Base type \"{}\" is not defined", name);
-        CHECK_NO_NODE(symbol->kind == kType, "Symbol \"{}\" is not a base type", name);
+        CHECK_AT(typeName.location(), symbol, "Base type \"{}\" is not defined", name);
+        CHECK_AT(typeName.location(), symbol->kind == kType, "Symbol \"{}\" is not a base type", name);
 
         return symbol->type;
     }
     else
     {
         auto i = variables.find(name);
-        CHECK_NO_NODE(createVariables || i != variables.end(), "No such type variable \"{}\"", name);
+        CHECK_AT(typeName.location(), createVariables || i != variables.end(), "No such type variable \"{}\"", name);
 
         if (createVariables && i == variables.end())
         {
@@ -256,17 +257,13 @@ std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const std::string& name, std
     }
 }
 
-std::shared_ptr<Type> SemanticAnalyzer::getBaseType(const std::string& name)
+TypeConstructor* SemanticAnalyzer::getTypeConstructor(const TypeName& typeName)
 {
-    std::unordered_map<std::string, std::shared_ptr<Type>> variables;
-    return getBaseType(name, variables);
-}
+    const std::string& name = typeName.name();
 
-TypeConstructor* SemanticAnalyzer::getTypeConstructor(const std::string& name)
-{
     Symbol* symbol = resolveTypeSymbol(name);
-    CHECK_NO_NODE(symbol, "Type constructor \"{}\" is not defined", name);
-    CHECK_NO_NODE(symbol->kind == kTypeConstructor, "Symbol \"{}\" is not a type constructor", name);
+    CHECK_AT(typeName.location(), symbol, "Type constructor \"{}\" is not defined", name);
+    CHECK_AT(typeName.location(), symbol->kind == kTypeConstructor, "Symbol \"{}\" is not a type constructor", name);
 
     return symbol->asTypeConstructor()->typeConstructor.get();
 }
@@ -275,7 +272,7 @@ std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName
 {
     if (typeName.parameters().empty())
     {
-        return getBaseType(typeName.name(), variables, createVariables);
+        return getBaseType(typeName, variables, createVariables);
     }
     else
     {
@@ -287,7 +284,7 @@ std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName
 
         if (typeName.name() == "Function")
         {
-            // With no type paramters, the return value should be Unit
+            // With no type parameters, the return value should be Unit
             if (typeParameters.empty())
             {
                 typeParameters.push_back(Unit);
@@ -300,7 +297,15 @@ std::shared_ptr<Type> SemanticAnalyzer::resolveTypeName(const TypeName& typeName
         }
         else
         {
-            const TypeConstructor* typeConstructor = getTypeConstructor(typeName.name());
+            const TypeConstructor* typeConstructor = getTypeConstructor(typeName);
+
+            CHECK_AT(typeName.location(),
+                     typeConstructor->parameters() == typeParameters.size(),
+                     "Expected {} parameter(s) to type constructor {}, but got {}",
+                     typeConstructor->parameters(),
+                     typeName.name(),
+                     typeParameters.size());
+
             return ConstructedType::create(typeConstructor, typeParameters);
         }
     }
@@ -384,6 +389,8 @@ void SemanticAnalyzer::bindVariable(const std::shared_ptr<Type>& variable, const
 
 void SemanticAnalyzer::inferenceError(AstNode* node, const std::string& msg)
 {
+    //std::cerr << typeid(*node).name() << std::endl;
+
     std::stringstream ss;
 
     ss << "Near line " << node->location.first_line << ", "
@@ -620,7 +627,7 @@ void SemanticAnalyzer::visit(ProgramNode* node)
 
     for (auto& child : node->children)
     {
-        unify(child->type, Unit, node);
+        unify(child->type, Unit, child.get());
     }
 
     exitScope();

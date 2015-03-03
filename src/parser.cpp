@@ -469,9 +469,11 @@ std::string ident()
 ///     | arrow_type
 TypeName* type()
 {
+    YYLTYPE location = getLocation();
+
     if (!accept('|')) return arrow_type();
 
-    TypeName* typeName = new TypeName("Function");
+    TypeName* typeName = new TypeName("Function", location);
 
     if (peekType() != '|')
     {
@@ -496,10 +498,12 @@ TypeName* type()
 ///     : constructed_type [ RARROW constructed_type ]
 TypeName* arrow_type()
 {
+    YYLTYPE location = getLocation();
+
     TypeName* firstType = constructed_type();
     if (accept(tRARROW))
     {
-        TypeName* functionType = new TypeName("Function");
+        TypeName* functionType = new TypeName("Function", location);
         functionType->append(firstType);
         functionType->append(constructed_type());
 
@@ -516,10 +520,12 @@ TypeName* arrow_type()
 ///     | simple_type
 TypeName* constructed_type()
 {
+    YYLTYPE location = getLocation();
+
     if (peekType() == tUIDENT)
     {
         Token name = expect(tUIDENT);
-        TypeName* typeName = new TypeName(name.value.str);
+        TypeName* typeName = new TypeName(name.value.str, location);
 
         while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[')
         {
@@ -541,15 +547,17 @@ TypeName* constructed_type()
 ///     | '(' type ')'
 TypeName* simple_type()
 {
+    YYLTYPE location = getLocation();
+
     if (peekType() == tUIDENT)
     {
         Token typeName = expect(tUIDENT);
-        return new TypeName(typeName.value.str);
+        return new TypeName(typeName.value.str, location);
     }
     else if (peekType() == tLIDENT)
     {
         Token typeName = expect(tLIDENT);
-        return new TypeName(typeName.value.str);
+        return new TypeName(typeName.value.str, location);
     }
     else if (peekType() == '(')
     {
@@ -565,7 +573,7 @@ TypeName* simple_type()
         TypeName* internalType = type();
         expect(']');
 
-        TypeName* typeName = new TypeName("List");
+        TypeName* typeName = new TypeName("List", location);
         typeName->append(internalType);
 
         return typeName;
@@ -598,10 +606,12 @@ std::pair<std::string, TypeName*> param_and_type()
 ///     : '(' [ LIDENT ':' type { ',' LIDENT ':' type } ] ')' RARROW constructed_type
 std::pair<ParamList*, TypeName*> params_and_types()
 {
+    YYLTYPE location = getLocation();
+
     expect('(');
 
     ParamList* params = new ParamList;
-    TypeName* typeName = new TypeName("Function");
+    TypeName* typeName = new TypeName("Function", location);
 
     if (peekType() == tLIDENT)
     {
@@ -837,6 +847,8 @@ ExpressionNode* func_call_expression()
 {
     if ((peekType() == tLIDENT || peekType() == tUIDENT) && (canStartUnaryExpression(peek2ndType()) || peek2ndType() == '$'))
     {
+        YYLTYPE location = getLocation();
+
         std::string functionName = ident();
 
         ArgList argList;
@@ -851,7 +863,7 @@ ExpressionNode* func_call_expression()
             argList.emplace_back(expression());
         }
 
-        return new FunctionCallNode(getLocation(), functionName, std::move(argList));
+        return new FunctionCallNode(location, functionName, std::move(argList));
     }
     else
     {

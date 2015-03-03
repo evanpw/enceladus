@@ -9,29 +9,6 @@
 #include <unordered_map>
 #include <vector>
 
-class TypeName
-{
-public:
-    TypeName(const std::string& name)
-    : name_(name)
-    {}
-
-    TypeName(const char* name)
-    : name_(name)
-    {}
-
-    const std::string& name() const { return name_; }
-    const std::vector<std::unique_ptr<TypeName>>& parameters() const { return parameters_; }
-
-    std::string str() const;
-
-    void append(TypeName* parameter) { parameters_.emplace_back(parameter); }
-
-private:
-    const std::string name_;
-    std::vector<std::unique_ptr<TypeName>> parameters_;
-};
-
 class ValueConstructor;
 class TypeConstructor
 {

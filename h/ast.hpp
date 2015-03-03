@@ -52,6 +52,32 @@ public:
 
 typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
 
+class TypeName
+{
+public:
+    TypeName(const std::string& name, const YYLTYPE& location)
+    : _name(name), _location(location)
+    {}
+
+    TypeName(const char* name, const YYLTYPE& location)
+    : _name(name), _location(location)
+    {}
+
+    const std::string& name() const { return _name; }
+    const YYLTYPE& location() const { return _location; }
+
+    const std::vector<std::unique_ptr<TypeName>>& parameters() const { return _parameters; }
+
+    std::string str() const;
+
+    void append(TypeName* parameter) { _parameters.emplace_back(parameter); }
+
+private:
+    std::string _name;
+    std::vector<std::unique_ptr<TypeName>> _parameters;
+    YYLTYPE _location;
+};
+
 class ConstructorSpec
 {
 public:
@@ -76,7 +102,6 @@ private:
 	std::vector<std::unique_ptr<TypeName>> members_;
 	std::vector<std::shared_ptr<Type>> types_;
 };
-
 
 ////// Top-level nodes /////////////////////////////////////////////////////////
 
