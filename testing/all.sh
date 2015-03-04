@@ -32,6 +32,7 @@ $platform/build.sh euler18 > /dev/null && value=$(cat testing/euler18.txt | buil
 [ "x$value" == "x1074" ] || echo "Project Euler 18 failed!"
 
 testing/test.sh $platform euler19 171 || echo "Project Euler 19 failed!"
+testing/test.sh $platform euler19-2 171 || echo "Project Euler 19-2 failed!"
 testing/test.sh $platform euler20 648 || echo "Project Euler 20 failed!"
 testing/test.sh $platform euler21 31626 || echo "Project Euler 21 failed!"
 

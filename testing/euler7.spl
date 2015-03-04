@@ -10,7 +10,7 @@ def isPrime (x: Int) -> Bool =
 
 x := 2
 n := 0
-while True do
+forever do
     if isPrime x then n += 1
 
     if n == 10001 then break

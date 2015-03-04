@@ -18,7 +18,7 @@ def divisors (n: Int) -> [Int] =
     return result
 
 def isAbundant (n: Int) -> Bool =
-    return (sum $ divisors n) > n
+    (sum $ divisors n) > n
 
 def isSumOfTwo (y: Int, xs: [Int], zs: [Int]) -> Bool =
     while not (null xs or null zs) do

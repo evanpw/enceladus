@@ -4,3 +4,14 @@
 
 * Type annotations on function definitions should be optional
   (see optionalAnnotation.spl)
+
+* If/else statements should be allowed to live on one line (see oneLineIf.spl)
+
+* Allow pattern-matching let statement to be an expression by adding an "in"
+  clause (see matchExpression.spl)
+
+* Struct members names should be allowed to clash when there is no ambiguity
+  Don't try to infer type of structs when accessing a member.
+  (see structMemberNames.spl)
+
+* Allow sum types and multiple pattern matching (see sumTypes.spl)

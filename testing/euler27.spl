@@ -19,7 +19,7 @@ def isPrime (x: Int) -> Bool =
 
 def numberOfPrimes (q: Quadratic) -> Int =
     n := 0
-    while True do
+    forever do
         p := eval q n
 
         if not $ isPrime p then break

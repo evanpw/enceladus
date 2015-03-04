@@ -1,0 +1,11 @@
+-- Solve Project Euler 5
+
+def gcd (a, b) = if b == 0 then a else gcd b (a mod b)
+def lcm (a, b) = (a * b) / (gcd a b)
+
+n := 1
+
+for i in range 1 20 do
+    n = lcm n i
+
+print $ show n
