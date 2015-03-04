@@ -20,6 +20,7 @@ statement
     | function_definition
     | for_statement
     | foreign_declaration
+    | forever_statement
     | match_statement
     | return_statement
     | struct_declaration
@@ -53,6 +54,9 @@ foreign_declaration
 
 for_statement
     : FOR LIDENT IN expression DO suite
+
+forever_statement
+    : FOREVER DO suite
 
 match_statement
     : LET UIDENT parameters '=' expression EOL

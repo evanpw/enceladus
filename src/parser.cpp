@@ -128,6 +128,9 @@ StatementNode* statement()
     case tFOREIGN:
         return foreign_declaration();
 
+    case tFOREVER:
+        return forever_statement();
+
     case tLET:
         return match_statement();
 
@@ -261,6 +264,18 @@ StatementNode* for_statement()
     StatementNode* body = suite();
 
     return makeForNode(location, loopVar.value.str, listExpression, body);
+}
+
+StatementNode* forever_statement()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tFOREVER);
+    expect(tDO);
+
+    StatementNode* body = suite();
+
+    return new ForeverNode(location, body);
 }
 
 StatementNode* match_statement()

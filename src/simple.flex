@@ -139,6 +139,7 @@ int yycolumn = 1;
 "False"     { return tFALSE; }
 "for"       { return tFOR; }
 "foreign"   { return tFOREIGN; }
+"forever"   { return tFOREVER; }
 "if"        { return tIF; }
 "in"        { return tIN; }
 "let"       { return tLET; }

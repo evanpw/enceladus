@@ -57,6 +57,11 @@ void AstVisitor::visit(WhileNode* node)
 	node->body->accept(this);
 }
 
+void AstVisitor::visit(ForeverNode* node)
+{
+	node->body->accept(this);
+}
+
 void AstVisitor::visit(AssignNode* node)
 {
 	node->value->accept(this);

@@ -24,6 +24,7 @@ public:
     UNSUPPORTED(BlockNode);
     UNSUPPORTED(BreakNode);
     UNSUPPORTED(DataDeclaration);
+    UNSUPPORTED(ForeverNode);
     UNSUPPORTED(FunctionDefNode);
     UNSUPPORTED(IfElseNode);
     UNSUPPORTED(IfNode);
@@ -88,6 +89,7 @@ public:
     virtual void visit(BoolNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(DataDeclaration* node);
+    virtual void visit(ForeverNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(FunctionDefNode* node);
     virtual void visit(IfElseNode* node);

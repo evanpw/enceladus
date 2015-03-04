@@ -41,6 +41,7 @@ public:
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(ComparisonNode* node);
+    virtual void visit(ForeverNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
@@ -107,7 +108,7 @@ private:
 
     ProgramNode* _root;
     FunctionDefNode* _enclosingFunction;
-    WhileNode* _enclosingLoop;
+    LoopNode* _enclosingLoop;
     std::vector<std::shared_ptr<Scope>> _scopes;
 };
 

@@ -40,6 +40,8 @@ std::string tokenToString(TokenType t)
         return "tFOR";
     case tFOREIGN:
         return "tFOREIGN";
+    case tFOREVER:
+        return "tFOREVER";
     case tGE:
         return "tGE";
     case tIF:

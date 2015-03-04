@@ -814,6 +814,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
     //std::cerr << name << " :: " << symbol->typeScheme->name() << std::endl;
 
+    unify(node->body->type, functionType->get<FunctionType>()->output(), node);
     node->type = Unit;
 }
 
@@ -1006,13 +1007,23 @@ void SemanticAnalyzer::visit(LogicalNode* node)
 
 void SemanticAnalyzer::visit(BlockNode* node)
 {
-    for (auto& child : node->children)
+    // Blocks have the type of their last expression
+
+    for (size_t i = 0; i + 1 < node->children.size(); ++i)
     {
-        child->accept(this);
-        unify(child->type, Unit, node);
+        node->children[i]->accept(this);
+        unify(node->children[i]->type, Unit, node);
     }
 
-    node->type = Unit;
+    if (node->children.size() > 0)
+    {
+        node->children.back()->accept(this);
+        node->type = node->children.back()->type;
+    }
+    else
+    {
+        node->type = Unit;
+    }
 }
 
 void SemanticAnalyzer::visit(IfNode* node)
@@ -1032,12 +1043,10 @@ void SemanticAnalyzer::visit(IfElseNode* node)
     unify(node->condition->type, Bool, node);
 
     node->body->accept(this);
-    unify(node->body->type, Unit, node);
-
     node->else_body->accept(this);
-    unify(node->else_body->type, Unit, node);
 
-    node->type = Unit;
+    unify(node->body->type, node->else_body->type, node);
+    node->type = node->body->type;
 }
 
 void SemanticAnalyzer::visit(WhileNode* node)
@@ -1047,21 +1056,39 @@ void SemanticAnalyzer::visit(WhileNode* node)
 
     // Save the current inner-most loop so that we can restore it after
     // visiting the children of this loop.
-    WhileNode* outerLoop = _enclosingLoop;
+    LoopNode* outerLoop = _enclosingLoop;
+
+    node->type = Unit;
 
     _enclosingLoop = node;
     node->body->accept(this);
     _enclosingLoop = outerLoop;
 
     unify(node->body->type, Unit, node);
+}
 
-    node->type = Unit;
+void SemanticAnalyzer::visit(ForeverNode* node)
+{
+    // Save the current inner-most loop so that we can restore it after
+    // visiting the children of this loop.
+    LoopNode* outerLoop = _enclosingLoop;
+
+    // The type of an infinite loop can be anything, unless we encounter a break
+    // statement in the body, in which case it must be Unit
+    node->type = newVariable();
+
+    _enclosingLoop = node;
+    node->body->accept(this);
+    _enclosingLoop = outerLoop;
+
+    unify(node->body->type, Unit, node);
 }
 
 void SemanticAnalyzer::visit(BreakNode* node)
 {
     CHECK(_enclosingLoop, "break statement must be within a loop");
-    node->loop = _enclosingLoop;
+
+    unify(_enclosingLoop->type, Unit, node);
 
     node->type = Unit;
 }
@@ -1089,7 +1116,9 @@ void SemanticAnalyzer::visit(ReturnNode* node)
 
     unify(node->expression->type, functionType->output(), node);
 
-    node->type = Unit;
+    // Since the function doesn't continue past a return statement, its value
+    // doesn't matter
+    node->type = newVariable();
 }
 
 void SemanticAnalyzer::visit(VariableNode* node)

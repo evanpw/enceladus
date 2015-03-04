@@ -2,3 +2,5 @@
   (see noReturn.spl)
 
 * Type errors should be more informative
+
+* The distinction between expressions and statements is unnecessary

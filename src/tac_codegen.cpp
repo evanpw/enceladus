@@ -461,6 +461,26 @@ void TACCodeGen::visit(WhileNode* node)
     emit(endLabel);
 }
 
+void TACCodeGen::visit(ForeverNode* node)
+{
+    TACLabel* beginLabel = new TACLabel;
+    TACLabel* endLabel = new TACLabel;
+
+    emit(beginLabel);
+
+    // Push a new inner loop on the (implicit) stack
+    TACLabel* prevLoopEnd = _currentLoopEnd;
+    _currentLoopEnd = endLabel;
+
+    node->body->accept(this);
+
+    _currentLoopEnd = prevLoopEnd;
+
+    emit(new TACJump(beginLabel));
+
+    emit(endLabel);
+}
+
 void TACCodeGen::visit(BreakNode* node)
 {
     emit(new TACJump(_currentLoopEnd));

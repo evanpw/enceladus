@@ -49,7 +49,7 @@ def countDivisors (x: Int) -> Int =
 def firstNumber (m: Int) -> Int =
     n := 0
     i := 1
-    while True do
+    forever do
         n += i
 
         if countDivisors n > m then

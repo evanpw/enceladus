@@ -24,6 +24,7 @@ enum TokenType : int
     tFALSE,
     tFOR,
     tFOREIGN,
+    tFOREVER,
     tGE,
     tIF,
     tIN,

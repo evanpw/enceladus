@@ -48,6 +48,14 @@ public:
 	{}
 };
 
+class LoopNode : public StatementNode
+{
+public:
+	LoopNode(const YYLTYPE& location)
+	: StatementNode(location)
+	{}
+};
+
 ////// Utility classes other than AST nodes ////////////////////////////////////
 
 typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
@@ -121,6 +129,20 @@ public:
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
+
+class BlockNode : public ExpressionNode
+{
+public:
+	BlockNode(const YYLTYPE& location)
+	: ExpressionNode(location)
+	{}
+
+	void append(StatementNode* child);
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
+	std::vector<std::unique_ptr<StatementNode>> children;
+};
 
 class LogicalNode : public ExpressionNode
 {
@@ -234,20 +256,6 @@ public:
 
 ////// Statement nodes /////////////////////////////////////////////////////////
 
-class BlockNode : public StatementNode
-{
-public:
-	BlockNode(const YYLTYPE& location)
-	: StatementNode(location)
-	{}
-
-	void append(StatementNode* child);
-
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	std::list<std::unique_ptr<StatementNode>> children;
-};
-
 class IfNode : public StatementNode
 {
 public:
@@ -275,16 +283,28 @@ public:
 	std::unique_ptr<StatementNode> else_body;
 };
 
-class WhileNode : public StatementNode
+class WhileNode : public LoopNode
 {
 public:
 	WhileNode(const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
-	: StatementNode(location), condition(condition), body(body)
+	: LoopNode(location), condition(condition), body(body)
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::unique_ptr<ExpressionNode> condition;
+	std::unique_ptr<StatementNode> body;
+};
+
+class ForeverNode : public LoopNode
+{
+public:
+	ForeverNode(const YYLTYPE& location, StatementNode* body)
+	: LoopNode(location), body(body)
+	{}
+
+	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
 	std::unique_ptr<StatementNode> body;
 };
 
@@ -296,8 +316,6 @@ public:
 	{}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	WhileNode* loop;
 };
 
 // For loops are implemented as pure syntactic sugar

@@ -12,6 +12,7 @@ class ComparisonNode;
 class DataDeclaration;
 class ExternalFunctionCallNode;
 class ForeignDeclNode;
+class ForeverNode;
 class FunctionCallNode;
 class FunctionDefNode;
 class IfElseNode;
@@ -37,6 +38,7 @@ public:
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(ComparisonNode* node);
+	virtual void visit(ForeverNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(IfElseNode* node);
