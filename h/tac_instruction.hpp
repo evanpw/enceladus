@@ -16,7 +16,7 @@ struct TACInstruction
     virtual std::string str() const = 0;
 
     // Instructions in a single function form an instrusive linked list
-    TACInstruction* next = 0;
+    TACInstruction* next = nullptr;
 };
 
 #define MAKE_VISITABLE() virtual void accept(TACVisitor* visitor) { visitor->visit(this); }

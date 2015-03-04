@@ -1,0 +1,5 @@
+def f () -> Int =
+    forever do
+        return 10
+
+print $ show $ f

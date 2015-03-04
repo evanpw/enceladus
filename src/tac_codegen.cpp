@@ -96,7 +96,13 @@ void TACCodeGen::visit(ProgramNode* node)
         }
 
         // Generate code for the function body
-        AstVisitor::visit(funcDefNode);
+        funcDefNode->body->accept(this);
+
+        // Handle implicit return values
+        if (funcDefNode->body->address)
+        {
+            emit(new TACAssign(_currentFunction->returnValue, funcDefNode->body->address));
+        }
 
         emit(_functionEnd);
 
@@ -402,6 +408,11 @@ void TACCodeGen::visit(BlockNode* node)
     {
         child->accept(this);
     }
+
+    if (node->children.size() > 0)
+    {
+        node->address = node->children.back()->address;
+    }
 }
 
 void TACCodeGen::visit(IfNode* node)
@@ -424,14 +435,18 @@ void TACCodeGen::visit(IfElseNode* node)
     TACLabel* falseBranch = new TACLabel;
     TACLabel* endLabel = new TACLabel;
 
+    if (!node->address) node->address = makeTemp();
+
     _conditionalCodeGen.visitCondition(*node->condition, trueBranch, falseBranch);
 
     emit(trueBranch);
-    node->body->accept(this);
+    std::shared_ptr<Address> bodyValue = visitAndGet(*node->body);
+    if (bodyValue) emit(new TACAssign(node->address, bodyValue));
     emit(new TACJump(endLabel));
 
     emit(falseBranch);
-    node->else_body->accept(this);
+    std::shared_ptr<Address> elseValue = visitAndGet(*node->else_body);
+    if (elseValue) emit(new TACAssign(node->address, elseValue));
 
     emit(endLabel);
 }

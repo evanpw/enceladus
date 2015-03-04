@@ -68,3 +68,5 @@ testing/testError.sh $platform constructorMismatch 'Error: Near line 3, column 1
 testing/testError.sh $platform overrideType 'Error: Near line 2, column 16: error: cannot unify types Int and a276' || echo "Rigid type variable test failed!"
 testing/test.sh $platform noReturn "1" || echo "No-return test 1 failed!"
 testing/testError.sh $platform noReturn2 'Error: Near line 1, column 0: error: cannot unify types Unit and Int' || echo "No-return test 2 failed!"
+testing/test.sh $platform implicitReturn "4" || echo "Implicit return test 1 failed!"
+testing/test.sh $platform implicitReturn2 "10" || echo "Implicit return test 2 failed!"

@@ -1,6 +1,6 @@
-* It should be enforced that all paths through a function return a value
-  (see noReturn.spl)
-
 * Type errors should be more informative
 
 * The distinction between expressions and statements is unnecessary
+
+* Type annotations on function definitions should be optional
+  (see optionalAnnotation.spl)
