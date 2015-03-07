@@ -179,11 +179,12 @@ StatementNode* if_statement()
 
     expect(tIF);
     ExpressionNode* condition = expression();
-    expect(tTHEN);
+    expect(':');
     StatementNode* ifBody = suite();
 
     if (accept(tELSE))
     {
+        expect(':');
         StatementNode* elseBody = suite();
         return new IfElseNode(location, condition, ifBody, elseBody);
     }
@@ -260,7 +261,7 @@ StatementNode* for_statement()
     Token loopVar = expect(tLIDENT);
     expect(tIN);
     ExpressionNode* listExpression = expression();
-    expect(tDO);
+    expect(':');
     StatementNode* body = suite();
 
     return makeForNode(location, loopVar.value.str, listExpression, body);
@@ -271,7 +272,7 @@ StatementNode* forever_statement()
     YYLTYPE location = getLocation();
 
     expect(tFOREVER);
-    expect(tDO);
+    expect(':');
 
     StatementNode* body = suite();
 
@@ -321,7 +322,7 @@ StatementNode* while_statement()
 
     expect(tWHILE);
     ExpressionNode* condition = expression();
-    expect(tDO);
+    expect(':');
     StatementNode* body = suite();
 
     return new WhileNode(location, condition, body);
@@ -766,7 +767,7 @@ ExpressionNode* cons_expression()
 {
     ExpressionNode* lhs = additive_expression();
 
-    if (accept((TokenType)':'))
+    if (accept(tDCOLON))
     {
         return new FunctionCallNode(getLocation(), "Cons", {lhs, cons_expression()});
     }
@@ -957,8 +958,18 @@ ExpressionNode* unary_expression()
         }
 
     default:
-        std::cerr << "ERROR: Token " << tokenToString(nextTokens[0].type) << " cannot start a unary expression." << std::endl;
-        exit(1);
+    {
+        YYLTYPE location = getLocation();
+
+        std::stringstream ss;
+
+        ss << "Near line " << location.first_line << ", "
+           << "column " << location.first_column << ": "
+           << "token " << tokenToString(peekType()) << " cannot start a unary expression.";
+
+        throw LexerError(ss.str());
+    }
+
     }
 }
 

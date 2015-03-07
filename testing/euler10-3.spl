@@ -1,18 +1,21 @@
 # Solves Project Euler 10
 
 def isPrime (x: Int, primes: [Int]) -> Bool =
-    for p in primes do
-        if x mod p == 0 then return False
-        if p * p > x then return True
+    for p in primes:
+        if x mod p == 0:
+            return False
+
+        if p * p > x:
+            return True
 
     return True
 
 def primesBelow (n: Int) -> [Int] =
     primes := []
 
-    for i in range 2 n do
-        if isPrime i (reverse primes) then
-            primes = i : primes
+    for i in range 2 n:
+        if isPrime i (reverse primes):
+            primes = i :: primes
 
     return primes
 

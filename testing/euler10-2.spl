@@ -1,13 +1,13 @@
 # Solves Project Euler 10
 
 def crossOff (p: Int, xs: [Int]) -> Int =
-    if null xs then
+    if null xs:
         return []
-    else
+    else:
         x := head xs
-        if x mod p != 0 then
-            return x : crossOff p (tail xs)
-        else
+        if x mod p != 0:
+            return x :: crossOff p (tail xs)
+        else:
             return crossOff p (tail xs)
 
 def sieve (ys: [Int]) -> [Int] =
@@ -16,7 +16,7 @@ def sieve (ys: [Int]) -> [Int] =
     print $ show p
     zs := crossOff p xs
 
-    return p : sieve zs
+    return p :: sieve zs
 
 print $ show $ sum $ sieve $ range 2 2000000
 

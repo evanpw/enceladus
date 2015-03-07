@@ -4,13 +4,13 @@ def reciprocal (d: Int) -> [Int] =
     result := []
     numerator := 1
 
-    while numerator != 0 do
+    while numerator != 0:
         quotient := numerator / d
         remainder := numerator mod d
 
         assert $ quotient < 10
 
-        result = quotient : result
+        result = quotient :: result
         numerator = remainder * 10
 
     return reverse $ result
@@ -25,10 +25,10 @@ def next (n: Int, d: Int) -> Int =
 
 def findIn (x: Int, xs: [Int]) -> Int =
     i := 0
-    while not $ null xs do
-        if x == head xs then
+    while not $ null xs:
+        if x == head xs:
             return i
-        else
+        else:
             xs = tail xs
             i += 1
 
@@ -38,24 +38,24 @@ def periodLength (d: Int) -> Int =
     n := 1
 
     numerators := []
-    while n != 0 do
+    while n != 0:
         n = next n d
 
         index := findIn n numerators
 
-        if index >= 0 then
+        if index >= 0:
             return index + 1
 
-        numerators = n : numerators
+        numerators = n :: numerators
 
     return 0
 
 longest := 0
 longestIndex := 1
-for d in range 2 999 do
+for d in range 2 999:
     period := periodLength d
 
-    if period > longest then
+    if period > longest:
         longest = period
         longestIndex = d
 

@@ -4,8 +4,8 @@ total := 0
 
 last := 1
 current := 2
-while current < 4000000 do
-	if current mod 2 == 0 then
+while current < 4000000:
+	if current mod 2 == 0:
 		total += current
 
     -- TODO: Add this syntax

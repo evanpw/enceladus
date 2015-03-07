@@ -30,8 +30,8 @@ statement
     | expression EOL
 
 if_statement
-    : IF expression THEN suite
-    | IF expression THEN suite ELSE suite
+    : IF expression ':' suite
+    | IF expression ':' suite ELSE ':' suite
 
 assignment_statement
     : LIDENT '=' expression EOL
@@ -53,10 +53,10 @@ foreign_declaration
     : FOREIGN ident params_and_types EOL
 
 for_statement
-    : FOR LIDENT IN expression DO suite
+    : FOR LIDENT IN expression ':' suite
 
 forever_statement
-    : FOREVER DO suite
+    : FOREVER ':' suite
 
 match_statement
     : LET UIDENT parameters '=' expression EOL
@@ -72,7 +72,7 @@ variable_declaration
     | VAR LIDENT [ ':' type ] '=' expression EOL
 
 while_statement
-    : WHILE expression DO suite
+    : WHILE expression ':' suite
 
 break_statement
     : BREAK EOL
@@ -149,7 +149,7 @@ relational_expression
     : cons_expression [ ( '>' | '<' | GE | LE ) cons_expression ]
 
 cons_expression
-    : additive_expression [ ':' cons_expression ]
+    : additive_expression [ DCOLON cons_expression ]
 
 additive_expression
     : multiplicative_expression { ( '+' | '-' ) multiplicative_expression }

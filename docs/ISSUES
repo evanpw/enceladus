@@ -15,3 +15,8 @@
   (see structMemberNames.spl)
 
 * Allow sum types and multiple pattern matching (see sumTypes.spl)
+
+* Need an else-if (elif) statement
+
+* Allow list literals within brackets to span multiple lines, with indentation
+  ignored (see longLiteral.spl)

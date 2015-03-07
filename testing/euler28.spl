@@ -10,7 +10,7 @@ def isDiagonal (x: Int, y: Int) -> Bool =
     (x == y) or (x == -y)
 
 def check x y =
-    if isDiagonal x y then
+    if isDiagonal x y:
         total += i
 
     i += 1
@@ -19,27 +19,27 @@ def check x y =
 check 0 0
 
 n := 1
-while 2 * n + 1 <= 1001 do
+while 2 * n + 1 <= 1001:
     x := n
     y := n
 
     -- Down
-    for _ in range 1 $ 2 * n do
+    for _ in range 1 $ 2 * n:
         y -= 1
         check x y
 
     -- Left
-    for _ in range 1 $ 2 * n do
+    for _ in range 1 $ 2 * n:
         x -= 1
         check x y
 
     -- Up
-    for _ in range 1 $ 2 * n do
+    for _ in range 1 $ 2 * n:
         y += 1
         check x y
 
     -- Right
-    for _ in range 1 $ 2 * n do
+    for _ in range 1 $ 2 * n:
         x += 1
         check x y
 

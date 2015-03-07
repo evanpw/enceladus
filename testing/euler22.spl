@@ -9,14 +9,14 @@ def readNames () -> [String] =
     pieces := splitBy ',' line
 
     result := []
-    for piece in pieces do
-        result = (trimChar '"' piece) : result
+    for piece in pieces:
+        result = (trimChar '"' piece) :: result
 
     return result
 
 def score (name: String) -> Int =
     total := 0
-    for c in name do
+    for c in name:
         total += (c - 'A') + 1
 
     return total
@@ -25,7 +25,7 @@ names := readNames
 names = sort cmpList names
 
 total := 0
-for i in range 1 (length names) do
+for i in range 1 (length names):
     name := at (i - 1) names
 
     total += i * score name

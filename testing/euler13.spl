@@ -5,17 +5,17 @@ import BigInt
 def readNumber () -> [Int] =
     ys := []
 
-    for j in range 1 50 do
-        ys = read : ys
+    for j in range 1 50:
+        ys = read :: ys
 
     return ys
 
 xs := toBigInt 0
-for i in range 1 100 do
+for i in range 1 100:
     xs = bigSum xs readNumber
 
 n := 0
-for x in take 10 $ reverse xs do
+for x in take 10 $ reverse xs:
     n = (n * 10) + x
 
 print $ show n

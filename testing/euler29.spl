@@ -4,11 +4,11 @@ import List
 import String
 
 values := []
-for a in range 2 100 do
-    for b in range 2 100 do
+for a in range 2 100:
+    for b in range 2 100:
         n := bigPower a b
 
-        values = n : values
+        values = n :: values
 
 values = uniquify cmpList values
 print $ show $ length values

@@ -11,24 +11,24 @@ struct Date =
 def isLeapYear (date: Date) -> Bool =
     year := date{year}
 
-    if year mod 4 == 0 then
-        if year mod 100 == 0 then
-            if year mod 400 == 0 then
+    if year mod 4 == 0:
+        if year mod 100 == 0:
+            if year mod 400 == 0:
                 return True
-            else
+            else:
                 return False
-        else
+        else:
             return True
-    else
+    else:
         return False
 
 def daysInMonth (date: Date) -> Int =
     nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-    if isLeapYear date then
+    if isLeapYear date:
         return at date{month} leapYear
-    else
+    else:
         return at date{month} nonLeap
 
 def incrementDate (date: Date) -> Date =
@@ -37,11 +37,11 @@ def incrementDate (date: Date) -> Date =
     d += 1
     w = (w + 1) mod 7
 
-    if d > daysInMonth date then
+    if d > daysInMonth date:
         d = 1
         m += 1
 
-        if m > 12 then
+        if m > 12:
             y += 1
             m = 1
 
@@ -56,8 +56,8 @@ def printDate (date: Date) -> String =
 current := Date 1900 1 1 1
 
 dayCount := 0
-while current{year} <= 2000 do
-    if (current{year} >= 1901) and (current{day} == 1) and (current{dayOfWeek} == 0) then
+while current{year} <= 2000:
+    if (current{year} >= 1901) and (current{day} == 1) and (current{dayOfWeek} == 0):
         dayCount += 1
 
     current = incrementDate current

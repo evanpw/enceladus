@@ -1,7 +1,7 @@
 def f (path: Bool) -> Int =
-    if path then
+    if path:
         4
-    else
+    else:
         5
 
 print $ show $ f True

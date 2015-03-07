@@ -2,8 +2,10 @@
 
 def isPrime (x: Int) -> Bool =
     i := 2
-    while i * i <= x do
-        if x mod i == 0 then return False
+    while i * i <= x:
+        if x mod i == 0:
+            return False
+
         i += 1
 
     return True
@@ -11,8 +13,9 @@ def isPrime (x: Int) -> Bool =
 def sumPrimes (n: Int) -> Int =
     total := 0
 
-    for i in range 2 n do
-        if isPrime i then total += i
+    for i in range 2 n:
+        if isPrime i:
+            total += i
 
     return total
 

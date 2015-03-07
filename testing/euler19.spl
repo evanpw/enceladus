@@ -23,15 +23,15 @@ def dayOfWeek (date: Date) -> Int =
 def isLeapYear (date: Date) -> Bool =
     let Date y m d w = date
 
-    if y mod 4 == 0 then
-        if y mod 100 == 0 then
-            if y mod 400 == 0 then
+    if y mod 4 == 0:
+        if y mod 100 == 0:
+            if y mod 400 == 0:
                 return True
-            else
+            else:
                 return False
-        else
+        else:
             return True
-    else
+    else:
         return False
 
 def daysInMonth (date: Date) -> Int =
@@ -40,9 +40,9 @@ def daysInMonth (date: Date) -> Int =
     nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-    if isLeapYear date then
+    if isLeapYear date:
         return at m leapYear
-    else
+    else:
         return at m nonLeap
 
 def incrementDate (date: Date) -> Date =
@@ -53,13 +53,13 @@ def incrementDate (date: Date) -> Date =
     w' := w + 1
     d' := d + 1
 
-    if w' > 6 then w' = 0
+    if w' > 6: w' = 0
 
-    if d' > daysInMonth date then
+    if d' > daysInMonth date:
         d' = 1
         m' = m + 1
 
-        if m' > 12 then
+        if m' > 12:
             y' = y + 1
             m' = 1
 
@@ -76,8 +76,8 @@ def printDate (date: Date) -> String =
 current := Date 1900 1 1 1
 
 dayCount := 0
-while (year current) <= 2000 do
-    if (year current >= 1901) and (day current == 1) and (dayOfWeek current == 0) then
+while (year current) <= 2000:
+    if (year current >= 1901) and (day current == 1) and (dayOfWeek current == 0):
         dayCount += 1
 
     current = incrementDate current

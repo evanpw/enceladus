@@ -244,7 +244,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(do|if|then|else|while|for|return|break|forever)\b</string>
+			<string>\b(do|if|then|else|while|for|return|break|forever|elif)\b</string>
 			<key>name</key>
 			<string>keyword.control.simple</string>
 		</dict>
@@ -512,7 +512,7 @@
 			<key>comment</key>
 			<string>In case this regex seems overly general, note that Simple permits the definition of new operators which can be nearly any string of punctuation characters, such as $%^&amp;*.</string>
 			<key>match</key>
-			<string>[|!%$?~+:\-.=&lt;/&gt;\\]+</string>
+			<string>[|!%$?~+:\-.=&lt;/&gt;\\]+|mod</string>
 			<key>name</key>
 			<string>keyword.operator.simple</string>
 		</dict>

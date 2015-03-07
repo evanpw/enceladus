@@ -6,19 +6,19 @@ def readInput () -> [String] =
     pyramid := []
 
     keepGoing := True
-    while keepGoing do
+    while keepGoing:
         line := readLine
 
-        if null line then
+        if null line:
             keepGoing = False
-        else
+        else:
             xs := []
-            for s in split line do
-                xs = (stringToInt s) : xs
+            for s in split line:
+                xs = (stringToInt s) :: xs
 
             row := reverse xs
 
-            pyramid = row : pyramid
+            pyramid = row :: pyramid
 
     return reverse pyramid
 
@@ -26,9 +26,9 @@ def bestRouteFrom (x: Int, y: Int, pyramid: [String]) -> Int =
     row := at y pyramid
     here := at x row
 
-    if y == (length pyramid - 1) then
+    if y == (length pyramid - 1):
         return here
-    else
+    else:
         left := bestRouteFrom x (y + 1) pyramid
         right := bestRouteFrom (x + 1) (y + 1) pyramid
 

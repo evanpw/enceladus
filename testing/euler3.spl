@@ -2,8 +2,10 @@
 
 def isPrime (x: Int) -> Bool =
     i := 2
-    while i * i <= x do
-        if x mod i == 0 then return False
+    while i * i <= x:
+        if x mod i == 0:
+            return False
+
         i += 1
 
     return True
@@ -13,9 +15,10 @@ biggest := 0
 
 -- Loop over all possible divisors of n
 i := 2
-while i * i <= n do
+while i * i <= n:
 
-	if n mod i == 0 and isPrime i then biggest = i
+	if n mod i == 0 and isPrime i:
+        biggest = i
 
 	i += 1
 

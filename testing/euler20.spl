@@ -3,7 +3,7 @@
 import BigInt
 
 x := [1]
-for i in range 2 100 do
+for i in range 2 100:
     x = bigProduct x $ toBigInt i
 
 print $ show $ sum x

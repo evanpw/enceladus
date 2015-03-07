@@ -8,21 +8,24 @@ def eval (quad: Quadratic, n: Int) -> Int =
     return n * n + a * n + b
 
 def isPrime (x: Int) -> Bool =
-    if x <= 0 then return False
+    if x <= 0: return False
 
     i := 2
-    while i * i <= x do
-        if x mod i == 0 then return False
+    while i * i <= x:
+        if x mod i == 0:
+            return False
+
         i += 1
 
     return True
 
 def numberOfPrimes (q: Quadratic) -> Int =
     n := 0
-    forever do
+    forever:
         p := eval q n
 
-        if not $ isPrime p then break
+        if not $ isPrime p:
+            break
 
         n += 1
 
@@ -31,12 +34,12 @@ def numberOfPrimes (q: Quadratic) -> Int =
 
 best := 0
 bestProduct := 0
-for a in range -1000 1000 do
-    for b in range -1000 1000 do
+for a in range -1000 1000:
+    for b in range -1000 1000:
         q := Quadratic a b
         count := numberOfPrimes q
 
-        if count > best then
+        if count > best:
             best = count
             bestProduct = a * b
 

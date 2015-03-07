@@ -2,7 +2,7 @@
 
 def toInt (xs: [Int]) -> Int =
     result := 0
-    for x in xs do
+    for x in xs:
         result = (result * 10) + x
 
     return result
@@ -11,25 +11,25 @@ def delete (x: Int, xs: [Int]) -> [Int] =
     initial := []
     xs' := xs
 
-    while not $ null xs' do
-        if head xs' == x then
+    while not $ null xs':
+        if head xs' == x:
             return (reverse initial) ++ (tail xs')
-        else
-            initial = (head xs') : initial
+        else:
+            initial = (head xs') :: initial
 
         xs' = tail xs'
 
     return xs
 
 def permutations (digits: [Int]) -> [[Int]] =
-    if length digits == 1 then
+    if length digits == 1:
         return [[head digits]]
 
     result := []
-    for digit in digits do
+    for digit in digits:
         ps := permutations $ delete digit digits
-        for p in ps do
-            result = (digit : p) : result
+        for p in ps:
+            result = (digit :: p) :: result
 
     return reverse $ result
 

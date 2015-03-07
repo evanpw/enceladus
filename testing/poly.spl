@@ -1,11 +1,11 @@
-xs := True : []
-ys := 4 : 3 : []
+xs := True :: []
+ys := 4 :: 3 :: []
 
-if head xs then
+if head xs:
     print $ show $ head ys
- else
-    if null $ tail xs then
+ else:
+    if null $ tail xs:
         print $ show $ head $ tail ys
-    else
+    else:
         print $ show -1
 

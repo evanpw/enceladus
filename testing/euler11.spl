@@ -11,9 +11,9 @@ def makeRun (x: Int, y: Int, dx: Int, dy: Int) -> Int =
 def allRuns (xrange: [Int], yrange: [Int], dx: Int, dy: Int) -> [Int] =
     xs := []
 
-    for x in xrange do
-        for y in yrange do
-            xs = makeRun x y dx dy : xs
+    for x in xrange:
+        for y in yrange:
+            xs = makeRun x y dx dy :: xs
 
     return xs
 
