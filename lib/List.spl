@@ -1,9 +1,9 @@
 -- Equality
-def eqInt (x: Int, y: Int) -> Bool =
+def eqInt (x: Int, y: Int) -> Bool 
     return (x == y)
 
 
-def eqList (xs: [Int], ys: [Int]) -> Bool =
+def eqList (xs: [Int], ys: [Int]) -> Bool 
     if null xs: return null ys
     if null ys: return null xs
 
@@ -14,11 +14,11 @@ def eqList (xs: [Int], ys: [Int]) -> Bool =
 ---- x < y   =>  -1
 ---- x > y   =>  +1
 ---- x == y  =>   0
-def cmpInt (x: Int, y: Int) -> Int =
+def cmpInt (x: Int, y: Int) -> Int 
     return (x - y)
 
 
-def cmpList (xs: [Int], ys: [Int]) -> Int =
+def cmpList (xs: [Int], ys: [Int]) -> Int 
     if null xs:
         if null ys:
             return 0
@@ -36,14 +36,14 @@ def cmpList (xs: [Int], ys: [Int]) -> Int =
 
 
 -- List operations
-def isIn (eq: |a, a| -> Bool, x: a, ys: [a]) -> Bool =
+def isIn (eq: |a, a| -> Bool, x: a, ys: [a]) -> Bool 
     for y in ys:
         if eq x y: return True
 
     return False
 
 
-def splitList (cmp: |a, a| -> Int, xs: [a], pivot: a) -> Pair [a] =
+def splitList (cmp: |a, a| -> Int, xs: [a], pivot: a) -> Pair [a] 
     lhs := []
     rhs := []
 
@@ -56,7 +56,7 @@ def splitList (cmp: |a, a| -> Int, xs: [a], pivot: a) -> Pair [a] =
     return Pair lhs rhs
 
 
-def sort (cmp: |a, a| -> Int, xs: [a]) -> [a] =
+def sort (cmp: |a, a| -> Int, xs: [a]) -> [a] 
     if length xs <= 1:
         return xs
 
@@ -66,7 +66,7 @@ def sort (cmp: |a, a| -> Int, xs: [a]) -> [a] =
     return (sort cmp lhs) ++ [pivot] ++ (sort cmp rhs)
 
 
-def uniquify (cmp: |a, a| -> Int, xs: [a]) -> [a] =
+def uniquify (cmp: |a, a| -> Int, xs: [a]) -> [a] 
     if null xs: return []
 
     xs = sort cmp xs

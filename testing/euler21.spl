@@ -1,6 +1,6 @@
 # Solves Project Euler #21
 
-def divisors (n: Int) -> [Int] =
+def divisors (n: Int) -> [Int] 
     result := [1]
 
     i := 2
@@ -15,7 +15,7 @@ def divisors (n: Int) -> [Int] =
 
     return result
 
-def isAmicable (n: Int) -> Bool =
+def isAmicable (n: Int) -> Bool 
     n' := sum $ divisors n
 
     if n == n': return False

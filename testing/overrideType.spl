@@ -1,4 +1,4 @@
-def f(x: a) -> a =
+def f(x: a) -> a 
     return x + 4
 
 print $ show $ f 8

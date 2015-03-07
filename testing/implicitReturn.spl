@@ -1,4 +1,4 @@
-def f (path: Bool) -> Int =
+def f (path: Bool) -> Int 
     if path:
         4
     else:

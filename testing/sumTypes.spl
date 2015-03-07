@@ -1,6 +1,6 @@
 data Option a = Some a | None
 
-def divideByTwo(x: Int) -> Option Int =
+def divideByTwo(x: Int) -> Option Int 
     if x % 2 == 0:
         return Some (x / 2)
     else:

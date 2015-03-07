@@ -9,7 +9,7 @@ let MyPair c d = y
 result := b
 if c: result += 1
 
-def identity (x: a) -> a =
+def identity (x: a) -> a 
     return x
 
 result += identity 3

@@ -13,23 +13,23 @@ foreign dieWithMessage (msg: String) -> Unit
 
 ## Native-language standard library
 
-def concat (xs: [a], ys: [a]) -> [a] =
+def concat (xs: [a], ys: [a]) -> [a]
     if null xs:
         return ys
     else:
         return head xs :: concat (tail xs) ys
 
 
-def assert (b: Bool) -> Unit =
+def assert (b: Bool) -> Unit
     if not b: dieWithMessage "Assertion failed!"
 
 
-def assertMessage (b: Bool, err: String) -> Unit =
+def assertMessage (b: Bool, err: String) -> Unit
     if not b: dieWithMessage $ "Assertion failed: " ++ err
 
 
 # Miscellanous functions
-def range (a: Int, b: Int) -> [Int] =
+def range (a: Int, b: Int) -> [Int]
     xs := []
 
     i := b
@@ -40,7 +40,7 @@ def range (a: Int, b: Int) -> [Int] =
     return xs
 
 
-def length (xs: [a]) -> Int =
+def length (xs: [a]) -> Int
     result := 0
 
     while not $ null xs:
@@ -50,49 +50,49 @@ def length (xs: [a]) -> Int =
     return result
 
 
-def sum (xs: [Int]) -> Int =
+def sum (xs: [Int]) -> Int
     if null xs:
         return 0
     else:
         return head xs + sum $ tail xs
 
 
-def product (xs: [Int]) -> Int =
+def product (xs: [Int]) -> Int
     if null xs:
         return 1
     else:
         return head xs * product $ tail xs
 
 
-def take (n: Int, xs: [a]) -> [a] =
+def take (n: Int, xs: [a]) -> [a]
     if n == 0:
         return []
     else:
         return head xs :: take (n - 1) (tail xs)
 
 
-def drop (n: Int, xs: [a]) -> [a] =
+def drop (n: Int, xs: [a]) -> [a]
     if n == 0:
         return xs
     else:
         return drop (n - 1) (tail xs)
 
 
-def max (a: Int, b: Int) -> Int =
+def max (a: Int, b: Int) -> Int
     if a > b:
         return a
     else:
         return b
 
 
-def maximum (xs: [Int]) -> Int =
+def maximum (xs: [Int]) -> Int
     if length xs == 1:
         return head xs
     else:
         return max (head xs) (maximum $ tail xs)
 
 
-def at (n: Int, xs: [a]) -> a =
+def at (n: Int, xs: [a]) -> a
     while n > 0:
         xs = tail xs
         n -= 1
@@ -100,7 +100,7 @@ def at (n: Int, xs: [a]) -> a =
     return head xs
 
 
-def reverse (xs: [a]) -> [a] =
+def reverse (xs: [a]) -> [a]
     ys := []
     for x in xs:
         ys = x :: ys
@@ -108,7 +108,7 @@ def reverse (xs: [a]) -> [a] =
     return ys
 
 
-def map (f: a -> b, xs: [a]) -> [b] =
+def map (f: a -> b, xs: [a]) -> [b]
     result := []
     for x in xs:
         result = f x :: result
@@ -116,7 +116,7 @@ def map (f: a -> b, xs: [a]) -> [b] =
     return reverse result
 
 
-def filter (f: a -> Bool, xs: [a]) -> [a] =
+def filter (f: a -> Bool, xs: [a]) -> [a]
     ys := []
     for x in xs:
         if f x: ys = x :: ys
@@ -124,17 +124,17 @@ def filter (f: a -> Bool, xs: [a]) -> [a] =
     return reverse ys
 
 
-def even (x: Int) -> Bool =
+def even (x: Int) -> Bool
     if x mod 2 == 0: return True
     else: return False
 
 
-def odd (x: Int) -> Bool =
+def odd (x: Int) -> Bool
     if x mod 2 == 0: return False
     else: return True
 
 
-def pow (a: Int, b: Int) -> Int =
+def pow (a: Int, b: Int) -> Int
     r := 1
     while True:
         if b mod 2 == 1: r *= a
@@ -146,7 +146,7 @@ def pow (a: Int, b: Int) -> Int =
 
 
 # Non stack-destroying version
-#def concat xs ys :: [Int] -> [Int] -> [Int] =
+#def concat xs ys :: [Int] -> [Int] -> [Int]
 #    let zs :: [Int] = ys
 
 #    for x in reverse xs:
@@ -157,7 +157,7 @@ def pow (a: Int, b: Int) -> Int =
 
 ## Strings ##
 
-def show (x: Int) -> String =
+def show (x: Int) -> String
     if x == 0: return "0"
 
     negative := (x < 0)
@@ -179,15 +179,15 @@ def show (x: Int) -> String =
 data Pair a = Pair a a
 
 
-def fst (pair: Pair a) -> a =
+def fst (pair: Pair a) -> a
     let Pair x _ = pair
     return x
 
 
-def snd (pair: Pair a) -> a =
+def snd (pair: Pair a) -> a
     let Pair _ x = pair
     return x
 
 
-def splitAt (n: Int, xs: [a]) -> Pair [a] =
+def splitAt (n: Int, xs: [a]) -> Pair [a]
     return Pair (take n xs) (drop n xs)

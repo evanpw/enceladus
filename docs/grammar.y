@@ -47,7 +47,8 @@ type_alias_declaration
     : TYPE UIDENT '=' type EOL
 
 function_definition
-    : DEF ident params_and_types '=' suite
+    : DEF ident params_and_types '=' statement
+    | DEF ident params_and_types EOL INDENT statement_list DEDENT
 
 foreign_declaration
     : FOREIGN ident params_and_types EOL

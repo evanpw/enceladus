@@ -1,6 +1,6 @@
 -- Solve Project Euler 5
 
-def gcd (a: Int, b: Int) -> Int =
+def gcd (a: Int, b: Int) -> Int
 	if b == 0:
 		return a
 	else:

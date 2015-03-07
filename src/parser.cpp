@@ -235,10 +235,28 @@ StatementNode* function_definition()
     expect(tDEF);
     std::string name = ident();
     std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
-    expect('=');
-    StatementNode* body = suite();
 
-    return new FunctionDefNode(location, name, body, paramsAndTypes.first, paramsAndTypes.second);
+    if (accept('='))
+    {
+        StatementNode* body = statement();
+
+        return new FunctionDefNode(location, name, body, paramsAndTypes.first, paramsAndTypes.second);
+    }
+    else
+    {
+        expect(tEOL);
+        expect(tINDENT);
+
+        BlockNode* block = new BlockNode(getLocation());
+        while (peekType() != tDEDENT)
+        {
+            block->append(statement());
+        }
+
+        expect(tDEDENT);
+
+        return new FunctionDefNode(location, name, block, paramsAndTypes.first, paramsAndTypes.second);
+    }
 }
 
 StatementNode* foreign_declaration()
@@ -335,7 +353,7 @@ StatementNode* assignment_statement()
     Token token = expect(tLIDENT);
     std::string lhs = token.value.str;
 
-    if (accept((TokenType)'='))
+    if (accept('='))
     {
         ExpressionNode* rhs = expression();
 
@@ -741,11 +759,11 @@ ExpressionNode* relational_expression()
 {
     ExpressionNode* lhs = cons_expression();
 
-    if (accept((TokenType)'>'))
+    if (accept('>'))
     {
         return new ComparisonNode(getLocation(), lhs, ComparisonNode::kGreater, cons_expression());
     }
-    else if (accept((TokenType)'<'))
+    else if (accept('<'))
     {
         return new ComparisonNode(getLocation(), lhs, ComparisonNode::kLess, cons_expression());
     }
@@ -910,7 +928,7 @@ ExpressionNode* unary_expression()
 
     case '[':
         expect('[');
-        if (accept((TokenType)']'))
+        if (accept(']'))
         {
             return new FunctionCallNode(getLocation(), "Nil", ArgList());
         }
@@ -919,7 +937,7 @@ ExpressionNode* unary_expression()
             ArgList argList;
             argList.emplace_back(expression());
 
-            while (accept((TokenType)','))
+            while (accept(','))
             {
                 argList.emplace_back(expression());
             }

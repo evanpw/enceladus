@@ -6,7 +6,7 @@ smallNumbers := ["zero", "one", "two", "three", "four", "five", "six", "seven", 
 
 multiplesOfTen := ["zero", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
 
-def numInWords (x: Int) -> String =
+def numInWords (x: Int) -> String 
     if x < 20:
         return at x smallNumbers
     else: if x < 100:

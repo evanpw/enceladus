@@ -1,4 +1,4 @@
-def f () -> Int =
+def f () -> Int 
     forever:
         return 10
 

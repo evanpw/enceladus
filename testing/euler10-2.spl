@@ -1,6 +1,6 @@
 # Solves Project Euler 10
 
-def crossOff (p: Int, xs: [Int]) -> Int =
+def crossOff (p: Int, xs: [Int]) -> Int 
     if null xs:
         return []
     else:
@@ -10,7 +10,7 @@ def crossOff (p: Int, xs: [Int]) -> Int =
         else:
             return crossOff p (tail xs)
 
-def sieve (ys: [Int]) -> [Int] =
+def sieve (ys: [Int]) -> [Int] 
     p := head ys
     xs := tail ys
     print $ show p

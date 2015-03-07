@@ -1,11 +1,11 @@
-def isSpace (c: Char) -> Bool =
+def isSpace (c: Char) -> Bool 
     if c == ' ' or c == '\n' or c == '\r' or c == '\t':
         return True
     else:
         return False
 
 
-def trimLeft (s: String) -> String =
+def trimLeft (s: String) -> String 
     xs := []
     for c in s:
         if not $ isSpace c: xs = c :: xs
@@ -13,7 +13,7 @@ def trimLeft (s: String) -> String =
     return reverse xs
 
 
-def trim (s: String) -> String =
+def trim (s: String) -> String 
     s1 := s
     while (not $ null s1) and (isSpace $ head s1):
         s1 = tail s1
@@ -25,7 +25,7 @@ def trim (s: String) -> String =
     return reverse s2
 
 
-def trimChar (c: Char, s: String) -> String =
+def trimChar (c: Char, s: String) -> String 
     s1 := s
     while (not $ null s1) and (head s1 == c):
         s1 = tail s1
@@ -37,11 +37,11 @@ def trimChar (c: Char, s: String) -> String =
     return reverse s2
 
 
-def substring (s: String, start: Int, n: Int) -> String =
+def substring (s: String, start: Int, n: Int) -> String 
     return take n (drop start s)
 
 
-def split (s: String) -> [String] =
+def split (s: String) -> [String] 
     result := []
     piece := ""
 
@@ -61,7 +61,7 @@ def split (s: String) -> [String] =
     return reverse result
 
 
-def splitBy (sep: Char, s: String) -> [String] =
+def splitBy (sep: Char, s: String) -> [String] 
     result := []
     piece := ""
 
@@ -81,7 +81,7 @@ def splitBy (sep: Char, s: String) -> [String] =
     return reverse result
 
 
-def join (sep: String, xs: [String]) -> String =
+def join (sep: String, xs: [String]) -> String 
     if null xs:
         return ""
     else: if length xs == 1:
@@ -90,7 +90,7 @@ def join (sep: String, xs: [String]) -> String =
         return head xs ++ sep ++ join sep $ tail xs
 
 
-def stringToInt (s: String) -> Int =
+def stringToInt (s: String) -> Int 
     x := 0
     for digit in s:
         assertMessage (digit >= '0' and digit <= '9') "stringToInt: Digit out of range"

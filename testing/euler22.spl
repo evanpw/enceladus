@@ -3,7 +3,7 @@
 import List
 import String
 
-def readNames () -> [String] =
+def readNames () -> [String] 
     line := readLine
 
     pieces := splitBy ',' line
@@ -14,7 +14,7 @@ def readNames () -> [String] =
 
     return result
 
-def score (name: String) -> Int =
+def score (name: String) -> Int 
     total := 0
     for c in name:
         total += (c - 'A') + 1
