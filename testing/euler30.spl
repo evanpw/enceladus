@@ -2,7 +2,7 @@
 
 def digitPowerSum (n: Int) -> Int 
     result := 0
-    while n > 0:
+    while n > 0
         digit := n mod 10
         result += pow digit 5
         n /= 10
@@ -15,8 +15,8 @@ def digitPowerSum (n: Int) -> Int
 top := 6 * pow 9 6
 
 total := 0
-for i in range 2 top:
-    if i == digitPowerSum i:
+for i in range 2 top
+    if i == digitPowerSum i
         total += i
 
 print $ show total

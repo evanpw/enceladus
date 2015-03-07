@@ -7,8 +7,8 @@ struct Pair =
 total := 0
 
 pair := Pair{last: 1, current: 2}
-while pair{current} < 4000000:
-    if pair{current} mod 2 == 0:
+while pair{current} < 4000000
+    if pair{current} mod 2 == 0
         total += pair{current}
 
     pair = Pair{last = pair{current}, current = pair{current} + pair{last}}

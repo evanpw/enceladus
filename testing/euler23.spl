@@ -6,11 +6,11 @@ def divisors (n: Int) -> [Int]
     result := [1]
 
     i := 2
-    while i * i <= n:
-        if n mod i == 0:
-            if i * i == n:
+    while i * i <= n
+        if n mod i == 0
+            if i * i == n
                 result = i :: result
-            else:
+            else
                 result = i :: (n / i) :: result
 
         i += 1
@@ -21,29 +21,29 @@ def isAbundant (n: Int) -> Bool
     (sum $ divisors n) > n
 
 def isSumOfTwo (y: Int, xs: [Int], zs: [Int]) -> Bool 
-    while not (null xs or null zs):
+    while not (null xs or null zs)
         s := (head xs) + (head zs)
 
-        if s == y:
+        if s == y
             return True
-        else: if s > y:
+        else: if s > y
             zs = tail zs
-        else:
+        else
             xs = tail xs
 
     return False
 
 abundants := []
-for i in range 1 28123:
-    if isAbundant i:
+for i in range 1 28123
+    if isAbundant i
         abundants = i :: abundants
 
 abundants = sort cmpInt abundants
 reversed := reverse abundants
 
 total := 0
-for j in range 1 28123:
-    if not $ isSumOfTwo j abundants reversed:
+for j in range 1 28123
+    if not $ isSumOfTwo j abundants reversed
         total += j
 
 print $ show total

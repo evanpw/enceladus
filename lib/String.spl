@@ -1,13 +1,13 @@
 def isSpace (c: Char) -> Bool 
-    if c == ' ' or c == '\n' or c == '\r' or c == '\t':
+    if c == ' ' or c == '\n' or c == '\r' or c == '\t'
         return True
-    else:
+    else
         return False
 
 
 def trimLeft (s: String) -> String 
     xs := []
-    for c in s:
+    for c in s
         if not $ isSpace c: xs = c :: xs
 
     return reverse xs
@@ -15,11 +15,11 @@ def trimLeft (s: String) -> String
 
 def trim (s: String) -> String 
     s1 := s
-    while (not $ null s1) and (isSpace $ head s1):
+    while (not $ null s1) and (isSpace $ head s1)
         s1 = tail s1
 
     s2 := reverse s1
-    while (not $ null s2) and (isSpace $ head s2):
+    while (not $ null s2) and (isSpace $ head s2)
         s2 = tail s2
 
     return reverse s2
@@ -27,11 +27,11 @@ def trim (s: String) -> String
 
 def trimChar (c: Char, s: String) -> String 
     s1 := s
-    while (not $ null s1) and (head s1 == c):
+    while (not $ null s1) and (head s1 == c)
         s1 = tail s1
 
     s2 := reverse s1
-    while (not $ null s2) and (head s2 == c):
+    while (not $ null s2) and (head s2 == c)
         s2 = tail s2
 
     return reverse s2
@@ -45,13 +45,13 @@ def split (s: String) -> [String]
     result := []
     piece := ""
 
-    while not $ null s:
-        if isSpace $ head s:
-            if length piece > 0:
+    while not $ null s
+        if isSpace $ head s
+            if length piece > 0
                 result = (reverse piece) :: result
 
             piece = ""
-        else:
+        else
             piece = (head s) :: piece
 
         s = tail s
@@ -65,13 +65,13 @@ def splitBy (sep: Char, s: String) -> [String]
     result := []
     piece := ""
 
-    while not $ null s:
-        if head s == sep:
-            if length piece > 0:
+    while not $ null s
+        if head s == sep
+            if length piece > 0
                 result = (reverse piece) :: result
 
             piece = ""
-        else:
+        else
             piece = (head s) :: piece
 
         s = tail s
@@ -82,17 +82,17 @@ def splitBy (sep: Char, s: String) -> [String]
 
 
 def join (sep: String, xs: [String]) -> String 
-    if null xs:
+    if null xs
         return ""
-    else: if length xs == 1:
+    else: if length xs == 1
         return head xs
-    else:
+    else
         return head xs ++ sep ++ join sep $ tail xs
 
 
 def stringToInt (s: String) -> Int 
     x := 0
-    for digit in s:
+    for digit in s
         assertMessage (digit >= '0' and digit <= '9') "stringToInt: Digit out of range"
 
         x *= 10

@@ -30,8 +30,8 @@ statement
     | expression EOL
 
 if_statement
-    : IF expression ':' suite
-    | IF expression ':' suite ELSE ':' suite
+    : IF expression suite
+    | IF expression suite ELSE suite
 
 assignment_statement
     : LIDENT '=' expression EOL
@@ -47,17 +47,16 @@ type_alias_declaration
     : TYPE UIDENT '=' type EOL
 
 function_definition
-    : DEF ident params_and_types '=' statement
-    | DEF ident params_and_types EOL INDENT statement_list DEDENT
+    : DEF ident params_and_types suite
 
 foreign_declaration
     : FOREIGN ident params_and_types EOL
 
 for_statement
-    : FOR LIDENT IN expression ':' suite
+    : FOR LIDENT IN expression suite
 
 forever_statement
-    : FOREVER ':' suite
+    : FOREVER suite
 
 match_statement
     : LET UIDENT parameters '=' expression EOL
@@ -73,7 +72,7 @@ variable_declaration
     | VAR LIDENT [ ':' type ] '=' expression EOL
 
 while_statement
-    : WHILE expression ':' suite
+    : WHILE expression suite
 
 break_statement
     : BREAK EOL
@@ -104,7 +103,7 @@ constructor_spec
     : UIDENT { simple_type }
 
 suite
-    : statement
+    : ':' statement
     | EOL INDENT statement_list DEDENT
 
 statement_list

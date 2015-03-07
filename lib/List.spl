@@ -10,7 +10,7 @@ def eqList (xs: [Int], ys: [Int]) -> Bool
     return (head xs == head ys) and (eqList (tail xs) (tail ys))
 
 
--- Comparisons:
+-- Comparisons
 ---- x < y   =>  -1
 ---- x > y   =>  +1
 ---- x == y  =>   0
@@ -19,25 +19,25 @@ def cmpInt (x: Int, y: Int) -> Int
 
 
 def cmpList (xs: [Int], ys: [Int]) -> Int 
-    if null xs:
-        if null ys:
+    if null xs
+        if null ys
             return 0
-        else:
+        else
             return -1
-    else: if null ys:
+    else: if null ys
         return 1
-    else:
-        if (head xs) < (head ys):
+    else
+        if (head xs) < (head ys)
             return -1
-        else: if (head xs) > (head ys):
+        else: if (head xs) > (head ys)
             return 1
-        else:
+        else
             return cmpList (tail xs) (tail ys)
 
 
 -- List operations
 def isIn (eq: |a, a| -> Bool, x: a, ys: [a]) -> Bool 
-    for y in ys:
+    for y in ys
         if eq x y: return True
 
     return False
@@ -47,17 +47,17 @@ def splitList (cmp: |a, a| -> Int, xs: [a], pivot: a) -> Pair [a]
     lhs := []
     rhs := []
 
-    for x in xs:
-        if cmp x pivot < 0:
+    for x in xs
+        if cmp x pivot < 0
             lhs = x :: lhs
-        else:
+        else
             rhs = x :: rhs
 
     return Pair lhs rhs
 
 
 def sort (cmp: |a, a| -> Int, xs: [a]) -> [a] 
-    if length xs <= 1:
+    if length xs <= 1
         return xs
 
     pivot := head xs
@@ -74,8 +74,8 @@ def uniquify (cmp: |a, a| -> Int, xs: [a]) -> [a]
     result := [head xs]
     last := head xs
 
-    for x in tail xs:
-        if cmp last x != 0:
+    for x in tail xs
+        if cmp last x != 0
             result = x :: result
 
         last = x

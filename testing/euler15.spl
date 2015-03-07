@@ -5,11 +5,11 @@ memo := []
 def searchMemo (p: MyPair) -> Int 
     let MyPair x y = p
 
-    for m in memo:
+    for m in memo
         let Memo p' count = m
         let MyPair x' y' = p'
 
-        if x == x' and y == y':
+        if x == x' and y == y'
             return count
 
     return -1
@@ -20,14 +20,14 @@ def insertMemo (p: MyPair, count: Int) -> Unit
 def countPaths (p: MyPair) -> Int 
     let MyPair x y = p
 
-    if x == 20 and y == 20:
+    if x == 20 and y == 20
         return 1
 
-    if x > 20 or y > 20:
+    if x > 20 or y > 20
         return 0
 
     memoCount :=  searchMemo p
-    if memoCount >= 0:
+    if memoCount >= 0
         return memoCount
 
     count := 0

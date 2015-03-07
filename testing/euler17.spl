@@ -7,33 +7,33 @@ smallNumbers := ["zero", "one", "two", "three", "four", "five", "six", "seven", 
 multiplesOfTen := ["zero", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
 
 def numInWords (x: Int) -> String 
-    if x < 20:
+    if x < 20
         return at x smallNumbers
-    else: if x < 100:
+    else: if x < 100
         tens := x / 10
         ones := x mod 10
 
-        if ones != 0:
+        if ones != 0
             return join "" [at tens multiplesOfTen, at ones smallNumbers]
-        else:
+        else
             return (at tens multiplesOfTen)
-    else: if x < 1000:
+    else: if x < 1000
         ones = x mod 10
         tens = (x / 10) mod 10
         hundreds := x / 100
         rest := x mod 100
 
-        if rest != 0:
+        if rest != 0
             return join "" [at hundreds smallNumbers, "hundred", "and", numInWords rest]
-        else:
+        else
             return join "" [at hundreds smallNumbers, "hundred"]
-    else: if x == 1000:
+    else: if x == 1000
         return join "" ["one", "thousand"]
-    else:
+    else
         return "unknown"
 
 totalLength := 0
-for i in range 1 1000:
+for i in range 1 1000
     s := numInWords i
     totalLength += length s
 

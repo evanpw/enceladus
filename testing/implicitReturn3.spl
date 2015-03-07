@@ -1,5 +1,5 @@
 def f () -> Int 
-    forever:
+    forever
         return 10
 
 print $ show $ f

@@ -14,9 +14,9 @@ foreign dieWithMessage (msg: String) -> Unit
 ## Native-language standard library
 
 def concat (xs: [a], ys: [a]) -> [a]
-    if null xs:
+    if null xs
         return ys
-    else:
+    else
         return head xs :: concat (tail xs) ys
 
 
@@ -33,7 +33,7 @@ def range (a: Int, b: Int) -> [Int]
     xs := []
 
     i := b
-    while i >= a:
+    while i >= a
         xs = i :: xs
         i -= 1
 
@@ -43,7 +43,7 @@ def range (a: Int, b: Int) -> [Int]
 def length (xs: [a]) -> Int
     result := 0
 
-    while not $ null xs:
+    while not $ null xs
         xs = tail xs
         result += 1
 
@@ -51,49 +51,49 @@ def length (xs: [a]) -> Int
 
 
 def sum (xs: [Int]) -> Int
-    if null xs:
+    if null xs
         return 0
-    else:
+    else
         return head xs + sum $ tail xs
 
 
 def product (xs: [Int]) -> Int
-    if null xs:
+    if null xs
         return 1
-    else:
+    else
         return head xs * product $ tail xs
 
 
 def take (n: Int, xs: [a]) -> [a]
-    if n == 0:
+    if n == 0
         return []
-    else:
+    else
         return head xs :: take (n - 1) (tail xs)
 
 
 def drop (n: Int, xs: [a]) -> [a]
-    if n == 0:
+    if n == 0
         return xs
-    else:
+    else
         return drop (n - 1) (tail xs)
 
 
 def max (a: Int, b: Int) -> Int
-    if a > b:
+    if a > b
         return a
-    else:
+    else
         return b
 
 
 def maximum (xs: [Int]) -> Int
-    if length xs == 1:
+    if length xs == 1
         return head xs
-    else:
+    else
         return max (head xs) (maximum $ tail xs)
 
 
 def at (n: Int, xs: [a]) -> a
-    while n > 0:
+    while n > 0
         xs = tail xs
         n -= 1
 
@@ -102,7 +102,7 @@ def at (n: Int, xs: [a]) -> a
 
 def reverse (xs: [a]) -> [a]
     ys := []
-    for x in xs:
+    for x in xs
         ys = x :: ys
 
     return ys
@@ -110,7 +110,7 @@ def reverse (xs: [a]) -> [a]
 
 def map (f: a -> b, xs: [a]) -> [b]
     result := []
-    for x in xs:
+    for x in xs
         result = f x :: result
 
     return reverse result
@@ -118,7 +118,7 @@ def map (f: a -> b, xs: [a]) -> [b]
 
 def filter (f: a -> Bool, xs: [a]) -> [a]
     ys := []
-    for x in xs:
+    for x in xs
         if f x: ys = x :: ys
 
     return reverse ys
@@ -136,7 +136,7 @@ def odd (x: Int) -> Bool
 
 def pow (a: Int, b: Int) -> Int
     r := 1
-    while True:
+    while True
         if b mod 2 == 1: r *= a
         b /= 2
         if b == 0: break
@@ -149,7 +149,7 @@ def pow (a: Int, b: Int) -> Int
 #def concat xs ys :: [Int] -> [Int] -> [Int]
 #    let zs :: [Int] = ys
 
-#    for x in reverse xs:
+#    for x in reverse xs
 #        zs = x :: zs
 
 #    return zs
@@ -164,7 +164,7 @@ def show (x: Int) -> String
     if negative: x = 0 - x
 
     s := []
-    while x != 0:
+    while x != 0
         digit := x mod 10
         s = (digit + '0') :: s
         x = x / 10

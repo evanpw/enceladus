@@ -3,10 +3,10 @@
 def collatzLength (n: Int) -> Int 
     count := 1
 
-    while n != 1:
-        if even n:
+    while n != 1
+        if even n
             n /= 2
-        else:
+        else
             n = 3 * n + 1
 
         count += 1
@@ -16,10 +16,10 @@ def collatzLength (n: Int) -> Int
 best := 1
 longest := 0
 
-for n in range 2 1000000:
+for n in range 2 1000000
     newLength := collatzLength n
 
-    if newLength > longest:
+    if newLength > longest
         best = n
         longest = newLength
 

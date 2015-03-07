@@ -6,16 +6,16 @@ def bigSum (xs: BigInt, ys: BigInt) -> BigInt
 
     x := 0
     y := 0
-    while not (null xs and null ys and carry == 0):
-        if null xs:
+    while not (null xs and null ys and carry == 0)
+        if null xs
             x = 0
-        else:
+        else
             x = head xs
             xs = tail xs
 
-        if null ys:
+        if null ys
             y = 0
-        else:
+        else
             y = head ys
             ys = tail ys
 
@@ -29,7 +29,7 @@ def bigSum (xs: BigInt, ys: BigInt) -> BigInt
 def sumAll (xss: [BigInt]) -> BigInt 
     result := [0]
 
-    for xs in xss:
+    for xs in xss
         result = bigSum result xs
 
     return result
@@ -38,10 +38,10 @@ def singleProduct (xs: BigInt, y: Int) -> BigInt
     carry := 0
     result := []
 
-    while not (null xs and carry == 0):
-        if null xs:
+    while not (null xs and carry == 0)
+        if null xs
             z := carry
-        else:
+        else
             x := head xs
             z = x * y + carry
             xs = tail xs
@@ -52,15 +52,15 @@ def singleProduct (xs: BigInt, y: Int) -> BigInt
     return reverse result
 
 def shift (xs: BigInt, n: Int) -> BigInt 
-    if n == 0:
+    if n == 0
         return xs
-    else:
+    else
         return shift (0 :: xs) (n - 1)
 
 def bigProduct (xs: BigInt, ys: BigInt) -> BigInt 
     partialProducts := []
 
-    for n in range 0 $ length ys - 1:
+    for n in range 0 $ length ys - 1
         y := at n ys
         z1 := singleProduct xs y
         z2 := shift z1 n
@@ -71,7 +71,7 @@ def bigProduct (xs: BigInt, ys: BigInt) -> BigInt
 def toBigInt (x: Int) -> BigInt 
     result := []
 
-    while x != 0:
+    while x != 0
         result = (x mod 10) :: result
         x /= 10
 
@@ -79,7 +79,7 @@ def toBigInt (x: Int) -> BigInt
 
 def bigToString (xs: BigInt) -> String 
     s := []
-    for x in xs:
+    for x in xs
         s = (x + '0') :: s
 
     return s
@@ -89,7 +89,7 @@ def bigPower (a: Int, b: Int) -> BigInt
     bigA := toBigInt a
     result := toBigInt 1
 
-    for i in range 1 b:
+    for i in range 1 b
         result = bigProduct result bigA
 
     return result

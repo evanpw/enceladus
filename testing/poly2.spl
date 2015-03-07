@@ -1,7 +1,7 @@
 def mydrop (n: Int, xs: [a]) -> [a] 
-    if n == 0:
+    if n == 0
         return xs
-    else:
+    else
         return mydrop (n - 1) (tail xs)
 
 xs := 1 :: 2 :: 3 :: 4 :: []
@@ -10,7 +10,7 @@ n := head ys
 
 zs := True :: True :: True :: False :: False :: False :: []
 us := mydrop n zs
-if head us:
+if head us
    print "True"
-else:
+else
    print "False"

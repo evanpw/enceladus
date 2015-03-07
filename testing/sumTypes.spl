@@ -1,9 +1,9 @@
 data Option a = Some a | None
 
 def divideByTwo(x: Int) -> Option Int 
-    if x % 2 == 0:
+    if x % 2 == 0
         return Some (x / 2)
-    else:
+    else
         return None
 
 x := divideByTwo 7

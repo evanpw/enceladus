@@ -1,7 +1,7 @@
 # Solves Project Euler 12
 
-def countGroups (xs: [Int]) -> [Int] 
-    if null xs:
+def countGroups (xs: [Int]) -> [Int]
+    if null xs
         return []
 
     result := []
@@ -9,10 +9,10 @@ def countGroups (xs: [Int]) -> [Int]
     count := 1
     xs = tail xs
 
-    while not $ null xs:
-        if head xs == last:
+    while not $ null xs
+        if head xs == last
             count += 1
-        else:
+        else
             result = count :: result
             last = head xs
             count = 1
@@ -21,15 +21,15 @@ def countGroups (xs: [Int]) -> [Int]
 
     return reverse $ count :: result
 
-def factor (n: Int) -> [Int] 
-    if n == 1:
+def factor (n: Int) -> [Int]
+    if n == 1
         return []
 
     factors := []
     i := 2
 
-    while n > 1:
-        while n mod i == 0:
+    while n > 1
+        while n mod i == 0
             factors = i :: factors
             n /= i
 
@@ -37,25 +37,25 @@ def factor (n: Int) -> [Int]
 
     return reverse factors
 
-def countDivisors (x: Int) -> Int 
-    if x == 1:
+def countDivisors (x: Int) -> Int
+    if x == 1
         return 1
 
     primeCounts := countGroups $ factor x
     count := 1
 
-    for n in primeCounts:
+    for n in primeCounts
         count *= (n + 1)
 
     return count
 
-def firstNumber (m: Int) -> Int 
+def firstNumber (m: Int) -> Int
     n := 0
     i := 1
-    forever:
+    forever
         n += i
 
-        if countDivisors n > m:
+        if countDivisors n > m
             return n
 
         i += 1

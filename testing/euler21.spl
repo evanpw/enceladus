@@ -4,11 +4,11 @@ def divisors (n: Int) -> [Int]
     result := [1]
 
     i := 2
-    while i * i <= n:
-        if n mod i == 0:
-            if i * i == n:
+    while i * i <= n
+        if n mod i == 0
+            if i * i == n
                 result = i :: result
-            else:
+            else
                 result = i :: (n / i) :: result
 
         i += 1
@@ -25,8 +25,8 @@ def isAmicable (n: Int) -> Bool
     return n == n''
 
 total := 0
-for n in range 1 9999:
-    if isAmicable n:
+for n in range 1 9999
+    if isAmicable n
         total += n
 
 print $ show total

@@ -179,12 +179,10 @@ StatementNode* if_statement()
 
     expect(tIF);
     ExpressionNode* condition = expression();
-    expect(':');
     StatementNode* ifBody = suite();
 
     if (accept(tELSE))
     {
-        expect(':');
         StatementNode* elseBody = suite();
         return new IfElseNode(location, condition, ifBody, elseBody);
     }
@@ -236,27 +234,8 @@ StatementNode* function_definition()
     std::string name = ident();
     std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
 
-    if (accept('='))
-    {
-        StatementNode* body = statement();
-
-        return new FunctionDefNode(location, name, body, paramsAndTypes.first, paramsAndTypes.second);
-    }
-    else
-    {
-        expect(tEOL);
-        expect(tINDENT);
-
-        BlockNode* block = new BlockNode(getLocation());
-        while (peekType() != tDEDENT)
-        {
-            block->append(statement());
-        }
-
-        expect(tDEDENT);
-
-        return new FunctionDefNode(location, name, block, paramsAndTypes.first, paramsAndTypes.second);
-    }
+    StatementNode* body = suite();
+    return new FunctionDefNode(location, name, body, paramsAndTypes.first, paramsAndTypes.second);
 }
 
 StatementNode* foreign_declaration()
@@ -279,7 +258,6 @@ StatementNode* for_statement()
     Token loopVar = expect(tLIDENT);
     expect(tIN);
     ExpressionNode* listExpression = expression();
-    expect(':');
     StatementNode* body = suite();
 
     return makeForNode(location, loopVar.value.str, listExpression, body);
@@ -290,8 +268,6 @@ StatementNode* forever_statement()
     YYLTYPE location = getLocation();
 
     expect(tFOREVER);
-    expect(':');
-
     StatementNode* body = suite();
 
     return new ForeverNode(location, body);
@@ -340,7 +316,6 @@ StatementNode* while_statement()
 
     expect(tWHILE);
     ExpressionNode* condition = expression();
-    expect(':');
     StatementNode* body = suite();
 
     return new WhileNode(location, condition, body);
@@ -459,6 +434,7 @@ StatementNode* suite()
     }
     else
     {
+        expect(':');
         return statement();
     }
 }
