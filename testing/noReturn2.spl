@@ -1,4 +1,4 @@
-def shouldFail () -> Int 
+def shouldFail() -> Int 
     print "Hello"
 
 x := shouldFail

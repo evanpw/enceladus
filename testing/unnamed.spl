@@ -2,7 +2,7 @@ struct Just =
     value: Int
     _: Int
 
-def f (x: a, _: b) -> a
+def f(x: a, _: b) -> a
     return x
 
 x := f 3 4

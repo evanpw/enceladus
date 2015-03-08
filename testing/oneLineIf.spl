@@ -1,7 +1,7 @@
 -- Solve Project Euler 5
 
-def gcd (a, b) = if b == 0: a else: gcd b (a mod b)
-def lcm (a, b) = (a * b) / (gcd a b)
+def gcd(a, b): a if b == 0 else gcd b (a mod b)
+def lcm(a, b): (a * b) / (gcd a b)
 
 n := 1
 

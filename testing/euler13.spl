@@ -2,7 +2,7 @@
 
 import BigInt
 
-def readNumber () -> [Int] 
+def readNumber() -> [Int] 
     ys := []
 
     for j in range 1 50

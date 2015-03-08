@@ -1,5 +1,5 @@
 data MyPair a = MyPair a a
 
-def f (p: MyPair Int Int) -> Int 
+def f(p: MyPair Int Int) -> Int 
     let MyPair x y  = p
     return x

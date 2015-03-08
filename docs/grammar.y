@@ -30,8 +30,7 @@ statement
     | expression EOL
 
 if_statement
-    : IF expression suite
-    | IF expression suite ELSE suite
+    : IF expression suite { ELIF expression suite } [ ELSE suite ]
 
 assignment_statement
     : LIDENT '=' expression EOL

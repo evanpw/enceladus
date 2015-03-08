@@ -134,7 +134,7 @@ int yycolumn = 1;
 "data"      { return tDATA; }
 "def"       { return tDEF; }
 "import"    { BEGIN(import); }
-"do"        { return tDO; }
+"elif"      { return tELIF; }
 "else"      { return tELSE; }
 "False"     { return tFALSE; }
 "for"       { return tFOR; }
@@ -145,7 +145,6 @@ int yycolumn = 1;
 "let"       { return tLET; }
 "return"    { return tRETURN; }
 "struct"    { return tSTRUCT; }
-"then"      { return tTHEN; }
 "True"      { return tTRUE; }
 "type"      { return tTYPE; }
 "var"       { return tVAR; }

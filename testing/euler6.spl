@@ -1,13 +1,13 @@
 -- Solves Project Euler 6
 
-def sumOfSquares (n: Int) -> Int 
+def sumOfSquares(n: Int) -> Int 
 	sum := 0
 	for i in range 1 n
 		sum += i * i
 
 	return sum
 
-def squareOfSum (n: Int) -> Int 
+def squareOfSum(n: Int) -> Int 
 	sum := 0
 	for i in range 1 n
 		sum += i

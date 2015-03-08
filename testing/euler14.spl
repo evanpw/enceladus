@@ -1,6 +1,6 @@
 # Solves Project Euler 14
 
-def collatzLength (n: Int) -> Int 
+def collatzLength(n: Int) -> Int 
     count := 1
 
     while n != 1

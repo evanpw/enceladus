@@ -1,7 +1,7 @@
-def addOne (x: Int) -> Int 
+def addOne(x: Int) -> Int 
     return x + 1
 
-def applyToOne (f: Int -> a) -> a 
+def applyToOne(f: Int -> a) -> a 
     return f 1
 
 result := 0

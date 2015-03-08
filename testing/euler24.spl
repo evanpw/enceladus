@@ -1,13 +1,13 @@
 -- Solves Project Euler #24
 
-def toInt (xs: [Int]) -> Int 
+def toInt(xs: [Int]) -> Int 
     result := 0
     for x in xs
         result = (result * 10) + x
 
     return result
 
-def delete (x: Int, xs: [Int]) -> [Int] 
+def delete(x: Int, xs: [Int]) -> [Int] 
     initial := []
     xs' := xs
 
@@ -21,7 +21,7 @@ def delete (x: Int, xs: [Int]) -> [Int]
 
     return xs
 
-def permutations (digits: [Int]) -> [[Int]] 
+def permutations(digits: [Int]) -> [[Int]] 
     if length digits == 1
         return [[head digits]]
 

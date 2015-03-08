@@ -1,6 +1,6 @@
 # Solves Project Euler 8
 
-def allProducts (xs: [Int]) -> [Int] 
+def allProducts(xs: [Int]) -> [Int] 
     if length xs < 5
         return []
     else

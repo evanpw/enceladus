@@ -6,7 +6,7 @@ total := 0
 # Number the locations based on the order visited
 i := 1
 
-def isDiagonal (x: Int, y: Int) -> Bool 
+def isDiagonal(x: Int, y: Int) -> Bool 
     (x == y) or (x == -y)
 
 def check x y 

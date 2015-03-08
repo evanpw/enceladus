@@ -1,6 +1,6 @@
 # Solves Project Euler 10
 
-def isPrime (x: Int, primes: [Int]) -> Bool 
+def isPrime(x: Int, primes: [Int]) -> Bool 
     for p in primes
         if x mod p == 0
             return False
@@ -10,7 +10,7 @@ def isPrime (x: Int, primes: [Int]) -> Bool
 
     return True
 
-def primesBelow (n: Int) -> [Int] 
+def primesBelow(n: Int) -> [Int] 
     primes := []
 
     for i in range 2 n

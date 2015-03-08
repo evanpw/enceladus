@@ -2,7 +2,7 @@ data MyPair = MyPair Int Int
 data Memo = Memo MyPair Int
 
 memo := []
-def searchMemo (p: MyPair) -> Int 
+def searchMemo(p: MyPair) -> Int 
     let MyPair x y = p
 
     for m in memo
@@ -14,10 +14,10 @@ def searchMemo (p: MyPair) -> Int
 
     return -1
 
-def insertMemo (p: MyPair, count: Int) -> Unit 
+def insertMemo(p: MyPair, count: Int) -> Unit 
     memo = (Memo p count) :: memo
 
-def countPaths (p: MyPair) -> Int 
+def countPaths(p: MyPair) -> Int 
     let MyPair x y = p
 
     if x == 20 and y == 20

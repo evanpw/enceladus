@@ -1,6 +1,6 @@
 -- Solves Project Euler 7
 
-def isPrime (x: Int) -> Bool
+def isPrime(x: Int) -> Bool
     i := 2
     while i * i <= x
         if x mod i == 0: return False

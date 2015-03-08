@@ -2,7 +2,7 @@ struct Test =
     left: Int
     right: Int
 
-def doSomething (test: Test) -> Int 
+def doSomething(test: Test) -> Int 
     return test{left} + test{right}
 
 test := Test 3 4

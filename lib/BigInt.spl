@@ -1,6 +1,6 @@
 type BigInt = [Int]
 
-def bigSum (xs: BigInt, ys: BigInt) -> BigInt 
+def bigSum(xs: BigInt, ys: BigInt) -> BigInt 
     carry := 0
     result := []
 
@@ -26,7 +26,7 @@ def bigSum (xs: BigInt, ys: BigInt) -> BigInt
 
     return reverse result
 
-def sumAll (xss: [BigInt]) -> BigInt 
+def sumAll(xss: [BigInt]) -> BigInt 
     result := [0]
 
     for xs in xss
@@ -34,7 +34,7 @@ def sumAll (xss: [BigInt]) -> BigInt
 
     return result
 
-def singleProduct (xs: BigInt, y: Int) -> BigInt 
+def singleProduct(xs: BigInt, y: Int) -> BigInt 
     carry := 0
     result := []
 
@@ -51,13 +51,13 @@ def singleProduct (xs: BigInt, y: Int) -> BigInt
 
     return reverse result
 
-def shift (xs: BigInt, n: Int) -> BigInt 
+def shift(xs: BigInt, n: Int) -> BigInt 
     if n == 0
         return xs
     else
         return shift (0 :: xs) (n - 1)
 
-def bigProduct (xs: BigInt, ys: BigInt) -> BigInt 
+def bigProduct(xs: BigInt, ys: BigInt) -> BigInt 
     partialProducts := []
 
     for n in range 0 $ length ys - 1
@@ -68,7 +68,7 @@ def bigProduct (xs: BigInt, ys: BigInt) -> BigInt
 
     return sumAll partialProducts
 
-def toBigInt (x: Int) -> BigInt 
+def toBigInt(x: Int) -> BigInt 
     result := []
 
     while x != 0
@@ -77,7 +77,7 @@ def toBigInt (x: Int) -> BigInt
 
     return reverse result
 
-def bigToString (xs: BigInt) -> String 
+def bigToString(xs: BigInt) -> String 
     s := []
     for x in xs
         s = (x + '0') :: s
@@ -85,7 +85,7 @@ def bigToString (xs: BigInt) -> String
     return s
 
 -- Computes a^b
-def bigPower (a: Int, b: Int) -> BigInt 
+def bigPower(a: Int, b: Int) -> BigInt 
     bigA := toBigInt a
     result := toBigInt 1
 

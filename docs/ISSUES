@@ -16,7 +16,8 @@
 
 * Allow sum types and multiple pattern matching (see sumTypes.spl)
 
-* Need an else-if (elif) statement
-
 * Allow list literals within brackets to span multiple lines, with indentation
   ignored (see longLiteral.spl)
+
+* Remove implicit returns, and add a separate semantic-analysis pass that
+  makes sure every path through a function has a return statement

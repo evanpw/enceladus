@@ -24,8 +24,8 @@ std::string tokenToString(TokenType t)
         return "tDEF";
     case tDIV_EQUAL:
         return "tDIV_EQUAL";
-    case tDO:
-        return "tDO";
+    case tELIF:
+        return "tELIF";
     case tELSE:
         return "tELSE";
     case tEOF:
@@ -76,8 +76,6 @@ std::string tokenToString(TokenType t)
         return "tSTRING_LIT";
     case tSTRUCT:
         return "tSTRUCT";
-    case tTHEN:
-        return "tTHEN";
     case tTIMES_EQUAL:
         return "tTIMES_EQUAL";
     case tTRUE:

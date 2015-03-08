@@ -1,6 +1,6 @@
 -- Solves Project Euler #30
 
-def digitPowerSum (n: Int) -> Int 
+def digitPowerSum(n: Int) -> Int 
     result := 0
     while n > 0
         digit := n mod 10

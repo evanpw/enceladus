@@ -12,7 +12,7 @@ extern int yylex_raw();
 YYLTYPE yylloc;
 YYSTYPE yylval;
 
-std::stack<int> indentation;
+std::stack<int> indentation({0});
 std::deque<Token> token_queue;
 
 // The scanner function seen by the parser. Handles initial whitespace
@@ -21,9 +21,6 @@ Token yylex()
 {
     static Token last_token(tEOL);
     static Token last_returned_token(tEOL);
-
-    // TODO: Move this initialization elsewhere, and don't do the check repeatedly.
-    if (indentation.empty()) indentation.push(0);
 
     while (true)
     {

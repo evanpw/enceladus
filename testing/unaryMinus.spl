@@ -1,4 +1,4 @@
-def plusOne (x: Int) -> Int
+def plusOne(x: Int) -> Int
     return x + 1
 
 y := -plusOne 4

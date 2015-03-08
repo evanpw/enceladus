@@ -173,15 +173,19 @@ StatementNode* statement()
     }
 }
 
-StatementNode* if_statement()
+// Like an if statement, but doesn't match IF first
+StatementNode* if_helper(const YYLTYPE& location)
 {
-    YYLTYPE location = getLocation();
-
-    expect(tIF);
     ExpressionNode* condition = expression();
     StatementNode* ifBody = suite();
 
-    if (accept(tELSE))
+    YYLTYPE intermediateLocation = getLocation();
+    if (accept(tELIF))
+    {
+        StatementNode* elseBody = if_helper(intermediateLocation);
+        return new IfElseNode(location, condition, ifBody, elseBody);
+    }
+    else if (accept(tELSE))
     {
         StatementNode* elseBody = suite();
         return new IfElseNode(location, condition, ifBody, elseBody);
@@ -190,6 +194,14 @@ StatementNode* if_statement()
     {
         return new IfNode(location, condition, ifBody);
     }
+}
+
+StatementNode* if_statement()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tIF);
+    return if_helper(location);
 }
 
 StatementNode* data_declaration()
