@@ -43,6 +43,7 @@ testing/test.sh $platform euler23 4179871 || echo "Project Euler 23 failed!"
 testing/test.sh $platform euler24 2783915460 || echo "Project Euler 24 failed!"
 testing/test.sh $platform euler25 4782 || echo "Project Euler 25 failed!"
 testing/test.sh $platform euler26 983 || echo "Project Euler 26 failed!"
+testing/test.sh $platform euler27 -59231 || echo "Project Euler 27 failed!"
 
 testing/test.sh $platform poly 4 || echo "Polymorphism test failed!"
 testing/test.sh $platform poly2 "False" || echo "Polymorphism test 2 failed!"

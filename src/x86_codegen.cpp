@@ -586,6 +586,9 @@ void X86CodeGen::visit(TACCall* inst)
 
         EMIT("call " << inst->function);
 
+        // Remove the function parameters from the stack
+        EMIT("add rsp, " << 8 * inst->params.size());
+
         if (inst->dest)
         {
             getSpecificRegisterFor(inst->dest, "rax", WRITE);
