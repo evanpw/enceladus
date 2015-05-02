@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	}
 	catch (LexerError& e)
 	{
-		std::cerr << "ERROR: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		fclose(yyin);
 		return 1;
 	}
@@ -108,9 +108,18 @@ int main(int argc, char* argv[])
 		TACProgram& intermediateCode = tacGen.getResult();
 
 		/*
-		for (auto& inst : intermediateCode.mainFunction.instructions)
+		for (const TACFunction& function : intermediateCode.otherFunctions)
 		{
-			std::cerr << inst->str() << std::endl;
+			std::cerr << function.name << ":" << std::endl;
+
+			TACInstruction* inst = function.instructions;
+			while (inst != nullptr)
+			{
+				std::cerr << inst->str() << std::endl;
+				inst = inst->next;
+			}
+
+			std::cerr << std::endl << std::endl;
 		}
 		*/
 

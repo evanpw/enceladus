@@ -23,7 +23,7 @@ private:
 };
 
 // Semantic analysis pass 1 - handle declarations and build the symbol tables
-class SemanticAnalyzer : public AstVisitor
+class SemanticAnalyzer
 {
 public:
     SemanticAnalyzer(ProgramNode* root);
@@ -41,12 +41,15 @@ public:
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(ComparisonNode* node);
+    virtual void visit(ForeverNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
     virtual void visit(LogicalNode* node);
+    virtual void visit(MatchArm* node);
     virtual void visit(MatchNode* node);
     virtual void visit(ProgramNode* node);
+    virtual void visit(SwitchNode* node);
     virtual void visit(WhileNode* node);
 
     // Leaf nodes
@@ -78,7 +81,7 @@ private:
 
     //// General semantic analysis /////////////////////////////////////////////
     template<typename... Args>
-    void semanticError(AstNode* node, const std::string& str, Args... args);
+    void semanticError(const YYLTYPE& location, const std::string& str, Args... args);
     template<typename... Args>
     void semanticErrorNoNode(const std::string& str, Args... args);
 
@@ -86,10 +89,9 @@ private:
     FunctionSymbol* makeExternal(const std::string& name);
     void injectSymbols();
 
-    std::shared_ptr<Type> getBaseType(const std::string& name);
-    std::shared_ptr<Type> getBaseType(const std::string& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
-    TypeConstructor* getTypeConstructor(const std::string& name);
-    std::shared_ptr<Type> resolveTypeName(const TypeName& typeName);
+    std::shared_ptr<Type> getBaseType(const TypeName& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
+    TypeConstructor* getTypeConstructor(const TypeName& name);
+    std::shared_ptr<Type> resolveTypeName(const TypeName& typeName, bool createVariables=false);
     std::shared_ptr<Type> resolveTypeName(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
 
     void insertSymbol(Symbol* symbol);
@@ -108,7 +110,7 @@ private:
 
     ProgramNode* _root;
     FunctionDefNode* _enclosingFunction;
-    WhileNode* _enclosingLoop;
+    LoopNode* _enclosingLoop;
     std::vector<std::shared_ptr<Scope>> _scopes;
 };
 

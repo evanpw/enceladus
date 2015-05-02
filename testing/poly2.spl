@@ -1,16 +1,16 @@
-def mydrop n xs =
-    if n == 0 then
+def mydrop(n: Int, xs: [a]) -> [a] 
+    if n == 0
         return xs
     else
         return mydrop (n - 1) (tail xs)
 
-xs := 1 : 2 : 3 : 4 : []
+xs := 1 :: 2 :: 3 :: 4 :: []
 ys := mydrop 2 xs
 n := head ys
 
-zs := True : True : True : False : False : False : []
+zs := True :: True :: True :: False :: False :: False :: []
 us := mydrop n zs
-if head us then
+if head us
    print "True"
 else
    print "False"

@@ -57,6 +57,11 @@ void AstVisitor::visit(WhileNode* node)
 	node->body->accept(this);
 }
 
+void AstVisitor::visit(ForeverNode* node)
+{
+	node->body->accept(this);
+}
+
 void AstVisitor::visit(AssignNode* node)
 {
 	node->value->accept(this);
@@ -88,4 +93,18 @@ void AstVisitor::visit(StructDefNode* node)
 	{
 		member->accept(this);
 	}
+}
+
+void AstVisitor::visit(SwitchNode* node)
+{
+	node->expr->accept(this);
+	for (auto& arm : node->arms)
+	{
+		arm->accept(this);
+	}
+}
+
+void AstVisitor::visit(MatchArm* node)
+{
+	node->body->accept(this);
 }

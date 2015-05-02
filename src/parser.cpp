@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include "exceptions.hpp"
 #include "tokens.hpp"
 
 #include <iostream>
@@ -57,8 +58,16 @@ Token expect(TokenType t)
         return token;
     }
 
-    std::cerr << "ERROR: Expected " << tokenToString(t) << ", but got " << tokenToString(nextTokens[0].type) << std::endl;
-    exit(1);
+    YYLTYPE location = getLocation();
+
+    std::stringstream ss;
+
+    ss << "Near line " << location.first_line << ", "
+       << "column " << location.first_column << ": "
+       << "expected " << tokenToString(t) << ", but got "
+       << tokenToString(nextTokens[0].type);
+
+    throw LexerError(ss.str());
 }
 
 Token expect(char c) { return expect((TokenType)c); }
@@ -119,7 +128,13 @@ StatementNode* statement()
     case tFOREIGN:
         return foreign_declaration();
 
+    case tFOREVER:
+        return forever_statement();
+
     case tLET:
+        return let_statement();
+
+    case tMATCH:
         return match_statement();
 
     case tRETURN:
@@ -147,7 +162,7 @@ StatementNode* statement()
         {
             return assignment_statement();
         }
-        else if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == tDCOLON)
+        else if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == ':')
         {
             return variable_declaration();
         }
@@ -161,16 +176,19 @@ StatementNode* statement()
     }
 }
 
-StatementNode* if_statement()
+// Like an if statement, but doesn't match IF first
+StatementNode* if_helper(const YYLTYPE& location)
 {
-    YYLTYPE location = getLocation();
-
-    expect(tIF);
     ExpressionNode* condition = expression();
-    expect(tTHEN);
     StatementNode* ifBody = suite();
 
-    if (accept(tELSE))
+    YYLTYPE intermediateLocation = getLocation();
+    if (accept(tELIF))
+    {
+        StatementNode* elseBody = if_helper(intermediateLocation);
+        return new IfElseNode(location, condition, ifBody, elseBody);
+    }
+    else if (accept(tELSE))
     {
         StatementNode* elseBody = suite();
         return new IfElseNode(location, condition, ifBody, elseBody);
@@ -179,6 +197,14 @@ StatementNode* if_statement()
     {
         return new IfNode(location, condition, ifBody);
     }
+}
+
+StatementNode* if_statement()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tIF);
+    return if_helper(location);
 }
 
 StatementNode* data_declaration()
@@ -228,12 +254,22 @@ StatementNode* function_definition()
 
     expect(tDEF);
     std::string name = ident();
-    ParamList* params = parameters();
-    TypeDecl* typeDecl = accept(tDCOLON) ? type_declaration() : nullptr;
-    expect('=');
-    StatementNode* body = suite();
+    std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
 
-    return new FunctionDefNode(location, name, body, params, typeDecl);
+    StatementNode* body = suite();
+    return new FunctionDefNode(location, name, body, paramsAndTypes.first, paramsAndTypes.second);
+}
+
+StatementNode* foreign_declaration()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tFOREIGN);
+    std::string name = ident();
+    std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
+    expect(tEOL);
+
+    return new ForeignDeclNode(location, name, paramsAndTypes.first, paramsAndTypes.second);
 }
 
 StatementNode* for_statement()
@@ -244,27 +280,22 @@ StatementNode* for_statement()
     Token loopVar = expect(tLIDENT);
     expect(tIN);
     ExpressionNode* listExpression = expression();
-    expect(tDO);
     StatementNode* body = suite();
 
     return makeForNode(location, loopVar.value.str, listExpression, body);
 }
 
-StatementNode* foreign_declaration()
+StatementNode* forever_statement()
 {
     YYLTYPE location = getLocation();
 
-    expect(tFOREIGN);
-    std::string name = ident();
-    ParamList* params = parameters();
-    expect(tDCOLON);
-    TypeDecl* typeDecl = type_declaration();
-    expect(tEOL);
+    expect(tFOREVER);
+    StatementNode* body = suite();
 
-    return new ForeignDeclNode(location, name, params, typeDecl);
+    return new ForeverNode(location, body);
 }
 
-StatementNode* match_statement()
+StatementNode* let_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -276,6 +307,37 @@ StatementNode* match_statement()
     expect(tEOL);
 
     return new MatchNode(location, constructor.value.str, params, body);
+}
+
+/// match_statement: MATCH expression EOL match_body
+/// match_body: INDENT match_arm { match_arm } DEDENT
+StatementNode* match_statement()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tMATCH);
+    ExpressionNode* expr = expression();
+    expect(tEOL);
+    expect(tINDENT);
+
+    std::vector<std::unique_ptr<MatchArm>> arms;
+    while (!accept(tDEDENT))
+    {
+        arms.emplace_back(match_arm());
+    }
+
+    return new SwitchNode(location, expr, std::move(arms));
+}
+
+MatchArm* match_arm()
+{
+    YYLTYPE location = getLocation();
+    Token constructor = expect(tUIDENT);
+    ParamList* params = parameters();
+    expect(tDARROW);
+    StatementNode* body = statement();
+
+    return new MatchArm(location, constructor.value.str, params, body);
 }
 
 StatementNode* return_statement()
@@ -307,7 +369,6 @@ StatementNode* while_statement()
 
     expect(tWHILE);
     ExpressionNode* condition = expression();
-    expect(tDO);
     StatementNode* body = suite();
 
     return new WhileNode(location, condition, body);
@@ -320,7 +381,7 @@ StatementNode* assignment_statement()
     Token token = expect(tLIDENT);
     std::string lhs = token.value.str;
 
-    if (accept((TokenType)'='))
+    if (accept('='))
     {
         ExpressionNode* rhs = expression();
 
@@ -376,7 +437,7 @@ StatementNode* variable_declaration()
     if (peekType() == tLIDENT)
     {
         Token varName = expect(tLIDENT);
-        TypeName* varType = accept(tDCOLON) ? type() : nullptr;
+        TypeName* varType = accept(':') ? type() : nullptr;
         expect(tCOLON_EQUAL);
         ExpressionNode* value = expression();
         expect(tEOL);
@@ -387,7 +448,7 @@ StatementNode* variable_declaration()
     {
         expect(tVAR);
         Token varName = expect(tLIDENT);
-        TypeName* varType = accept(tDCOLON) ? type() : nullptr;
+        TypeName* varType = accept(':') ? type() : nullptr;
         expect('=');
         ExpressionNode* value = expression();
         expect(tEOL);
@@ -426,6 +487,7 @@ StatementNode* suite()
     }
     else
     {
+        expect(':');
         return statement();
     }
 }
@@ -465,25 +527,68 @@ std::string ident()
 
 //// Types /////////////////////////////////////////////////////////////////////
 
-TypeDecl* type_declaration()
-{
-    TypeDecl* typeDecl = new TypeDecl;
-    typeDecl->emplace_back(type());
-
-    while (accept(tRARROW))
-    {
-        typeDecl->emplace_back(type());
-    }
-
-     return typeDecl;
-}
-
+/// type
+///     : '|' [ arrow_type { ',' arrow_type } ] '|' RARROW constructed_type
+///     | arrow_type
 TypeName* type()
 {
+    YYLTYPE location = getLocation();
+
+    if (!accept('|')) return arrow_type();
+
+    TypeName* typeName = new TypeName("Function", location);
+
+    if (peekType() != '|')
+    {
+        typeName->append(arrow_type());
+
+        while (accept(','))
+        {
+            typeName->append(arrow_type());
+        }
+    }
+
+    expect('|');
+    expect(tRARROW);
+
+    // Return type
+    typeName->append(constructed_type());
+
+    return typeName;
+}
+
+/// arrow_type
+///     : constructed_type [ RARROW constructed_type ]
+TypeName* arrow_type()
+{
+    YYLTYPE location = getLocation();
+
+    TypeName* firstType = constructed_type();
+    if (accept(tRARROW))
+    {
+        TypeName* functionType = new TypeName("Function", location);
+        functionType->append(firstType);
+        functionType->append(constructed_type());
+
+        return functionType;
+    }
+    else
+    {
+        return firstType;
+    }
+}
+
+/// constructed_type
+///     : UIDENT { simple_type }
+///     | simple_type
+TypeName* constructed_type()
+{
+    YYLTYPE location = getLocation();
+
     if (peekType() == tUIDENT)
     {
         Token name = expect(tUIDENT);
-        TypeName* typeName = new TypeName(name.value.str);
+        TypeName* typeName = new TypeName(name.value.str, location);
 
         while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[')
         {
@@ -498,17 +603,32 @@ TypeName* type()
     }
 }
 
+/// simple_type
+///     : LIDENT
+///     | UIDENT
+///     | '[' type ']'
+///     | '(' type ')'
 TypeName* simple_type()
 {
+    YYLTYPE location = getLocation();
+
     if (peekType() == tUIDENT)
     {
         Token typeName = expect(tUIDENT);
-        return new TypeName(typeName.value.str);
+        return new TypeName(typeName.value.str, location);
     }
     else if (peekType() == tLIDENT)
     {
         Token typeName = expect(tLIDENT);
-        return new TypeName(typeName.value.str);
+        return new TypeName(typeName.value.str, location);
+    }
+    else if (peekType() == '(')
+    {
+        expect('(');
+        TypeName* internalType = type();
+        expect(')');
+
+        return internalType;
     }
     else
     {
@@ -516,7 +636,7 @@ TypeName* simple_type()
         TypeName* internalType = type();
         expect(']');
 
-        TypeName* typeName = new TypeName("List");
+        TypeName* typeName = new TypeName("List", location);
         typeName->append(internalType);
 
         return typeName;
@@ -534,6 +654,49 @@ ConstructorSpec* constructor_spec()
     }
 
     return constructorSpec;
+}
+
+std::pair<std::string, TypeName*> param_and_type()
+{
+    Token param = expect(tLIDENT);
+    expect(':');
+    TypeName* typeName = type();
+
+    return {param.value.str, typeName};
+}
+
+/// type_declaration
+///     : '(' [ LIDENT ':' type { ',' LIDENT ':' type } ] ')' RARROW constructed_type
+std::pair<ParamList*, TypeName*> params_and_types()
+{
+    YYLTYPE location = getLocation();
+
+    expect('(');
+
+    ParamList* params = new ParamList;
+    TypeName* typeName = new TypeName("Function", location);
+
+    if (peekType() == tLIDENT)
+    {
+        std::pair<std::string, TypeName*> param_type = param_and_type();
+        params->push_back(param_type.first);
+        typeName->append(param_type.second);
+
+        while (accept(','))
+        {
+            param_type = param_and_type();
+            params->push_back(param_type.first);
+            typeName->append(param_type.second);
+        }
+    }
+
+    expect(')');
+    expect(tRARROW);
+
+    // Return type
+    typeName->append(constructed_type());
+
+    return {params, typeName};
 }
 
  //// Structures ///////////////////////////////////////////////////////////////
@@ -566,7 +729,7 @@ MemberDefNode* member_definition()
     YYLTYPE location = getLocation();
 
     Token name = expect(tLIDENT);
-    expect(tDCOLON);
+    expect(':');
     TypeName* typeName = type();
     expect(tEOL);
 
@@ -625,11 +788,11 @@ ExpressionNode* relational_expression()
 {
     ExpressionNode* lhs = cons_expression();
 
-    if (accept((TokenType)'>'))
+    if (accept('>'))
     {
         return new ComparisonNode(getLocation(), lhs, ComparisonNode::kGreater, cons_expression());
     }
-    else if (accept((TokenType)'<'))
+    else if (accept('<'))
     {
         return new ComparisonNode(getLocation(), lhs, ComparisonNode::kLess, cons_expression());
     }
@@ -651,7 +814,7 @@ ExpressionNode* cons_expression()
 {
     ExpressionNode* lhs = additive_expression();
 
-    if (accept((TokenType)':'))
+    if (accept(tDCOLON))
     {
         return new FunctionCallNode(getLocation(), "Cons", {lhs, cons_expression()});
     }
@@ -747,6 +910,8 @@ ExpressionNode* func_call_expression()
 {
     if ((peekType() == tLIDENT || peekType() == tUIDENT) && (canStartUnaryExpression(peek2ndType()) || peek2ndType() == '$'))
     {
+        YYLTYPE location = getLocation();
+
         std::string functionName = ident();
 
         ArgList argList;
@@ -761,7 +926,7 @@ ExpressionNode* func_call_expression()
             argList.emplace_back(expression());
         }
 
-        return new FunctionCallNode(getLocation(), functionName, std::move(argList));
+        return new FunctionCallNode(location, functionName, std::move(argList));
     }
     else
     {
@@ -792,7 +957,7 @@ ExpressionNode* unary_expression()
 
     case '[':
         expect('[');
-        if (accept((TokenType)']'))
+        if (accept(']'))
         {
             return new FunctionCallNode(getLocation(), "Nil", ArgList());
         }
@@ -801,7 +966,7 @@ ExpressionNode* unary_expression()
             ArgList argList;
             argList.emplace_back(expression());
 
-            while (accept((TokenType)','))
+            while (accept(','))
             {
                 argList.emplace_back(expression());
             }
@@ -840,8 +1005,18 @@ ExpressionNode* unary_expression()
         }
 
     default:
-        std::cerr << "ERROR: Token " << tokenToString(nextTokens[0].type) << " cannot start a unary expression." << std::endl;
-        exit(1);
+    {
+        YYLTYPE location = getLocation();
+
+        std::stringstream ss;
+
+        ss << "Near line " << location.first_line << ", "
+           << "column " << location.first_column << ": "
+           << "token " << tokenToString(peekType()) << " cannot start a unary expression.";
+
+        throw LexerError(ss.str());
+    }
+
     }
 }
 

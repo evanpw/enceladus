@@ -1,0 +1,7 @@
+def f(path: Bool) -> Int 
+    if path
+        4
+    else
+        5
+
+print $ show $ f True

@@ -1,0 +1,7 @@
+def shouldFail() -> Int
+    forever
+        print "Hello"
+        break
+
+x := shouldFail
+print $ show x

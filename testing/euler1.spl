@@ -1,6 +1,6 @@
--- Solves Project Euler #1
+# Solves Project Euler #1
 
-def good x =
-    return (x mod 3 == 0) or (x mod 5 == 0)
+def good(x: Int) -> Bool 
+    (x mod 3 == 0) or (x mod 5 == 0)
 
 print $ show $ sum $ filter good $ range 1 999

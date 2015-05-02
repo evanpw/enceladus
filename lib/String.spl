@@ -1,98 +1,98 @@
-def isSpace c :: Char -> Bool =
-    if c == ' ' or c == '\n' or c == '\r' or c == '\t' then
+def isSpace(c: Char) -> Bool 
+    if c == ' ' or c == '\n' or c == '\r' or c == '\t'
         return True
     else
         return False
 
 
-def trimLeft s :: String -> String =
+def trimLeft(s: String) -> String 
     xs := []
-    for c in s do
-        if not $ isSpace c then xs = c : xs
+    for c in s
+        if not $ isSpace c: xs = c :: xs
 
     return reverse xs
 
 
-def trim s :: String -> String =
+def trim(s: String) -> String 
     s1 := s
-    while (not $ null s1) and (isSpace $ head s1) do
+    while (not $ null s1) and (isSpace $ head s1)
         s1 = tail s1
 
     s2 := reverse s1
-    while (not $ null s2) and (isSpace $ head s2) do
+    while (not $ null s2) and (isSpace $ head s2)
         s2 = tail s2
 
     return reverse s2
 
 
-def trimChar c s :: Char -> String -> String =
+def trimChar(c: Char, s: String) -> String 
     s1 := s
-    while (not $ null s1) and (head s1 == c) do
+    while (not $ null s1) and (head s1 == c)
         s1 = tail s1
 
     s2 := reverse s1
-    while (not $ null s2) and (head s2 == c) do
+    while (not $ null s2) and (head s2 == c)
         s2 = tail s2
 
     return reverse s2
 
 
-def substring s start n :: String -> Int -> Int -> String =
+def substring(s: String, start: Int, n: Int) -> String 
     return take n (drop start s)
 
 
-def split s :: String -> [String] =
+def split(s: String) -> [String] 
     result := []
     piece := ""
 
-    while not $ null s do
-        if isSpace $ head s then
-            if length piece > 0 then
-                result = (reverse piece) : result
+    while not $ null s
+        if isSpace $ head s
+            if length piece > 0
+                result = (reverse piece) :: result
 
             piece = ""
         else
-            piece = (head s) : piece
+            piece = (head s) :: piece
 
         s = tail s
 
-    if length piece > 0 then result = (reverse piece) : result
+    if length piece > 0: result = (reverse piece) :: result
 
     return reverse result
 
 
-def splitBy sep s :: Char -> String -> [String] =
+def splitBy(sep: Char, s: String) -> [String] 
     result := []
     piece := ""
 
-    while not $ null s do
-        if head s == sep then
-            if length piece > 0 then
-                result = (reverse piece) : result
+    while not $ null s
+        if head s == sep
+            if length piece > 0
+                result = (reverse piece) :: result
 
             piece = ""
         else
-            piece = (head s) : piece
+            piece = (head s) :: piece
 
         s = tail s
 
-    if length piece > 0 then result = (reverse piece) : result
+    if length piece > 0: result = (reverse piece) :: result
 
     return reverse result
 
 
-def join sep xs :: String -> [String] -> String =
-    if null xs then
+def join(sep: String, xs: [String]) -> String 
+    if null xs
         return ""
-    else if length xs == 1 then
+    else: if length xs == 1
         return head xs
     else
         return head xs ++ sep ++ join sep $ tail xs
 
 
-def stringToInt s :: String -> Int =
+def stringToInt(s: String) -> Int 
     x := 0
-    for digit in s do
+    for digit in s
         assertMessage (digit >= '0' and digit <= '9') "stringToInt: Digit out of range"
 
         x *= 10

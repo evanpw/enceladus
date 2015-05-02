@@ -1,0 +1,3 @@
+def f() -> Int: 10
+
+print $ show $ f

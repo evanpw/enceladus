@@ -1,201 +1,193 @@
----- Declarations for built-in functions written in C
+## Declarations for built-in functions written in C
 
--- String functions
+# String functions
 type Char = Int
 type String = [Char]
 
--- I/O functions
-foreign read :: Int
-foreign readLine :: String
-foreign print :: String -> Unit
-foreign dieWithMessage :: String -> Unit
+# I/O functions
+foreign read () -> Int
+foreign readLine () -> String
+foreign print (msg: String) -> Unit
+foreign dieWithMessage (msg: String) -> Unit
 
 
----- Native-language standard library
+## Native-language standard library
 
--- concat :: [a] -> [a] -> [a]
-def concat xs ys =
-    if null xs then
+def concat(xs: [a], ys: [a]) -> [a]
+    if null xs
         return ys
     else
-        return head xs : concat (tail xs) ys
+        return head xs :: concat (tail xs) ys
 
 
-def assert b :: Bool -> Unit =
-    if not b then dieWithMessage "Assertion failed!"
+def assert(b: Bool) -> Unit
+    if not b: dieWithMessage "Assertion failed!"
 
 
-def assertMessage b err :: Bool -> String -> Unit =
-    if not b then dieWithMessage $ "Assertion failed: " ++ err
+def assertMessage(b: Bool, err: String) -> Unit
+    if not b: dieWithMessage $ "Assertion failed: " ++ err
 
 
--- Miscellanous functions
-def range a b :: Int -> Int -> [Int] =
+# Miscellanous functions
+def range(a: Int, b: Int) -> [Int]
     xs := []
 
     i := b
-    while i >= a do
-        xs = i : xs
+    while i >= a
+        xs = i :: xs
         i -= 1
 
     return xs
 
 
--- length :: [a] -> Int
-def length xs =
+def length(xs: [a]) -> Int
     result := 0
 
-    while not $ null xs do
+    while not $ null xs
         xs = tail xs
         result += 1
 
     return result
 
 
-def sum xs :: [Int] -> Int =
-    if null xs then
+def sum(xs: [Int]) -> Int
+    if null xs
         return 0
     else
         return head xs + sum $ tail xs
 
 
-def product xs :: [Int] -> Int =
-    if null xs then
+def product(xs: [Int]) -> Int
+    if null xs
         return 1
     else
         return head xs * product $ tail xs
 
 
--- take :: Int -> [a] -> [a]
-def take n xs =
-    if n == 0 then
+def take(n: Int, xs: [a]) -> [a]
+    if n == 0
         return []
     else
-        return head xs : take (n - 1) (tail xs)
+        return head xs :: take (n - 1) (tail xs)
 
 
--- drop :: Int -> [a] -> [a]
-def drop n xs =
-    if n == 0 then
+def drop(n: Int, xs: [a]) -> [a]
+    if n == 0
         return xs
     else
         return drop (n - 1) (tail xs)
 
 
-def max a b :: Int -> Int -> Int =
-    if a > b then
+def max(a: Int, b: Int) -> Int
+    if a > b
         return a
     else
         return b
 
 
-def maximum xs :: [Int] -> Int =
-    if length xs == 1 then
+def maximum(xs: [Int]) -> Int
+    if length xs == 1
         return head xs
     else
         return max (head xs) (maximum $ tail xs)
 
 
--- at :: Int -> [a] -> a
-def at n xs =
-    while n > 0 do
+def at(n: Int, xs: [a]) -> a
+    while n > 0
         xs = tail xs
         n -= 1
 
     return head xs
 
 
--- reverse :: [a] -> [a]
-def reverse xs =
+def reverse(xs: [a]) -> [a]
     ys := []
-    for x in xs do
-        ys = x : ys
+    for x in xs
+        ys = x :: ys
 
     return ys
 
 
--- map :: (a -> b) -> [a] -> [b]
-def map f xs =
+def map(f: a -> b, xs: [a]) -> [b]
     result := []
-    for x in xs do
-        result = f x : result
+    for x in xs
+        result = f x :: result
 
     return reverse result
 
 
--- filter :: (a -> Bool) -> [a] -> [a]
-def filter f xs =
+def filter(f: a -> Bool, xs: [a]) -> [a]
     ys := []
-    for x in xs do
-        if f x then ys = x : ys
+    for x in xs
+        if f x: ys = x :: ys
 
     return reverse ys
 
 
-def even x :: Int -> Bool =
-    if x mod 2 == 0 then return True
-    else return False
+def even(x: Int) -> Bool
+    if x mod 2 == 0: return True
+    else: return False
 
 
-def odd x :: Int -> Bool =
-    if x mod 2 == 0 then return False
-    else return True
+def odd(x: Int) -> Bool
+    if x mod 2 == 0: return False
+    else: return True
 
 
-def pow a b :: Int -> Int -> Int =
+def pow(a: Int, b: Int) -> Int
     r := 1
-    while True do
-        if b mod 2 == 1 then r *= a
+    while True
+        if b mod 2 == 1: r *= a
         b /= 2
-        if b == 0 then break
+        if b == 0: break
         a *= a
 
     return r
 
 
--- Non stack-destroying version
---def concat xs ys :: [Int] -> [Int] -> [Int] =
---    let zs :: [Int] = ys
+# Non stack-destroying version
+#def concat xs ys :: [Int] -> [Int] -> [Int]
+#    let zs :: [Int] = ys
 
---    for x in reverse xs do
---        zs = x : zs
+#    for x in reverse xs
+#        zs = x :: zs
 
---    return zs
+#    return zs
 
 
----- Strings ----
+## Strings ##
 
-def show x :: Int -> String =
-    if x == 0 then return "0"
+def show(x: Int) -> String
+    if x == 0: return "0"
 
     negative := (x < 0)
-    if negative then x = 0 - x
+    if negative: x = 0 - x
 
     s := []
-    while x != 0 do
+    while x != 0
         digit := x mod 10
-        s = (digit + '0') : s
+        s = (digit + '0') :: s
         x = x / 10
 
-    if negative then s = '-' : s
+    if negative: s = '-' :: s
 
     return s
 
 
----- Pairs ----
+## Pairs ##
 
 data Pair a = Pair a a
 
 
-def fst pair =
+def fst(pair: Pair a) -> a
     let Pair x _ = pair
     return x
 
 
-def snd pair =
+def snd(pair: Pair a) -> a
     let Pair _ x = pair
     return x
 
 
-def splitAt n xs =
+def splitAt(n: Int, xs: [a]) -> Pair [a]
     return Pair (take n xs) (drop n xs)

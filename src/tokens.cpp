@@ -14,6 +14,8 @@ std::string tokenToString(TokenType t)
         return "tCOLON_EQUAL";
     case tCONCAT:
         return "tCONCAT";
+    case tDARROW:
+        return "tDARROW";
     case tDATA:
         return "tDATA";
     case tDCOLON:
@@ -24,8 +26,8 @@ std::string tokenToString(TokenType t)
         return "tDEF";
     case tDIV_EQUAL:
         return "tDIV_EQUAL";
-    case tDO:
-        return "tDO";
+    case tELIF:
+        return "tELIF";
     case tELSE:
         return "tELSE";
     case tEOF:
@@ -40,6 +42,8 @@ std::string tokenToString(TokenType t)
         return "tFOR";
     case tFOREIGN:
         return "tFOREIGN";
+    case tFOREVER:
+        return "tFOREVER";
     case tGE:
         return "tGE";
     case tIF:
@@ -56,6 +60,8 @@ std::string tokenToString(TokenType t)
         return "tLET";
     case tLIDENT:
         return "tLIDENT";
+    case tMATCH:
+        return "tMATCH";
     case tMINUS_EQUAL:
         return "tMINUS_EQUAL";
     case tMOD:
@@ -74,8 +80,6 @@ std::string tokenToString(TokenType t)
         return "tSTRING_LIT";
     case tSTRUCT:
         return "tSTRUCT";
-    case tTHEN:
-        return "tTHEN";
     case tTIMES_EQUAL:
         return "tTIMES_EQUAL";
     case tTRUE:

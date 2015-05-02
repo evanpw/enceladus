@@ -1,7 +1,7 @@
 struct Test1 =
-    x :: Int
-    y :: Int
+    x: Int
+    y: Int
 
 struct Test2 =
-    a :: Int
-    y :: Int
+    a: Int
+    y: Int

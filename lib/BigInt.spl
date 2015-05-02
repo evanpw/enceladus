@@ -1,19 +1,19 @@
 type BigInt = [Int]
 
-def bigSum xs ys :: BigInt -> BigInt -> BigInt =
+def bigSum(xs: BigInt, ys: BigInt) -> BigInt 
     carry := 0
     result := []
 
     x := 0
     y := 0
-    while not (null xs and null ys and carry == 0) do
-        if null xs then
+    while not (null xs and null ys and carry == 0)
+        if null xs
             x = 0
         else
             x = head xs
             xs = tail xs
 
-        if null ys then
+        if null ys
             y = 0
         else
             y = head ys
@@ -21,75 +21,75 @@ def bigSum xs ys :: BigInt -> BigInt -> BigInt =
 
         z := x + y + carry
 
-        result = (z mod 10) : result
+        result = (z mod 10) :: result
         carry = z / 10
 
     return reverse result
 
-def sumAll xss :: [BigInt] -> BigInt =
+def sumAll(xss: [BigInt]) -> BigInt 
     result := [0]
 
-    for xs in xss do
+    for xs in xss
         result = bigSum result xs
 
     return result
 
-def singleProduct xs y :: BigInt -> Int -> BigInt =
+def singleProduct(xs: BigInt, y: Int) -> BigInt 
     carry := 0
     result := []
 
-    while not (null xs and carry == 0) do
-        if null xs then
+    while not (null xs and carry == 0)
+        if null xs
             z := carry
         else
             x := head xs
             z = x * y + carry
             xs = tail xs
 
-        result = (z mod 10) : result
+        result = (z mod 10) :: result
         carry = z / 10
 
     return reverse result
 
-def shift xs n :: BigInt -> Int -> BigInt =
-    if n == 0 then
+def shift(xs: BigInt, n: Int) -> BigInt 
+    if n == 0
         return xs
     else
-        return shift (0 : xs) (n - 1)
+        return shift (0 :: xs) (n - 1)
 
-def bigProduct xs ys :: BigInt -> BigInt -> BigInt =
+def bigProduct(xs: BigInt, ys: BigInt) -> BigInt 
     partialProducts := []
 
-    for n in range 0 $ length ys - 1 do
+    for n in range 0 $ length ys - 1
         y := at n ys
         z1 := singleProduct xs y
         z2 := shift z1 n
-        partialProducts = z2 : partialProducts
+        partialProducts = z2 :: partialProducts
 
     return sumAll partialProducts
 
-def toBigInt x :: Int -> BigInt =
+def toBigInt(x: Int) -> BigInt 
     result := []
 
-    while x != 0 do
-        result = (x mod 10) : result
+    while x != 0
+        result = (x mod 10) :: result
         x /= 10
 
     return reverse result
 
-def bigToString xs :: BigInt -> String =
+def bigToString(xs: BigInt) -> String 
     s := []
-    for x in xs do
-        s = (x + '0') : s
+    for x in xs
+        s = (x + '0') :: s
 
     return s
 
--- Computes a^b
-def bigPower a b :: Int -> Int -> BigInt =
+# Computes a^b
+def bigPower(a: Int, b: Int) -> BigInt 
     bigA := toBigInt a
     result := toBigInt 1
 
-    for i in range 1 b do
+    for i in range 1 b
         result = bigProduct result bigA
 
     return result

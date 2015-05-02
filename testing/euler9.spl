@@ -1,8 +1,8 @@
--- Solves Project Euler 9
+# Solves Project Euler 9
 
-for a in range 1 1000 do
-    for b in range (a + 1) 1000 do
+for a in range 1 1000
+    for b in range (a + 1) 1000
         c := 1000 - (a + b)
 
-        if c > b and a * a + b * b == c * c then
+        if c > b and a * a + b * b == c * c
             print $ show $ a * b * c

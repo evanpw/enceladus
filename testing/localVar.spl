@@ -1,6 +1,6 @@
 x := 1
 
-def f =
+def f() -> Int 
     x := 2
     return x
 

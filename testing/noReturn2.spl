@@ -1,0 +1,5 @@
+def shouldFail() -> Int 
+    print "Hello"
+
+x := shouldFail
+print $ show x

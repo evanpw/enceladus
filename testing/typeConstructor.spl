@@ -7,14 +7,14 @@ let MyPair a b = x
 let MyPair c d = y
 
 result := b
-if c then result += 1
+if c: result += 1
 
-def identity x :: a -> a =
+def identity(x: a) -> a 
     return x
 
 result += identity 3
 
-if not $ identity False then
+if not $ identity False
     result += 1
 
 print $ show result

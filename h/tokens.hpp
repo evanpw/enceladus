@@ -12,18 +12,20 @@ enum TokenType : int
     tBREAK,
     tCOLON_EQUAL,
     tCONCAT,
+    tDARROW,
     tDATA,
     tDCOLON,
     tDEDENT,
     tDEF,
     tDIV_EQUAL,
-    tDO,
+    tELIF,
     tELSE,
     tEOL,
     tEQUALS,
     tFALSE,
     tFOR,
     tFOREIGN,
+    tFOREVER,
     tGE,
     tIF,
     tIN,
@@ -32,6 +34,7 @@ enum TokenType : int
     tLE,
     tLET,
     tLIDENT,
+    tMATCH,
     tMINUS_EQUAL,
     tMOD,
     tNE,
@@ -41,7 +44,6 @@ enum TokenType : int
     tRETURN,
     tSTRING_LIT,
     tSTRUCT,
-    tTHEN,
     tTIMES_EQUAL,
     tTRUE,
     tTYPE,
@@ -73,7 +75,9 @@ extern YYSTYPE yylval;
 
 struct Token
 {
-    Token(TokenType type = tNONE) : type(type) {}
+    Token(TokenType type = tNONE, YYLTYPE location = {})
+    : type(type), location(location)
+    {}
 
     TokenType type;
     YYSTYPE value;

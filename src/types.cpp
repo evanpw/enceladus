@@ -7,19 +7,6 @@
 #include <cassert>
 #include <sstream>
 
-std::string TypeName::str() const
-{
-    std::stringstream ss;
-
-    ss << name_;
-    for (auto& param : parameters())
-    {
-        ss << " " << param->str();
-    }
-
-    return ss.str();
-}
-
 TypeTag Type::tag() const
 {
     return _impl->tag();
@@ -125,26 +112,30 @@ std::string FunctionType::name() const
 {
     std::stringstream ss;
 
-    for (auto& input : _inputs)
-    {
-        if (input->tag() == ttFunction)
-        {
-            ss << "(" << input->name() << ")";
-        }
-        else
-        {
-            ss << input->name();
-        }
-
-        ss << " -> ";
-    }
-
     if (_inputs.empty())
     {
-        ss << "Unit -> ";
+        ss << "Unit";
+    }
+    else if (_inputs.size() == 1)
+    {
+        ss << _inputs[0]->name();
+    }
+    else
+    {
+        ss << "|";
+
+        for (size_t i = 0; i < _inputs.size(); ++i)
+        {
+            ss << _inputs[i]->name();
+
+            if (i + 1 < _inputs.size()) 
+                ss << ", ";
+        }
+        
+        ss << "|";
     }
 
-    ss << _output->name();
+    ss << " -> " << _output->name();
 
     return ss.str();
 }

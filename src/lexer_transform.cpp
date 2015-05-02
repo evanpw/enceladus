@@ -12,7 +12,7 @@ extern int yylex_raw();
 YYLTYPE yylloc;
 YYSTYPE yylval;
 
-std::stack<int> indentation;
+std::stack<int> indentation({0});
 std::deque<Token> token_queue;
 
 // The scanner function seen by the parser. Handles initial whitespace
@@ -21,9 +21,6 @@ Token yylex()
 {
     static Token last_token(tEOL);
     static Token last_returned_token(tEOL);
-
-    // TODO: Move this initialization elsewhere, and don't do the check repeatedly.
-    if (indentation.empty()) indentation.push(0);
 
     while (true)
     {
@@ -46,15 +43,15 @@ Token yylex()
         if (token.type == 0)
         {
             if (last_returned_token.type != tEOL)
-                token_queue.emplace_back(tEOL);
+                token_queue.emplace_back(tEOL, token.location);
 
             while (indentation.top() > 0)
             {
                 indentation.pop();
-                token_queue.emplace_back(tDEDENT);
+                token_queue.emplace_back(tDEDENT, token.location);
             }
 
-            token_queue.emplace_back(tEOF);
+            token_queue.emplace_back(tEOF, token.location);
             continue;
         }
 
@@ -71,7 +68,7 @@ Token yylex()
             {
                 // Increase of indentation -> tINDENT
                 indentation.push(new_level);
-                token_queue.emplace_back(tINDENT);
+                token_queue.emplace_back(tINDENT, token.location);
                 continue;
             }
             else if (new_level < indentation.top())
@@ -80,14 +77,14 @@ Token yylex()
                 while (new_level < indentation.top())
                 {
                     indentation.pop();
-                    token_queue.emplace_back(tDEDENT);
+                    token_queue.emplace_back(tDEDENT, token.location);
                 }
 
                 // Dedenting to a level we have seen before is an error
                 if (new_level != indentation.top())
                 {
                     //TODO: throw SyntaxError("Unexpected indentation level on line X");
-                    token_queue.emplace_back(tEOF);
+                    token_queue.emplace_back(tEOF, token.location);
                     continue;
                 }
             }

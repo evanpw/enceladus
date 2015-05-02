@@ -1,4 +1,4 @@
--- Solves Project Euler #25
+# Solves Project Euler #25
 
 import BigInt
 
@@ -6,7 +6,7 @@ last := toBigInt 1
 current := toBigInt 1
 index := 2
 
-while length current < 1000 do
+while length current < 1000
     next := bigSum last current
     last = current
     current = next

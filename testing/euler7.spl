@@ -1,19 +1,21 @@
--- Solves Project Euler 7
+# Solves Project Euler 7
 
-def isPrime x =
+def isPrime(x: Int) -> Bool
     i := 2
-    while i * i <= x do
-        if x mod i == 0 then return False
+    while i * i <= x
+        if x mod i == 0: return False
         i += 1
 
     return True
 
 x := 2
 n := 0
-while True do
-    if isPrime x then n += 1
+forever
+    if isPrime x
+        n += 1
 
-    if n == 10001 then break
+    if n == 10001
+        break
 
     x += 1
 

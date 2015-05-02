@@ -1,0 +1,12 @@
+data Option a = Some a | None
+
+def divideByTwo(x: Int) -> Option Int 
+    if x % 2 == 0
+        return Some (x / 2)
+    else
+        return None
+
+x := divideByTwo 7
+match x with
+    Some y => print $ show y
+    None   => print "Not divisible by two"

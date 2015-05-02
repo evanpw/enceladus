@@ -1,32 +1,32 @@
--- Solves Project Euler #23
+# Solves Project Euler #23
 
 import List
 
-def divisors n =
+def divisors(n: Int) -> [Int] 
     result := [1]
 
     i := 2
-    while i * i <= n do
-        if n mod i == 0 then
-            if i * i == n then
-                result = i : result
+    while i * i <= n
+        if n mod i == 0
+            if i * i == n
+                result = i :: result
             else
-                result = i : (n / i) : result
+                result = i :: (n / i) :: result
 
         i += 1
 
     return result
 
-def isAbundant n =
-    return (sum $ divisors n) > n
+def isAbundant(n: Int) -> Bool 
+    (sum $ divisors n) > n
 
-def isSumOfTwo y xs zs =
-    while not (null xs or null zs) do
+def isSumOfTwo(y: Int, xs: [Int], zs: [Int]) -> Bool 
+    while not (null xs or null zs)
         s := (head xs) + (head zs)
 
-        if s == y then
+        if s == y
             return True
-        else if s > y then
+        else: if s > y
             zs = tail zs
         else
             xs = tail xs
@@ -34,16 +34,16 @@ def isSumOfTwo y xs zs =
     return False
 
 abundants := []
-for i in range 1 28123 do
-    if isAbundant i then
-        abundants = i : abundants
+for i in range 1 28123
+    if isAbundant i
+        abundants = i :: abundants
 
 abundants = sort cmpInt abundants
 reversed := reverse abundants
 
 total := 0
-for j in range 1 28123 do
-    if not $ isSumOfTwo j abundants reversed then
+for j in range 1 28123
+    if not $ isSumOfTwo j abundants reversed
         total += j
 
 print $ show total

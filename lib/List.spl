@@ -1,63 +1,63 @@
--- Equality
-def eqInt x y :: Int -> Int -> Bool =
+# Equality
+def eqInt(x: Int, y: Int) -> Bool 
     return (x == y)
 
 
-def eqList xs ys :: [Int] -> [Int] -> Bool =
-    if null xs then return null ys
-    if null ys then return null xs
+def eqList(xs: [Int], ys: [Int]) -> Bool 
+    if null xs: return null ys
+    if null ys: return null xs
 
     return (head xs == head ys) and (eqList (tail xs) (tail ys))
 
 
--- Comparisons:
----- x < y   =>  -1
----- x > y   =>  +1
----- x == y  =>   0
-def cmpInt x y :: Int -> Int -> Int =
+# Comparisons
+## x < y   =>  -1
+## x > y   =>  +1
+## x == y  =>   0
+def cmpInt(x: Int, y: Int) -> Int 
     return (x - y)
 
 
-def cmpList xs ys :: [Int] -> [Int] -> Int =
-    if null xs then
-        if null ys then
+def cmpList(xs: [Int], ys: [Int]) -> Int 
+    if null xs
+        if null ys
             return 0
         else
             return -1
-    else if null ys then
+    else: if null ys
         return 1
     else
-        if (head xs) < (head ys) then
+        if (head xs) < (head ys)
             return -1
-        else if (head xs) > (head ys) then
+        else: if (head xs) > (head ys)
             return 1
         else
             return cmpList (tail xs) (tail ys)
 
 
--- List operations
-def isIn eq x ys =
-    for y in ys do
-        if eq x y then return True
+# List operations
+def isIn(eq: |a, a| -> Bool, x: a, ys: [a]) -> Bool 
+    for y in ys
+        if eq x y: return True
 
     return False
 
 
-def splitList cmp xs pivot =
+def splitList(cmp: |a, a| -> Int, xs: [a], pivot: a) -> Pair [a] 
     lhs := []
     rhs := []
 
-    for x in xs do
-        if cmp x pivot < 0 then
-            lhs = x : lhs
+    for x in xs
+        if cmp x pivot < 0
+            lhs = x :: lhs
         else
-            rhs = x : rhs
+            rhs = x :: rhs
 
     return Pair lhs rhs
 
 
-def sort cmp xs =
-    if length xs <= 1 then
+def sort(cmp: |a, a| -> Int, xs: [a]) -> [a] 
+    if length xs <= 1
         return xs
 
     pivot := head xs
@@ -66,17 +66,17 @@ def sort cmp xs =
     return (sort cmp lhs) ++ [pivot] ++ (sort cmp rhs)
 
 
-def uniquify cmp xs =
-    if null xs then return []
+def uniquify(cmp: |a, a| -> Int, xs: [a]) -> [a] 
+    if null xs: return []
 
     xs = sort cmp xs
 
     result := [head xs]
     last := head xs
 
-    for x in tail xs do
-        if cmp last x != 0 then
-            result = x : result
+    for x in tail xs
+        if cmp last x != 0
+            result = x :: result
 
         last = x
 

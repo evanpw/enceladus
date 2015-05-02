@@ -1,7 +1,0 @@
-n <- 3
-while n > 1 do
-{
-	print $ show n
-	
-	n <- n - 1
-}

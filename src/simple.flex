@@ -1,6 +1,7 @@
 %{
 #include <iostream>
 #include <sstream>
+#include <stack>
 #include <boost/lexical_cast.hpp>
 #include "ast.hpp"
 #include "exceptions.hpp"
@@ -55,6 +56,8 @@ int char_literal(const char* s)
     }
 }
 
+std::stack<std::pair<int, int>> locationStack;
+
 int yycolumn = 1;
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
     yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
@@ -68,7 +71,7 @@ int yycolumn = 1;
 %%
 
  /* It's easier to get rid of blank lines here than in the grammar. */
-^[ \t]*("#".*|"--".*)?\n  { yycolumn = 1; }
+^[ \t]*("#".*)?\n  { yycolumn = 1; }
 
 -?[0-9][0-9]* {
     try
@@ -87,8 +90,8 @@ int yycolumn = 1;
      }
 }
 
- /* Python- and Haskell-style comments */
-("#"|"--").*
+ /* Python-style comments */
+"#".*
 
  /* Operators and punctuation */
 "+"     { return '+'; }
@@ -111,6 +114,7 @@ int yycolumn = 1;
 "|"     { return '|'; }
 "mod"   { return tMOD; }
 "->"    { return tRARROW; }
+"=>"    { return tDARROW; }
 "<="    { return tLE; }
 ">="    { return tGE; }
 "=="    { return tEQUALS; }
@@ -131,17 +135,18 @@ int yycolumn = 1;
 "data"      { return tDATA; }
 "def"       { return tDEF; }
 "import"    { BEGIN(import); }
-"do"        { return tDO; }
+"elif"      { return tELIF; }
 "else"      { return tELSE; }
 "False"     { return tFALSE; }
 "for"       { return tFOR; }
 "foreign"   { return tFOREIGN; }
+"forever"   { return tFOREVER; }
 "if"        { return tIF; }
 "in"        { return tIN; }
 "let"       { return tLET; }
+"match"     { return tMATCH; }
 "return"    { return tRETURN; }
 "struct"    { return tSTRUCT; }
-"then"      { return tTHEN; }
 "True"      { return tTRUE; }
 "type"      { return tTYPE; }
 "var"       { return tVAR; }
@@ -157,12 +162,21 @@ int yycolumn = 1;
     assert(f);
 
     yypush_buffer_state(yy_create_buffer(f, YY_BUF_SIZE));
+    locationStack.push({yylineno, yycolumn});
 
     BEGIN(INITIAL);
 }
 
 <<EOF>> {
     yypop_buffer_state();
+
+    if (!locationStack.empty())
+    {
+        std::pair<int, int> prevLocation = locationStack.top();
+        locationStack.pop();
+        yylineno = prevLocation.first;
+        yycolumn = prevLocation.second;
+    }
 
     if (!YY_CURRENT_BUFFER)
     {
