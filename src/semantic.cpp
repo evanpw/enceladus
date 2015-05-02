@@ -135,6 +135,20 @@ void SemanticAnalyzer::injectSymbols()
     scope->types.insert(new TypeSymbol("Unit", _root, Unit));
     //scope->types.insert(new TypeSymbol("Tree", _root, BaseType::create("Tree", false)));
 
+    /*
+    // Example ADT
+    auto Option = BaseType::create("Option");
+    scope->types.insert(new TypeSymbol("Option", _root, Option));
+    Option->addValueConstructor(new ValueConstructor("Some", {Int}, {}));
+    Option->addValueConstructor(new ValueConstructor("None", {}, {}));
+    Symbol* symbolSome = new FunctionSymbol("Some", _root, nullptr);
+    symbolSome->setTypeScheme(TypeScheme::make(FunctionType::create({Int}, Option), {}));
+    insertSymbol(symbolSome);
+    Symbol* symbolNone = new FunctionSymbol("None", _root, nullptr);
+    symbolNone->setTypeScheme(TypeScheme::make(FunctionType::create({}, Option), {}));
+    insertSymbol(symbolNone);
+    */
+
     TypeConstructor* List = new TypeConstructor("List", 1);
     scope->types.insert(new TypeConstructorSymbol("List", _root, List));
 
@@ -612,42 +626,50 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 	// Data declarations cannot be local
     CHECK_TOP_LEVEL("data declaration");
 
-	// The data type and constructor name cannot have already been used for something
+	// The data type name cannot have already been used for something
 	const std::string& typeName = node->name;
     CHECK_UNDEFINED(typeName);
 
-	const std::string& constructorName = node->constructor->name;
-    CHECK_UNDEFINED(constructorName);
-
     // Actually create the type
     std::shared_ptr<Type> newType;
-    std::vector<std::shared_ptr<Type>> memberTypes;
     if (node->typeParameters.empty())
     {
         newType = BaseType::create(node->name);
-        topScope()->types.insert(new TypeSymbol(typeName, node, newType));
 
-        // All of the constructor members must refer to already-declared types
-        for (auto& memberTypeName : node->constructor->members())
+        for (auto& constructor : node->constructorSpecs)
         {
-            std::shared_ptr<Type> memberType = resolveTypeName(*memberTypeName);
-            CHECK(memberType, "unknown member type \"{}\"", memberTypeName->str());
+            CHECK_UNDEFINED(constructor->name);
 
-            memberTypes.push_back(memberType);
+            // All of the constructor members must refer to already-declared types
+            std::vector<std::shared_ptr<Type>> memberTypes;
+            for (auto& memberTypeName : constructor->members())
+            {
+                std::shared_ptr<Type> memberType = resolveTypeName(*memberTypeName);
+                CHECK(memberType, "unknown member type \"{}\"", memberTypeName->str());
+
+                memberTypes.push_back(memberType);
+            }
+            constructor->setMemberTypes(memberTypes);
+
+            ValueConstructor* valueConstructor = new ValueConstructor(constructor->name, memberTypes);
+            node->valueConstructors.push_back(valueConstructor);
+            newType->addValueConstructor(valueConstructor);
+
+            // Create a symbol for the constructor
+            Symbol* symbol = new FunctionSymbol(constructor->name, node, nullptr);
+            symbol->setType(FunctionType::create(memberTypes, newType));
+            insertSymbol(symbol);
         }
-        node->constructor->setMemberTypes(memberTypes);
 
-        ValueConstructor* valueConstructor = new ValueConstructor(node->constructor->name, memberTypes);
-        node->valueConstructor = valueConstructor;
-        newType->addValueConstructor(valueConstructor);
-
-        // Create a symbol for the constructor
-        Symbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
-        symbol->setType(FunctionType::create(memberTypes, newType));
-        insertSymbol(symbol);
+        topScope()->types.insert(new TypeSymbol(typeName, node, newType));
     }
     else
     {
+        // We don't support algebraic data types with type variables yet
+        assert(node->constructorSpecs.size() == 1);
+        auto& constructor = node->constructorSpecs[0];
+        CHECK_UNDEFINED(constructor->name);
+
         TypeConstructor* typeConstructor = new TypeConstructor(typeName, node->typeParameters.size());
         topScope()->types.insert(new TypeConstructorSymbol(typeName, node, typeConstructor));
 
@@ -662,23 +684,24 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         }
 
         // All of the constructor members must refer to already-declared types
-        for (auto& memberTypeName : node->constructor->members())
+        std::vector<std::shared_ptr<Type>> memberTypes;
+        for (auto& memberTypeName : constructor->members())
         {
             std::shared_ptr<Type> memberType = resolveTypeName(*memberTypeName, varMap);
             CHECK(memberType, "unknown member type \"{}\"", memberTypeName->str());
 
             memberTypes.push_back(memberType);
         }
-        node->constructor->setMemberTypes(memberTypes);
+        constructor->setMemberTypes(memberTypes);
 
-        ValueConstructor* valueConstructor = new ValueConstructor(node->constructor->name, memberTypes);
-        node->valueConstructor = valueConstructor;
+        ValueConstructor* valueConstructor = new ValueConstructor(constructor->name, memberTypes);
+        node->valueConstructors.push_back(valueConstructor);
         typeConstructor->addValueConstructor(valueConstructor);
 
         newType = ConstructedType::create(typeConstructor, variables);
 
         // Create a symbol for the constructor
-        Symbol* symbol = new FunctionSymbol(constructorName, node, nullptr);
+        Symbol* symbol = new FunctionSymbol(constructor->name, node, nullptr);
         symbol->setTypeScheme(generalize(FunctionType::create(memberTypes, newType), _scopes));
         insertSymbol(symbol);
     }
@@ -783,8 +806,6 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	releaseSymbol(symbol);
 	symbol->setTypeScheme(generalize(symbol->typeScheme->type(), _scopes));
 	insertSymbol(symbol);
-
-    //std::cerr << name << " :: " << symbol->typeScheme->name() << std::endl;
 
     node->type = Unit;
 }

@@ -43,13 +43,13 @@ public:
     const std::string& name() const { return name_; }
     size_t parameters() const { return parameters_; }
 
-    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return valueConstructors_; }
-    void addValueConstructor(ValueConstructor* valueConstructor) { valueConstructors_.emplace_back(valueConstructor); }
+    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return _valueConstructors; }
+    void addValueConstructor(ValueConstructor* valueConstructor) { _valueConstructors.emplace_back(valueConstructor); }
 
 private:
     std::string name_;
     size_t parameters_;
-    std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
+    std::vector<std::shared_ptr<ValueConstructor>> _valueConstructors;
 };
 
 enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed};
@@ -70,6 +70,7 @@ public:
     TypeTag tag() const;
     bool isBoxed() const;
     std::string name() const;
+    bool isAlgebraic() const;
 
     const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const;
     void addValueConstructor(ValueConstructor* valueConstructor);
@@ -170,12 +171,13 @@ public:
     virtual TypeTag tag() const { return _tag; }
     virtual std::string name() const = 0;
     virtual bool isBoxed() const = 0;
+    virtual bool isAlgebraic() const { return _valueConstructors.size() > 1; }
 
-    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return valueConstructors_; }
-    void addValueConstructor(ValueConstructor* valueConstructor) { valueConstructors_.emplace_back(valueConstructor); }
+    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return _valueConstructors; }
+    void addValueConstructor(ValueConstructor* valueConstructor) { _valueConstructors.emplace_back(valueConstructor); }
 
 protected:
-    std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
+    std::vector<std::shared_ptr<ValueConstructor>> _valueConstructors;
 
 private:
     TypeTag _tag;
@@ -199,13 +201,12 @@ private:
     {
         if (!primitive)
         {
-            valueConstructors_.emplace_back(new ValueConstructor(name, {}));
+            //_valueConstructors.emplace_back(new ValueConstructor(name, {}));
         }
     }
 
     std::string name_;
     bool primitive_;
-    std::vector<std::shared_ptr<ValueConstructor>> valueConstructors_;
 };
 
 // The type of a function from one type to another
@@ -264,7 +265,7 @@ private:
 
         for (auto& valueConstructor : typeConstructor->valueConstructors())
         {
-            valueConstructors_.push_back(valueConstructor);
+            _valueConstructors.push_back(valueConstructor);
         }
     }
 
@@ -279,13 +280,12 @@ private:
 
         for (auto& valueConstructor : typeConstructor->valueConstructors())
         {
-            valueConstructors_.push_back(valueConstructor);
+            _valueConstructors.push_back(valueConstructor);
         }
     }
 
     const TypeConstructor* _typeConstructor;
     std::vector<std::shared_ptr<Type>> _typeParameters;
-    std::vector<std::shared_ptr<ValueConstructor>> _valueConstructors;
 };
 
 // A variable which can be substituted with a type. Used for polymorphism.

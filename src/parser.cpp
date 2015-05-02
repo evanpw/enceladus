@@ -196,10 +196,17 @@ StatementNode* data_declaration()
     }
 
     expect('=');
-    ConstructorSpec* constructorSpec = constructor_spec();
+
+    std::vector<ConstructorSpec*> specs;
+    specs.push_back(constructor_spec());
+    while (accept('|'))
+    {
+        specs.push_back(constructor_spec());
+    }
+
     expect(tEOL);
 
-    return new DataDeclaration(location, name.value.str, typeParameters, constructorSpec);
+    return new DataDeclaration(location, name.value.str, typeParameters, specs);
 }
 
 StatementNode* type_alias_declaration()

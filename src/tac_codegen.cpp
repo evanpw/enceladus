@@ -130,19 +130,21 @@ void TACCodeGen::visit(ProgramNode* node)
 
     for (DataDeclaration* dataDeclaration : _dataDeclarations)
     {
-        ValueConstructor* constructor = dataDeclaration->valueConstructor;
+        for (size_t i = 0; i < dataDeclaration->valueConstructors.size(); ++i)
+        {
+            ValueConstructor* constructor = dataDeclaration->valueConstructors[i];
+            _tacProgram.otherFunctions.emplace_back(constructor->name());
+            _currentFunction = &_tacProgram.otherFunctions.back();
+            _currentInstruction = nullptr;
 
-        _tacProgram.otherFunctions.emplace_back(constructor->name());
-        _currentFunction = &_tacProgram.otherFunctions.back();
-        _currentInstruction = nullptr;
+            createConstructor(constructor, i);
 
-        createConstructor(dataDeclaration->valueConstructor);
+            _tacProgram.otherFunctions.emplace_back("_destroy" + mangle(constructor->name()));
+            _currentFunction = &_tacProgram.otherFunctions.back();
+            _currentInstruction = nullptr;
 
-        _tacProgram.otherFunctions.emplace_back("_destroy" + mangle(constructor->name()));
-        _currentFunction = &_tacProgram.otherFunctions.back();
-        _currentInstruction = nullptr;
-
-        createDestructor(dataDeclaration->valueConstructor);
+            createDestructor(constructor);
+        }
     }
 
     for (StructDefNode* structDeclaration : _structDeclarations)
@@ -153,7 +155,7 @@ void TACCodeGen::visit(ProgramNode* node)
         _currentFunction = &_tacProgram.otherFunctions.back();
         _currentInstruction = nullptr;
 
-        createConstructor(structDeclaration->valueConstructor);
+        createConstructor(structDeclaration->valueConstructor, 0);
 
         _tacProgram.otherFunctions.emplace_back("_destroy" + mangle(constructor->name()));
         _currentFunction = &_tacProgram.otherFunctions.back();
@@ -349,7 +351,7 @@ void TACCodeGen::visit(NullaryNode* node)
         {
             if (node->symbol->asFunction()->isForeign)
             {
-                emit(new TACCall(true, dest, FOREIGN_NAME(node->symbol->name)));    
+                emit(new TACCall(true, dest, FOREIGN_NAME(node->symbol->name)));
             }
             else
             {
@@ -507,7 +509,6 @@ void TACCodeGen::visit(LetNode* node)
 
         // Make sure to incref before decref in case dest currently has the
         // only reference to value
-        //emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
         incref(value);
         emit(new TACCall(true, FOREIGN_NAME("_decref"), {dest}));
         emit(new TACAssign(dest, value));
@@ -562,7 +563,6 @@ void TACCodeGen::visit(MatchNode* node)
 
         if (member->typeScheme->isBoxed())
         {
-            //emit(new TACCall(true, FOREIGN_NAME("_incref"), {getNameAddress(member)}));
             incref(getNameAddress(member));
         }
     }
@@ -702,7 +702,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         }
         else
         {
-            emit(new TACCall(false, result, mangle(node->symbol->name), arguments));   
+            emit(new TACCall(false, result, mangle(node->symbol->name), arguments));
         }
     }
     else /* node->symbol->kind == kVariable */
@@ -765,7 +765,7 @@ void TACCodeGen::visit(DataDeclaration* node)
     _dataDeclarations.push_back(node);
 }
 
-void TACCodeGen::createConstructor(ValueConstructor* constructor)
+void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constructorTag)
 {
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
 
@@ -784,6 +784,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
 
     // SplObject header fields
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
+    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, constructorTag), std::make_shared<ConstAddress>(constructorTag)));
 
     std::string destructor = "_destroy" + mangle(constructor->name());
     emit(new TACLeftIndexedAssignment(
@@ -804,7 +805,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
         // Assigning into this structure gives a new reference to each member
         if (member.type->isBoxed())
         {
-            //emit(new TACCall(true, FOREIGN_NAME("_incref"), {param}));
             incref(param);
         }
     }

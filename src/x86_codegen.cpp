@@ -30,9 +30,7 @@ void X86CodeGen::generateCode(TACProgram& program)
         {
             EMIT_LEFT("extern " << program.externs[i]);
         }
-        EMIT_BLANK();
     }
-    EMIT_BLANK();
 
     // Main function
     generateCode(program.mainFunction);
@@ -54,6 +52,7 @@ void X86CodeGen::generateCode(TACProgram& program)
 
 void X86CodeGen::generateCode(TACFunction& function)
 {
+    EMIT_BLANK();
     EMIT_COMMENT("begin " << function.name);
 
     clearRegisters();

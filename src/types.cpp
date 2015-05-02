@@ -35,6 +35,11 @@ bool Type::isBoxed() const
     return _impl->isBoxed();
 }
 
+bool Type::isAlgebraic() const
+{
+    return _impl->isAlgebraic();
+}
+
 const std::vector<std::shared_ptr<ValueConstructor>>& Type::valueConstructors() const
 {
     return _impl->valueConstructors();

@@ -351,16 +351,21 @@ public:
 class DataDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, ConstructorSpec* constructor)
-	: StatementNode(location), name(name), typeParameters(typeParameters), constructor(constructor)
-	{}
+	DataDeclaration(const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, const std::vector<ConstructorSpec*> specs)
+	: StatementNode(location), name(name), typeParameters(typeParameters)
+	{
+		for (auto& spec : specs)
+		{
+			constructorSpecs.emplace_back(spec);
+		}
+	}
 
 	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
 
 	std::string name;
 	std::vector<std::string> typeParameters;
-	std::unique_ptr<ConstructorSpec> constructor;
-	ValueConstructor* valueConstructor;
+	std::vector<std::unique_ptr<ConstructorSpec>> constructorSpecs;
+	std::vector<ValueConstructor*> valueConstructors;
 };
 
 class TypeAliasNode : public StatementNode
