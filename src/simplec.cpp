@@ -1,12 +1,14 @@
 #include <cstdio>
 #include <iostream>
 #include "ast.hpp"
+#include "ast_context.hpp"
 #include "exceptions.hpp"
-#include "tac_codegen.hpp"
-#include "x86_codegen.hpp"
-#include "tac_local_optimizer.hpp"
+#include "parser.hpp"
 #include "scope.hpp"
 #include "semantic.hpp"
+#include "tac_codegen.hpp"
+#include "tac_local_optimizer.hpp"
+#include "x86_codegen.hpp"
 
 using namespace std;
 
@@ -83,10 +85,11 @@ int main(int argc, char* argv[])
 
 	int return_value = 1;
 
-	ProgramNode* root;
+	AstContext context;
+	Parser parser(context);
 	try
 	{
-		root = parse();
+		parser.parse();
 	}
 	catch (LexerError& e)
 	{
@@ -95,6 +98,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	ProgramNode* root = context.root();
 	SemanticAnalyzer semant(root);
 	bool semantic_success = semant.analyze();
 
@@ -130,8 +134,6 @@ int main(int argc, char* argv[])
 		x86Gen.generateCode(intermediateCode);
 	}
 
-	delete root;
 	fclose(yyin);
-
 	return return_value;
 }

@@ -82,10 +82,10 @@ TokenType peek2ndType()
     return nextTokens[1].type;
 }
 
-ProgramNode* parse()
+void Parser::parse()
 {
     initialize();
-    return program();
+    program();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -94,19 +94,21 @@ ProgramNode* parse()
 
 //// Statements ////////////////////////////////////////////////////////////////
 
-ProgramNode* program()
+ProgramNode* Parser::program()
 {
-    ProgramNode* node = new ProgramNode(getLocation());
+    ProgramNode* node = new ProgramNode(_context, getLocation());
 
     while (!accept(tEOF))
     {
-        node->append(statement());
+        node->children.push_back(statement());
     }
+
+    _context.setRoot(node);
 
     return node;
 }
 
-StatementNode* statement()
+StatementNode* Parser::statement()
 {
     switch(peekType())
     {
@@ -177,7 +179,7 @@ StatementNode* statement()
 }
 
 // Like an if statement, but doesn't match IF first
-StatementNode* if_helper(const YYLTYPE& location)
+StatementNode* Parser::if_helper(const YYLTYPE& location)
 {
     ExpressionNode* condition = expression();
     StatementNode* ifBody = suite();
@@ -186,20 +188,20 @@ StatementNode* if_helper(const YYLTYPE& location)
     if (accept(tELIF))
     {
         StatementNode* elseBody = if_helper(intermediateLocation);
-        return new IfElseNode(location, condition, ifBody, elseBody);
+        return new IfElseNode(_context, location, condition, ifBody, elseBody);
     }
     else if (accept(tELSE))
     {
         StatementNode* elseBody = suite();
-        return new IfElseNode(location, condition, ifBody, elseBody);
+        return new IfElseNode(_context, location, condition, ifBody, elseBody);
     }
     else
     {
-        return new IfNode(location, condition, ifBody);
+        return new IfNode(_context, location, condition, ifBody);
     }
 }
 
-StatementNode* if_statement()
+StatementNode* Parser::if_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -207,7 +209,7 @@ StatementNode* if_statement()
     return if_helper(location);
 }
 
-StatementNode* data_declaration()
+StatementNode* Parser::data_declaration()
 {
     YYLTYPE location = getLocation();
 
@@ -232,10 +234,10 @@ StatementNode* data_declaration()
 
     expect(tEOL);
 
-    return new DataDeclaration(location, name.value.str, typeParameters, specs);
+    return new DataDeclaration(_context, location, name.value.str, typeParameters, specs);
 }
 
-StatementNode* type_alias_declaration()
+StatementNode* Parser::type_alias_declaration()
 {
     YYLTYPE location = getLocation();
 
@@ -245,34 +247,34 @@ StatementNode* type_alias_declaration()
     TypeName* typeName = type();
     expect(tEOL);
 
-    return new TypeAliasNode(location, name.value.str, typeName);
+    return new TypeAliasNode(_context, location, name.value.str, typeName);
 }
 
-StatementNode* function_definition()
+StatementNode* Parser::function_definition()
 {
     YYLTYPE location = getLocation();
 
     expect(tDEF);
     std::string name = ident();
-    std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
+    std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
 
     StatementNode* body = suite();
-    return new FunctionDefNode(location, name, body, paramsAndTypes.first, paramsAndTypes.second);
+    return new FunctionDefNode(_context, location, name, body, paramsAndTypes.first, paramsAndTypes.second);
 }
 
-StatementNode* foreign_declaration()
+StatementNode* Parser::foreign_declaration()
 {
     YYLTYPE location = getLocation();
 
     expect(tFOREIGN);
     std::string name = ident();
-    std::pair<ParamList*, TypeName*> paramsAndTypes = params_and_types();
+    std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
     expect(tEOL);
 
-    return new ForeignDeclNode(location, name, paramsAndTypes.first, paramsAndTypes.second);
+    return new ForeignDeclNode(_context, location, name, paramsAndTypes.first, paramsAndTypes.second);
 }
 
-StatementNode* for_statement()
+StatementNode* Parser::for_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -282,36 +284,36 @@ StatementNode* for_statement()
     ExpressionNode* listExpression = expression();
     StatementNode* body = suite();
 
-    return makeForNode(location, loopVar.value.str, listExpression, body);
+    return makeForNode(_context, location, loopVar.value.str, listExpression, body);
 }
 
-StatementNode* forever_statement()
+StatementNode* Parser::forever_statement()
 {
     YYLTYPE location = getLocation();
 
     expect(tFOREVER);
     StatementNode* body = suite();
 
-    return new ForeverNode(location, body);
+    return new ForeverNode(_context, location, body);
 }
 
-StatementNode* let_statement()
+StatementNode* Parser::let_statement()
 {
     YYLTYPE location = getLocation();
 
     expect(tLET);
     Token constructor = expect(tUIDENT);
-    ParamList* params = parameters();
+    std::vector<std::string> params = parameters();
     expect('=');
     ExpressionNode* body = expression();
     expect(tEOL);
 
-    return new MatchNode(location, constructor.value.str, params, body);
+    return new MatchNode(_context, location, constructor.value.str, params, body);
 }
 
 /// match_statement: MATCH expression EOL match_body
 /// match_body: INDENT match_arm { match_arm } DEDENT
-StatementNode* match_statement()
+StatementNode* Parser::match_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -320,27 +322,27 @@ StatementNode* match_statement()
     expect(tEOL);
     expect(tINDENT);
 
-    std::vector<std::unique_ptr<MatchArm>> arms;
+    std::vector<MatchArm*> arms;
     while (!accept(tDEDENT))
     {
-        arms.emplace_back(match_arm());
+        arms.push_back(match_arm());
     }
 
-    return new SwitchNode(location, expr, std::move(arms));
+    return new SwitchNode(_context, location, expr, std::move(arms));
 }
 
-MatchArm* match_arm()
+MatchArm* Parser::match_arm()
 {
     YYLTYPE location = getLocation();
     Token constructor = expect(tUIDENT);
-    ParamList* params = parameters();
+    std::vector<std::string> params = parameters();
     expect(tDARROW);
     StatementNode* body = statement();
 
-    return new MatchArm(location, constructor.value.str, params, body);
+    return new MatchArm(_context, location, constructor.value.str, params, body);
 }
 
-StatementNode* return_statement()
+StatementNode* Parser::return_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -348,22 +350,22 @@ StatementNode* return_statement()
     ExpressionNode* value = expression();
     expect(tEOL);
 
-    return new ReturnNode(location, value);
+    return new ReturnNode(_context, location, value);
 }
 
-StatementNode* struct_declaration()
+StatementNode* Parser::struct_declaration()
 {
     YYLTYPE location = getLocation();
 
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
     expect('=');
-    MemberList* memberList = members();
+    std::vector<MemberDefNode*> memberList = members();
 
-    return new StructDefNode(location, name.value.str, memberList);
+    return new StructDefNode(_context, location, name.value.str, memberList);
 }
 
-StatementNode* while_statement()
+StatementNode* Parser::while_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -371,10 +373,10 @@ StatementNode* while_statement()
     ExpressionNode* condition = expression();
     StatementNode* body = suite();
 
-    return new WhileNode(location, condition, body);
+    return new WhileNode(_context, location, condition, body);
 }
 
-StatementNode* assignment_statement()
+StatementNode* Parser::assignment_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -387,11 +389,11 @@ StatementNode* assignment_statement()
 
         expect(tEOL);
 
-        return new AssignNode(location, lhs, rhs);
+        return new AssignNode(_context, location, lhs, rhs);
     }
 
-    ArgList argList;
-    argList.emplace_back(new VariableNode(location, lhs));
+    std::vector<ExpressionNode*> argList;
+    argList.push_back(new VariableNode(_context, location, lhs));
 
     std::string functionName;
     switch (peekType())
@@ -423,14 +425,14 @@ StatementNode* assignment_statement()
     }
 
     ExpressionNode* rhs = expression();
-    argList.emplace_back(rhs);
+    argList.push_back(rhs);
 
     expect(tEOL);
 
-    return new AssignNode(location, lhs, new FunctionCallNode(location, functionName, std::move(argList)));
+    return new AssignNode(_context, location, lhs, new FunctionCallNode(_context, location, functionName, std::move(argList)));
 }
 
-StatementNode* variable_declaration()
+StatementNode* Parser::variable_declaration()
 {
     YYLTYPE location = getLocation();
 
@@ -442,7 +444,7 @@ StatementNode* variable_declaration()
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(location, varName.value.str, varType, value);
+        return new LetNode(_context, location, varName.value.str, varType, value);
     }
     else
     {
@@ -453,32 +455,32 @@ StatementNode* variable_declaration()
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(location, varName.value.str, varType, value);
+        return new LetNode(_context, location, varName.value.str, varType, value);
     }
 }
 
-StatementNode* break_statement()
+StatementNode* Parser::break_statement()
 {
     YYLTYPE location = getLocation();
 
     expect(tBREAK);
     expect(tEOL);
 
-    return new BreakNode(location);
+    return new BreakNode(_context, location);
 }
 
 //// Miscellaneous /////////////////////////////////////////////////////////////
 
-StatementNode* suite()
+StatementNode* Parser::suite()
 {
     if (accept(tEOL))
     {
         expect(tINDENT);
 
-        BlockNode* block = new BlockNode(getLocation());
+        BlockNode* block = new BlockNode(_context, getLocation());
         while (peekType() != tDEDENT)
         {
-            block->append(statement());
+            block->children.push_back(statement());
         }
 
         expect(tDEDENT);
@@ -492,20 +494,20 @@ StatementNode* suite()
     }
 }
 
-ParamList* parameters()
+std::vector<std::string> Parser::parameters()
 {
-    ParamList* result = new ParamList;
+    std::vector<std::string> result;
     while (peekType() == tLIDENT)
     {
         Token param = expect(tLIDENT);
 
-        result->push_back(param.value.str);
+        result.push_back(param.value.str);
     }
 
     return result;
 }
 
-std::string ident()
+std::string Parser::ident()
 {
     Token name;
     if (peekType() == tLIDENT)
@@ -530,21 +532,21 @@ std::string ident()
 /// type
 ///     : '|' [ arrow_type { ',' arrow_type } ] '|' RARROW constructed_type
 ///     | arrow_type
-TypeName* type()
+TypeName* Parser::type()
 {
     YYLTYPE location = getLocation();
 
     if (!accept('|')) return arrow_type();
 
-    TypeName* typeName = new TypeName("Function", location);
+    TypeName* typeName = new TypeName(_context, location, "Function");
 
     if (peekType() != '|')
     {
-        typeName->append(arrow_type());
+        typeName->parameters.push_back(arrow_type());
 
         while (accept(','))
         {
-            typeName->append(arrow_type());
+            typeName->parameters.push_back(arrow_type());
         }
     }
 
@@ -552,23 +554,23 @@ TypeName* type()
     expect(tRARROW);
 
     // Return type
-    typeName->append(constructed_type());
+    typeName->parameters.push_back(constructed_type());
 
     return typeName;
 }
 
 /// arrow_type
 ///     : constructed_type [ RARROW constructed_type ]
-TypeName* arrow_type()
+TypeName* Parser::arrow_type()
 {
     YYLTYPE location = getLocation();
 
     TypeName* firstType = constructed_type();
     if (accept(tRARROW))
     {
-        TypeName* functionType = new TypeName("Function", location);
-        functionType->append(firstType);
-        functionType->append(constructed_type());
+        TypeName* functionType = new TypeName(_context, location, "Function");
+        functionType->parameters.push_back(firstType);
+        functionType->parameters.push_back(constructed_type());
 
         return functionType;
     }
@@ -581,18 +583,18 @@ TypeName* arrow_type()
 /// constructed_type
 ///     : UIDENT { simple_type }
 ///     | simple_type
-TypeName* constructed_type()
+TypeName* Parser::constructed_type()
 {
     YYLTYPE location = getLocation();
 
     if (peekType() == tUIDENT)
     {
         Token name = expect(tUIDENT);
-        TypeName* typeName = new TypeName(name.value.str, location);
+        TypeName* typeName = new TypeName(_context, location, name.value.str);
 
         while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[')
         {
-            typeName->append(simple_type());
+            typeName->parameters.push_back(simple_type());
         }
 
         return typeName;
@@ -608,19 +610,19 @@ TypeName* constructed_type()
 ///     | UIDENT
 ///     | '[' type ']'
 ///     | '(' type ')'
-TypeName* simple_type()
+TypeName* Parser::simple_type()
 {
     YYLTYPE location = getLocation();
 
     if (peekType() == tUIDENT)
     {
         Token typeName = expect(tUIDENT);
-        return new TypeName(typeName.value.str, location);
+        return new TypeName(_context, location, typeName.value.str);
     }
     else if (peekType() == tLIDENT)
     {
         Token typeName = expect(tLIDENT);
-        return new TypeName(typeName.value.str, location);
+        return new TypeName(_context, location, typeName.value.str);
     }
     else if (peekType() == '(')
     {
@@ -636,27 +638,28 @@ TypeName* simple_type()
         TypeName* internalType = type();
         expect(']');
 
-        TypeName* typeName = new TypeName("List", location);
-        typeName->append(internalType);
+        TypeName* typeName = new TypeName(_context, location, "List");
+        typeName->parameters.push_back(internalType);
 
         return typeName;
     }
 }
 
-ConstructorSpec* constructor_spec()
+ConstructorSpec* Parser::constructor_spec()
 {
+    YYLTYPE location = getLocation();
     Token name = expect(tUIDENT);
 
-    ConstructorSpec* constructorSpec = new ConstructorSpec(name.value.str);
+    ConstructorSpec* constructorSpec = new ConstructorSpec(_context, location, name.value.str);
     while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[')
     {
-        constructorSpec->append(simple_type());
+        constructorSpec->members.push_back(simple_type());
     }
 
     return constructorSpec;
 }
 
-std::pair<std::string, TypeName*> param_and_type()
+std::pair<std::string, TypeName*> Parser::param_and_type()
 {
     Token param = expect(tLIDENT);
     expect(':');
@@ -667,26 +670,26 @@ std::pair<std::string, TypeName*> param_and_type()
 
 /// type_declaration
 ///     : '(' [ LIDENT ':' type { ',' LIDENT ':' type } ] ')' RARROW constructed_type
-std::pair<ParamList*, TypeName*> params_and_types()
+std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types()
 {
     YYLTYPE location = getLocation();
 
     expect('(');
 
-    ParamList* params = new ParamList;
-    TypeName* typeName = new TypeName("Function", location);
+    std::vector<std::string> params;
+    TypeName* typeName = new TypeName(_context, location, "Function");
 
     if (peekType() == tLIDENT)
     {
         std::pair<std::string, TypeName*> param_type = param_and_type();
-        params->push_back(param_type.first);
-        typeName->append(param_type.second);
+        params.push_back(param_type.first);
+        typeName->parameters.push_back(param_type.second);
 
         while (accept(','))
         {
             param_type = param_and_type();
-            params->push_back(param_type.first);
-            typeName->append(param_type.second);
+            params.push_back(param_type.first);
+            typeName->parameters.push_back(param_type.second);
         }
     }
 
@@ -694,16 +697,16 @@ std::pair<ParamList*, TypeName*> params_and_types()
     expect(tRARROW);
 
     // Return type
-    typeName->append(constructed_type());
+    typeName->parameters.push_back(constructed_type());
 
     return {params, typeName};
 }
 
  //// Structures ///////////////////////////////////////////////////////////////
 
-MemberList* members()
+std::vector<MemberDefNode*> Parser::members()
 {
-    MemberList* memberList = new MemberList();
+    std::vector<MemberDefNode*> memberList;
 
     if (accept(tEOL))
     {
@@ -711,20 +714,20 @@ MemberList* members()
 
         while (peekType() != tDEDENT)
         {
-            memberList->emplace_back(member_definition());
+            memberList.push_back(member_definition());
         }
 
         expect(tDEDENT);
     }
     else
     {
-        memberList->emplace_back(member_definition());
+        memberList.push_back(member_definition());
     }
 
     return memberList;
 }
 
-MemberDefNode* member_definition()
+MemberDefNode* Parser::member_definition()
 {
     YYLTYPE location = getLocation();
 
@@ -733,18 +736,18 @@ MemberDefNode* member_definition()
     TypeName* typeName = type();
     expect(tEOL);
 
-    return new MemberDefNode(location, name.value.str, typeName);
+    return new MemberDefNode(_context, location, name.value.str, typeName);
 }
 
 //// Expressions ///////////////////////////////////////////////////////////////
 
-ExpressionNode* expression()
+ExpressionNode* Parser::expression()
 {
     ExpressionNode* lhs = and_expression();
 
     if (accept(tOR))
     {
-        return new LogicalNode(getLocation(), lhs, LogicalNode::kOr, expression());
+        return new LogicalNode(_context, getLocation(), lhs, LogicalNode::kOr, expression());
     }
     else
     {
@@ -752,13 +755,13 @@ ExpressionNode* expression()
     }
 }
 
-ExpressionNode* and_expression()
+ExpressionNode* Parser::and_expression()
 {
     ExpressionNode* lhs = equality_expression();
 
     if (accept(tAND))
     {
-        return new LogicalNode(getLocation(), lhs, LogicalNode::kAnd, and_expression());
+        return new LogicalNode(_context, getLocation(), lhs, LogicalNode::kAnd, and_expression());
     }
     else
     {
@@ -766,17 +769,17 @@ ExpressionNode* and_expression()
     }
 }
 
-ExpressionNode* equality_expression()
+ExpressionNode* Parser::equality_expression()
 {
     ExpressionNode* lhs = relational_expression();
 
     if (accept(tEQUALS))
     {
-        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kEqual, relational_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kEqual, relational_expression());
     }
     else if (accept(tNE))
     {
-        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kNotEqual, relational_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kNotEqual, relational_expression());
     }
     else
     {
@@ -784,25 +787,25 @@ ExpressionNode* equality_expression()
     }
 }
 
-ExpressionNode* relational_expression()
+ExpressionNode* Parser::relational_expression()
 {
     ExpressionNode* lhs = cons_expression();
 
     if (accept('>'))
     {
-        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kGreater, cons_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreater, cons_expression());
     }
     else if (accept('<'))
     {
-        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kLess, cons_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLess, cons_expression());
     }
     else if (accept(tGE))
     {
-        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kGreaterOrEqual, cons_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreaterOrEqual, cons_expression());
     }
     else if (accept(tLE))
     {
-        return new ComparisonNode(getLocation(), lhs, ComparisonNode::kLessOrEqual, cons_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLessOrEqual, cons_expression());
     }
     else
     {
@@ -810,13 +813,13 @@ ExpressionNode* relational_expression()
     }
 }
 
-ExpressionNode* cons_expression()
+ExpressionNode* Parser::cons_expression()
 {
     ExpressionNode* lhs = additive_expression();
 
     if (accept(tDCOLON))
     {
-        return new FunctionCallNode(getLocation(), "Cons", {lhs, cons_expression()});
+        return new FunctionCallNode(_context, getLocation(), "Cons", {lhs, cons_expression()});
     }
     else
     {
@@ -824,7 +827,7 @@ ExpressionNode* cons_expression()
     }
 }
 
-ExpressionNode* additive_expression()
+ExpressionNode* Parser::additive_expression()
 {
     ExpressionNode* result = multiplicative_expression();
 
@@ -832,19 +835,19 @@ ExpressionNode* additive_expression()
     {
         if (accept('+'))
         {
-            result = new FunctionCallNode(getLocation(), "+", {result, multiplicative_expression()});
+            result = new FunctionCallNode(_context, getLocation(), "+", {result, multiplicative_expression()});
         }
         else
         {
             expect('-');
-            result = new FunctionCallNode(getLocation(), "-", {result, multiplicative_expression()});
+            result = new FunctionCallNode(_context, getLocation(), "-", {result, multiplicative_expression()});
         }
     }
 
     return result;
 }
 
-ExpressionNode* multiplicative_expression()
+ExpressionNode* Parser::multiplicative_expression()
 {
     ExpressionNode* result = concat_expression();
 
@@ -852,29 +855,29 @@ ExpressionNode* multiplicative_expression()
     {
         if (accept('*'))
         {
-            result = new FunctionCallNode(getLocation(), "*", {result, concat_expression()});
+            result = new FunctionCallNode(_context, getLocation(), "*", {result, concat_expression()});
         }
         else if (accept('/'))
         {
-            result = new FunctionCallNode(getLocation(), "/", {result, concat_expression()});
+            result = new FunctionCallNode(_context, getLocation(), "/", {result, concat_expression()});
         }
         else
         {
             expect(tMOD);
-            result = new FunctionCallNode(getLocation(), "%", {result, concat_expression()});
+            result = new FunctionCallNode(_context, getLocation(), "%", {result, concat_expression()});
         }
     }
 
     return result;
 }
 
-ExpressionNode* concat_expression()
+ExpressionNode* Parser::concat_expression()
 {
     ExpressionNode* lhs = negation_expression();
 
     if (accept(tCONCAT))
     {
-        return new FunctionCallNode(getLocation(), "concat", {lhs, concat_expression()});
+        return new FunctionCallNode(_context, getLocation(), "concat", {lhs, concat_expression()});
     }
     else
     {
@@ -882,11 +885,11 @@ ExpressionNode* concat_expression()
     }
 }
 
-ExpressionNode* negation_expression()
+ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
-        return new FunctionCallNode(getLocation(), "-", {new IntNode(getLocation(), 0), func_call_expression()});
+        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), func_call_expression()});
     }
     else
     {
@@ -894,7 +897,7 @@ ExpressionNode* negation_expression()
     }
 }
 
-bool canStartUnaryExpression(TokenType t)
+static bool canStartUnaryExpression(TokenType t)
 {
     return (t == '(' ||
             t == tTRUE ||
@@ -906,7 +909,7 @@ bool canStartUnaryExpression(TokenType t)
             t == tUIDENT);
 }
 
-ExpressionNode* func_call_expression()
+ExpressionNode* Parser::func_call_expression()
 {
     if ((peekType() == tLIDENT || peekType() == tUIDENT) && (canStartUnaryExpression(peek2ndType()) || peek2ndType() == '$'))
     {
@@ -914,19 +917,19 @@ ExpressionNode* func_call_expression()
 
         std::string functionName = ident();
 
-        ArgList argList;
+        std::vector<ExpressionNode*> argList;
         while (canStartUnaryExpression(peekType()))
         {
-            argList.emplace_back(unary_expression());
+            argList.push_back(unary_expression());
         }
 
         if (peekType() == '$')
         {
             expect('$');
-            argList.emplace_back(expression());
+            argList.push_back(expression());
         }
 
-        return new FunctionCallNode(location, functionName, std::move(argList));
+        return new FunctionCallNode(_context, location, functionName, std::move(argList));
     }
     else
     {
@@ -934,7 +937,7 @@ ExpressionNode* func_call_expression()
     }
 }
 
-ExpressionNode* unary_expression()
+ExpressionNode* Parser::unary_expression()
 {
     switch (peekType())
     {
@@ -949,43 +952,43 @@ ExpressionNode* unary_expression()
 
     case tTRUE:
         expect(tTRUE);
-        return new BoolNode(getLocation(), true);
+        return new BoolNode(_context, getLocation(), true);
 
     case tFALSE:
         expect(tFALSE);
-        return new BoolNode(getLocation(), false);
+        return new BoolNode(_context, getLocation(), false);
 
     case '[':
         expect('[');
         if (accept(']'))
         {
-            return new FunctionCallNode(getLocation(), "Nil", ArgList());
+            return new FunctionCallNode(_context, getLocation(), "Nil", {});
         }
         else
         {
-            ArgList argList;
-            argList.emplace_back(expression());
+            std::vector<ExpressionNode*> argList;
+            argList.push_back(expression());
 
             while (accept(','))
             {
-                argList.emplace_back(expression());
+                argList.push_back(expression());
             }
 
             expect(']');
 
-            return makeList(getLocation(), argList);
+            return makeList(_context, getLocation(), argList);
         }
 
     case tINT_LIT:
     {
         Token token = expect(tINT_LIT);
-        return new IntNode(getLocation(), token.value.number);
+        return new IntNode(_context, getLocation(), token.value.number);
     }
 
     case tSTRING_LIT:
     {
         Token token = expect(tSTRING_LIT);
-        return makeString(getLocation(), token.value.str);
+        return makeString(_context, getLocation(), token.value.str);
     }
 
     case tLIDENT:
@@ -997,11 +1000,11 @@ ExpressionNode* unary_expression()
             Token memberName = expect(tLIDENT);
             expect('}');
 
-            return new MemberAccessNode(getLocation(), varName.value.str, memberName.value.str);
+            return new MemberAccessNode(_context, getLocation(), varName.value.str, memberName.value.str);
         }
         else
         {
-            return new NullaryNode(getLocation(), ident());
+            return new NullaryNode(_context, getLocation(), ident());
         }
 
     default:

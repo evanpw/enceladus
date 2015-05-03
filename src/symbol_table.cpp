@@ -39,6 +39,7 @@ void SymbolTable::insert(Symbol* symbol)
 Symbol* SymbolTable::release(const std::string& name)
 {
     Symbol* symbol = symbols[name].release();
+
     symbols.erase(name);
 
     return symbol;

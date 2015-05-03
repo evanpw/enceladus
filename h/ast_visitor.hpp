@@ -9,6 +9,7 @@ class BlockNode;
 class BoolNode;
 class BreakNode;
 class ComparisonNode;
+class ConstructorSpec;
 class DataDeclaration;
 class ExternalFunctionCallNode;
 class ForeignDeclNode;
@@ -30,6 +31,7 @@ class ReturnNode;
 class StructDefNode;
 class SwitchNode;
 class TypeAliasNode;
+class TypeName;
 class VariableNode;
 class WhileNode;
 
@@ -46,25 +48,27 @@ public:
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(LetNode* node);
+	virtual void visit(LogicalNode* node);
 	virtual void visit(MatchArm* node);
 	virtual void visit(MatchNode* node);
-	virtual void visit(LogicalNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(StructDefNode* node);
 	virtual void visit(SwitchNode* node);
 	virtual void visit(WhileNode* node);
+	virtual void visit(ConstructorSpec* node);
+	virtual void visit(ForeignDeclNode* node);
+	virtual void visit(MemberDefNode* node);
+	virtual void visit(DataDeclaration* node);
 
 	// Leaf nodes
 	virtual void visit(BoolNode* node) {}
 	virtual void visit(BreakNode* node) {}
-	virtual void visit(DataDeclaration* node) {}
-	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}
 	virtual void visit(MemberAccessNode* node) {}
-	virtual void visit(MemberDefNode* node) {}
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
+	virtual void visit(TypeName* node) {}
 	virtual void visit(VariableNode* node) {}
 };
 

@@ -1,0 +1,12 @@
+data Option = Some Int | None
+x := Some 4
+y := None
+
+def extract(val: Option) -> Int
+    match val
+        Some a => return a
+        None   => return 1
+
+    return 0
+
+print $ show (extract x + extract y)

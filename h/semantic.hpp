@@ -23,7 +23,7 @@ private:
 };
 
 // Semantic analysis pass 1 - handle declarations and build the symbol tables
-class SemanticAnalyzer
+class SemanticAnalyzer : public AstVisitor
 {
 public:
     SemanticAnalyzer(ProgramNode* root);
@@ -51,6 +51,7 @@ public:
     virtual void visit(ProgramNode* node);
     virtual void visit(SwitchNode* node);
     virtual void visit(WhileNode* node);
+    virtual void visit(ConstructorSpec* node);
 
     // Leaf nodes
     virtual void visit(BoolNode* node);
@@ -89,10 +90,10 @@ private:
     FunctionSymbol* makeExternal(const std::string& name);
     void injectSymbols();
 
-    std::shared_ptr<Type> getBaseType(const TypeName& name, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
-    TypeConstructor* getTypeConstructor(const TypeName& name);
-    std::shared_ptr<Type> resolveTypeName(const TypeName& typeName, bool createVariables=false);
-    std::shared_ptr<Type> resolveTypeName(const TypeName& typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
+    TypeConstructor* getTypeConstructor(const TypeName* typeName);
+    void resolveBaseType(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
+    void resolveTypeName(TypeName* typeName, bool createVariables=false);
+    void resolveTypeName(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
 
     void insertSymbol(Symbol* symbol);
     void releaseSymbol(Symbol* symbol);

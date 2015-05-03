@@ -37,6 +37,8 @@ public:
     UNSUPPORTED(WhileNode);
     UNSUPPORTED(MemberDefNode);
     UNSUPPORTED(TypeAliasNode);
+    UNSUPPORTED(SwitchNode);
+    UNSUPPORTED(MatchArm);
 
     virtual void visit(BoolNode* node) { wrapper(*node); }
     virtual void visit(MemberAccessNode* node) { wrapper(*node); }
@@ -107,6 +109,8 @@ public:
     virtual void visit(WhileNode* node);
     virtual void visit(MemberDefNode* node);
     virtual void visit(TypeAliasNode* node);
+    virtual void visit(SwitchNode* node);
+    virtual void visit(MatchArm* node);
 
     TACProgram& getResult() { return _tacProgram; }
 

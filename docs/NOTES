@@ -18,3 +18,6 @@
     - If a non-nullary function, then evaluates to a closure around the fn
 
 * Destructors are part of the run-time, so they use a C calling convention
+
+* AST nodes are owned by the ASTContext they are constructed with, so they
+  should always be allocated on the heap, never on the stack

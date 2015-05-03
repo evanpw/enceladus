@@ -70,11 +70,14 @@ void AstVisitor::visit(AssignNode* node)
 void AstVisitor::visit(LetNode* node)
 {
 	node->value->accept(this);
+	if (node->typeName)
+		node->typeName->accept(this);
 }
 
 void AstVisitor::visit(FunctionDefNode* node)
 {
 	node->body->accept(this);
+	node->typeName->accept(this);
 }
 
 void AstVisitor::visit(ReturnNode* node)
@@ -89,7 +92,7 @@ void AstVisitor::visit(MatchNode* node)
 
 void AstVisitor::visit(StructDefNode* node)
 {
-	for (auto& member : *node->members)
+	for (auto& member : node->members)
 	{
 		member->accept(this);
 	}
@@ -108,3 +111,30 @@ void AstVisitor::visit(MatchArm* node)
 {
 	node->body->accept(this);
 }
+
+void AstVisitor::visit(ConstructorSpec* node)
+{
+	for (auto& member : node->members)
+	{
+		member->accept(this);
+	}
+}
+
+void AstVisitor::visit(ForeignDeclNode* node)
+{
+	node->typeName->accept(this);
+}
+
+void AstVisitor::visit(MemberDefNode* node)
+{
+	node->typeName->accept(this);
+}
+
+void AstVisitor::visit(DataDeclaration* node)
+{
+	for (auto& spec : node->constructorSpecs)
+	{
+		spec->accept(this);
+	}
+}
+

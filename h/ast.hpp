@@ -13,12 +13,14 @@
 #include "tokens.hpp"
 #include "types.hpp"
 
+class AstContext;
+
 ////// Abstract base nodes /////////////////////////////////////////////////////
 
 class AstNode
 {
 public:
-	AstNode(const YYLTYPE& location);
+	AstNode(AstContext& context, const YYLTYPE& location);
 	virtual ~AstNode();
 	virtual void accept(AstVisitor* visitor) = 0;
 
@@ -32,83 +34,73 @@ public:
 	std::shared_ptr<Address> address;
 };
 
+#define AST_VISITABLE() virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+
 class StatementNode : public AstNode
 {
 public:
-	StatementNode(const YYLTYPE& location)
-	: AstNode(location)
+	StatementNode(AstContext& context, const YYLTYPE& location)
+	: AstNode(context, location)
 	{}
 };
 
 class ExpressionNode : public StatementNode
 {
 public:
-	ExpressionNode(const YYLTYPE& location)
-	: StatementNode(location)
+	ExpressionNode(AstContext& context, const YYLTYPE& location)
+	: StatementNode(context, location)
 	{}
 };
 
 class LoopNode : public StatementNode
 {
 public:
-	LoopNode(const YYLTYPE& location)
-	: StatementNode(location)
+	LoopNode(AstContext& context, const YYLTYPE& location)
+	: StatementNode(context, location)
 	{}
 };
 
-////// Utility classes other than AST nodes ////////////////////////////////////
+////// Miscellaneous AST nodes /////////////////////////////////////////////////
 
-typedef std::vector<std::unique_ptr<ExpressionNode>> ArgList;
-
-class TypeName
+class TypeName : public AstNode
 {
 public:
-    TypeName(const std::string& name, const YYLTYPE& location)
-    : _name(name), _location(location)
+    TypeName(AstContext& context, const YYLTYPE& location, const std::string& name)
+    : AstNode(context, location), name(name)
     {}
 
-    TypeName(const char* name, const YYLTYPE& location)
-    : _name(name), _location(location)
+    TypeName(AstContext& context, const YYLTYPE& location, const char* name)
+    : AstNode(context, location), name(name)
     {}
-
-    const std::string& name() const { return _name; }
-    const YYLTYPE& location() const { return _location; }
-
-    const std::vector<std::unique_ptr<TypeName>>& parameters() const { return _parameters; }
 
     std::string str() const;
 
-    void append(TypeName* parameter) { _parameters.emplace_back(parameter); }
+    AST_VISITABLE();
 
-private:
-    std::string _name;
-    std::vector<std::unique_ptr<TypeName>> _parameters;
-    YYLTYPE _location;
+    std::string name;
+    std::vector<TypeName*> parameters;
+
+    // Annotations
+    std::shared_ptr<Type> type;
 };
 
-class ConstructorSpec
+class ConstructorSpec : public AstNode
 {
 public:
-	ConstructorSpec(const std::string& name)
-	: name(name)
+	ConstructorSpec(AstContext& context, const YYLTYPE& location, const std::string& name)
+	: AstNode(context, location), name(name)
 	{}
 
-	void append(TypeName* typeName) { members_.emplace_back(typeName); }
-
-	const std::vector<std::unique_ptr<TypeName>>& members() const { return members_; }
-
-	void setMemberTypes(const std::vector<std::shared_ptr<Type>> types)
-	{
-		assert(types.size() == members_.size());
-		types_ = types;
-	}
-	const std::vector<std::shared_ptr<Type>>& memberTypes() { return types_; }
+	AST_VISITABLE();
 
 	std::string name;
+	std::vector<TypeName*> members;
 
-private:
-	std::vector<std::unique_ptr<TypeName>> members_;
-	std::vector<std::shared_ptr<Type>> types_;
+	// Annotations
+	std::unordered_map<std::string, std::shared_ptr<Type>> typeContext;
+	std::shared_ptr<Type> resultType;
+	std::vector<std::shared_ptr<Type>> memberTypes;
+	ValueConstructor* valueConstructor = nullptr;
 };
 
 ////// Top-level nodes /////////////////////////////////////////////////////////
@@ -116,16 +108,16 @@ private:
 class ProgramNode : public AstNode
 {
 public:
-	ProgramNode(const YYLTYPE& location)
-	: AstNode(location), scope(new Scope)
+	ProgramNode(AstContext& context, const YYLTYPE& location)
+	: AstNode(context, location), scope(new Scope)
 	{}
 
-	void append(AstNode* child);
+	AST_VISITABLE();
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	std::vector<AstNode*> children;
 
+	// Annotations
 	std::shared_ptr<Scope> scope;
-	std::list<std::unique_ptr<AstNode>> children;
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
@@ -133,15 +125,13 @@ public:
 class BlockNode : public ExpressionNode
 {
 public:
-	BlockNode(const YYLTYPE& location)
-	: ExpressionNode(location)
+	BlockNode(AstContext& context, const YYLTYPE& location)
+	: ExpressionNode(context, location)
 	{}
 
-	void append(StatementNode* child);
+	AST_VISITABLE();
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	std::vector<std::unique_ptr<StatementNode>> children;
+	std::vector<StatementNode*> children;
 };
 
 class LogicalNode : public ExpressionNode
@@ -149,15 +139,15 @@ class LogicalNode : public ExpressionNode
 public:
 	enum Operator {kAnd, kOr};
 
-	LogicalNode(const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: ExpressionNode(location), lhs(lhs), op(op), rhs(rhs)
+	LogicalNode(AstContext& context, const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	: ExpressionNode(context, location), lhs(lhs), op(op), rhs(rhs)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<ExpressionNode> lhs;
+	ExpressionNode* lhs;
 	Operator op;
-	std::unique_ptr<ExpressionNode> rhs;
+	ExpressionNode* rhs;
 };
 
 class ComparisonNode : public ExpressionNode
@@ -165,38 +155,40 @@ class ComparisonNode : public ExpressionNode
 public:
 	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual, kNotEqual };
 
-	ComparisonNode(const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
-	: ExpressionNode(location), lhs(lhs), op(op), rhs(rhs)
+	ComparisonNode(AstContext& context, const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	: ExpressionNode(context, location), lhs(lhs), op(op), rhs(rhs)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<ExpressionNode> lhs;
+	ExpressionNode* lhs;
 	Operator op;
-	std::unique_ptr<ExpressionNode> rhs;
+	ExpressionNode* rhs;
 };
 
 class NullaryNode : public ExpressionNode
 {
 public:
-	NullaryNode(const YYLTYPE& location, const std::string& name)
-	: ExpressionNode(location), name(name), symbol(nullptr)
+	NullaryNode(AstContext& context, const YYLTYPE& location, const std::string& name)
+	: ExpressionNode(context, location), name(name)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
-	Symbol* symbol;
+
+	// Annotations
+	Symbol* symbol = nullptr;
 };
 
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(const YYLTYPE& location, long value)
-	: ExpressionNode(location), value(value)
+	IntNode(AstContext& context, const YYLTYPE& location, long value)
+	: ExpressionNode(context, location), value(value)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	long value;
 };
@@ -204,54 +196,54 @@ public:
 class BoolNode : public ExpressionNode
 {
 public:
-	BoolNode(const YYLTYPE& location, bool value)
-	: ExpressionNode(location), value(value)
+	BoolNode(AstContext& context, const YYLTYPE& location, bool value)
+	: ExpressionNode(context, location), value(value)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	bool value;
 };
 
 // Syntactic sugar for list and string literals
-FunctionCallNode* makeList(const YYLTYPE& location, ArgList& elements);
-FunctionCallNode* makeString(const YYLTYPE& location, const std::string& s);
+FunctionCallNode* makeList(AstContext& context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements);
+FunctionCallNode* makeString(AstContext& context, const YYLTYPE& location, const std::string& s);
 
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(const YYLTYPE& location, const std::string& target, ArgList&& arguments)
-	: ExpressionNode(location), target(target), arguments(std::move(arguments)), symbol(nullptr)
+	FunctionCallNode(AstContext& context, const YYLTYPE& location, const std::string& target, std::vector<ExpressionNode*>&& arguments)
+	: ExpressionNode(context, location), target(target), arguments(std::move(arguments))
 	{}
 
-	FunctionCallNode(const YYLTYPE& location, const std::string& target, std::initializer_list<ExpressionNode*> args)
-    : ExpressionNode(location), target(target), symbol(nullptr)
+	FunctionCallNode(AstContext& context, const YYLTYPE& location, const std::string& target, std::initializer_list<ExpressionNode*>&& args)
+    : ExpressionNode(context, location), target(target), arguments(std::move(args))
     {
-    	for (auto& arg : args)
-    	{
-    		arguments.emplace_back(arg);
-    	}
     }
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string target;
-	ArgList arguments;
-	Symbol* symbol;
+	std::vector<ExpressionNode*> arguments;
+
+	// Annotations
+	Symbol* symbol = nullptr;
 };
 
 class VariableNode : public ExpressionNode
 {
 public:
-	VariableNode(const YYLTYPE& location, const std::string& name)
-	: ExpressionNode(location), name(name), symbol(nullptr)
+	VariableNode(AstContext& context, const YYLTYPE& location, const std::string& name)
+	: ExpressionNode(context, location), name(name)
 	{
 	}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
-	Symbol* symbol;
+
+	// Annotations
+	Symbol* symbol = nullptr;
 };
 
 ////// Statement nodes /////////////////////////////////////////////////////////
@@ -259,114 +251,118 @@ public:
 class IfNode : public StatementNode
 {
 public:
-	IfNode(const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
-	: StatementNode(location), condition(condition), body(body)
+	IfNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
+	: StatementNode(context, location), condition(condition), body(body)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<ExpressionNode> condition;
-	std::unique_ptr<StatementNode> body;
+	ExpressionNode* condition;
+	StatementNode* body;
 };
 
 class IfElseNode : public StatementNode
 {
 public:
-	IfElseNode(const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
-	: StatementNode(location), condition(condition), body(body), else_body(else_body)
+	IfElseNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
+	: StatementNode(context, location), condition(condition), body(body), else_body(else_body)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<ExpressionNode> condition;
-	std::unique_ptr<StatementNode> body;
-	std::unique_ptr<StatementNode> else_body;
+	ExpressionNode* condition;
+	StatementNode* body;
+	StatementNode* else_body;
 };
 
 class WhileNode : public LoopNode
 {
 public:
-	WhileNode(const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
-	: LoopNode(location), condition(condition), body(body)
+	WhileNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
+	: LoopNode(context, location), condition(condition), body(body)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<ExpressionNode> condition;
-	std::unique_ptr<StatementNode> body;
+	ExpressionNode* condition;
+	StatementNode* body;
 };
 
 class ForeverNode : public LoopNode
 {
 public:
-	ForeverNode(const YYLTYPE& location, StatementNode* body)
-	: LoopNode(location), body(body)
+	ForeverNode(AstContext& context, const YYLTYPE& location, StatementNode* body)
+	: LoopNode(context, location), body(body)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<StatementNode> body;
+	StatementNode* body;
 };
 
 class BreakNode : public StatementNode
 {
 public:
-	BreakNode(const YYLTYPE& location)
-	: StatementNode(location)
+	BreakNode(AstContext& context, const YYLTYPE& location)
+	: StatementNode(context, location)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 };
 
 // For loops are implemented as pure syntactic sugar
-BlockNode* makeForNode(const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body);
+BlockNode* makeForNode(AstContext& context, const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body);
 
 class AssignNode : public StatementNode
 {
 public:
-	AssignNode(const YYLTYPE& location, const std::string& target, ExpressionNode* value)
-	: StatementNode(location), target(target), value(value)
+	AssignNode(AstContext& context, const YYLTYPE& location, const std::string& target, ExpressionNode* value)
+	: StatementNode(context, location), target(target), value(value)
 	{
 	}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string target;
-	std::unique_ptr<ExpressionNode> value;
-	Symbol* symbol;
+	ExpressionNode* value;
+
+	// Annotations
+	Symbol* symbol = nullptr;
 };
 
 class LetNode : public StatementNode
 {
 public:
-	LetNode(const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* value)
-	: StatementNode(location), target(target), typeName(typeName), value(value), symbol(nullptr)
+	LetNode(AstContext& context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* value)
+	: StatementNode(context, location), target(target), typeName(typeName), value(value)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string target;
-	std::unique_ptr<TypeName> typeName;
-	std::unique_ptr<ExpressionNode> value;
-	Symbol* symbol;
-};
+	TypeName* typeName;
+	ExpressionNode* value;
 
-typedef std::vector<std::string> ParamList;
+	// Annotations
+	Symbol* symbol = nullptr;
+};
 
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(const YYLTYPE& location, const std::string& name, StatementNode* body, ParamList* params, TypeName* typeName)
-	: StatementNode(location), name(name), body(body), params(params), typeName(typeName), symbol(nullptr), scope(new Scope)
+	FunctionDefNode(AstContext& context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& params, TypeName* typeName)
+	: StatementNode(context, location), name(name), body(body), params(params), typeName(typeName), scope(new Scope)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
-	std::unique_ptr<StatementNode> body;
-	std::unique_ptr<ParamList> params;
-	std::unique_ptr<TypeName> typeName;
-	Symbol* symbol;
+	StatementNode* body;
+	std::vector<std::string> params;
+	TypeName* typeName;
+
+	// Annotations
+	Symbol* symbol = nullptr;
 	std::vector<Symbol*> parameterSymbols;
 	std::shared_ptr<Scope> scope;
 };
@@ -374,17 +370,17 @@ public:
 class MatchNode : public StatementNode
 {
 public:
-	MatchNode(const YYLTYPE& location, const std::string& constructor, ParamList* params, ExpressionNode* body)
-	: StatementNode(location), constructor(constructor), params(params), body(body)
+	MatchNode(AstContext& context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, ExpressionNode* body)
+	: StatementNode(context, location), constructor(constructor), params(params), body(body)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	void attachSymbol(Symbol* symbol) { symbols.push_back(symbol); }
+	AST_VISITABLE();
 
 	std::string constructor;
-	std::unique_ptr<ParamList> params;
-	std::unique_ptr<ExpressionNode> body;
+	std::vector<std::string> params;
+	ExpressionNode* body;
+
+	// Annotations
 	std::vector<Symbol*> symbols;
 	Symbol* constructorSymbol = nullptr;
 };
@@ -392,94 +388,96 @@ public:
 class MatchArm : public AstNode
 {
 public:
-	MatchArm(const YYLTYPE& location, const std::string& constructor, ParamList* params, StatementNode* body)
-	: AstNode(location), constructor(constructor), params(params), body(body)
+	MatchArm(AstContext& context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, StatementNode* body)
+	: AstNode(context, location), constructor(constructor), params(params), body(body)
 	{}
 
+	AST_VISITABLE();
+
 	std::string constructor;
-	std::unique_ptr<ParamList> params;
-	std::unique_ptr<StatementNode> body;
+	std::vector<std::string> params;
+	StatementNode* body;
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
-
-	void attachSymbol(Symbol* symbol) { symbols.push_back(symbol); }
-
+	// Annotations
+	std::shared_ptr<Type> matchType;
 	std::vector<Symbol*> symbols;
 	Symbol* constructorSymbol = nullptr;
+	size_t constructorTag;
+	ValueConstructor* valueConstructor;
 };
 
 class SwitchNode : public StatementNode
 {
 public:
-	SwitchNode(const YYLTYPE& location, ExpressionNode* expr, std::vector<std::unique_ptr<MatchArm>>&& arms)
-	: StatementNode(location), expr(expr), arms(std::move(arms))
+	SwitchNode(AstContext& context, const YYLTYPE& location, ExpressionNode* expr, std::vector<MatchArm*>&& arms)
+	: StatementNode(context, location), expr(expr), arms(std::move(arms))
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<ExpressionNode> expr;
-	std::vector<std::unique_ptr<MatchArm>> arms;
+	ExpressionNode* expr;
+	std::vector<MatchArm*> arms;
 };
 
 class DataDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, const std::vector<ConstructorSpec*> specs)
-	: StatementNode(location), name(name), typeParameters(typeParameters)
+	DataDeclaration(AstContext& context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, const std::vector<ConstructorSpec*>& specs)
+	: StatementNode(context, location), name(name), typeParameters(typeParameters)
 	{
-		for (auto& spec : specs)
-		{
-			constructorSpecs.emplace_back(spec);
-		}
+		constructorSpecs = specs;
 	}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
 	std::vector<std::string> typeParameters;
-	std::vector<std::unique_ptr<ConstructorSpec>> constructorSpecs;
+	std::vector<ConstructorSpec*> constructorSpecs;
+
+	// Annotations
 	std::vector<ValueConstructor*> valueConstructors;
 };
 
 class TypeAliasNode : public StatementNode
 {
 public:
-	TypeAliasNode(const YYLTYPE& location, const std::string& name, TypeName* underlying)
-	: StatementNode(location), name(name), underlying(underlying)
+	TypeAliasNode(AstContext& context, const YYLTYPE& location, const std::string& name, TypeName* underlying)
+	: StatementNode(context, location), name(name), underlying(underlying)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
-	std::unique_ptr<TypeName> underlying;
+	TypeName* underlying;
 };
 
 class ForeignDeclNode : public StatementNode
 {
 public:
-	ForeignDeclNode(const YYLTYPE& location, const std::string& name, ParamList* params, TypeName* typeName)
-	: StatementNode(location), name(name), params(params), typeName(typeName), symbol(nullptr)
+	ForeignDeclNode(AstContext& context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
+	: StatementNode(context, location), name(name), params(params), typeName(typeName)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
-	std::unique_ptr<ParamList> params;
-	std::unique_ptr<TypeName> typeName;
-	Symbol* symbol;
-	std::vector<const Type*> paramTypes;
+	std::vector<std::string> params;
+	TypeName* typeName;
+
+	// Annotations
+	Symbol* symbol = nullptr;
 };
 
 class ReturnNode : public StatementNode
 {
 public:
-	ReturnNode(const YYLTYPE& location, ExpressionNode* expression)
-	: StatementNode(location), expression(expression)
+	ReturnNode(AstContext& context, const YYLTYPE& location, ExpressionNode* expression)
+	: StatementNode(context, location), expression(expression)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
-	std::unique_ptr<ExpressionNode> expression;
+	ExpressionNode* expression;
 };
 
 //// Structures ////////////////////////////////////////////////////////////////
@@ -487,30 +485,32 @@ public:
 class MemberDefNode : public AstNode
 {
 public:
-	MemberDefNode(const YYLTYPE& location, const std::string& name, TypeName* typeName)
-	: AstNode(location), name(name), typeName(typeName)
+	MemberDefNode(AstContext& context, const YYLTYPE& location, const std::string& name, TypeName* typeName)
+	: AstNode(context, location), name(name), typeName(typeName)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
-	std::unique_ptr<TypeName> typeName;
+	TypeName* typeName;
+
+	// Annotations
 	std::shared_ptr<Type> memberType;
 };
-
-typedef std::vector<std::unique_ptr<MemberDefNode>> MemberList;
 
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(const YYLTYPE& location, const std::string& name, MemberList* members)
-	: StatementNode(location), name(name), members(members)
+	StructDefNode(AstContext& context, const YYLTYPE& location, const std::string& name, const std::vector<MemberDefNode*>& members)
+	: StatementNode(context, location), name(name), members(members)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string name;
-	std::unique_ptr<MemberList> members;
+	std::vector<MemberDefNode*> members;
+
+	// Annotations
 	std::shared_ptr<Type> structType;
 	ValueConstructor* valueConstructor;
 };
@@ -519,17 +519,21 @@ public:
 class MemberAccessNode : public ExpressionNode
 {
 public:
-	MemberAccessNode(const YYLTYPE& location, const std::string& varName, const std::string& memberName)
-	: ExpressionNode(location), varName(varName), memberName(memberName)
+	MemberAccessNode(AstContext& context, const YYLTYPE& location, const std::string& varName, const std::string& memberName)
+	: ExpressionNode(context, location), varName(varName), memberName(memberName)
 	{}
 
-	virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+	AST_VISITABLE();
 
 	std::string varName;
 	std::string memberName;
+
+	// Annotations
 	VariableSymbol* varSymbol;
 	MemberSymbol* memberSymbol;
 	size_t memberLocation;
 };
+
+
 
 #endif

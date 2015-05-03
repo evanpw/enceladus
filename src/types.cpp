@@ -27,9 +27,14 @@ bool Type::isAlgebraic() const
     return _impl->isAlgebraic();
 }
 
-const std::vector<std::shared_ptr<ValueConstructor>>& Type::valueConstructors() const
+const std::vector<ValueConstructor*>& Type::valueConstructors() const
 {
     return _impl->valueConstructors();
+}
+
+std::pair<size_t, ValueConstructor*> Type::getValueConstructor(const std::string& name) const
+{
+    return _impl->getValueConstructor(name);
 }
 
 void Type::addValueConstructor(ValueConstructor* valueConstructor)
@@ -108,6 +113,19 @@ std::set<TypeVariable*> TypeScheme::freeVars() const
     return allVars;
 }
 
+std::pair<size_t, ValueConstructor*> TypeImpl::getValueConstructor(const std::string& name) const
+{
+    for (size_t i = 0; i < _valueConstructors.size(); ++i)
+    {
+        if (_valueConstructors[i]->name() == name)
+        {
+            return std::make_pair(i, _valueConstructors[i]);
+        }
+    }
+
+    return std::make_pair(0, nullptr);
+}
+
 std::string FunctionType::name() const
 {
     std::stringstream ss;
@@ -128,10 +146,10 @@ std::string FunctionType::name() const
         {
             ss << _inputs[i]->name();
 
-            if (i + 1 < _inputs.size()) 
+            if (i + 1 < _inputs.size())
                 ss << ", ";
         }
-        
+
         ss << "|";
     }
 
@@ -178,6 +196,7 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<st
     for (size_t i = 0; i < memberTypes.size(); ++i)
     {
         std::string memberName = memberNames.empty() ? "_" : memberNames[i];
-        members_.emplace_back(memberName, memberTypes[i], i);
+        std::shared_ptr<Type> type = memberTypes[i];
+        members_.emplace_back(memberName, type, i);
     }
 }

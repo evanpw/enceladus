@@ -20,13 +20,13 @@ public:
     const std::string& name() const { return name_; }
     size_t parameters() const { return parameters_; }
 
-    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return _valueConstructors; }
+    virtual const std::vector<ValueConstructor*>& valueConstructors() const { return _valueConstructors; }
     void addValueConstructor(ValueConstructor* valueConstructor) { _valueConstructors.emplace_back(valueConstructor); }
 
 private:
     std::string name_;
     size_t parameters_;
-    std::vector<std::shared_ptr<ValueConstructor>> _valueConstructors;
+    std::vector<ValueConstructor*> _valueConstructors;
 };
 
 enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed};
@@ -49,7 +49,8 @@ public:
     std::string name() const;
     bool isAlgebraic() const;
 
-    const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const;
+    const std::vector<ValueConstructor*>& valueConstructors() const;
+    std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const;
     void addValueConstructor(ValueConstructor* valueConstructor);
 
     std::set<TypeVariable*> freeVars() const;
@@ -124,7 +125,7 @@ public:
     // Convenience redirections to the underlying type
     virtual TypeTag tag() const { return _type->tag(); }
     virtual bool isBoxed() const { return _type->isBoxed(); }
-    const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return _type->valueConstructors(); }
+    const std::vector<ValueConstructor*>& valueConstructors() const { return _type->valueConstructors(); }
 
     const std::shared_ptr<Type>& type() const { return _type; }
     std::set<TypeVariable*> freeVars() const;
@@ -144,17 +145,18 @@ public:
     {}
 
     virtual ~TypeImpl() {}
-
-    virtual TypeTag tag() const { return _tag; }
     virtual std::string name() const = 0;
     virtual bool isBoxed() const = 0;
-    virtual bool isAlgebraic() const { return _valueConstructors.size() > 1; }
 
-    virtual const std::vector<std::shared_ptr<ValueConstructor>>& valueConstructors() const { return _valueConstructors; }
+    TypeTag tag() const { return _tag; }
+    bool isAlgebraic() const { return _valueConstructors.size() > 1; }
+
+    const std::vector<ValueConstructor*>& valueConstructors() const { return _valueConstructors; }
+    std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const;
     void addValueConstructor(ValueConstructor* valueConstructor) { _valueConstructors.emplace_back(valueConstructor); }
 
 protected:
-    std::vector<std::shared_ptr<ValueConstructor>> _valueConstructors;
+    std::vector<ValueConstructor*> _valueConstructors;
 
 private:
     TypeTag _tag;

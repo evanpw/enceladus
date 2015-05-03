@@ -800,6 +800,88 @@ void TACCodeGen::visit(DataDeclaration* node)
     _dataDeclarations.push_back(node);
 }
 
+void TACCodeGen::visit(SwitchNode* node)
+{
+    std::vector<TACLabel*> caseLabels;
+    for (size_t i = 0; i < node->arms.size(); ++i)
+    {
+        caseLabels.push_back(new TACLabel);
+    }
+    TACLabel* endLabel = new TACLabel;
+
+    std::shared_ptr<Address> expr = visitAndGet(*node->expr);
+
+    // Get constructor tag of expr
+    std::shared_ptr<Address> tag = makeTemp();
+    emit(new TACRightIndexedAssignment(tag, expr, offsetof(SplObject, constructorTag)));
+
+    // Jump to the appropriate case based on the tag
+    for (size_t i = 0; i < node->arms.size(); ++i)
+    {
+        auto& arm = node->arms[i];
+        size_t armTag = arm->constructorTag;
+        emit(new TACConditionalJump(tag, "==", std::make_shared<ConstAddress>(armTag), caseLabels[i]));
+    }
+
+    // If nothing matches
+    emit(new TACJump(endLabel));
+
+    // Individual arms
+    for (size_t i = 0; i < node->arms.size(); ++i)
+    {
+        auto& arm = node->arms[i];
+
+        emit(caseLabels[i]);
+
+        // The arm needs to know the expression so that it can extract fields
+        arm->address = expr;
+        arm->accept(this);
+
+        emit(new TACJump(endLabel));
+    }
+
+    emit(endLabel);
+}
+
+void TACCodeGen::visit(MatchArm* node)
+{
+    // Decrement references to the existing variables
+    for (size_t i = 0; i < node->symbols.size(); ++i)
+    {
+        const Symbol* member = node->symbols.at(i);
+
+        if (member->typeScheme->isBoxed())
+        {
+            emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(member)}));
+        }
+    }
+
+    FunctionType* functionType = node->constructorSymbol->typeScheme->type()->get<FunctionType>();
+    auto& constructor = functionType->output()->valueConstructors().front();
+
+    // Copy over each of the members of the constructor pattern
+    for (size_t i = 0; i < node->symbols.size(); ++i)
+    {
+        const Symbol* member = node->symbols.at(i);
+        size_t location = constructor->members().at(i).location;
+
+        emit(new TACRightIndexedAssignment(getNameAddress(member), node->address, sizeof(SplObject) + 8 * location));
+    }
+
+    // Increment references to the new variables
+    for (size_t i = 0; i < node->symbols.size(); ++i)
+    {
+        const Symbol* member = node->symbols.at(i);
+
+        if (member->typeScheme->isBoxed())
+        {
+            incref(getNameAddress(member));
+        }
+    }
+
+    node->body->accept(this);
+}
+
 void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constructorTag)
 {
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
