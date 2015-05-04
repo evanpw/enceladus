@@ -62,7 +62,7 @@ void TACCodeGen::visit(ProgramNode* node)
     // other functions. Now generate code for those
     for (FunctionDefNode* funcDefNode : _functions)
     {
-        FunctionType* functionType = funcDefNode->symbol->typeScheme->type()->get<FunctionType>();
+        FunctionType* functionType = funcDefNode->functionType;
 
         _tacProgram.otherFunctions.emplace_back(funcDefNode->symbol->name);
 
@@ -90,9 +90,8 @@ void TACCodeGen::visit(ProgramNode* node)
             _currentFunction->params.push_back(paramAddress);
 
             // We gain a reference to every parameter
-            if (param->typeScheme->isBoxed())
+            if (param->typeScheme->type()->isBoxed())
                 incref(paramAddress);
-                //emit(new TACCall(true, FOREIGN_NAME("_incref"), {paramAddress}));
         }
 
         // Generate code for the function body
@@ -110,7 +109,6 @@ void TACCodeGen::visit(ProgramNode* node)
         // same as one of the local variables.
         if (functionType->output()->isBoxed())
         {
-            //emit(new TACCall(true, FOREIGN_NAME("_incref"), {_currentFunction->returnValue}));
             incref(_currentFunction->returnValue);
         }
 
@@ -121,7 +119,7 @@ void TACCodeGen::visit(ProgramNode* node)
             const Symbol* symbol = i.second.get();
             assert(symbol->kind == kVariable);
 
-            if (symbol->typeScheme->isBoxed())
+            if (symbol->typeScheme->type()->isBoxed())
                 emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(symbol)}));
         }
 
@@ -340,9 +338,7 @@ void TACCodeGen::visit(LogicalNode* node)
 
 void TACCodeGen::visit(NullaryNode* node)
 {
-    assert(node->symbol->kind == kVariable || node->symbol->kind == kFunction);
-
-    if (node->symbol->kind == kVariable)
+    if (node->kind == NullaryNode::VARIABLE)
     {
         node->address = getNameAddress(node->symbol);
     }
@@ -353,18 +349,15 @@ void TACCodeGen::visit(NullaryNode* node)
 
         std::shared_ptr<Address> dest = node->address;
 
-        if (node->type->tag() != ttFunction)
+        if (node->kind == NullaryNode::FOREIGN_CALL)
         {
-            if (node->symbol->asFunction()->isForeign)
-            {
-                emit(new TACCall(true, dest, FOREIGN_NAME(node->symbol->name)));
-            }
-            else
-            {
-                emit(new TACCall(false, dest, mangle(node->symbol->name)));
-            }
+            emit(new TACCall(true, dest, FOREIGN_NAME(node->symbol->name)));
         }
-        else
+        else if (node->kind == NullaryNode::FUNC_CALL)
+        {
+            emit(new TACCall(false, dest, mangle(node->symbol->name)));
+        }
+        else /* node->kind == NullaryNode::CLOSURE */
         {
             // If the function is not completely applied, then this nullary node
             // evaluates to a function type -- create a closure
@@ -573,14 +566,13 @@ void TACCodeGen::visit(MatchNode* node)
     {
         const Symbol* member = node->symbols.at(i);
 
-        if (member->typeScheme->isBoxed())
+        if (member->typeScheme->type()->isBoxed())
         {
             emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(member)}));
         }
     }
 
-    FunctionType* functionType = node->constructorSymbol->typeScheme->type()->get<FunctionType>();
-    auto& constructor = functionType->output()->valueConstructors().front();
+    ValueConstructor* constructor = node->valueConstructor;
 
     // Copy over each of the members of the constructor pattern
     for (size_t i = 0; i < node->symbols.size(); ++i)
@@ -596,7 +588,7 @@ void TACCodeGen::visit(MatchNode* node)
     {
         const Symbol* member = node->symbols.at(i);
 
-        if (member->typeScheme->isBoxed())
+        if (member->typeScheme->type()->isBoxed())
         {
             incref(getNameAddress(member));
         }
@@ -850,14 +842,13 @@ void TACCodeGen::visit(MatchArm* node)
     {
         const Symbol* member = node->symbols.at(i);
 
-        if (member->typeScheme->isBoxed())
+        if (member->typeScheme->type()->isBoxed())
         {
             emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(member)}));
         }
     }
 
-    FunctionType* functionType = node->constructorSymbol->typeScheme->type()->get<FunctionType>();
-    auto& constructor = functionType->output()->valueConstructors().front();
+    ValueConstructor* constructor = node->valueConstructor;
 
     // Copy over each of the members of the constructor pattern
     for (size_t i = 0; i < node->symbols.size(); ++i)
@@ -873,7 +864,7 @@ void TACCodeGen::visit(MatchArm* node)
     {
         const Symbol* member = node->symbols.at(i);
 
-        if (member->typeScheme->isBoxed())
+        if (member->typeScheme->type()->isBoxed())
         {
             incref(getNameAddress(member));
         }

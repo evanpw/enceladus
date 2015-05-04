@@ -7,7 +7,27 @@
 #include <cassert>
 #include <sstream>
 
-std::set<TypeVariable*> TypeImpl::freeVars()
+std::shared_ptr<Type> unwrap(const std::shared_ptr<Type>& type)
+{
+    if (type->tag() == ttVariable)
+    {
+        std::shared_ptr<Type> target = type->get<TypeVariable>()->target();
+        if (target)
+        {
+            return unwrap(target);
+        }
+        else
+        {
+            return type;
+        }
+    }
+    else
+    {
+        return type;
+    }
+}
+
+std::set<TypeVariable*> Type::freeVars()
 {
     std::set<TypeVariable*> result;
 
@@ -18,7 +38,17 @@ std::set<TypeVariable*> TypeImpl::freeVars()
 
         case ttVariable:
         {
-            result.insert(dynamic_cast<TypeVariable*>(this));
+            TypeVariable* typeVar = dynamic_cast<TypeVariable*>(this);
+            std::shared_ptr<Type> target = typeVar->deref();
+
+            if (target)
+            {
+                result += target->freeVars();
+            }
+            else
+            {
+                result.insert(typeVar);
+            }
             break;
         }
 
@@ -78,7 +108,7 @@ std::set<TypeVariable*> TypeScheme::freeVars() const
     return allVars;
 }
 
-std::pair<size_t, ValueConstructor*> TypeImpl::getValueConstructor(const std::string& name) const
+std::pair<size_t, ValueConstructor*> Type::getValueConstructor(const std::string& name) const
 {
     for (size_t i = 0; i < _valueConstructors.size(); ++i)
     {
@@ -124,7 +154,7 @@ std::string FunctionType::name() const
 }
 
 ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
-: TypeImpl(ttConstructed), _typeConstructor(typeConstructor)
+: Type(ttConstructed), _typeConstructor(typeConstructor)
 {
     for (const std::shared_ptr<Type>& parameter : typeParameters)
     {
@@ -138,7 +168,7 @@ ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, std::in
 }
 
 ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
-: TypeImpl(ttConstructed), _typeConstructor(typeConstructor)
+: Type(ttConstructed), _typeConstructor(typeConstructor)
 {
     for (const std::shared_ptr<Type>& parameter : typeParameters)
     {
@@ -173,13 +203,6 @@ std::string ConstructedType::name() const
 }
 
 int TypeVariable::_count;
-
-std::string TypeVariable::name() const
-{
-    std::stringstream ss;
-    ss << "a" << _index;
-    return ss.str();
-}
 
 ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames)
 : name_(name)

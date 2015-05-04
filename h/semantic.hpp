@@ -66,7 +66,6 @@ public:
 private:
     //// Type Inference ////////////////////////////////////////////////////////
     std::shared_ptr<Type> newVariable();
-    std::map<TypeVariable*, std::vector<std::shared_ptr<Type>>> _variables;
 
     static void inferenceError(AstNode* node, const std::string& msg);
 

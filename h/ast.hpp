@@ -178,7 +178,9 @@ public:
 	std::string name;
 
 	// Annotations
+	enum NullaryKind { VARIABLE, FUNC_CALL, FOREIGN_CALL, CLOSURE };
 	Symbol* symbol = nullptr;
+	NullaryKind kind;
 };
 
 class IntNode : public ExpressionNode
@@ -365,6 +367,7 @@ public:
 	Symbol* symbol = nullptr;
 	std::vector<Symbol*> parameterSymbols;
 	std::shared_ptr<Scope> scope;
+	FunctionType* functionType;
 };
 
 class MatchNode : public StatementNode
@@ -382,7 +385,7 @@ public:
 
 	// Annotations
 	std::vector<Symbol*> symbols;
-	Symbol* constructorSymbol = nullptr;
+	ValueConstructor* valueConstructor = nullptr;
 };
 
 class MatchArm : public AstNode
@@ -401,9 +404,8 @@ public:
 	// Annotations
 	std::shared_ptr<Type> matchType;
 	std::vector<Symbol*> symbols;
-	Symbol* constructorSymbol = nullptr;
 	size_t constructorTag;
-	ValueConstructor* valueConstructor;
+	ValueConstructor* valueConstructor = nullptr;
 };
 
 class SwitchNode : public StatementNode
