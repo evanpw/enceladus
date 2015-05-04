@@ -9,57 +9,254 @@
 #include <unordered_map>
 #include <vector>
 
+class BaseType;
+class ConstructedType;
+class FunctionType;
+class TypeConstructor;
+class TypeImpl;
+class TypeImpl;
+class TypeScheme;
+class TypeVariable;
+class TypeVariable;
+class TypeVariable;
 class ValueConstructor;
-class TypeConstructor
-{
-public:
-    TypeConstructor(const std::string& name, size_t parameters = 0)
-    : name_(name), parameters_(parameters)
-    {}
-
-    const std::string& name() const { return name_; }
-    size_t parameters() const { return parameters_; }
-
-    virtual const std::vector<ValueConstructor*>& valueConstructors() const { return _valueConstructors; }
-    void addValueConstructor(ValueConstructor* valueConstructor) { _valueConstructors.emplace_back(valueConstructor); }
-
-private:
-    std::string name_;
-    size_t parameters_;
-    std::vector<ValueConstructor*> _valueConstructors;
-};
+class ValueConstructor;
+class ValueConstructor;
 
 enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed};
 
-class TypeImpl;
-class TypeVariable;
+// Base class of all types
+class TypeImpl
+{
+public:
+    TypeImpl(TypeTag tag)
+    : _tag(tag)
+    {}
 
-class ValueConstructor;
+    virtual ~TypeImpl() {}
+    virtual std::string name() const = 0;
+    virtual bool isBoxed() const = 0;
+
+    TypeTag tag() const
+    {
+        return _tag;
+    }
+
+    bool isAlgebraic() const
+    {
+        return _valueConstructors.size() > 1;
+    }
+
+    const std::vector<ValueConstructor*>& valueConstructors() const
+    {
+        return _valueConstructors;
+    }
+
+    std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const;
+
+    void addValueConstructor(ValueConstructor* valueConstructor)
+    {
+        _valueConstructors.emplace_back(valueConstructor);
+    }
+
+    std::set<TypeVariable*> freeVars();
+
+private:
+    TypeTag _tag;
+    std::vector<ValueConstructor*> _valueConstructors;
+};
+
 class Type
 {
 public:
-    Type(TypeImpl* impl)
-    : _impl(impl)
-    {}
+    Type(TypeImpl* impl) : _impl(impl) {}
 
-    virtual ~Type() {}
+    template <class T>
+    T* get()
+    {
+        return dynamic_cast<T*>(_impl.get());
+    }
 
-    TypeTag tag() const;
-    bool isBoxed() const;
-    std::string name() const;
-    bool isAlgebraic() const;
+    // Forwarded to _impl
+    std::string name() const
+    {
+        return _impl->name();
+    }
 
-    const std::vector<ValueConstructor*>& valueConstructors() const;
-    std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const;
-    void addValueConstructor(ValueConstructor* valueConstructor);
+    bool isBoxed() const
+    {
+        return _impl->isBoxed();
+    }
 
-    std::set<TypeVariable*> freeVars() const;
+    TypeTag tag() const
+    {
+        return _impl->tag();
+    }
 
-    template <typename T>
-    T* get() const { return dynamic_cast<T*>(_impl.get()); }
+    bool isAlgebraic() const
+    {
+        return _impl->isAlgebraic();
+    }
+
+    const std::vector<ValueConstructor*>& valueConstructors() const
+    {
+        return _impl->valueConstructors();
+    }
+
+    std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const
+    {
+        return _impl->getValueConstructor(name);
+    }
+
+    void addValueConstructor(ValueConstructor* valueConstructor)
+    {
+        _impl->addValueConstructor(valueConstructor);
+    }
+
+    std::set<TypeVariable*> freeVars()
+    {
+        return _impl->freeVars();
+    }
 
 private:
     std::shared_ptr<TypeImpl> _impl;
+};
+
+// Represents a bottom-level basic types (Int, Bool, ...)
+class BaseType : public TypeImpl
+{
+public:
+    static std::shared_ptr<Type> create(const std::string& name, bool primitive = false)
+    {
+        return std::make_shared<Type>(new BaseType(name, primitive));
+    }
+
+    virtual std::string name() const
+    {
+        return name_;
+    }
+
+    virtual bool isBoxed() const
+    {
+        return !primitive_;
+    }
+
+private:
+    BaseType(const std::string& name, bool primitive)
+    : TypeImpl(ttBase), name_(name), primitive_(primitive)
+    {}
+
+    std::string name_;
+    bool primitive_;
+};
+
+// The type of a function from one type to another
+class FunctionType : public TypeImpl
+{
+public:
+    static std::shared_ptr<Type> create(const std::vector<std::shared_ptr<Type>>& inputs, const std::shared_ptr<Type>& output)
+    {
+        return std::make_shared<Type>(new FunctionType(inputs, output));
+    }
+
+    virtual std::string name() const;
+    virtual bool isBoxed() const { return true; }
+
+    const std::vector<std::shared_ptr<Type>>& inputs() const
+    {
+        return _inputs;
+    }
+
+    const std::shared_ptr<Type>& output() const
+    {
+        return _output;
+    }
+
+private:
+    FunctionType(const std::vector<std::shared_ptr<Type>>& inputs, const std::shared_ptr<Type>& output)
+    : TypeImpl(ttFunction), _inputs(inputs), _output(output)
+    {}
+
+    std::vector<std::shared_ptr<Type>> _inputs;
+    std::shared_ptr<Type> _output;
+};
+
+// The type of any type constructed from other types
+class ConstructedType : public TypeImpl
+{
+public:
+    static std::shared_ptr<Type> create(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
+    {
+        return std::make_shared<Type>(new ConstructedType(typeConstructor, typeParameters));
+    }
+
+    static std::shared_ptr<Type> create(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
+    {
+        return std::make_shared<Type>(new ConstructedType(typeConstructor, typeParameters));
+    }
+
+    virtual std::string name() const;
+
+    virtual bool isBoxed() const
+    {
+        return true;
+    }
+
+    const TypeConstructor* typeConstructor() const
+    {
+        return _typeConstructor;
+    }
+
+    const std::vector<std::shared_ptr<Type>>& typeParameters() const
+    {
+        return _typeParameters;
+    }
+
+private:
+    ConstructedType(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters);
+    ConstructedType(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters);
+
+    const TypeConstructor* _typeConstructor;
+    std::vector<std::shared_ptr<Type>> _typeParameters;
+};
+
+// A variable which can be substituted with a type. Used for polymorphism.
+class TypeVariable : public TypeImpl
+{
+public:
+    static std::shared_ptr<Type> create(bool rigid=false)
+    {
+        return std::make_shared<Type>(new TypeVariable(rigid));
+    }
+
+    virtual bool isBoxed() const
+    {
+        return true;
+    }
+
+    virtual std::string name() const;
+
+    int index() const
+    {
+        return _index;
+    }
+
+    bool rigid() const
+    {
+        return _rigid;
+    }
+
+private:
+    TypeVariable(bool rigid)
+    : TypeImpl(ttVariable)
+    , _index(_count++)
+    , _rigid(rigid)
+    {}
+
+    int _index;
+    bool _rigid;
+
+    static int _count;
 };
 
 class ValueConstructor
@@ -67,7 +264,10 @@ class ValueConstructor
 public:
     ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames = {});
 
-    virtual std::string name() const { return name_; }
+    virtual std::string name() const
+    {
+        return name_;
+    }
 
     struct MemberDesc
     {
@@ -80,14 +280,15 @@ public:
         size_t location;
     };
 
-    std::vector<MemberDesc>& members() { return members_; }
+    std::vector<MemberDesc>& members()
+    {
+        return members_;
+    }
 
 private:
     std::string name_;
     std::vector<MemberDesc> members_;
 };
-
-class TypeVariable;
 
 class TypeScheme
 {
@@ -123,176 +324,69 @@ public:
     std::string name() const;
 
     // Convenience redirections to the underlying type
-    virtual TypeTag tag() const { return _type->tag(); }
-    virtual bool isBoxed() const { return _type->isBoxed(); }
-    const std::vector<ValueConstructor*>& valueConstructors() const { return _type->valueConstructors(); }
+    virtual TypeTag tag() const
+    {
+        return _type->tag();
+    }
 
-    const std::shared_ptr<Type>& type() const { return _type; }
+    virtual bool isBoxed() const
+    {
+        return _type->isBoxed();
+    }
+
+    const std::vector<ValueConstructor*>& valueConstructors() const
+    {
+        return _type->valueConstructors();
+    }
+
+    const std::shared_ptr<Type>& type() const
+    {
+        return _type;
+    }
+
     std::set<TypeVariable*> freeVars() const;
-    const std::set<TypeVariable*>& quantified() const { return _quantified; }
+
+    const std::set<TypeVariable*>& quantified() const
+    {
+        return _quantified;
+    }
 
 private:
     std::shared_ptr<Type> _type;
     std::set<TypeVariable*> _quantified;
 };
 
-// Base class of all types
-class TypeImpl
+class TypeConstructor
 {
 public:
-    TypeImpl(TypeTag tag)
-    : _tag(tag)
+    TypeConstructor(const std::string& name, size_t parameters = 0)
+    : name_(name), parameters_(parameters)
     {}
 
-    virtual ~TypeImpl() {}
-    virtual std::string name() const = 0;
-    virtual bool isBoxed() const = 0;
-
-    TypeTag tag() const { return _tag; }
-    bool isAlgebraic() const { return _valueConstructors.size() > 1; }
-
-    const std::vector<ValueConstructor*>& valueConstructors() const { return _valueConstructors; }
-    std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const;
-    void addValueConstructor(ValueConstructor* valueConstructor) { _valueConstructors.emplace_back(valueConstructor); }
-
-protected:
-    std::vector<ValueConstructor*> _valueConstructors;
-
-private:
-    TypeTag _tag;
-};
-
-// Represents a bottom-level basic types (Int, Bool, ...)
-class BaseType : public TypeImpl
-{
-public:
-    static std::shared_ptr<Type> create(const std::string& name, bool primitive = false)
+    const std::string& name() const
     {
-        return std::make_shared<Type>(new BaseType(name, primitive));
+        return name_;
     }
 
-    virtual std::string name() const { return name_; }
-    virtual bool isBoxed() const { return !primitive_; }
-
-private:
-    BaseType(const std::string& name, bool primitive)
-    : TypeImpl(ttBase), name_(name), primitive_(primitive)
+    size_t parameters() const
     {
-        if (!primitive)
-        {
-            //_valueConstructors.emplace_back(new ValueConstructor(name, {}));
-        }
+        return parameters_;
     }
 
+    virtual const std::vector<ValueConstructor*>& valueConstructors() const
+    {
+        return _valueConstructors;
+    }
+
+    void addValueConstructor(ValueConstructor* valueConstructor)
+    {
+        _valueConstructors.emplace_back(valueConstructor);
+    }
+
+private:
     std::string name_;
-    bool primitive_;
-};
-
-// The type of a function from one type to another
-class FunctionType : public TypeImpl
-{
-public:
-    static std::shared_ptr<Type> create(const std::vector<std::shared_ptr<Type>>& inputs, const std::shared_ptr<Type>& output)
-    {
-        return std::make_shared<Type>(new FunctionType(inputs, output));
-    }
-
-    virtual std::string name() const;
-    virtual bool isBoxed() const { return true; }
-
-    const std::vector<std::shared_ptr<Type>>& inputs() const { return _inputs; }
-    const std::shared_ptr<Type>& output() const { return _output; }
-
-private:
-    FunctionType(const std::vector<std::shared_ptr<Type>>& inputs, const std::shared_ptr<Type>& output)
-    : TypeImpl(ttFunction), _inputs(inputs), _output(output)
-    {}
-
-    std::vector<std::shared_ptr<Type>> _inputs;
-    std::shared_ptr<Type> _output;
-};
-
-// The type of any type constructed from other types
-class ConstructedType : public TypeImpl
-{
-public:
-    static std::shared_ptr<Type> create(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
-    {
-        return std::make_shared<Type>(new ConstructedType(typeConstructor, typeParameters));
-    }
-
-    static std::shared_ptr<Type> create(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
-    {
-        return std::make_shared<Type>(new ConstructedType(typeConstructor, typeParameters));
-    }
-
-    virtual std::string name() const;
-    virtual bool isBoxed() const { return true; }
-
-    const TypeConstructor* typeConstructor() const { return _typeConstructor; }
-    const std::vector<std::shared_ptr<Type>>& typeParameters() const { return _typeParameters; }
-
-private:
-    // TODO: Build value constructors
-    ConstructedType(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
-    : TypeImpl(ttConstructed), _typeConstructor(typeConstructor)
-    {
-        for (const std::shared_ptr<Type>& parameter : typeParameters)
-        {
-            _typeParameters.push_back(parameter);
-        }
-
-        for (auto& valueConstructor : typeConstructor->valueConstructors())
-        {
-            _valueConstructors.push_back(valueConstructor);
-        }
-    }
-
-    // TODO: Build value constructors
-    ConstructedType(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
-    : TypeImpl(ttConstructed), _typeConstructor(typeConstructor)
-    {
-        for (const std::shared_ptr<Type>& parameter : typeParameters)
-        {
-            _typeParameters.push_back(parameter);
-        }
-
-        for (auto& valueConstructor : typeConstructor->valueConstructors())
-        {
-            _valueConstructors.push_back(valueConstructor);
-        }
-    }
-
-    const TypeConstructor* _typeConstructor;
-    std::vector<std::shared_ptr<Type>> _typeParameters;
-};
-
-// A variable which can be substituted with a type. Used for polymorphism.
-class TypeVariable : public TypeImpl
-{
-public:
-    static std::shared_ptr<Type> create(bool rigid=false)
-    {
-        return std::make_shared<Type>(new TypeVariable(rigid));
-    }
-
-    virtual bool isBoxed() const { return true; }
-    virtual std::string name() const;
-
-    int index() const { return _index; }
-    bool rigid() const { return _rigid; }
-
-private:
-    TypeVariable(bool rigid)
-    : TypeImpl(ttVariable)
-    , _index(_count++)
-    , _rigid(rigid)
-    {}
-
-    int _index;
-    bool _rigid;
-
-    static int _count;
+    size_t parameters_;
+    std::vector<ValueConstructor*> _valueConstructors;
 };
 
 #endif

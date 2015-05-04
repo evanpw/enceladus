@@ -7,59 +7,24 @@
 #include <cassert>
 #include <sstream>
 
-TypeTag Type::tag() const
-{
-    return _impl->tag();
-}
-
-std::string Type::name() const
-{
-    return _impl->name();
-}
-
-bool Type::isBoxed() const
-{
-    return _impl->isBoxed();
-}
-
-bool Type::isAlgebraic() const
-{
-    return _impl->isAlgebraic();
-}
-
-const std::vector<ValueConstructor*>& Type::valueConstructors() const
-{
-    return _impl->valueConstructors();
-}
-
-std::pair<size_t, ValueConstructor*> Type::getValueConstructor(const std::string& name) const
-{
-    return _impl->getValueConstructor(name);
-}
-
-void Type::addValueConstructor(ValueConstructor* valueConstructor)
-{
-    _impl->addValueConstructor(valueConstructor);
-}
-
-std::set<TypeVariable*> Type::freeVars() const
+std::set<TypeVariable*> TypeImpl::freeVars()
 {
     std::set<TypeVariable*> result;
 
-    switch (_impl->tag())
+    switch (_tag)
     {
         case ttBase:
             break;
 
         case ttVariable:
         {
-            result.insert(get<TypeVariable>());
+            result.insert(dynamic_cast<TypeVariable*>(this));
             break;
         }
 
         case ttFunction:
         {
-            FunctionType* functionType = get<FunctionType>();
+            FunctionType* functionType = dynamic_cast<FunctionType*>(this);
 
             for (auto& input : functionType->inputs())
             {
@@ -71,7 +36,7 @@ std::set<TypeVariable*> Type::freeVars() const
 
         case ttConstructed:
         {
-            ConstructedType* constructedType = get<ConstructedType>();
+            ConstructedType* constructedType = dynamic_cast<ConstructedType*>(this);
             for (const std::shared_ptr<Type>& parameter : constructedType->typeParameters())
             {
                 result += parameter->freeVars();
@@ -156,6 +121,34 @@ std::string FunctionType::name() const
     ss << " -> " << _output->name();
 
     return ss.str();
+}
+
+ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
+: TypeImpl(ttConstructed), _typeConstructor(typeConstructor)
+{
+    for (const std::shared_ptr<Type>& parameter : typeParameters)
+    {
+        _typeParameters.push_back(parameter);
+    }
+
+    for (auto& valueConstructor : typeConstructor->valueConstructors())
+    {
+        addValueConstructor(valueConstructor);
+    }
+}
+
+ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
+: TypeImpl(ttConstructed), _typeConstructor(typeConstructor)
+{
+    for (const std::shared_ptr<Type>& parameter : typeParameters)
+    {
+        _typeParameters.push_back(parameter);
+    }
+
+    for (auto& valueConstructor : typeConstructor->valueConstructors())
+    {
+        addValueConstructor(valueConstructor);
+    }
 }
 
 std::string ConstructedType::name() const
