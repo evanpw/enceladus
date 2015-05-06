@@ -64,3 +64,6 @@ testing/test.sh $platform implicitReturn "4" || echo "Implicit return test 1 fai
 testing/test.sh $platform implicitReturn2 "10" || echo "Implicit return test 2 failed!"
 testing/testFile.sh $platform fizzBuzz testing/fizzBuzz.correct || echo "FizzBuzz test failed!"
 testing/test.sh $platform adt1 "5" || echo "ADT test 1 failed!"
+testing/test.sh $platform adt2 "2" || echo "ADT test 2 failed!"
+testing/testError.sh $platform adt3 'Error: Near line 6, column 5: cannot repeat constructors in match statement' || echo "ADT test 3 failed!"
+testing/testError.sh $platform adt4 'Error: Near line 4, column 1: switch statement is not exhaustive' || echo "ADT test 4 failed!"

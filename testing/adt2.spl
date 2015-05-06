@@ -1,0 +1,14 @@
+data Option a = Some a | None
+
+def isGood(a: Option a) -> Int
+    match a
+        Some b => return 1
+        None   => return 0
+
+    return 0
+
+x := Some 1
+y := None
+z := Some "Hello"
+
+print $ show $ isGood x + isGood y + isGood z

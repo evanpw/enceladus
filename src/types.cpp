@@ -9,7 +9,7 @@
 
 std::shared_ptr<Type> unwrap(const std::shared_ptr<Type>& type)
 {
-    if (type->tag() == ttVariable)
+    if (type->isVariable())
     {
         std::shared_ptr<Type> target = type->get<TypeVariable>()->target();
         if (target)
@@ -205,7 +205,7 @@ std::string ConstructedType::name() const
 int TypeVariable::_count;
 
 ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames)
-: name_(name)
+: _name(name)
 {
     assert(memberNames.empty() || (memberNames.size() == memberTypes.size()));
 
@@ -213,6 +213,6 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<st
     {
         std::string memberName = memberNames.empty() ? "_" : memberNames[i];
         std::shared_ptr<Type> type = memberTypes[i];
-        members_.emplace_back(memberName, type, i);
+        _members.emplace_back(memberName, type, i);
     }
 }

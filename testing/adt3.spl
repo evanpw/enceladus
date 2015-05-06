@@ -1,0 +1,6 @@
+data Option = Some Int | None
+x := Some 4
+
+match x
+    Some a => print $ show a
+    Some b => print $ show b

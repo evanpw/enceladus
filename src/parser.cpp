@@ -592,7 +592,7 @@ TypeName* Parser::constructed_type()
         Token name = expect(tUIDENT);
         TypeName* typeName = new TypeName(_context, location, name.value.str);
 
-        while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[')
+        while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[' || peekType() == '(')
         {
             typeName->parameters.push_back(simple_type());
         }
@@ -651,7 +651,7 @@ ConstructorSpec* Parser::constructor_spec()
     Token name = expect(tUIDENT);
 
     ConstructorSpec* constructorSpec = new ConstructorSpec(_context, location, name.value.str);
-    while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[')
+    while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[' || peekType() == '(')
     {
         constructorSpec->members.push_back(simple_type());
     }

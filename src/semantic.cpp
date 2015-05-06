@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 
@@ -345,7 +346,6 @@ void SemanticAnalyzer::releaseSymbol(Symbol* symbol)
 void SemanticAnalyzer::bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node)
 {
     assert(variable->tag() == ttVariable);
-    assert(!variable->get<TypeVariable>()->deref());
 
     std::shared_ptr<Type> rhs = unwrap(value);
 
@@ -539,6 +539,12 @@ void SemanticAnalyzer::unify(const std::shared_ptr<Type>& a, const std::shared_p
     std::shared_ptr<Type> lhs = unwrap(a);
     std::shared_ptr<Type> rhs = unwrap(b);
 
+    // std::cerr << "unify: "
+    //           << lhs->name() << " " << lhs->isVariable() << ((lhs->isVariable()) ? lhs->get<TypeVariable>()->rigid() : false)
+    //           << " -- "
+    //           << rhs->name() << " " << rhs->isVariable() << ((rhs->isVariable()) ? rhs->get<TypeVariable>()->rigid() : false)
+    //           << std::endl;
+
     assert(lhs && rhs && node);
 
     if (lhs->tag() == ttBase && rhs->tag() == ttBase)
@@ -660,8 +666,15 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
 
     // Create a symbol for the constructor
     Symbol* symbol = new FunctionSymbol(node->name, node, nullptr);
-    symbol->setTypeScheme(generalize(FunctionType::create(node->memberTypes, node->resultType), _scopes));
+    std::set<TypeVariable*> variables;
+    for (auto& element : node->typeContext)
+    {
+        variables.insert(element.second->get<TypeVariable>());
+    }
+    symbol->setTypeScheme(std::make_shared<TypeScheme>(FunctionType::create(node->memberTypes, node->resultType), variables));
     insertSymbol(symbol);
+
+    //std::cerr << "constructor: " << node->name << " :: " << symbol->typeScheme->name() << std::endl;
 
     node->type = Unit;
 }
@@ -680,28 +693,25 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
     if (node->typeParameters.empty())
     {
         std::shared_ptr<Type> newType = BaseType::create(node->name);
+        topScope()->types.insert(new TypeSymbol(name, node, newType));
+
         for (auto& spec : node->constructorSpecs)
         {
             spec->resultType = newType;
             spec->accept(this);
             node->valueConstructors.push_back(spec->valueConstructor);
         }
-
-        topScope()->types.insert(new TypeSymbol(name, node, newType));
     }
     else
     {
-        // We don't support algebraic data types with type variables yet
-        assert(node->constructorSpecs.size() == 1);
-        auto& spec = node->constructorSpecs[0];
-
         // Create type variables for each type parameter
         std::vector<std::shared_ptr<Type>> variables;
+        std::unordered_map<std::string, std::shared_ptr<Type>> typeContext;
         for (auto& typeParameter : node->typeParameters)
         {
-            std::shared_ptr<Type> var = TypeVariable::create();
+            std::shared_ptr<Type> var = TypeVariable::create(true);
             variables.push_back(var);
-            spec->typeContext.emplace(typeParameter, var);
+            typeContext.emplace(typeParameter, var);
         }
 
         TypeConstructor* typeConstructor = new TypeConstructor(name, node->typeParameters.size());
@@ -710,10 +720,14 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 
         std::shared_ptr<Type> newType = ConstructedType::create(typeConstructor, variables);
 
-        spec->resultType = newType;
-        spec->accept(this);
-        typeConstructor->addValueConstructor(spec->valueConstructor);
-        node->valueConstructors.push_back(spec->valueConstructor);
+        for (auto& spec : node->constructorSpecs)
+        {
+            spec->typeContext = typeContext;
+            spec->resultType = newType;
+            spec->accept(this);
+            typeConstructor->addValueConstructor(spec->valueConstructor);
+            node->valueConstructors.push_back(spec->valueConstructor);
+        }
     }
 
 	node->type = Unit;
@@ -816,7 +830,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     assert(functionType->get<FunctionType>()->inputs().size() == node->params.size());
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
-	symbol->setType(functionType);
+	symbol->setTypeScheme(generalize(functionType, _scopes));
 	symbol->isForeign = true;
 	symbol->isExternal = true;
 	insertSymbol(symbol);
@@ -858,15 +872,22 @@ void SemanticAnalyzer::visit(SwitchNode* node)
     node->expr->accept(this);
     std::shared_ptr<Type> type = node->expr->type;
 
+    node->type = TypeVariable::create();
+
+    std::set<size_t> constructorTags;
     for (auto& arm : node->arms)
     {
         arm->matchType = type;
         arm->accept(this);
+
+        bool notDuplicate = (constructorTags.find(arm->constructorTag) == constructorTags.end());
+        CHECK_AT(arm->location, notDuplicate, "cannot repeat constructors in match statement");
+        constructorTags.insert(arm->constructorTag);
+
+        unify(node->type, arm->type, node);
     }
 
-    // TODO: Check exhaustiveness
-
-    node->type = Unit;
+    CHECK(constructorTags.size() == type->valueConstructors().size(), "switch statement is not exhaustive");
 }
 
 void SemanticAnalyzer::visit(MatchArm* node)
@@ -886,7 +907,9 @@ void SemanticAnalyzer::visit(MatchArm* node)
 
     std::shared_ptr<Type> instantiatedType = instantiate(constructorSymbol->typeScheme.get());
     FunctionType* functionType = instantiatedType->get<FunctionType>();
+    //std::cerr << "functionType: " << functionType->name() << std::endl;
     std::shared_ptr<Type> constructedType = functionType->output();
+    //std::cerr << "constructedType: " << constructedType->name() << std::endl;
     unify(constructedType, node->matchType, node);
 
     CHECK(functionType->inputs().size() == node->params.size(),
@@ -904,10 +927,10 @@ void SemanticAnalyzer::visit(MatchArm* node)
         node->symbols.push_back(member);
     }
 
-    node->type = Unit;
-
     // Visit body
     AstVisitor::visit(node);
+
+    node->type = node->body->type;
 }
 
 void SemanticAnalyzer::visit(MatchNode* node)

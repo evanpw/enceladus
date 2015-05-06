@@ -8,7 +8,7 @@ type String = [Char]
 foreign read () -> Int
 foreign readLine () -> String
 foreign print (msg: String) -> Unit
-foreign dieWithMessage (msg: String) -> Unit
+foreign dieWithMessage (msg: String) -> a
 
 
 ## Native-language standard library

@@ -42,6 +42,11 @@ public:
         return _tag;
     }
 
+    virtual bool isVariable() const
+    {
+        return false;
+    }
+
     virtual const std::vector<ValueConstructor*>& valueConstructors() const
     {
         return _valueConstructors;
@@ -179,8 +184,6 @@ public:
         return std::shared_ptr<Type>(new TypeVariable(rigid));
     }
 
-    // These methods mimic the target type rather than this type variable
-
     virtual std::string name() const
     {
         flatten();
@@ -209,7 +212,44 @@ public:
         }
     }
 
-    // These methods act on the actual type variable
+    virtual TypeTag tag() const
+    {
+        flatten();
+        if (_target)
+        {
+            return _target->tag();
+        }
+        else
+        {
+            return ttVariable;
+        }
+    }
+
+    virtual bool isVariable() const
+    {
+        return true;
+    }
+
+    virtual const std::vector<ValueConstructor*>& valueConstructors() const
+    {
+        flatten();
+        assert(_target);
+        return _target->valueConstructors();
+    }
+
+    virtual std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const
+    {
+        flatten();
+        assert(_target);
+        return _target->getValueConstructor(name);
+    }
+
+    virtual void addValueConstructor(ValueConstructor* valueConstructor)
+    {
+        flatten();
+        assert(_target);
+        _target->addValueConstructor(valueConstructor);
+    }
 
     std::shared_ptr<Type> deref() const
     {
@@ -270,7 +310,7 @@ public:
 
     virtual std::string name() const
     {
-        return name_;
+        return _name;
     }
 
     struct MemberDesc
@@ -286,12 +326,12 @@ public:
 
     std::vector<MemberDesc>& members()
     {
-        return members_;
+        return _members;
     }
 
 private:
-    std::string name_;
-    std::vector<MemberDesc> members_;
+    std::string _name;
+    std::vector<MemberDesc> _members;
 };
 
 class TypeScheme
@@ -364,17 +404,17 @@ class TypeConstructor
 {
 public:
     TypeConstructor(const std::string& name, size_t parameters = 0)
-    : name_(name), parameters_(parameters)
+    : _name(name), _parameters(parameters)
     {}
 
     const std::string& name() const
     {
-        return name_;
+        return _name;
     }
 
     size_t parameters() const
     {
-        return parameters_;
+        return _parameters;
     }
 
     virtual const std::vector<ValueConstructor*>& valueConstructors() const
@@ -388,8 +428,8 @@ public:
     }
 
 private:
-    std::string name_;
-    size_t parameters_;
+    std::string _name;
+    size_t _parameters;
     std::vector<ValueConstructor*> _valueConstructors;
 };
 
