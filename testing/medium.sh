@@ -7,8 +7,6 @@ else
     platform=osx
 fi
 
-$(dirname $0)/fast.sh
-
 # Medium tests (>= 100ms, < 1s)
 testing/test.sh $platform euler4 906609 || echo "Project Euler 4 failed!"
 testing/test.sh $platform euler12 76576500 || echo "Project Euler 12 failed!"

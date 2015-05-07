@@ -141,7 +141,6 @@ private:
     std::vector<StructDefNode*> _structDeclarations;
 
     void createConstructor(ValueConstructor* constructor, size_t constructorTag);
-    void createDestructor(ValueConstructor* constructor);
 
     void incref(std::shared_ptr<Address> operand);
 

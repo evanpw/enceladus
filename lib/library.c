@@ -112,19 +112,95 @@ int64_t _decrefNoFree(SplObject* object)
     return object->refCount;
 }
 
+static void destroy(SplObject* object);
+
 void _decref(SplObject* object)
 {
     if (object == NULL || IS_TAGGED(object)) return;
 
-    if (_decrefNoFree(object) == 0)
+    --object->refCount;
+    if (object->refCount < 0)
     {
-        (object->destructor)(object);
+        _dieWithMessage("*** Exception: Reference count is negative");
     }
+    else if (object->refCount > 0)
+    {
+        return;
+    }
+
+    destroy(object);
 }
 
-void __destroyClosure(SplObject* object)
+// Recursively destroy object and decrement the reference count of its children.
+// Does a depth-first traversal of the object graph in constant stack space by
+// storing back-tracking pointers in the child pointers themselves.
+// See "Deutsch-Schorr-Waite pointer reversal"
+static void destroy(SplObject* object)
 {
-    free(object);
+    if (object->refCount != 0)
+    {
+        _dieWithMessage("*** Exception: Destroying object with positive reference count");
+    }
+
+    SplObject* back = NULL;
+    SplObject* next = object;
+
+    while (1)
+    {
+continue_main_loop:
+        if (next->pointerFields)
+        {
+            uint64_t mask = 1;
+            SplObject** p = (SplObject**)(next + 1);
+
+            while (next->pointerFields)
+            {
+                if (next->pointerFields & mask)
+                {
+                    // Decrement child. If also at refcount 0, then recurse
+                    if (_decrefNoFree(*p) == 0)
+                    {
+                        // Rotate back, next, *p cyclically to the left
+                        SplObject* tmp = back;
+                        back = next;
+                        next = *p;
+                        *p = tmp;
+                        goto continue_main_loop;
+                    }
+                    else
+                    {
+                        next->pointerFields &= ~mask;
+                    }
+                }
+
+                mask <<= 1;
+                ++p;
+            }
+        }
+
+        free(next);
+
+        if (back)
+        {
+            // Backtrack
+            next = back;
+
+            uint64_t mask = 1;
+            SplObject** p = (SplObject**)(next + 1);
+            while (!(next->pointerFields & mask))
+            {
+                mask <<= 1;
+                ++p;
+            }
+
+            next->pointerFields &= ~mask;
+            back = *p;
+        }
+        else
+        {
+            break;
+        }
+    }
 }
 
 //// Ints //////////////////////////////////////////////////////////////////////
@@ -142,10 +218,12 @@ int64_t fromInt(int64_t n)
 //// Strings ///////////////////////////////////////////////////////////////////
 
 List* Cons(void* value, List* next);
+List* Nil();
+#define IS_EMPTY(xs) ((xs)->constructorTag == 1)
 
 String* makeString(const char* s)
 {
-    List* str = NULL;
+    List* str = Nil();
 
     for (int i = strlen(s) - 1; i >= 0; --i)
     {
@@ -163,7 +241,7 @@ size_t get_length(String* s)
 
     size_t length = 0;
 
-    while (s != NULL)
+    while (!IS_EMPTY(s))
     {
         ++length;
         s = s->next;
@@ -181,7 +259,7 @@ char* content(String* s)
     char* str = (char*)malloc(get_length(s) + 1);
 
     char* out = str;
-    while (s != NULL)
+    while (!IS_EMPTY(s))
     {
         *out = fromInt((int64_t)s->value);
 
@@ -213,7 +291,7 @@ String* readLine()
 
     if (read == -1)
     {
-        return NULL;
+        return Nil();
     }
     else
     {
@@ -243,47 +321,6 @@ void dieWithMessage(String* s)
     //Spl_DECREF(s);
 
     exit(1);
-}
-
-//// Lists /////////////////////////////////////////////////////////////////////
-
-void _destroyList(List* list)
-{
-    if (list == NULL) return;
-
-    while (1)
-    {
-        List* next = list->next;
-        _decref(list->value);
-        free(list);
-
-        if (next == NULL) break;
-
-        --next->refCount;
-        if (next->refCount > 0)
-        {
-            break;
-        }
-        else
-        {
-            list = next;
-        }
-    }
-}
-
-List* Cons(void* value, List* next)
-{
-    List* newCell = (List*)malloc(sizeof(List));
-
-    newCell->refCount = 0;
-    newCell->next = next;
-    newCell->value = value;
-    newCell->destructor = (void (*)(SplObject*))_destroyList;
-
-    Spl_INCREF(next);
-    Spl_INCREF(value);
-
-    return newCell;
 }
 
 //// Trees /////////////////////////////////////////////////////////////////////

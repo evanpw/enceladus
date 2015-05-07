@@ -142,12 +142,6 @@ void TACCodeGen::visit(ProgramNode* node)
             _currentInstruction = nullptr;
 
             createConstructor(constructor, i);
-
-            _tacProgram.otherFunctions.emplace_back("_destroy" + mangle(constructor->name()));
-            _currentFunction = &_tacProgram.otherFunctions.back();
-            _currentInstruction = nullptr;
-
-            createDestructor(constructor);
         }
     }
 
@@ -160,12 +154,6 @@ void TACCodeGen::visit(ProgramNode* node)
         _currentInstruction = nullptr;
 
         createConstructor(structDeclaration->valueConstructor, 0);
-
-        _tacProgram.otherFunctions.emplace_back("_destroy" + mangle(constructor->name()));
-        _currentFunction = &_tacProgram.otherFunctions.back();
-        _currentInstruction = nullptr;
-
-        createDestructor(structDeclaration->valueConstructor);
     }
 
     // Gather up all references to external functions and all global variables
@@ -369,10 +357,8 @@ void TACCodeGen::visit(NullaryNode* node)
 
             emit(new TACLeftIndexedAssignment(
                 dest,
-                offsetof(SplObject, destructor),
-                std::make_shared<NameAddress>(
-                    FOREIGN_NAME("_destroyClosure"),
-                    NameTag::Function)));
+                offsetof(SplObject, pointerFields),
+                ConstAddress::UnboxedZero));
 
             // Address of the function as an unboxed member
             emit(new TACLeftIndexedAssignment(dest, sizeof(SplObject), getNameAddress(node->symbol)));
@@ -649,48 +635,6 @@ void TACCodeGen::visit(FunctionCallNode* node)
             emit(new TACAssign(result, ConstAddress::False));
             emit(endLabel);
         }
-        else if (node->target == "head")
-        {
-            assert(arguments.size() == 1);
-
-            TACLabel* good = new TACLabel;
-
-            emit(new TACConditionalJump(arguments[0], "!=", ConstAddress::UnboxedZero, good));
-            emit(new TACCall(true, FOREIGN_NAME("_die"), {ConstAddress::UnboxedZero}));
-            emit(good);
-            emit(new TACRightIndexedAssignment(result, arguments[0], offsetof(List, value)));
-        }
-        else if (node->target == "tail")
-        {
-            assert(arguments.size() == 1);
-
-            TACLabel* good = new TACLabel;
-
-            emit(new TACConditionalJump(arguments[0], "!=", ConstAddress::UnboxedZero, good));
-            emit(new TACCall(true, FOREIGN_NAME("_die"), {ConstAddress::UnboxedZero}));
-            emit(good);
-            emit(new TACRightIndexedAssignment(result, arguments[0], offsetof(List, next)));
-        }
-        else if (node->target == "Nil")
-        {
-            assert(arguments.size() == 0);
-
-            emit(new TACAssign(result, ConstAddress::UnboxedZero));
-        }
-        else if (node->target == "null")
-        {
-            assert(arguments.size() == 1);
-
-            TACLabel* endLabel = new TACLabel;
-            TACLabel* trueBranch = new TACLabel;
-
-            emit(new TACConditionalJump(arguments[0], "==", ConstAddress::UnboxedZero, trueBranch));
-            emit(new TACAssign(result, ConstAddress::False));
-            emit(new TACJump(endLabel));
-            emit(trueBranch);
-            emit(new TACAssign(result, ConstAddress::True));
-            emit(endLabel);
-        }
         else if (node->target == "+")
         {
             assert(arguments.size() == 2);
@@ -894,19 +838,33 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, constructorTag), std::make_shared<ConstAddress>(constructorTag)));
 
-    std::string destructor = "_destroy" + mangle(constructor->name());
-    emit(new TACLeftIndexedAssignment(
-        _currentFunction->returnValue,
-        offsetof(SplObject, destructor),
-        std::make_shared<NameAddress>(destructor, NameTag::Function)));
-
+    uint64_t pointerFields = 0;
     for (size_t i = 0; i < members.size(); ++i)
     {
         auto& member = members[i];
         size_t location = member.location;
 
-        std::shared_ptr<Address> param(new NameAddress(member.name, NameTag::Param));
-        _currentFunction->params.push_back(param);
+        if (member.type->isBoxed())
+        {
+            pointerFields |= (1 << location);
+        }
+    }
+
+    emit(new TACLeftIndexedAssignment(
+        _currentFunction->returnValue,
+        offsetof(SplObject, pointerFields),
+        std::make_shared<ConstAddress>(pointerFields)));
+
+    // Individual members
+    for (size_t i = 0; i < members.size(); ++i)
+    {
+        auto& member = members[i];
+        size_t location = member.location;
+
+        std::shared_ptr<Address> param(new NameAddress(member.name, NameTag::Local));
+        //_currentFunction->params.push_back(param);
+        _currentFunction->regParams.push_back(param);
+        _currentFunction->locals.push_back(param);
 
         emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, sizeof(SplObject) + 8 * location, param));
 
@@ -918,38 +876,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     }
 }
 
-void TACCodeGen::createDestructor(ValueConstructor* constructor)
-{
-    // No return value
-    _currentFunction->returnValue.reset();
-
-    const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
-
-    std::string destructorName = "_destroy" + mangle(constructor->name());
-
-    // This function is called by C code, so expect the argument in a register
-    // This is a bit of a hack
-    std::shared_ptr<Address> param(new NameAddress("object", NameTag::Local));
-    _currentFunction->regParams.push_back(param);
-    _currentFunction->locals.push_back(param);
-
-    for (size_t i = 0; i < members.size(); ++i)
-    {
-        auto& member = members[i];
-        size_t location = member.location;
-
-        if (member.type->isBoxed())
-        {
-            std::shared_ptr<Address> temp = makeTemp();
-
-            emit(new TACRightIndexedAssignment(temp, param, sizeof(SplObject) + 8 * location));
-            emit(new TACCall(true, FOREIGN_NAME("_decref"), {temp}));
-        }
-    }
-
-    emit(new TACCall(true, FOREIGN_NAME("free"), {param}));
-}
-
 void TACCodeGen::incref(std::shared_ptr<Address> operand)
 {
     TACLabel* endLabel = new TACLabel;
@@ -958,6 +884,8 @@ void TACCodeGen::incref(std::shared_ptr<Address> operand)
 
     std::shared_ptr<Address> mod4 = makeTemp();
 
+    // TODO: Don't do this check. Use the type information to determine if this
+    // value is boxed or not.
     emit(new TACBinaryOperation(mod4, operand, BinaryOperation::UAND, std::make_shared<ConstAddress>(3)));
     emit(new TACConditionalJump(mod4, "!=", ConstAddress::UnboxedZero, endLabel));
 

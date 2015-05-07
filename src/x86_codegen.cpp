@@ -32,6 +32,9 @@ void X86CodeGen::generateCode(TACProgram& program)
         }
     }
 
+    // For linking with the C library
+    EMIT_LEFT("global _Cons, _Nil");
+
     // Main function
     generateCode(program.mainFunction);
 
@@ -84,12 +87,14 @@ void X86CodeGen::generateCode(TACFunction& function)
 
     // We have to zero out the local variables for the reference counting
     // to work correctly
-    evictRegister("rdi");   // rdi could contain a function parameter
+    if (function.regParams.size() >= 1) EMIT("mov r10, rdi");
+    if (function.regParams.size() >= 4) EMIT("mov r11, rcx");
     EMIT("mov rax, 0");
     EMIT("mov rcx, " << total);
     EMIT("mov rdi, rsp");
     EMIT("rep stosq");
-    freeRegister("rdi");
+    if (function.regParams.size() >= 1) EMIT("mov rdi, r10");
+    if (function.regParams.size() >= 4) EMIT("mov rcx, r11");
 
     for (TACInstruction* inst = function.instructions; inst != nullptr; inst = inst->next)
     {

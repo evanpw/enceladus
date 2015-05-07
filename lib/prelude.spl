@@ -1,4 +1,4 @@
-## Declarations for built-in functions written in C
+data List a = Cons a (List a) | Nil
 
 # String functions
 type Char = Int
@@ -10,6 +10,21 @@ foreign readLine () -> String
 foreign print (msg: String) -> Unit
 foreign dieWithMessage (msg: String) -> a
 
+# Basic List operations
+def head(xs: [a]) -> a
+    match xs
+        Cons x _ => return x
+        Nil      => dieWithMessage "*** Exception: Called head on empty list"
+
+def tail(xs: [a]) -> [a]
+    match xs
+        Cons _ rest => return rest
+        Nil         => dieWithMessage "*** Exception: Called tail on empty list"
+
+def null(xs: [a]) -> Bool
+    match xs
+        Cons _ _ => return False
+        Nil      => return True
 
 ## Native-language standard library
 

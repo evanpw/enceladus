@@ -6,7 +6,7 @@ struct SplObject;
 #define SplObject_HEAD \
     int64_t refCount; \
     size_t constructorTag; \
-    void (*destructor)(struct SplObject* object);
+    uint64_t pointerFields;
 
 #define IS_TAGGED(p) ((int64_t)p & 0x3)
 
@@ -18,8 +18,8 @@ typedef struct SplObject
 typedef struct List
 {
     SplObject_HEAD
-    struct List* next;
     void* value;
+    struct List* next;
 } List;
 
 typedef struct Tree

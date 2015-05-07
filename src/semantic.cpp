@@ -139,9 +139,6 @@ void SemanticAnalyzer::injectSymbols()
     scope->types.insert(new TypeSymbol("Bool", _root, Bool));
     scope->types.insert(new TypeSymbol("Unit", _root, Unit));
 
-    TypeConstructor* List = new TypeConstructor("List", 1);
-    scope->types.insert(new TypeConstructorSymbol("List", _root, List));
-
     TypeConstructor* Function = new TypeConstructor("Function", 1);
     scope->types.insert(new TypeConstructorSymbol("Function", _root, Function));
 
@@ -149,49 +146,6 @@ void SemanticAnalyzer::injectSymbols()
     FunctionSymbol* notFn = makeBuiltin("not");
 	notFn->setType(FunctionType::create({Bool}, Bool));
 	scope->symbols.insert(notFn);
-
-	FunctionSymbol* head = makeBuiltin("head");
-	std::shared_ptr<Type> a1 = TypeVariable::create();
-	std::shared_ptr<Type> headType =
-		FunctionType::create(
-			{ConstructedType::create(List, {a1})},
-			a1);
-	head->setTypeScheme(TypeScheme::make(headType, {a1->get<TypeVariable>()}));
-	scope->symbols.insert(head);
-
-	FunctionSymbol* tail = makeBuiltin("tail");
-	std::shared_ptr<Type> a2 = TypeVariable::create();
-	std::shared_ptr<Type> tailType =
-		FunctionType::create(
-			{ConstructedType::create(List, {a2})},
-			ConstructedType::create(List, {a2}));
-	tail->setTypeScheme(TypeScheme::make(tailType, {a2->get<TypeVariable>()}));
-	scope->symbols.insert(tail);
-
-	FunctionSymbol* cons = new FunctionSymbol("Cons", _root, nullptr);
-	std::shared_ptr<Type> a3 = TypeVariable::create();
-	std::shared_ptr<Type> consType =
-		FunctionType::create(
-			{a3, ConstructedType::create(List, {a3})},
-			ConstructedType::create(List, {a3}));
-	cons->setTypeScheme(TypeScheme::make(consType, {a3->get<TypeVariable>()}));
-	cons->isExternal = true;
-	cons->isForeign = true;
-	scope->symbols.insert(cons);
-
-	FunctionSymbol* nil = makeBuiltin("Nil");
-	std::shared_ptr<Type> a4 = TypeVariable::create();
-	std::shared_ptr<Type> nilType =
-		FunctionType::create({}, ConstructedType::create(List, {a4}));
-	nil->setTypeScheme(TypeScheme::make(nilType, {a4->get<TypeVariable>()}));
-	scope->symbols.insert(nil);
-
-	FunctionSymbol* nullFn = makeBuiltin("null");
-	std::shared_ptr<Type> a5 = TypeVariable::create();
-	std::shared_ptr<Type> nullType =
-		FunctionType::create({a5}, Bool);
-	nullFn->setTypeScheme(TypeScheme::make(nullType, {a5->get<TypeVariable>()}));
-	scope->symbols.insert(nullFn);
 
 	//// Integer arithmetic functions //////////////////////////////////////////
 
@@ -665,7 +619,8 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     node->resultType->addValueConstructor(valueConstructor);
 
     // Create a symbol for the constructor
-    Symbol* symbol = new FunctionSymbol(node->name, node, nullptr);
+    FunctionSymbol* symbol = new FunctionSymbol(node->name, node, nullptr);
+    symbol->isForeign = true;
     std::set<TypeVariable*> variables;
     for (auto& element : node->typeContext)
     {
@@ -1249,7 +1204,8 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     }
 
     // Create a symbol for the constructor
-    Symbol* symbol = new FunctionSymbol(typeName, node, nullptr);
+    FunctionSymbol* symbol = new FunctionSymbol(typeName, node, nullptr);
+    symbol->isForeign = true;
     symbol->setType(FunctionType::create(memberTypes, newType));
     insertSymbol(symbol);
 
