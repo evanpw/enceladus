@@ -8,18 +8,18 @@ type String = [Char]
 foreign read () -> Int
 foreign readLine () -> String
 foreign print (msg: String) -> Unit
-foreign dieWithMessage (msg: String) -> a
+foreign panic (msg: String) -> a
 
 # Basic List operations
 def head(xs: [a]) -> a
     match xs
         Cons x _ => return x
-        Nil      => dieWithMessage "*** Exception: Called head on empty list"
+        Nil      => panic "*** Exception: Called head on empty list"
 
 def tail(xs: [a]) -> [a]
     match xs
         Cons _ rest => return rest
-        Nil         => dieWithMessage "*** Exception: Called tail on empty list"
+        Nil         => panic "*** Exception: Called tail on empty list"
 
 def null(xs: [a]) -> Bool
     match xs
@@ -36,11 +36,11 @@ def concat(xs: [a], ys: [a]) -> [a]
 
 
 def assert(b: Bool) -> Unit
-    if not b: dieWithMessage "Assertion failed!"
+    if not b: panic "*** Exception: Assertion failed"
 
 
 def assertMessage(b: Bool, err: String) -> Unit
-    if not b: dieWithMessage $ "Assertion failed: " ++ err
+    if not b: panic $ "*** Exception: Assertion failed: " ++ err
 
 
 # Miscellanous functions

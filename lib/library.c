@@ -30,56 +30,7 @@ int main(void)
 
 #endif
 
-
-#define ERR_HEAD_EMPTY      0
-#define ERR_TAIL_EMPTY      1
-#define ERR_REF_NEG         2
-#define ERR_TOP_EMPTY       3
-#define ERR_LEFT_EMPTY      4
-#define ERR_RIGHT_EMPTY     5
-#define ERR_OUT_OF_BOUNDS   6
-
-void _die(int64_t errorCode)
-{
-    switch(errorCode)
-    {
-        case ERR_HEAD_EMPTY:
-            puts("*** Exception: Called head on empty list");
-            break;
-
-        case ERR_TAIL_EMPTY:
-            puts("*** Exception: Called tail on empty list");
-            break;
-
-        case ERR_REF_NEG:
-            puts("*** Exception: Reference count is negative");
-            break;
-
-        case ERR_TOP_EMPTY:
-            puts("*** Exception: Called top on empty tree");
-            break;
-
-        case ERR_LEFT_EMPTY:
-            puts("*** Exception: Called left on empty tree");
-            break;
-
-        case ERR_RIGHT_EMPTY:
-            puts("*** Exception: Called right on empty tree");
-            break;
-
-        case ERR_OUT_OF_BOUNDS:
-            puts("*** Exception: Index passed to charAt is out of range");
-            break;
-
-        default:
-            puts("*** Exception: Unknown error");
-            break;
-    }
-
-    exit(1);
-}
-
-void _dieWithMessage(const char* str)
+void _panic(const char* str)
 {
     puts(str);
     exit(1);
@@ -106,7 +57,7 @@ int64_t _decrefNoFree(SplObject* object)
 
     if (object->refCount < 0)
     {
-        _dieWithMessage("*** Exception: Reference count is negative");
+        _panic("*** Exception: Reference count is negative");
     }
 
     return object->refCount;
@@ -121,7 +72,7 @@ void _decref(SplObject* object)
     --object->refCount;
     if (object->refCount < 0)
     {
-        _dieWithMessage("*** Exception: Reference count is negative");
+        _panic("*** Exception: Reference count is negative");
     }
     else if (object->refCount > 0)
     {
@@ -139,7 +90,7 @@ static void destroy(SplObject* object)
 {
     if (object->refCount != 0)
     {
-        _dieWithMessage("*** Exception: Destroying object with positive reference count");
+        _panic("*** Exception: Destroying object with positive reference count");
     }
 
     SplObject* back = NULL;

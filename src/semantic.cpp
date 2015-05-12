@@ -175,7 +175,6 @@ void SemanticAnalyzer::injectSymbols()
 	//// These definitions are only needed so that we list them as external
 	//// symbols in the output assembly file. They can't be called from
 	//// language.
-    scope->symbols.insert(makeExternal("_die"));
     scope->symbols.insert(makeExternal("_incref"));
     scope->symbols.insert(makeExternal("_decref"));
     scope->symbols.insert(makeExternal("_decrefNoFree"));
@@ -338,7 +337,7 @@ std::set<TypeVariable*> SemanticAnalyzer::getFreeVars(Symbol& symbol)
 {
     std::set<TypeVariable*> freeVars;
 
-    // FIXME: Some functions (like _die) which cannot be called from in-language
+    // FIXME: Some functions (like _panic) which cannot be called from in-language
     // have no type scheme because they don't need it. We should have a better
     // way of declaring external symbols without introducing fake in-language
     // functions.
