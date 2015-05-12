@@ -5,21 +5,21 @@ type Char = Int
 type String = [Char]
 
 # I/O functions
-foreign read () -> Int
-foreign readLine () -> String
-foreign print (msg: String) -> Unit
-foreign panic (msg: String) -> a
+foreign read() -> Int
+foreign readLine() -> String
+foreign print(msg: String) -> Unit
+foreign die(msg: String) -> a
 
 # Basic List operations
 def head(xs: [a]) -> a
     match xs
         Cons x _ => return x
-        Nil      => panic "*** Exception: Called head on empty list"
+        Nil      => die "*** Exception: Called head on empty list"
 
 def tail(xs: [a]) -> [a]
     match xs
         Cons _ rest => return rest
-        Nil         => panic "*** Exception: Called tail on empty list"
+        Nil         => die "*** Exception: Called tail on empty list"
 
 def null(xs: [a]) -> Bool
     match xs
@@ -36,11 +36,11 @@ def concat(xs: [a], ys: [a]) -> [a]
 
 
 def assert(b: Bool) -> Unit
-    if not b: panic "*** Exception: Assertion failed"
+    if not b: die "*** Exception: Assertion failed"
 
 
 def assertMessage(b: Bool, err: String) -> Unit
-    if not b: panic $ "*** Exception: Assertion failed: " ++ err
+    if not b: die $ "*** Exception: Assertion failed: " ++ err
 
 
 # Miscellanous functions

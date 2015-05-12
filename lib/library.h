@@ -3,6 +3,9 @@
 
 struct SplObject;
 
+#define MAX_STRUCTURED_TAG      ((1L << 32) - 1)
+#define STRING_TAG              (1L << 32)
+
 #define SplObject_HEAD \
     int64_t refCount; \
     size_t constructorTag; \

@@ -30,7 +30,7 @@ int main(void)
 
 #endif
 
-void _panic(const char* str)
+void fail(const char* str)
 {
     puts(str);
     exit(1);
@@ -57,7 +57,7 @@ int64_t _decrefNoFree(SplObject* object)
 
     if (object->refCount < 0)
     {
-        _panic("*** Exception: Reference count is negative");
+        fail("*** Exception: Reference count is negative");
     }
 
     return object->refCount;
@@ -72,14 +72,21 @@ void _decref(SplObject* object)
     --object->refCount;
     if (object->refCount < 0)
     {
-        _panic("*** Exception: Reference count is negative");
+        fail("*** Exception: Reference count is negative");
     }
     else if (object->refCount > 0)
     {
         return;
     }
 
-    destroy(object);
+    if (object->constructorTag <= MAX_STRUCTURED_TAG)
+    {
+        destroy(object);
+    }
+    else
+    {
+        free(object);
+    }
 }
 
 // Recursively destroy object and decrement the reference count of its children.
@@ -90,7 +97,7 @@ static void destroy(SplObject* object)
 {
     if (object->refCount != 0)
     {
-        _panic("*** Exception: Destroying object with positive reference count");
+        fail("*** Exception: Destroying object with positive reference count");
     }
 
     SplObject* back = NULL;
@@ -264,13 +271,9 @@ void print(String* s)
     Spl_DECREF(s);
 }
 
-void dieWithMessage(String* s)
+void die(String* s)
 {
-    // Reference count can be elided because it's done in print
-    //Spl_INCREF(s);
     print(s);
-    //Spl_DECREF(s);
-
     exit(1);
 }
 

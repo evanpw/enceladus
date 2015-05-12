@@ -337,7 +337,7 @@ std::set<TypeVariable*> SemanticAnalyzer::getFreeVars(Symbol& symbol)
 {
     std::set<TypeVariable*> freeVars;
 
-    // FIXME: Some functions (like _panic) which cannot be called from in-language
+    // FIXME: Some functions (like _die) which cannot be called from in-language
     // have no type scheme because they don't need it. We should have a better
     // way of declaring external symbols without introducing fake in-language
     // functions.
