@@ -3,6 +3,7 @@
 
 #include "x86_codegen.hpp"
 #include "ast.hpp"
+#include "mangler.hpp"
 
 #include "lib/library.h"
 
@@ -22,7 +23,7 @@ void X86CodeGen::generateCode(TACProgram& program)
     //// Program prefix
     EMIT_LEFT("bits 64");
     EMIT_LEFT("section .text");
-    EMIT_LEFT("global __main");
+    EMIT_LEFT("global " << mangle("main"));
 
     // External references
     if (!program.externs.empty())
@@ -73,7 +74,7 @@ void X86CodeGen::generateCode(TACFunction& function)
     clearRegisters();
     _currentFunction = &function;
 
-    EMIT_LABEL("_" + function.name);
+    EMIT_LABEL(mangle(function.name));
     EMIT("push rbp");
     EMIT("mov rbp, rsp");
 

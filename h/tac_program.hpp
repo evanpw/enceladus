@@ -45,7 +45,7 @@ struct TACFunction
 struct TACProgram
 {
     TACProgram()
-    : mainFunction("_main")
+    : mainFunction("main")
     {}
 
     TACFunction mainFunction;

@@ -339,7 +339,17 @@ void TACCodeGen::visit(NullaryNode* node)
 
         if (node->kind == NullaryNode::FOREIGN_CALL)
         {
-            emit(new TACCall(true, dest, FOREIGN_NAME(node->symbol->name)));
+            std::string name;
+            if (node->symbol->asFunction()->isExternal)
+            {
+                name = FOREIGN_NAME(node->symbol->name);
+            }
+            else
+            {
+                name = mangle(node->symbol->name);
+            }
+
+            emit(new TACCall(true, dest, name));
         }
         else if (node->kind == NullaryNode::FUNC_CALL)
         {
@@ -667,14 +677,18 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
     else if (node->symbol->kind == kFunction)
     {
-        if (node->symbol->asFunction()->isForeign)
+        std::string name;
+        if (node->symbol->asFunction()->isExternal)
         {
-            emit(new TACCall(true, result, FOREIGN_NAME(node->symbol->name), arguments));
+            name = FOREIGN_NAME(node->symbol->name);
         }
         else
         {
-            emit(new TACCall(false, result, mangle(node->symbol->name), arguments));
+            name = mangle(node->symbol->name);
         }
+
+        bool foreign = node->symbol->asFunction()->isForeign;
+        emit(new TACCall(foreign, result, name, arguments));
     }
     else /* node->symbol->kind == kVariable */
     {

@@ -1,4 +1,5 @@
 #include "address.hpp"
+#include "mangler.hpp"
 #include <sstream>
 
 NameAddress& Address::asName()
@@ -23,8 +24,9 @@ std::string NameAddress::str() const
 
 NameAddress::NameAddress(const Symbol* symbol)
 : Address(AddressTag::Name)
-, name("_" + symbol->name)
 {
+    name = mangle(symbol->name);
+
     if (symbol->kind == kVariable)
     {
         if (symbol->asVariable()->isStatic)

@@ -4,6 +4,7 @@
 #include "address.hpp"
 #include "ast.hpp"
 #include "ast_visitor.hpp"
+#include "mangler.hpp"
 #include "tac_instruction.hpp"
 #include "tac_program.hpp"
 
@@ -121,10 +122,6 @@ private:
     // uniquely identifies a location
     std::unordered_map<const Symbol*, std::shared_ptr<Address>> _names;
     std::shared_ptr<Address> getNameAddress(const Symbol* symbol);
-
-    // Add an underscore to every in-language name, so that they don't
-    // interfere with compiler-defined names or assembly-language keywords
-    std::string mangle(const std::string& name) { return std::string("_") + name; }
 
     // The exit label of the current loop (used by break statements)
     TACLabel* _currentLoopEnd;

@@ -10,21 +10,21 @@
 
 #ifdef __APPLE__
 
-extern void _main(void);
+extern void Z4main(void);
 
 int main(void)
 {
-    _main();
+    Z4main();
     return 0;
 }
 
 #else
 
-extern void __main(void);
+extern void __Z4main(void);
 
 int main(void)
 {
-    __main();
+    __Z4main();
     return 0;
 }
 
