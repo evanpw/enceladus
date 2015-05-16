@@ -33,4 +33,4 @@ build/%.o: src/%.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 tests: simplec
-	testing/all.sh
+	python testing/test.py

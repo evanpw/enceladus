@@ -26,7 +26,12 @@ def get(x: Int, y: Int) -> Int
     at (y * 20 + x) grid
 
 def makeRun(x: Int, y: Int, dx: Int, dy: Int) -> Int
-    get x y * get (x + dx) (y + dy) * get (x + 2 * dx) (y + 2 * dy) * get (x + 3 * dx) (y + 3 * dy)
+    x1 := get x y
+    x2 := get (x + dx) (y + dy)
+    x3 := get (x + 2 * dx) (y + 2 * dy)
+    x4 := get (x + 3 * dx) (y + 3 * dy)
+
+    return x1 * x2 * x3 * x4
 
 def allRuns(xrange: [Int], yrange: [Int], dx: Int, dy: Int) -> [Int]
     xs := []
