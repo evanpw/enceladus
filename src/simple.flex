@@ -58,6 +58,8 @@ int char_literal(const char* s)
 
 std::stack<std::pair<int, int>> locationStack;
 
+int unclosedBrackets = 0;
+
 int yycolumn = 1;
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
     yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
@@ -107,8 +109,8 @@ int yycolumn = 1;
 "="     { return '='; }
 ":="    { return tCOLON_EQUAL; }
 "$"     { return '$'; }
-"["     { return '['; }
-"]"     { return ']'; }
+"["     { ++unclosedBrackets; return '['; }
+"]"     { unclosedBrackets = std::max(0, unclosedBrackets - 1); return ']'; }
 "{"     { return '{'; }
 "}"     { return '}'; }
 "|"     { return '|'; }
@@ -195,7 +197,8 @@ int yycolumn = 1;
 [a-z][a-zA-Z0-9.']*      { yylval.str = StringTable::add(yytext); return tLIDENT; }
 "_"                      { yylval.str = StringTable::add(yytext); return tLIDENT; }
 [A-Z][a-zA-Z0-9.']*      { yylval.str = StringTable::add(yytext); return tUIDENT; }
-\n                       { yycolumn = 1; return tEOL; }
+\\\n                     { yycolumn = 1; }
+\n                       { yycolumn = 1; if (unclosedBrackets == 0) return tEOL; }
 [ \t]+                   { yylval.number = count_whitespace(yytext, yyleng); return tWHITESPACE; }
 
 .                        {

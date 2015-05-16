@@ -2,9 +2,12 @@
 
 import String
 
-smallNumbers := ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+smallNumbers := ["zero", "one", "two", "three", "four", "five", "six", "seven",
+    "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+    "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
 
-multiplesOfTen := ["zero", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+multiplesOfTen := ["zero", "ten", "twenty", "thirty", "forty", "fifty",
+    "sixty", "seventy", "eighty", "ninety"]
 
 def numInWords(x: Int) -> String
     if x < 20

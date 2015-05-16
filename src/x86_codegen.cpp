@@ -35,9 +35,6 @@ void X86CodeGen::generateCode(TACProgram& program)
         }
     }
 
-    // For linking with the C library
-    EMIT_LEFT("global _Cons, _Nil");
-
     // Main function
     generateCode(program.mainFunction);
 
