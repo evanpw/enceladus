@@ -52,6 +52,7 @@ struct TACProgram
     std::vector<TACFunction> otherFunctions;
     std::vector<std::string> externs;
     std::vector<std::shared_ptr<Address>> globals;
+    std::vector<std::pair<std::shared_ptr<Address>, std::string>> staticStrings;
 };
 
 #endif

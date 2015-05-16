@@ -337,9 +337,26 @@ MatchArm* Parser::match_arm()
     Token constructor = expect(tUIDENT);
     std::vector<std::string> params = parameters();
     expect(tDARROW);
-    StatementNode* body = statement();
 
-    return new MatchArm(_context, location, constructor.value.str, params, body);
+    if (accept(tEOL))
+    {
+        expect(tINDENT);
+
+        BlockNode* block = new BlockNode(_context, getLocation());
+        while (peekType() != tDEDENT)
+        {
+            block->children.push_back(statement());
+        }
+
+        expect(tDEDENT);
+
+        return new MatchArm(_context, location, constructor.value.str, params, block);
+    }
+    else
+    {
+        StatementNode* body = statement();
+        return new MatchArm(_context, location, constructor.value.str, params, body);
+    }
 }
 
 StatementNode* Parser::return_statement()
@@ -879,6 +896,10 @@ ExpressionNode* Parser::concat_expression()
     {
         return new FunctionCallNode(_context, getLocation(), "concat", {lhs, concat_expression()});
     }
+    else if (accept('.'))
+    {
+        return new FunctionCallNode(_context, getLocation(), "strCat", {lhs, concat_expression()});
+    }
     else
     {
         return lhs;
@@ -988,7 +1009,7 @@ ExpressionNode* Parser::unary_expression()
     case tSTRING_LIT:
     {
         Token token = expect(tSTRING_LIT);
-        return makeString(_context, getLocation(), token.value.str);
+        return new StringLiteralNode(_context, getLocation(), token.value.str);
     }
 
     case tLIDENT:

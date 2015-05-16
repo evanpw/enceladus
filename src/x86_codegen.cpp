@@ -4,6 +4,8 @@
 #include "x86_codegen.hpp"
 #include "ast.hpp"
 
+#include "lib/library.h"
+
 #define EMIT_BLANK() std::cout << std::endl;
 #define EMIT_LEFT(x) std::cout << x << std::endl;
 #define EMIT_LABEL(x) std::cout << x << ":" << std::endl;
@@ -51,6 +53,16 @@ void X86CodeGen::generateCode(TACProgram& program)
     {
         EMIT_LEFT(global->asName().name << ": dq 0");
     }
+
+    for (auto& item : program.staticStrings)
+    {
+        const std::string& name = item.first->asName().name;
+        const std::string& content = item.second;
+
+        EMIT_LEFT(name << ":");
+        EMIT("dq 1, " << STRING_TAG << ", 0"); // refCount = 1
+        EMIT("db \"" << content << "\", 0");
+    }
 }
 
 void X86CodeGen::generateCode(TACFunction& function)
@@ -89,7 +101,7 @@ void X86CodeGen::generateCode(TACFunction& function)
     // to work correctly
     if (function.regParams.size() >= 1) EMIT("mov r10, rdi");
     if (function.regParams.size() >= 4) EMIT("mov r11, rcx");
-    EMIT("mov rax, 0");
+    EMIT("xor rax, rax");
     EMIT("mov rcx, " << total);
     EMIT("mov rdi, rsp");
     EMIT("rep stosq");
@@ -146,6 +158,10 @@ std::string X86CodeGen::accessDirectly(std::shared_ptr<Address> address)
         if (nameAddress.nameTag == NameTag::Global)
         {
             result << "qword [rel " << nameAddress.name << "]";
+        }
+        else if (nameAddress.nameTag == NameTag::Static)
+        {
+            result << "qword " << nameAddress.name;
         }
         else if (nameAddress.nameTag == NameTag::Local)
         {
@@ -583,7 +599,17 @@ void X86CodeGen::visit(TACCall* inst)
     {
         for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
         {
-            EMIT("push " << access(*i));
+            // No 64-bit immediate push
+            if ((*i)->tag == AddressTag::Name && (*i)->asName().nameTag == NameTag::Static)
+            {
+                std::string reg = getRegisterFor(*i);
+                EMIT("push " << reg);
+                freeRegister(reg);
+            }
+            else
+            {
+                EMIT("push " << access(*i));
+            }
         }
 
         spillAndClear();

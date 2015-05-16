@@ -3,7 +3,7 @@
 import List
 import String
 
-def readNames() -> [String] 
+def readNames() -> [String]
     line := readLine
 
     pieces := splitBy ',' line
@@ -14,15 +14,16 @@ def readNames() -> [String]
 
     return result
 
-def score(name: String) -> Int 
+def score(name: String) -> Int
     total := 0
-    for c in name
+    for i in range 0 (strLength name - 1)
+        c := strAt name i
         total += (c - 'A') + 1
 
     return total
 
 names := readNames
-names = sort cmpList names
+names = sort cmpString names
 
 total := 0
 for i in range 1 (length names)

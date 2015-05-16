@@ -61,6 +61,7 @@ public:
     virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);
     virtual void visit(ReturnNode* node);
+    virtual void visit(StringLiteralNode* node);
     virtual void visit(VariableNode* node);
 
 private:
@@ -107,6 +108,7 @@ private:
     std::shared_ptr<Type> Int;
     std::shared_ptr<Type> Bool;
     std::shared_ptr<Type> Unit;
+    std::shared_ptr<Type> String;
 
     ProgramNode* _root;
     FunctionDefNode* _enclosingFunction;

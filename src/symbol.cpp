@@ -52,16 +52,11 @@ const MemberSymbol* Symbol::asMember() const
 
 VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction)
 : Symbol(name, kVariable, node, enclosingFunction)
-, isParam(false)
-, offset(-1)
 {
 }
 
 FunctionSymbol::FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition)
 : Symbol(name, kFunction, node, nullptr)
-, isForeign(false)
-, isExternal(false)
-, isBuiltin(false)
 , definition(definition)
 {
 }

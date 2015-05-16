@@ -28,6 +28,7 @@ class MemberDefNode;
 class NullaryNode;
 class ProgramNode;
 class ReturnNode;
+class StringLiteralNode;
 class StructDefNode;
 class SwitchNode;
 class TypeAliasNode;
@@ -67,6 +68,7 @@ public:
 	virtual void visit(IntNode* node) {}
 	virtual void visit(MemberAccessNode* node) {}
 	virtual void visit(NullaryNode* node) {}
+	virtual void visit(StringLiteralNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(TypeName* node) {}
 	virtual void visit(VariableNode* node) {}

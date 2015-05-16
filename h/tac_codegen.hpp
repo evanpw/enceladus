@@ -37,6 +37,7 @@ public:
     UNSUPPORTED(WhileNode);
     UNSUPPORTED(MemberDefNode);
     UNSUPPORTED(TypeAliasNode);
+    UNSUPPORTED(StringLiteralNode);
     UNSUPPORTED(SwitchNode);
     UNSUPPORTED(MatchArm);
 
@@ -108,6 +109,7 @@ public:
     virtual void visit(VariableNode* node);
     virtual void visit(WhileNode* node);
     virtual void visit(MemberDefNode* node);
+    virtual void visit(StringLiteralNode* node);
     virtual void visit(TypeAliasNode* node);
     virtual void visit(SwitchNode* node);
     virtual void visit(MatchArm* node);

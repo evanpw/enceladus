@@ -86,16 +86,5 @@ FunctionCallNode* makeList(AstContext& context, const YYLTYPE& location, std::ve
     return result;
 }
 
-FunctionCallNode* makeString(AstContext& context, const YYLTYPE& location, const std::string& s)
-{
-    FunctionCallNode* result = new FunctionCallNode(context, location, "Nil", {});
-
-    for (auto i = s.rbegin(); i != s.rend(); ++i)
-    {
-        std::vector<ExpressionNode*> argList = {new IntNode(context, location, *i), result};
-        result = new FunctionCallNode(context, location, "Cons", std::move(argList));
-    }
-
-    return result;
-}
+int StringLiteralNode::nextCounter = 0;
 

@@ -2,7 +2,12 @@ data List a = Cons a (List a) | Nil
 
 # String functions
 type Char = Int
-type String = [Char]
+foreign strLength(s: String) -> Int
+foreign strSlice(s: String, pos: Int, len: Int) -> String
+foreign strAt(s: String, n: Int) -> Char
+foreign strFromList(s: [Char]) -> String
+foreign strCat(lhs: String, rhs: String) -> String
+foreign show(x: Int) -> String
 
 # I/O functions
 foreign read() -> Int
@@ -40,7 +45,7 @@ def assert(b: Bool) -> Unit
 
 
 def assertMessage(b: Bool, err: String) -> Unit
-    if not b: die $ "*** Exception: Assertion failed: " ++ err
+    if not b: die $ "*** Exception: Assertion failed: " . err
 
 
 # Miscellanous functions
@@ -95,6 +100,13 @@ def drop(n: Int, xs: [a]) -> [a]
 
 def max(a: Int, b: Int) -> Int
     if a > b
+        return a
+    else
+        return b
+
+
+def min(a: Int, b: Int) -> Int
+    if a < b
         return a
     else
         return b
@@ -168,25 +180,6 @@ def pow(a: Int, b: Int) -> Int
 #        zs = x :: zs
 
 #    return zs
-
-
-## Strings ##
-
-def show(x: Int) -> String
-    if x == 0: return "0"
-
-    negative := (x < 0)
-    if negative: x = 0 - x
-
-    s := []
-    while x != 0
-        digit := x mod 10
-        s = (digit + '0') :: s
-        x = x / 10
-
-    if negative: s = '-' :: s
-
-    return s
 
 
 ## Pairs ##

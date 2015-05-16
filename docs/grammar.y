@@ -68,7 +68,7 @@ match_body
     : INDENT match_arm { match_arm } DEDENT
 
 match_arm
-    : UIDENT parameters '=>' statement
+    : UIDENT parameters '=>' ( statement | EOL INDENT statement_list DEDENT)
 
 return_statement
     : RETURN expression EOL
@@ -168,6 +168,7 @@ multiplicative_expression
 
 concat_expression
     : negation_expression [ CONCAT concat_expression ]
+    | negation_expression [ '.' concat_expression ]
 
 negation_expression
     : [ '-' ] func_call_expression

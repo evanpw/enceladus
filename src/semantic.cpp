@@ -13,6 +13,7 @@
 #include "tokens.hpp"
 #include "utility.hpp"
 
+#include "lib/library.h"
 
 //// Utility functions /////////////////////////////////////////////////////////
 
@@ -134,10 +135,12 @@ void SemanticAnalyzer::injectSymbols()
     Int = BaseType::create("Int", true);
     Bool = BaseType::create("Bool", true);
     Unit = BaseType::create("Unit", true);
+    String = BaseType::create("String", false, STRING_TAG);
 
     scope->types.insert(new TypeSymbol("Int", _root, Int));
     scope->types.insert(new TypeSymbol("Bool", _root, Bool));
     scope->types.insert(new TypeSymbol("Unit", _root, Unit));
+    scope->types.insert(new TypeSymbol("String", _root, String));
 
     TypeConstructor* Function = new TypeConstructor("Function", 1);
     scope->types.insert(new TypeConstructorSymbol("Function", _root, Function));
@@ -1126,6 +1129,16 @@ void SemanticAnalyzer::visit(IntNode* node)
 void SemanticAnalyzer::visit(BoolNode* node)
 {
     node->type = Bool;
+}
+
+void SemanticAnalyzer::visit(StringLiteralNode* node)
+{
+    node->type = String;
+
+    std::string name = "__staticString" + std::to_string(node->counter);
+    VariableSymbol* symbol = new VariableSymbol(name, node, nullptr);
+    symbol->isStatic = true;
+    node->symbol = symbol;
 }
 
 void SemanticAnalyzer::visit(ReturnNode* node)

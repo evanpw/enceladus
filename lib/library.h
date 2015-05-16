@@ -34,6 +34,6 @@ typedef struct Tree
     int64_t count;
 } Tree;
 
-typedef List String;
+typedef SplObject String;
 
 #endif

@@ -75,23 +75,22 @@ struct VariableSymbol : public Symbol
     VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction);
 
     // Is this symbol a function parameter?
-    bool isParam;
+    bool isParam = false;
+
+    bool isStatic = false;
 
     // Used by the code generator to assign a place on the stack (relative to rbp) for all of
     // the local variables.
-    int offset;
+    int offset = -1;
 };
 
 struct FunctionSymbol : public Symbol
 {
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
 
-    // C argument-passing style
-    bool isForeign;
-
-    bool isExternal;
-
-    bool isBuiltin;
+    bool isForeign = false;     // C argument-passing style
+    bool isExternal = false;
+    bool isBuiltin = false;
 
     FunctionDefNode* definition;
 };

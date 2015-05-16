@@ -26,7 +26,7 @@ def isSumOfTwo(y: Int, xs: [Int], zs: [Int]) -> Bool
 
         if s == y
             return True
-        else: if s > y
+        elif s > y
             zs = tail zs
         else
             xs = tail xs

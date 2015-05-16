@@ -27,7 +27,11 @@ NameAddress::NameAddress(const Symbol* symbol)
 {
     if (symbol->kind == kVariable)
     {
-        if (symbol->asVariable()->isParam)
+        if (symbol->asVariable()->isStatic)
+        {
+            nameTag = NameTag::Static;
+        }
+        else if (symbol->asVariable()->isParam)
         {
             nameTag = NameTag::Param;
         }

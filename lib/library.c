@@ -175,59 +175,129 @@ int64_t fromInt(int64_t n)
 
 //// Strings ///////////////////////////////////////////////////////////////////
 
-List* Cons(void* value, List* next);
-List* Nil();
+char* strContent(String* s)
+{
+    return (char*)(s + 1);
+}
+
+String* makeStr(const char* data)
+{
+    String* result = malloc(sizeof(SplObject) + strlen(data) + 1);
+    result->refCount = 0;
+    result->constructorTag = STRING_TAG;
+    result->pointerFields = 0;
+    strcpy(strContent(result), data);
+
+    return result;
+}
+
+int64_t strLength(String* s)
+{
+    return toInt(strlen(strContent(s)));
+}
+
+String* strSlice(String* s, int64_t tPos, int64_t tLength)
+{
+    int64_t pos = fromInt(tPos);
+    int64_t length = fromInt(tLength);
+
+    if (pos < 0 || pos >= strLength(s))
+    {
+        fail("*** Exception: String slice position out of range");
+    }
+    else if (length < 0 || pos + length >= strLength(s))
+    {
+        fail("*** Exception: String slice length out of range");
+    }
+
+    String* result = malloc(sizeof(SplObject) + length + 1);
+    result->refCount = 0;
+    result->constructorTag = STRING_TAG;
+    result->pointerFields = 0;
+
+    strncpy(strContent(result), strContent(s) + pos, length);
+    strContent(result)[length] = '\0';
+
+    return result;
+}
+
+String* strCat(String* lhs, String* rhs)
+{
+    size_t n1 = strlen(strContent(lhs));
+    size_t n2 = strlen(strContent(rhs));
+
+    String* result = malloc(sizeof(SplObject) + n1 + n2 + 1);
+    result->refCount = 0;
+    result->constructorTag = STRING_TAG;
+    result->pointerFields = 0;
+
+    char* dest = strContent(result);
+    strncpy(dest, strContent(lhs), n1);
+    strncpy(dest + n1, strContent(rhs), n2);
+    *(dest + n1 + n2) = '\0';
+
+    return result;
+}
+
+int64_t strAt(String* s, int64_t n)
+{
+    int64_t idx = fromInt(n);
+
+    if (idx < 0 || idx >= strLength(s))
+    {
+        fail("*** Exception: String index out of range");
+    }
+
+    return toInt(strContent(s)[idx]);
+}
+
 #define IS_EMPTY(xs) ((xs)->constructorTag == 1)
 
-String* makeString(const char* s)
+String* strFromList(List* list)
 {
-    List* str = Nil();
-
-    for (int i = strlen(s) - 1; i >= 0; --i)
-    {
-        int64_t c = toInt(s[i]);
-        str = Cons((void*)c, str);
-    }
-
-    return str;
-}
-
-size_t get_length(String* s)
-{
-    String* original = s;
-    Spl_INCREF(original);
-
+    // Get length
+    List* p = list;
     size_t length = 0;
-
-    while (!IS_EMPTY(s))
+    while (!IS_EMPTY(list))
     {
+        list = list->next;
         ++length;
-        s = s->next;
     }
 
-    Spl_DECREF(original);
-    return length;
+    String* result = malloc(sizeof(SplObject) + length + 1);
+    result->refCount = 0;
+    result->constructorTag = STRING_TAG;
+    result->pointerFields = 0;
+
+    char* out = strContent(result);
+    while (!IS_EMPTY(list))
+    {
+        int64_t c = fromInt((int64_t)list->value);
+        if (c < 0 || c > 255)
+        {
+            fail("*** Exception: Char value out of range");
+        }
+
+        *out++ = c;
+        list = list->next;
+    }
+
+    *out++ = '\0';
+
+    return result;
 }
 
-// Should only ever be called by print function
-char* content(String* s)
+String* show(int64_t x)
 {
-    String* original = s;
+    int64_t value = fromInt(x);
 
-    char* str = (char*)malloc(get_length(s) + 1);
+    String* result = malloc(sizeof(SplObject) + 20 + 1);
+    result->refCount = 0;
+    result->constructorTag = STRING_TAG;
+    result->pointerFields = 0;
 
-    char* out = str;
-    while (!IS_EMPTY(s))
-    {
-        *out = fromInt((int64_t)s->value);
-
-        ++out;
-        s = s->next;
-    }
-
-    *out = '\0';
-
-    return str;
+    sprintf(strContent(result), "%lld", value);
+    return result;
 }
 
 //// I/O ///////////////////////////////////////////////////////////////////////
@@ -235,7 +305,7 @@ char* content(String* s)
 int64_t read()
 {
     int64_t result;
-    scanf("%" PRId64, &result);
+    scanf("%lld", &result);
 
     return toInt(result);
 }
@@ -249,11 +319,11 @@ String* readLine()
 
     if (read == -1)
     {
-        return Nil();
+        return makeStr("");
     }
     else
     {
-        String* result = makeString(line);
+        String* result = makeStr(line);
         free(line);
 
         return result;
@@ -262,18 +332,12 @@ String* readLine()
 
 void print(String* s)
 {
-    Spl_INCREF(s);
-    char* str = content(s);
-
-    printf("%s\n", str);
-
-    free(str);
-    Spl_DECREF(s);
+    printf("%s\n", strContent(s));
 }
 
 void die(String* s)
 {
-    print(s);
+    fprintf(stderr, "%s\n", strContent(s));
     exit(1);
 }
 
@@ -283,3 +347,4 @@ Tree* Empty()
 {
     return NULL;
 }
+

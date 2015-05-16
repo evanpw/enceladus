@@ -32,7 +32,7 @@ struct Address
     AddressTag tag;
 };
 
-enum class NameTag {Local, Global, Param, Function};
+enum class NameTag {Local, Global, Param, Function, Static};
 
 struct NameAddress : public Address
 {

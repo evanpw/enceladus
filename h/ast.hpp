@@ -209,7 +209,25 @@ public:
 
 // Syntactic sugar for list and string literals
 FunctionCallNode* makeList(AstContext& context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements);
-FunctionCallNode* makeString(AstContext& context, const YYLTYPE& location, const std::string& s);
+
+class StringLiteralNode : public ExpressionNode
+{
+public:
+	StringLiteralNode(AstContext& context, const YYLTYPE& location, const std::string& content)
+	: ExpressionNode(context, location), content(content), counter(nextCounter++)
+	{
+	}
+
+	AST_VISITABLE();
+
+	std::string content;
+	int counter;
+
+	// Annotations
+	Symbol* symbol = nullptr;
+
+	static int nextCounter;
+};
 
 class FunctionCallNode : public ExpressionNode
 {

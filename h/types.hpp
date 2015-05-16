@@ -79,9 +79,9 @@ std::shared_ptr<Type> unwrap(const std::shared_ptr<Type>& type);
 class BaseType : public Type
 {
 public:
-    static std::shared_ptr<Type> create(const std::string& name, bool primitive = false)
+    static std::shared_ptr<Type> create(const std::string& name, bool primitive = false, size_t constructorTag = 0)
     {
-        return std::shared_ptr<Type>(new BaseType(name, primitive));
+        return std::shared_ptr<Type>(new BaseType(name, primitive, constructorTag));
     }
 
     virtual std::string name() const
@@ -94,14 +94,20 @@ public:
         return !_primitive;
     }
 
+    size_t constructorTag() const
+    {
+        return _constructorTag;
+    }
+
 private:
-    BaseType(const std::string& name, bool primitive)
-    : Type(ttBase), _name(name), _primitive(primitive)
+    BaseType(const std::string& name, bool primitive, size_t constructorTag)
+    : Type(ttBase), _name(name), _primitive(primitive), _constructorTag(constructorTag)
     {
     }
 
     std::string _name;
     bool _primitive;
+    size_t _constructorTag;
 };
 
 // The type of a function from one type to another

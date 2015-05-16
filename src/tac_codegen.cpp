@@ -817,6 +817,12 @@ void TACCodeGen::visit(MatchArm* node)
     node->body->accept(this);
 }
 
+void TACCodeGen::visit(StringLiteralNode* node)
+{
+    node->address = getNameAddress(node->symbol);
+    _tacProgram.staticStrings.emplace_back(node->address, node->content);
+}
+
 void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constructorTag)
 {
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();

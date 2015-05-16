@@ -112,6 +112,7 @@ int yycolumn = 1;
 "{"     { return '{'; }
 "}"     { return '}'; }
 "|"     { return '|'; }
+"."     { return '.'; }
 "mod"   { return tMOD; }
 "->"    { return tRARROW; }
 "=>"    { return tDARROW; }
@@ -163,6 +164,9 @@ int yycolumn = 1;
 
     yypush_buffer_state(yy_create_buffer(f, YY_BUF_SIZE));
     locationStack.push({yylineno, yycolumn});
+
+    yylineno = 1;
+    yycolumn = 1;
 
     BEGIN(INITIAL);
 }
