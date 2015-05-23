@@ -165,7 +165,7 @@ struct TACCall : public TACInstruction
         for (auto& param : paramsList) params.push_back(param);
     }
 
-    TACCall(bool foreign, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList)
+    TACCall(bool foreign, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList = {})
     : foreign(foreign), function(function)
     {
         for (auto& param : paramsList) params.push_back(param);

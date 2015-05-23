@@ -20,11 +20,11 @@ int main(void)
 
 #else
 
-extern void __Z4main(void);
+extern void _Z4main(void);
 
 int main(void)
 {
-    __Z4main();
+    _Z4main();
     return 0;
 }
 
@@ -346,5 +346,15 @@ void die(String* s)
 Tree* Empty()
 {
     return NULL;
+}
+
+//// Garbage collector /////////////////////////////////////////////////////////
+
+void walkStackC(uint64_t* stackTop, uint64_t* stackBottom)
+{
+    for (uint64_t* p = stackTop; p < stackBottom; ++p)
+    {
+        printf("%llx\n", *p);
+    }
 }
 

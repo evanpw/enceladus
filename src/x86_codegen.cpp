@@ -24,6 +24,7 @@ void X86CodeGen::generateCode(TACProgram& program)
     EMIT_LEFT("bits 64");
     EMIT_LEFT("section .text");
     EMIT_LEFT("global " << mangle("main"));
+    EMIT_LEFT("extern initGC");
 
     // External references
     if (!program.externs.empty())
@@ -72,6 +73,12 @@ void X86CodeGen::generateCode(TACFunction& function)
     _currentFunction = &function;
 
     EMIT_LABEL(mangle(function.name));
+
+    if (function.name == "main")
+    {
+        EMIT("call initGC");
+    }
+
     EMIT("push rbp");
     EMIT("mov rbp, rsp");
 
