@@ -363,7 +363,9 @@ void TACCodeGen::visit(NullaryNode* node)
             emit(new TACCall(true, dest, FOREIGN_NAME("mymalloc"), {std::make_shared<ConstAddress>(size)}));
 
             // SplObject header fields
+            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, constructorTag), ConstAddress::UnboxedZero));
             emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
+            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, markBit), ConstAddress::UnboxedZero));
 
             emit(new TACLeftIndexedAssignment(
                 dest,
@@ -857,6 +859,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     // SplObject header fields
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, constructorTag), std::make_shared<ConstAddress>(constructorTag)));
+    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, markBit), ConstAddress::UnboxedZero));
 
     uint64_t pointerFields = 0;
     for (size_t i = 0; i < members.size(); ++i)

@@ -188,6 +188,7 @@ String* makeStr(const char* data)
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
+    result->markBit = 0;
     strcpy(strContent(result), data);
 
     return result;
@@ -216,6 +217,7 @@ String* strSlice(String* s, int64_t tPos, int64_t tLength)
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
+    result->markBit = 0;
 
     strncpy(strContent(result), strContent(s) + pos, length);
     strContent(result)[length] = '\0';
@@ -232,6 +234,7 @@ String* strCat(String* lhs, String* rhs)
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
+    result->markBit = 0;
 
     char* dest = strContent(result);
     strncpy(dest, strContent(lhs), n1);
@@ -270,6 +273,7 @@ String* strFromList(List* list)
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
+    result->markBit = 0;
 
     char* out = strContent(result);
     while (!IS_EMPTY(list))
@@ -297,6 +301,7 @@ String* show(int64_t x)
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
+    result->markBit = 0;
 
     sprintf(strContent(result), "%" PRId64, value);
     return result;
@@ -345,20 +350,70 @@ void die(String* s)
 
 //// Garbage collector /////////////////////////////////////////////////////////
 
-void _walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* globalVarTable)
+void markRecursive(SplObject* object)
 {
-    printf("Stack:\n");
-    for (uint64_t* p = stackTop; p <= stackBottom; ++p)
+    if (object->markBit) return;
+
+    printf("Mark: %p\n", object);
+    object->markBit = 1;
+
+    SplObject** p = (SplObject**)(object + 1);
+    uint64_t fields = object->pointerFields;
+    while (fields)
     {
-        printf("%p: %p\n", p, (void*)*p);
+        if ((fields & 1) && !IS_TAGGED(*p))
+        {
+            markRecursive(*p);
+        }
+
+        fields >>= 1;
+        ++p;
+    }
+}
+
+extern void walkStackC(uint64_t*, uint64_t*, uint64_t*, uint64_t*) asm("walkStackC") ;
+void walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointer, uint64_t* globalVarTable)
+{
+    uint64_t* top = stackTop;
+    uint64_t* bottom = framePointer;
+
+    while (1)
+    {
+        printf("Stack frame: %p %p\n", top, bottom);
+        for (uint64_t* p = top; p < bottom; ++p)
+        {
+            printf("%p: %p\n", p, (void*)*p);
+
+            SplObject* object = (SplObject*)*p;
+            if (object && !IS_TAGGED(object))
+            {
+                markRecursive(object);
+            }
+        }
+        printf("\n");
+
+        if (bottom == stackBottom)
+        {
+            break;
+        }
+
+        top = bottom + 2;
+        bottom = (uint64_t*)*bottom;
     }
 
-    printf("\nGlobals:\n");
-    uint64_t* p = globalVarTable;
-    uint64_t numGlobals = *p++;
+    printf("Globals:\n");
+    uint64_t numGlobals = *globalVarTable;
+    uint64_t** p = (uint64_t**)(globalVarTable + 1);
     for (size_t i = 0; i < numGlobals; ++i)
     {
-        printf("%p: %p\n", p, (void*)*p);
+        printf("%p: %p\n", p, (void*)**p);
+
+        SplObject* object = (SplObject*)**p;
+        if (object && !IS_TAGGED(object))
+        {
+            markRecursive(object);
+        }
+
         ++p;
     }
 }
@@ -380,6 +435,8 @@ void* mymalloc(size_t size)
             return NULL;
         }
 
+        printf("mymalloc chunk: %p\n", newChunk);
+
         firstChunk = currentChunk = newChunk;
         chunkSize = newSize;
         *(void**)currentChunk = NULL;
@@ -397,6 +454,8 @@ void* mymalloc(size_t size)
         {
             return NULL;
         }
+
+        printf("mymalloc chunk: %p\n", newChunk);
 
         *(void**)currentChunk = newChunk;
 
