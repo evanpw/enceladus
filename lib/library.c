@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -331,7 +332,7 @@ String* readLine()
     else
     {
         String* result = makeStr(line);
-        myfree(line);
+        free(line);
 
         return result;
     }
@@ -433,8 +434,15 @@ uint8_t* currentChunk = NULL;
 size_t chunkSize = 0;
 FreeBlock* freeList = NULL;
 
+const size_t MIN_BLOCK_SIZE = sizeof(FreeBlock);
+
 void* mymalloc(size_t size)
 {
+    //printf("mymalloc(0x%zx)\n", size);
+
+    if (size < MIN_BLOCK_SIZE)
+        size = MIN_BLOCK_SIZE;
+
     // First allocation: need to create a heap
     if (!firstChunk)
     {
@@ -463,27 +471,34 @@ void* mymalloc(size_t size)
     FreeBlock* prev = NULL;
     while (p)
     {
+        //printf("Examining free block @ %p, size = 0x%llx, next = %p\n", p, p->size, p->nextBlock);
+
         // This block is large enough.
         if (p->size >= size + 8)
         {
             uint64_t* result = (uint64_t*)p;
 
+            //printf("Allocating block @ %p\n", p);
+
             // If this is large enough to accomodate the current request and
             // possibly another one, then split it.
             FreeBlock* nextBlock;
-            if (p->size - size - 8 >= sizeof(SplObject) + 8)
+            if (p->size - size - 8 >= MIN_BLOCK_SIZE)
             {
                 FreeBlock* newBlock = (FreeBlock*)((uint8_t*)p + size + 8);
                 newBlock->size = p->size - size - 8;
                 newBlock->tag = FREE_BLOCK_TAG;
                 newBlock->nextBlock = p->nextBlock;
 
+                //printf("Splitting block @ %p, new size = 0x%llx\n", newBlock, p->size - size - 8);
+
                 nextBlock = newBlock;
             }
             else // Otherwise, use the whole thing
             {
-                uint64_t* result = (uint64_t*)p;
                 nextBlock = p->nextBlock;
+                size = p->size - 8;
+                //printf("Using full block\n");
             }
 
             if (prev)
@@ -495,7 +510,7 @@ void* mymalloc(size_t size)
                 freeList = nextBlock;
             }
 
-            *result = p->size - 8;
+            *result = size;
             return (void*)(result + 1);
         }
 
@@ -533,5 +548,15 @@ void* mymalloc(size_t size)
 void myfree(void* p)
 {
     void* block = (uint8_t*)p - 8;
-    size_t size = *(uint64_t*)block;
+    size_t size = *(uint64_t*)block + 8;
+
+    //printf("myfree @ %p, size = 0x%zx, next = %p\n", block, size, freeList);
+
+    assert(size >= MIN_BLOCK_SIZE);
+
+    FreeBlock* newHead = (FreeBlock*)block;
+    newHead->size = size;
+    newHead->tag = FREE_BLOCK_TAG;
+    newHead->nextBlock = freeList;
+    freeList = newHead;
 }
