@@ -913,9 +913,9 @@ void TACCodeGen::incref(std::shared_ptr<Address> operand)
     emit(new TACConditionalJump(mod4, "!=", ConstAddress::UnboxedZero, endLabel));
 
     std::shared_ptr<Address> refcount = makeTemp();
-    emit(new TACRightIndexedAssignment(refcount, operand, 0));
+    emit(new TACRightIndexedAssignment(refcount, operand, offsetof(SplObject, refCount)));
     emit(new TACBinaryOperation(refcount, refcount, BinaryOperation::UADD, ConstAddress::UnboxedOne));
-    emit(new TACLeftIndexedAssignment(operand, 0, refcount));
+    emit(new TACLeftIndexedAssignment(operand, offsetof(SplObject, refCount), refcount));
 
     emit(endLabel);
 }

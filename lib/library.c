@@ -185,8 +185,8 @@ char* strContent(String* s)
 String* makeStr(const char* data)
 {
     String* result = mymalloc(sizeof(SplObject) + strlen(data) + 1);
-    result->refCount = 0;
     result->constructorTag = STRING_TAG;
+    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
     strcpy(strContent(result), data);
@@ -214,8 +214,8 @@ String* strSlice(String* s, int64_t tPos, int64_t tLength)
     }
 
     String* result = mymalloc(sizeof(SplObject) + length + 1);
-    result->refCount = 0;
     result->constructorTag = STRING_TAG;
+    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -231,8 +231,8 @@ String* strCat(String* lhs, String* rhs)
     size_t n2 = strlen(strContent(rhs));
 
     String* result = mymalloc(sizeof(SplObject) + n1 + n2 + 1);
-    result->refCount = 0;
     result->constructorTag = STRING_TAG;
+    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -270,8 +270,8 @@ String* strFromList(List* list)
     }
 
     String* result = mymalloc(sizeof(SplObject) + length + 1);
-    result->refCount = 0;
     result->constructorTag = STRING_TAG;
+    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -298,8 +298,8 @@ String* show(int64_t x)
     int64_t value = fromInt(x);
 
     String* result = mymalloc(sizeof(SplObject) + 20 + 1);
-    result->refCount = 0;
     result->constructorTag = STRING_TAG;
+    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -418,10 +418,17 @@ void walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointe
     }
 }
 
+typedef struct FreeBlock
+{
+    uint64_t size;
+    uint64_t tag;
+    struct FreeBlock* nextBlock;
+} FreeBlock;
+
 uint8_t* firstChunk = NULL;
 uint8_t* currentChunk = NULL;
 size_t chunkSize = 0;
-uint8_t* nextAvailable = NULL;
+FreeBlock* freeList = NULL;
 
 void* mymalloc(size_t size)
 {
@@ -435,41 +442,93 @@ void* mymalloc(size_t size)
             return NULL;
         }
 
-        printf("mymalloc chunk: %p\n", newChunk);
+        //printf("mymalloc chunk: %p\n", newChunk);
 
         firstChunk = currentChunk = newChunk;
         chunkSize = newSize;
+
         *(void**)currentChunk = NULL;
-        nextAvailable = currentChunk + sizeof(void*);
+
+        freeList = (FreeBlock*)(currentChunk + sizeof(void*));
+        freeList->size = newSize - sizeof(void*);
+        freeList->tag = FREE_BLOCK_TAG;
+        freeList->nextBlock = NULL;
+    }
+
+    // Search for a large-enough free block
+    FreeBlock* p = freeList;
+    FreeBlock* prev = NULL;
+    while (p)
+    {
+        // This block is large enough.
+        if (p->size >= size + 8)
+        {
+            uint64_t* result = (uint64_t*)p;
+
+            // If this is large enough to accomodate the current request and
+            // possibly another one, then split it.
+            FreeBlock* nextBlock;
+            if (p->size - size - 8 >= sizeof(SplObject) + 8)
+            {
+                FreeBlock* newBlock = (FreeBlock*)((uint8_t*)p + size + 8);
+                newBlock->size = p->size - size - 8;
+                newBlock->tag = FREE_BLOCK_TAG;
+                newBlock->nextBlock = p->nextBlock;
+
+                nextBlock = newBlock;
+            }
+            else // Otherwise, use the whole thing
+            {
+                uint64_t* result = (uint64_t*)p;
+                nextBlock = p->nextBlock;
+            }
+
+            if (prev)
+            {
+                prev->nextBlock = nextBlock;
+            }
+            else
+            {
+                freeList = nextBlock;
+            }
+
+            *result = p->size - 8;
+            return (void*)(result + 1);
+        }
+
+        prev = p;
+        p = p->nextBlock;
     }
 
     // Current heap is full: need to allocate another chunk
-    if (nextAvailable + size > currentChunk + chunkSize)
+    size_t newSize = 2 * chunkSize;
+    while (newSize < size + sizeof(void*)) newSize *= 2;
+
+    void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (newChunk == MAP_FAILED)
     {
-        size_t newSize = 2 * chunkSize;
-        while (newSize < size + sizeof(void*)) newSize *= 2;
-
-        void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-        if (newChunk == MAP_FAILED)
-        {
-            return NULL;
-        }
-
-        printf("mymalloc chunk: %p\n", newChunk);
-
-        *(void**)currentChunk = newChunk;
-
-        currentChunk = newChunk;
-        chunkSize = newSize;
-        *(void**)currentChunk = NULL;
-        nextAvailable = currentChunk + sizeof(void*);
+        return NULL;
     }
 
-    void* result = nextAvailable;
-    nextAvailable += size;
-    return result;
+    //printf("mymalloc chunk: %p\n", newChunk);
+
+    *(void**)currentChunk = newChunk;
+
+    currentChunk = newChunk;
+    chunkSize = newSize;
+    *(void**)currentChunk = NULL;
+
+    FreeBlock* newHead = (FreeBlock*)(currentChunk + sizeof(void*));
+    newHead->size = newSize - sizeof(void*);
+    newHead->tag = FREE_BLOCK_TAG;
+    newHead->nextBlock = freeList;
+    freeList = newHead;
+
+    return mymalloc(size);
 }
 
 void myfree(void* p)
 {
+    void* block = (uint8_t*)p - 8;
+    size_t size = *(uint64_t*)block;
 }

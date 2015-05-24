@@ -8,10 +8,11 @@ struct SplObject;
 
 #define MAX_STRUCTURED_TAG      ((1L << 32) - 1)
 #define STRING_TAG              (1L << 32)
+#define FREE_BLOCK_TAG          INT64_MAX
 
 #define SplObject_HEAD \
-    int64_t refCount; \
     size_t constructorTag; \
+    int64_t refCount; \
     uint64_t markBit; \
     uint64_t pointerFields;
 
@@ -28,15 +29,6 @@ typedef struct List
     void* value;
     struct List* next;
 } List;
-
-typedef struct Tree
-{
-    SplObject_HEAD
-    struct Tree* left;
-    struct Tree* right;
-    int64_t value;
-    int64_t count;
-} Tree;
 
 typedef SplObject String;
 

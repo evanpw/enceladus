@@ -67,7 +67,7 @@ void X86CodeGen::generateCode(TACProgram& program)
         const std::string& content = item.second;
 
         EMIT_LEFT(name << ":");
-        EMIT("dq 1, " << STRING_TAG << ", 0"); // refCount = 1
+        EMIT("dq " << STRING_TAG << ", 1, 0, 0"); // refCount = 1
         EMIT("db \"" << content << "\", 0");
     }
 }
