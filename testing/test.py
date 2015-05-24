@@ -17,11 +17,13 @@ class Regex(object):
         self.pattern = pattern
 
 
-def matches(result, expected):
+def assert_matches(result, expected):
     if isinstance(expected, Regex):
-        return re.match(expected.pattern, result.strip())
+        if not re.match(expected.pattern, result.strip()):
+            raise AssertionError('{} !=~ {}'.format(result.strip(), expected.pattern))
     else:
-        return expected.strip() == result.strip()
+        if expected.strip() != result.strip():
+            raise AssertionError('{} != {}'.format(result.strip(), expected.strip()))
 
 
 def run_test(name, result=None, build_error=None, runtime_error=None, input_file=None):
@@ -29,7 +31,7 @@ def run_test(name, result=None, build_error=None, runtime_error=None, input_file
     build_proc = subprocess.Popen(build_cmd, shell=True, stderr=subprocess.PIPE)
 
     if build_error:
-        assert matches(build_proc.stderr.read(), build_error)
+        assert_matches(build_proc.stderr.read(), build_error)
         assert build_proc.wait() != 0
         return
     else:
@@ -43,10 +45,10 @@ def run_test(name, result=None, build_error=None, runtime_error=None, input_file
     run_proc = subprocess.Popen(run_cmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
     if runtime_error:
-        assert matches(run_proc.stderr.read(), runtime_error)
+        assert_matches(run_proc.stderr.read(), runtime_error)
         assert run_proc.wait() != 0
     else:
-        assert matches(run_proc.stdout.read(), result)
+        assert_matches(run_proc.stdout.read(), result)
         assert run_proc.wait() == 0
 
 

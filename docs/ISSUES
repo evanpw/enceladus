@@ -23,3 +23,6 @@
   makes sure every path through a function has a return statement
 
 * Optimization: Unconditional jump to next instruction can be killed
+
+* Don't save Unit return values in a temporary, and reuse temporaries that are
+  no longer live.

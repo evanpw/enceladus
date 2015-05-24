@@ -24,6 +24,7 @@ void X86CodeGen::generateCode(TACProgram& program)
     EMIT_LEFT("bits 64");
     EMIT_LEFT("section .text");
     EMIT_LEFT("global " << mangle("main"));
+    EMIT_LEFT("global __globalVarTable");
     EMIT_LEFT("extern initGC");
 
     // External references
@@ -51,6 +52,13 @@ void X86CodeGen::generateCode(TACProgram& program)
     for (auto& global : program.globals)
     {
         EMIT_LEFT(global->asName().name << ": dq 0");
+    }
+
+    EMIT_LEFT("__globalVarTable:");
+    EMIT("dq " << program.globals.size());
+    for (auto& global : program.globals)
+    {
+        EMIT("dq " << global->asName().name);
     }
 
     for (auto& item : program.staticStrings)
@@ -576,14 +584,6 @@ void X86CodeGen::visit(TACCall* inst)
             getSpecificRegisterFor(inst->params[i], registerArgs[i], READ);
         }
 
-        // std::string stackSave = getScratchRegister();
-
-        // // Realign the stack to 16 bytes (may not be necessary on all platforms)
-        // EMIT("mov " << stackSave << ", rsp");
-        // EMIT("and rsp, -16");
-        // EMIT("add rsp, -8");
-        // EMIT("push " << stackSave);
-
         spillAndClear();
 
         EMIT("call " << inst->function);
@@ -593,16 +593,11 @@ void X86CodeGen::visit(TACCall* inst)
             getSpecificRegisterFor(inst->dest, "rax", WRITE);
             freeRegister("rax");
         }
-
-        // Undo the stack alignment
-        //EMIT("pop rsp");
-
-        //freeRegister(stackSave);
     }
     else
     {
         // Keep 16-byte alignment
-        size_t paramsOnStack = inst->params.size() % 2;
+        size_t paramsOnStack = inst->params.size();
         if (paramsOnStack % 2)
         {
             EMIT("push qword 0");
@@ -647,7 +642,7 @@ void X86CodeGen::visit(TACIndirectCall* inst)
     EMIT_COMMENT(inst->str());
 
     // Keep 16-byte alignment
-    size_t paramsOnStack = inst->params.size() % 2;
+    size_t paramsOnStack = inst->params.size();
     if (paramsOnStack % 2)
     {
         EMIT("push qword 0");

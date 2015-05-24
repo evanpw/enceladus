@@ -1,6 +1,9 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
+void* mymalloc(size_t size);
+void myfree(void* p);
+
 struct SplObject;
 
 #define MAX_STRUCTURED_TAG      ((1L << 32) - 1)

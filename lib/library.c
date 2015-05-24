@@ -1,11 +1,13 @@
 // For non-standard getline
 #define _GNU_SOURCE
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include "library.h"
 
 #ifdef __APPLE__
@@ -85,7 +87,7 @@ void _decref(SplObject* object)
     }
     else
     {
-        free(object);
+        myfree(object);
     }
 }
 
@@ -136,7 +138,7 @@ continue_main_loop:
             }
         }
 
-        free(next);
+        myfree(next);
 
         if (back)
         {
@@ -182,7 +184,7 @@ char* strContent(String* s)
 
 String* makeStr(const char* data)
 {
-    String* result = malloc(sizeof(SplObject) + strlen(data) + 1);
+    String* result = mymalloc(sizeof(SplObject) + strlen(data) + 1);
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
@@ -210,7 +212,7 @@ String* strSlice(String* s, int64_t tPos, int64_t tLength)
         fail("*** Exception: String slice length out of range");
     }
 
-    String* result = malloc(sizeof(SplObject) + length + 1);
+    String* result = mymalloc(sizeof(SplObject) + length + 1);
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
@@ -226,7 +228,7 @@ String* strCat(String* lhs, String* rhs)
     size_t n1 = strlen(strContent(lhs));
     size_t n2 = strlen(strContent(rhs));
 
-    String* result = malloc(sizeof(SplObject) + n1 + n2 + 1);
+    String* result = mymalloc(sizeof(SplObject) + n1 + n2 + 1);
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
@@ -264,7 +266,7 @@ String* strFromList(List* list)
         ++length;
     }
 
-    String* result = malloc(sizeof(SplObject) + length + 1);
+    String* result = mymalloc(sizeof(SplObject) + length + 1);
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
@@ -291,7 +293,7 @@ String* show(int64_t x)
 {
     int64_t value = fromInt(x);
 
-    String* result = malloc(sizeof(SplObject) + 20 + 1);
+    String* result = mymalloc(sizeof(SplObject) + 20 + 1);
     result->refCount = 0;
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
@@ -324,7 +326,7 @@ String* readLine()
     else
     {
         String* result = makeStr(line);
-        free(line);
+        myfree(line);
 
         return result;
     }
@@ -341,20 +343,76 @@ void die(String* s)
     exit(1);
 }
 
-//// Trees /////////////////////////////////////////////////////////////////////
-
-Tree* Empty()
-{
-    return NULL;
-}
-
 //// Garbage collector /////////////////////////////////////////////////////////
+
+#ifdef __APPLE__
+
+extern void _globalVarTable;
+#define GLOBAL_VAR_TABLE _globalVarTable
+
+#else
+
+extern void __globalVarTable;
+#define GLOBAL_VAR_TABLE __globalVarTable
+
+#endif
 
 void walkStackC(uint64_t* stackTop, uint64_t* stackBottom)
 {
-    for (uint64_t* p = stackTop; p < stackBottom; ++p)
+    printf("Stack:\n");
+    for (uint64_t* p = stackTop; p <= stackBottom; ++p)
     {
-        printf("%llx\n", *p);
+        printf("%p: %p\n", p, (void*)*p);
+    }
+
+    printf("\nGlobals:\n");
+    uint64_t* p = &GLOBAL_VAR_TABLE;
+    uint64_t numGlobals = *p++;
+    for (size_t i = 0; i < numGlobals; ++i)
+    {
+        printf("%p: %p\n", p, (void*)*p);
+        ++p;
     }
 }
 
+uint8_t* heap = NULL;
+size_t heapSize = 0;
+uint8_t* next = NULL;
+
+void* mymalloc(size_t size)
+{
+    // First allocation: need to create a heap
+    if (!heap)
+    {
+        size_t newSize = 4096;
+        void* newHeap = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+        if (newHeap == MAP_FAILED)
+        {
+            return NULL;
+        }
+
+        heap = newHeap;
+        heapSize = newSize;
+        next = heap;
+    }
+
+    // Current heap is full: need to resize
+    while (next + size > heap + heapSize)
+    {
+        void* extraHeap = mmap(heap + heapSize, heapSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0);
+        if (extraHeap == MAP_FAILED)
+        {
+            return NULL;
+        }
+
+        heapSize *= 2;
+    }
+
+    void* result = next;
+    next += size;
+    return result;
+}
+
+void myfree(void* p)
+{
+}

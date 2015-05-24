@@ -182,8 +182,8 @@ void SemanticAnalyzer::injectSymbols()
     scope->symbols.insert(makeExternal("_decref"));
     scope->symbols.insert(makeExternal("_decrefNoFree"));
     scope->symbols.insert(makeExternal("__destroyClosure"));
-    scope->symbols.insert(makeExternal("malloc"));
-    scope->symbols.insert(makeExternal("free"));
+    scope->symbols.insert(makeExternal("mymalloc"));
+    scope->symbols.insert(makeExternal("myfree"));
 
     scope->symbols.insert(new FunctionSymbol("_main", _root, nullptr));
 }

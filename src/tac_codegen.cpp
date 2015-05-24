@@ -360,7 +360,7 @@ void TACCodeGen::visit(NullaryNode* node)
             // If the function is not completely applied, then this nullary node
             // evaluates to a function type -- create a closure
             size_t size = sizeof(SplObject) + 8;
-            emit(new TACCall(true, dest, FOREIGN_NAME("malloc"), {std::make_shared<ConstAddress>(size)}));
+            emit(new TACCall(true, dest, FOREIGN_NAME("mymalloc"), {std::make_shared<ConstAddress>(size)}));
 
             // SplObject header fields
             emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
@@ -849,7 +849,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     emit(new TACCall(
         true,
         _currentFunction->returnValue,
-        FOREIGN_NAME("malloc"),
+        FOREIGN_NAME("mymalloc"),
         {std::make_shared<ConstAddress>(size)}));
 
     //// Fill in the members with the constructor arguments
