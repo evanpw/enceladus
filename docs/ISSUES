@@ -21,3 +21,5 @@
 
 * Remove implicit returns, and add a separate semantic-analysis pass that
   makes sure every path through a function has a return statement
+
+* Optimization: Unconditional jump to next instruction can be killed

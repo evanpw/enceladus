@@ -85,7 +85,9 @@ void X86CodeGen::generateCode(TACFunction& function)
     assert(function.regParams.size() <= 6);
 
     // x86_64 calling convention for C puts the first 6 arguments in registers
-    std::string registerArgs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    if (function.regParams.size() >= 1) EMIT("mov r10, rdi");
+    if (function.regParams.size() >= 4) EMIT("mov r11, rcx");
+    std::string registerArgs[] = {"r10", "rsi", "rdx", "r11", "r8", "r9"};
 
     for (size_t i = 0; i < function.regParams.size(); ++i)
     {
@@ -100,18 +102,15 @@ void X86CodeGen::generateCode(TACFunction& function)
     }
 
     int total = function.locals.size() + function.numberOfTemps;
+    if (total % 2) ++total; // Keep 16-byte alignment
     if (total > 0) EMIT("add rsp, -" << (8 * total));
 
     // We have to zero out the local variables for the reference counting
     // to work correctly
-    if (function.regParams.size() >= 1) EMIT("mov r10, rdi");
-    if (function.regParams.size() >= 4) EMIT("mov r11, rcx");
     EMIT("xor rax, rax");
     EMIT("mov rcx, " << total);
     EMIT("mov rdi, rsp");
     EMIT("rep stosq");
-    if (function.regParams.size() >= 1) EMIT("mov rdi, r10");
-    if (function.regParams.size() >= 4) EMIT("mov rcx, r11");
 
     for (TACInstruction* inst = function.instructions; inst != nullptr; inst = inst->next)
     {
@@ -577,13 +576,13 @@ void X86CodeGen::visit(TACCall* inst)
             getSpecificRegisterFor(inst->params[i], registerArgs[i], READ);
         }
 
-        std::string stackSave = getScratchRegister();
+        // std::string stackSave = getScratchRegister();
 
-        // Realign the stack to 16 bytes (may not be necessary on all platforms)
-        EMIT("mov " << stackSave << ", rsp");
-        EMIT("and rsp, -16");
-        EMIT("add rsp, -8");
-        EMIT("push " << stackSave);
+        // // Realign the stack to 16 bytes (may not be necessary on all platforms)
+        // EMIT("mov " << stackSave << ", rsp");
+        // EMIT("and rsp, -16");
+        // EMIT("add rsp, -8");
+        // EMIT("push " << stackSave);
 
         spillAndClear();
 
@@ -596,12 +595,20 @@ void X86CodeGen::visit(TACCall* inst)
         }
 
         // Undo the stack alignment
-        EMIT("pop rsp");
+        //EMIT("pop rsp");
 
-        freeRegister(stackSave);
+        //freeRegister(stackSave);
     }
     else
     {
+        // Keep 16-byte alignment
+        size_t paramsOnStack = inst->params.size() % 2;
+        if (paramsOnStack % 2)
+        {
+            EMIT("push qword 0");
+            ++paramsOnStack;
+        }
+
         for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
         {
             // No 64-bit immediate push
@@ -622,7 +629,10 @@ void X86CodeGen::visit(TACCall* inst)
         EMIT("call " << inst->function);
 
         // Remove the function parameters from the stack
-        EMIT("add rsp, " << 8 * inst->params.size());
+        if (paramsOnStack > 0)
+        {
+            EMIT("add rsp, " << 8 * paramsOnStack);
+        }
 
         if (inst->dest)
         {
@@ -636,6 +646,14 @@ void X86CodeGen::visit(TACIndirectCall* inst)
 {
     EMIT_COMMENT(inst->str());
 
+    // Keep 16-byte alignment
+    size_t paramsOnStack = inst->params.size() % 2;
+    if (paramsOnStack % 2)
+    {
+        EMIT("push qword 0");
+        ++paramsOnStack;
+    }
+
     for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
     {
         EMIT("push " << access(*i));
@@ -644,6 +662,12 @@ void X86CodeGen::visit(TACIndirectCall* inst)
     spillAndClear();
 
     EMIT("call " << access(inst->function));
+
+    // Remove the function parameters from the stack
+    if (paramsOnStack > 0)
+    {
+        EMIT("add rsp, " << 8 * paramsOnStack);
+    }
 
     getSpecificRegisterFor(inst->dest, "rax", WRITE);
     freeRegister("rax");
