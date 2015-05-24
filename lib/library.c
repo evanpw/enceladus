@@ -371,7 +371,10 @@ void markRecursive(SplObject* object)
     }
 }
 
+#ifdef __APPLE__
 extern void walkStackC(uint64_t*, uint64_t*, uint64_t*, uint64_t*) asm("walkStackC") ;
+#endif
+
 void walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointer, uint64_t* globalVarTable)
 {
     uint64_t* top = stackTop;
