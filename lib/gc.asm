@@ -1,6 +1,6 @@
 bits 64
 section .text
-global initGC, _walkStack, stackBottom
+global initGC, walkStack, stackBottom
 extern _walkStackC
 
 initGC:
@@ -9,7 +9,7 @@ initGC:
     mov qword [rel stackBottom], rax
     ret
 
-_walkStack:
+walkStack:
     push rbp
     mov rbp, rsp
 

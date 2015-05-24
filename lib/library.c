@@ -298,7 +298,7 @@ String* show(int64_t x)
     result->constructorTag = STRING_TAG;
     result->pointerFields = 0;
 
-    sprintf(strContent(result), "%lld", value);
+    sprintf(strContent(result), "%" PRId64, value);
     return result;
 }
 
@@ -307,7 +307,7 @@ String* show(int64_t x)
 int64_t read()
 {
     int64_t result;
-    scanf("%lld", &result);
+    scanf("%" PRId64, &result);
 
     return toInt(result);
 }
@@ -347,17 +347,17 @@ void die(String* s)
 
 #ifdef __APPLE__
 
-extern void _globalVarTable;
+extern uint64_t _globalVarTable;
 #define GLOBAL_VAR_TABLE _globalVarTable
 
 #else
 
-extern void __globalVarTable;
+extern uint64_t __globalVarTable;
 #define GLOBAL_VAR_TABLE __globalVarTable
 
 #endif
 
-void walkStackC(uint64_t* stackTop, uint64_t* stackBottom)
+void _walkStackC(uint64_t* stackTop, uint64_t* stackBottom)
 {
     printf("Stack:\n");
     for (uint64_t* p = stackTop; p <= stackBottom; ++p)
@@ -375,41 +375,51 @@ void walkStackC(uint64_t* stackTop, uint64_t* stackBottom)
     }
 }
 
-uint8_t* heap = NULL;
-size_t heapSize = 0;
-uint8_t* next = NULL;
+uint8_t* firstChunk = NULL;
+uint8_t* currentChunk = NULL;
+size_t chunkSize = 0;
+uint8_t* nextAvailable = NULL;
 
 void* mymalloc(size_t size)
 {
     // First allocation: need to create a heap
-    if (!heap)
+    if (!firstChunk)
     {
-        size_t newSize = 4096;
-        void* newHeap = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-        if (newHeap == MAP_FAILED)
+        size_t newSize = 4 << 20;
+        void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+        if (newChunk == MAP_FAILED)
         {
             return NULL;
         }
 
-        heap = newHeap;
-        heapSize = newSize;
-        next = heap;
+        firstChunk = currentChunk = newChunk;
+        chunkSize = newSize;
+        *(void**)currentChunk = NULL;
+        nextAvailable = currentChunk + sizeof(void*);
     }
 
-    // Current heap is full: need to resize
-    while (next + size > heap + heapSize)
+    // Current heap is full: need to allocate another chunk
+    if (nextAvailable + size > currentChunk + chunkSize)
     {
-        void* extraHeap = mmap(heap + heapSize, heapSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0);
-        if (extraHeap == MAP_FAILED)
+        size_t newSize = 2 * chunkSize;
+        while (newSize < size + sizeof(void*)) newSize *= 2;
+
+        void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+        if (newChunk == MAP_FAILED)
         {
             return NULL;
         }
 
-        heapSize *= 2;
+        *(void**)currentChunk = newChunk;
+
+        currentChunk = newChunk;
+        chunkSize = newSize;
+        *(void**)currentChunk = NULL;
+        nextAvailable = currentChunk + sizeof(void*);
     }
 
-    void* result = next;
-    next += size;
+    void* result = nextAvailable;
+    nextAvailable += size;
     return result;
 }
 
