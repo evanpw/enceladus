@@ -345,19 +345,7 @@ void die(String* s)
 
 //// Garbage collector /////////////////////////////////////////////////////////
 
-#ifdef __APPLE__
-
-extern uint64_t _globalVarTable;
-#define GLOBAL_VAR_TABLE _globalVarTable
-
-#else
-
-extern uint64_t __globalVarTable;
-#define GLOBAL_VAR_TABLE __globalVarTable
-
-#endif
-
-void _walkStackC(uint64_t* stackTop, uint64_t* stackBottom)
+void _walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* globalVarTable)
 {
     printf("Stack:\n");
     for (uint64_t* p = stackTop; p <= stackBottom; ++p)
@@ -366,7 +354,7 @@ void _walkStackC(uint64_t* stackTop, uint64_t* stackBottom)
     }
 
     printf("\nGlobals:\n");
-    uint64_t* p = &GLOBAL_VAR_TABLE;
+    uint64_t* p = globalVarTable;
     uint64_t numGlobals = *p++;
     for (size_t i = 0; i < numGlobals; ++i)
     {
