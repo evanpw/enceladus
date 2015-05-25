@@ -422,23 +422,190 @@ void walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointe
     }
 }
 
-typedef struct FreeBlock
-{
-    uint64_t size;
-    uint64_t tag;
-    struct FreeBlock* nextBlock;
-} FreeBlock;
-
 uint8_t* firstChunk = NULL;
 uint8_t* currentChunk = NULL;
 size_t chunkSize = 0;
-FreeBlock* freeList = NULL;
+void* freeList = NULL;
 
-const size_t MIN_BLOCK_SIZE = sizeof(FreeBlock);
+const size_t MIN_BLOCK_SIZE = 0x20;
+const size_t MIN_SPLIT_SIZE = 0x50;
+
+static void createFreeBlock(void* p, size_t size, void* prev, void* next)
+{
+    assert(size >= MIN_BLOCK_SIZE);
+
+    uint64_t* header = p;
+    *header++ = size | 1;
+    *header++ = (uint64_t)next;
+
+    // Footer
+    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 2;
+    *footer++ = (uint64_t)prev;
+    *footer++ = size | 1;
+}
+
+uint64_t freeGetSize(void* p)
+{
+    uint64_t* header = p;
+    return *header & ~1ULL;
+}
+
+void* freeGetNext(void* p)
+{
+    uint64_t* header = p;
+    return (void*)*(header + 1);
+}
+
+void freeSetNext(void* p, void* next)
+{
+    void** header = p;
+    *(header + 1) = next;
+}
+
+void* freeGetPrev(void* p)
+{
+    size_t size = freeGetSize(p);
+    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 2;
+    return (void*)*footer;
+}
+
+void freeSetPrev(void* p, void* prev)
+{
+    size_t size = freeGetSize(p);
+    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 2;
+    *footer = (uint64_t)prev;
+}
+
+int createChunk(size_t minSize)
+{
+    size_t newSize = chunkSize == 0 ? 4 << 20 : chunkSize * 2;
+    while (newSize < minSize) newSize *= 2;
+
+    void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (newChunk == MAP_FAILED)
+    {
+        return 0;
+    }
+
+    //printf("mymalloc: new chunk @ %p, size = %zx\n", newChunk, newSize);
+
+    if (currentChunk)
+    {
+        *(void**)currentChunk = newChunk;
+    }
+    else
+    {
+        firstChunk = newChunk;
+    }
+
+    currentChunk = newChunk;
+    chunkSize = newSize;
+
+    // Pointer to next chunk
+    *(void**)currentChunk = NULL;                   // Pointer to next chunk
+    *((uint64_t*)currentChunk + 1) = chunkSize;     // Size of this chunk
+
+    // Fake sentinel footer and header
+    uint64_t* fakeHeader = (uint64_t*)currentChunk + 2;
+    uint64_t* fakeFooter = (uint64_t*)(currentChunk + newSize) - 1;
+    *fakeHeader = 0;
+    *fakeFooter = 0;
+    //printf("fakeHeader = %p, fakeFooter = %p\n", fakeHeader, fakeFooter);
+
+    void* newBlock = currentChunk + 3 * 8;
+    createFreeBlock(newBlock, newSize - 4 * 8, NULL, freeList);
+    if (freeList)
+    {
+        freeSetPrev(freeList, newBlock);
+    }
+    freeList = newBlock;
+
+    return 1;
+}
+
+void makeAllocatedBlock(void* p, size_t size)
+{
+    uint64_t* header = p;
+    *header = size;
+
+    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 1;
+    *footer = size;
+}
+
+size_t roundUp8(size_t size)
+{
+    if (size & 7)
+    {
+        return (size & ~7UL) + 8;
+    }
+    else
+    {
+        return size;
+    }
+}
+
+void checkAllocatedBlock(void* p, size_t useableSize)
+{
+    uint8_t* bytes = p;
+    uint64_t* header = (uint64_t*)bytes;
+
+    size_t actualSize = *header;
+    assert(actualSize >= useableSize + 16);
+
+    uint64_t* footer = (uint64_t*)(bytes + actualSize) - 1;
+    assert(*footer == actualSize);
+
+    printf("Good block @ %p, size = %zx\n", p, actualSize);
+}
+
+void walkChunk(void* p)
+{
+    uint8_t* bytes = p;
+    void* nextChunk = *((void**)bytes);
+    uint64_t chunkSize = *((uint64_t*)bytes + 1);
+    uint8_t* chunkEnd = bytes + chunkSize - 8;
+
+    printf("Chunk @ %p, next = %p, size = %llx\n", p, nextChunk, chunkSize);
+
+    uint8_t* block = bytes + 3 * 8;
+    while (block < chunkEnd)
+    {
+        uint64_t sizeAndFlag = *(uint64_t*)block;
+        printf("Block @ %p, size = %llx, free = %llx\n", block, sizeAndFlag & ~1ULL, sizeAndFlag & 1);
+
+        block += sizeAndFlag & ~1ULL;
+    }
+
+    printf("End Chunk\n");
+}
+
+void walkFreeList()
+{
+    printf("freeList = %p\n", freeList);
+
+    void* p = freeList;
+    while (p)
+    {
+        uint64_t sizeAndFlag = *(uint64_t*)p;
+        printf("Free block @ %p, size = %llx, free = %llx\n", p, sizeAndFlag & ~1ULL, sizeAndFlag & 1);
+
+        void* next = freeGetNext(p);
+        void* prev = freeGetPrev(p);
+
+        if (prev) assert(freeGetNext(prev) == p);
+        if (next) assert(freeGetPrev(next) == p);
+
+        p = next;
+    }
+}
 
 void* mymalloc(size_t size)
 {
     //printf("mymalloc(0x%zx)\n", size);
+    //printf("Start:\n");
+    //walkFreeList();
+
+    size = roundUp8(size);
 
     if (size < MIN_BLOCK_SIZE)
         size = MIN_BLOCK_SIZE;
@@ -446,117 +613,146 @@ void* mymalloc(size_t size)
     // First allocation: need to create a heap
     if (!firstChunk)
     {
-        size_t newSize = 4 << 20;
-        void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-        if (newChunk == MAP_FAILED)
-        {
-            return NULL;
-        }
-
-        //printf("mymalloc chunk: %p\n", newChunk);
-
-        firstChunk = currentChunk = newChunk;
-        chunkSize = newSize;
-
-        *(void**)currentChunk = NULL;
-
-        freeList = (FreeBlock*)(currentChunk + sizeof(void*));
-        freeList->size = newSize - sizeof(void*);
-        freeList->tag = FREE_BLOCK_TAG;
-        freeList->nextBlock = NULL;
+        if (!createChunk(0)) return NULL;
     }
 
     // Search for a large-enough free block
-    FreeBlock* p = freeList;
-    FreeBlock* prev = NULL;
+    void* p = freeList;
     while (p)
     {
-        //printf("Examining free block @ %p, size = 0x%llx, next = %p\n", p, p->size, p->nextBlock);
+        //printf("Examining free block @ %p, size = 0x%llx, next = %p\n", p, freeGetSize(p), freeGetNext(p));
 
         // This block is large enough.
-        if (p->size >= size + 8)
+        if (freeGetSize(p) >= size + 16)
         {
-            uint64_t* result = (uint64_t*)p;
+            uint64_t* result = p;
 
             //printf("Allocating block @ %p\n", p);
 
             // If this is large enough to accomodate the current request and
             // possibly another one, then split it.
-            FreeBlock* nextBlock;
-            if (p->size - size - 8 >= MIN_BLOCK_SIZE)
+            if (freeGetSize(p) - size - 16 >= MIN_SPLIT_SIZE)
             {
-                FreeBlock* newBlock = (FreeBlock*)((uint8_t*)p + size + 8);
-                newBlock->size = p->size - size - 8;
-                newBlock->tag = FREE_BLOCK_TAG;
-                newBlock->nextBlock = p->nextBlock;
+                size_t fullSize = freeGetSize(p);
+                void* prev = freeGetPrev(p);
+                void* next = freeGetNext(p);
 
-                //printf("Splitting block @ %p, new size = 0x%llx\n", newBlock, p->size - size - 8);
+                void* newBlock = (uint8_t*)p + fullSize - size - 16;
+                makeAllocatedBlock(newBlock, size + 16);
+                createFreeBlock(p, fullSize - size - 16, prev, next);
 
-                nextBlock = newBlock;
+                //printf("Splitting block @ %p\n", newBlock);
+
+                result = newBlock;
             }
             else // Otherwise, use the whole thing
             {
-                nextBlock = p->nextBlock;
-                size = p->size - 8;
                 //printf("Using full block\n");
+
+                void* prev = freeGetPrev(p);
+                void* next = freeGetNext(p);
+
+                makeAllocatedBlock(p, freeGetSize(p));
+
+                if (prev)
+                {
+                    freeSetNext(prev, next);
+                }
+                else
+                {
+                    freeList = next;
+                }
+
+                if (next) freeSetPrev(next, prev);
             }
 
-            if (prev)
-            {
-                prev->nextBlock = nextBlock;
-            }
-            else
-            {
-                freeList = nextBlock;
-            }
+            //checkAllocatedBlock(result, size);
+            //walkChunk(currentChunk);
 
-            *result = size;
+            //printf("End:\n");
+            //walkFreeList();
             return (void*)(result + 1);
         }
 
-        prev = p;
-        p = p->nextBlock;
+        p = freeGetNext(p);
     }
 
     // Current heap is full: need to allocate another chunk
-    size_t newSize = 2 * chunkSize;
-    while (newSize < size + sizeof(void*)) newSize *= 2;
-
-    void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (newChunk == MAP_FAILED)
-    {
-        return NULL;
-    }
-
-    //printf("mymalloc chunk: %p\n", newChunk);
-
-    *(void**)currentChunk = newChunk;
-
-    currentChunk = newChunk;
-    chunkSize = newSize;
-    *(void**)currentChunk = NULL;
-
-    FreeBlock* newHead = (FreeBlock*)(currentChunk + sizeof(void*));
-    newHead->size = newSize - sizeof(void*);
-    newHead->tag = FREE_BLOCK_TAG;
-    newHead->nextBlock = freeList;
-    freeList = newHead;
-
+    createChunk(size + 16);
     return mymalloc(size);
 }
 
 void myfree(void* p)
 {
-    void* block = (uint8_t*)p - 8;
-    size_t size = *(uint64_t*)block + 8;
+    void* block = (void*)((uint8_t*)p - 8);
+    size_t size = *(uint64_t*)block;
 
-    //printf("myfree @ %p, size = 0x%zx, next = %p\n", block, size, freeList);
+    //printf("myfree @ %p, size = 0x%zx\n", block, size);
+    //printf("Start:\n");
+    //walkFreeList();
 
     assert(size >= MIN_BLOCK_SIZE);
 
-    FreeBlock* newHead = (FreeBlock*)block;
-    newHead->size = size;
-    newHead->tag = FREE_BLOCK_TAG;
-    newHead->nextBlock = freeList;
-    freeList = newHead;
+    uint64_t* prevFooter = (uint64_t*)block - 1;
+    uint64_t* nextHeader = (uint64_t*)((uint8_t*)block + size);
+
+    //printf("prevFooter = %p, nextHeader = %p\n", prevFooter, nextHeader);
+
+    // If previous contiguous block is free, then coalesce
+    uint64_t prevSizeAndFlag = *prevFooter;
+    if (prevSizeAndFlag & 1)
+    {
+        size_t prevSize = prevSizeAndFlag & ~1ULL;
+        uint8_t* prevBlock = (uint8_t*)block - prevSize;
+        void* prev = freeGetPrev(prevBlock);
+        void* next = freeGetNext(prevBlock);
+
+        //printf("Coalesce with previous: %p %p %p\n", prevBlock, prev, next);
+
+        createFreeBlock(prevBlock, size + prevSize, prev, next);
+
+        //printf("End:\n");
+        //walkFreeList();
+        return;
+    }
+
+    // If next contiguous block is free, then coalesce
+    uint64_t nextSizeAndFlag = *nextHeader;
+    if (nextSizeAndFlag & 1)
+    {
+        size_t nextSize = nextSizeAndFlag & ~1ULL;
+        uint8_t* nextBlock = (uint8_t*)nextHeader;
+        void* prev = freeGetPrev(nextBlock);
+        void* next = freeGetNext(nextBlock);
+
+        //printf("Coalesce with next: %p %p %p\n", nextBlock, prev, next);
+
+        createFreeBlock(block, size + nextSize, prev, next);
+
+        if (prev)
+        {
+            freeSetNext(prev, block);
+        }
+        else
+        {
+            freeList = block;
+        }
+
+        if (next)
+        {
+            freeSetPrev(next, block);
+        }
+
+        //printf("End:\n");
+        //walkFreeList();
+        return;
+    }
+
+    // Otherwise, add to the beginning of the free list
+    createFreeBlock(block, size, NULL, freeList);
+    freeSetPrev(freeList, block);
+    freeList = block;
+
+    //printf("End:\n");
+    //walkFreeList();
 }

@@ -2,7 +2,7 @@
 
 import List
 
-def divisors(n: Int) -> [Int] 
+def divisors(n: Int) -> [Int]
     result := [1]
 
     i := 2
@@ -17,10 +17,10 @@ def divisors(n: Int) -> [Int]
 
     return result
 
-def isAbundant(n: Int) -> Bool 
+def isAbundant(n: Int) -> Bool
     (sum $ divisors n) > n
 
-def isSumOfTwo(y: Int, xs: [Int], zs: [Int]) -> Bool 
+def isSumOfTwo(y: Int, xs: [Int], zs: [Int]) -> Bool
     while not (null xs or null zs)
         s := (head xs) + (head zs)
 
@@ -33,13 +33,12 @@ def isSumOfTwo(y: Int, xs: [Int], zs: [Int]) -> Bool
 
     return False
 
-abundants := []
+reversed := []
 for i in range 1 28123
     if isAbundant i
-        abundants = i :: abundants
+        reversed = i :: reversed
 
-abundants = sort cmpInt abundants
-reversed := reverse abundants
+abundants := reverse reversed
 
 total := 0
 for j in range 1 28123
