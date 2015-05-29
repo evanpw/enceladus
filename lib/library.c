@@ -39,133 +39,6 @@ void fail(const char* str)
     exit(1);
 }
 
-//// Reference counting ////////////////////////////////////////////////////////
-
-#define Spl_INCREF(p) _incref((SplObject*)(p))
-#define Spl_DECREF(p) _decref((SplObject*)(p))
-#define Spl_DECREF_NO_FREE(p) _decrefNoFree((SplObject*)(p))
-
-void _incref(SplObject* object)
-{
-    if (object == NULL || IS_TAGGED(object)) return;
-
-    ++(object->refCount);
-}
-
-int64_t _decrefNoFree(SplObject* object)
-{
-    if (object == NULL || IS_TAGGED(object)) return 1;
-
-    --object->refCount;
-
-    if (object->refCount < 0)
-    {
-        fail("*** Exception: Reference count is negative");
-    }
-
-    return object->refCount;
-}
-
-static void destroy(SplObject* object);
-
-void _decref(SplObject* object)
-{
-    if (object == NULL || IS_TAGGED(object)) return;
-
-    --object->refCount;
-    if (object->refCount < 0)
-    {
-        fail("*** Exception: Reference count is negative");
-    }
-    else if (object->refCount > 0)
-    {
-        return;
-    }
-
-    /*
-    if (object->constructorTag <= MAX_STRUCTURED_TAG)
-    {
-        destroy(object);
-    }
-    else
-    {
-        myfree(object);
-    }
-    */
-}
-
-// Recursively destroy object and decrement the reference count of its children.
-// Does a depth-first traversal of the object graph in constant stack space by
-// storing back-tracking pointers in the child pointers themselves.
-// See "Deutsch-Schorr-Waite pointer reversal"
-static void destroy(SplObject* object)
-{
-    if (object->refCount != 0)
-    {
-        fail("*** Exception: Destroying object with positive reference count");
-    }
-
-    SplObject* back = NULL;
-    SplObject* next = object;
-
-    while (1)
-    {
-continue_main_loop:
-        if (next->pointerFields)
-        {
-            uint64_t mask = 1;
-            SplObject** p = (SplObject**)(next + 1);
-
-            while (next->pointerFields)
-            {
-                if (next->pointerFields & mask)
-                {
-                    // Decrement child. If also at refcount 0, then recurse
-                    if (_decrefNoFree(*p) == 0)
-                    {
-                        // Rotate back, next, *p cyclically to the left
-                        SplObject* tmp = back;
-                        back = next;
-                        next = *p;
-                        *p = tmp;
-                        goto continue_main_loop;
-                    }
-                    else
-                    {
-                        next->pointerFields &= ~mask;
-                    }
-                }
-
-                mask <<= 1;
-                ++p;
-            }
-        }
-
-        myfree(next);
-
-        if (back)
-        {
-            // Backtrack
-            next = back;
-
-            uint64_t mask = 1;
-            SplObject** p = (SplObject**)(next + 1);
-            while (!(next->pointerFields & mask))
-            {
-                mask <<= 1;
-                ++p;
-            }
-
-            next->pointerFields &= ~mask;
-            back = *p;
-        }
-        else
-        {
-            break;
-        }
-    }
-}
-
 //// Ints //////////////////////////////////////////////////////////////////////
 
 int64_t toInt(int64_t n)
@@ -180,6 +53,12 @@ int64_t fromInt(int64_t n)
 
 //// Strings ///////////////////////////////////////////////////////////////////
 
+#ifdef __APPLE__
+extern void* gcAllocate(size_t) asm("gcAllocate");
+#else
+extern void* gcAllocate(size_t);
+#endif
+
 char* strContent(String* s)
 {
     return (char*)(s + 1);
@@ -187,9 +66,8 @@ char* strContent(String* s)
 
 String* makeStr(const char* data)
 {
-    String* result = mymalloc(sizeof(SplObject) + strlen(data) + 1);
+    String* result = gcAllocate(sizeof(SplObject) + strlen(data) + 1);
     result->constructorTag = STRING_TAG;
-    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
     strcpy(strContent(result), data);
@@ -216,9 +94,8 @@ String* strSlice(String* s, int64_t tPos, int64_t tLength)
         fail("*** Exception: String slice length out of range");
     }
 
-    String* result = mymalloc(sizeof(SplObject) + length + 1);
+    String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -233,9 +110,8 @@ String* strCat(String* lhs, String* rhs)
     size_t n1 = strlen(strContent(lhs));
     size_t n2 = strlen(strContent(rhs));
 
-    String* result = mymalloc(sizeof(SplObject) + n1 + n2 + 1);
+    String* result = gcAllocate(sizeof(SplObject) + n1 + n2 + 1);
     result->constructorTag = STRING_TAG;
-    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -272,9 +148,8 @@ String* strFromList(List* list)
         ++length;
     }
 
-    String* result = mymalloc(sizeof(SplObject) + length + 1);
+    String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -300,9 +175,8 @@ String* show(int64_t x)
 {
     int64_t value = fromInt(x);
 
-    String* result = mymalloc(sizeof(SplObject) + 20 + 1);
+    String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
     result->constructorTag = STRING_TAG;
-    result->refCount = 0;
     result->pointerFields = 0;
     result->markBit = 0;
 
@@ -353,50 +227,56 @@ void die(String* s)
 
 //// Garbage collector /////////////////////////////////////////////////////////
 
-void markRecursive(SplObject* object)
+void markFromRoot(SplObject* p)
 {
-    if (object->markBit) return;
+    if (p->markBit) return;
 
-    printf("Mark: %p\n", object);
-    object->markBit = 1;
+    p->gcNext = NULL;
+    SplObject* markStack = p;
 
-    SplObject** p = (SplObject**)(object + 1);
-    uint64_t fields = object->pointerFields;
-    while (fields)
+    while (markStack)
     {
-        if ((fields & 1) && !IS_TAGGED(*p))
-        {
-            markRecursive(*p);
-        }
+        // Pop the top of the stack, mark it, and add its children to the stack
+        SplObject* object = markStack;
+        markStack = object->gcNext;
 
-        fields >>= 1;
-        ++p;
+        object->markBit = 1;
+
+        SplObject** p = (SplObject**)(object + 1);
+        uint64_t fields = object->pointerFields;
+        while (fields)
+        {
+            if ((fields & 1) && !IS_TAGGED(*p) && !(*p)->markBit)
+            {
+                (*p)->gcNext = markStack;
+                markStack = *p;
+            }
+
+            fields >>= 1;
+            ++p;
+        }
     }
 }
 
-#ifdef __APPLE__
-extern void walkStackC(uint64_t*, uint64_t*, uint64_t*, uint64_t*) asm("walkStackC") ;
-#endif
-
-void walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointer, uint64_t* globalVarTable)
+void gcMark(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointer, uint64_t* globalVarTable)
 {
     uint64_t* top = stackTop;
     uint64_t* bottom = framePointer;
 
     while (1)
     {
-        printf("Stack frame: %p %p\n", top, bottom);
+        //printf("Stack frame: %p %p\n", top, bottom);
         for (uint64_t* p = top; p < bottom; ++p)
         {
-            printf("%p: %p\n", p, (void*)*p);
+            //printf("%p: %p\n", p, (void*)*p);
 
             SplObject* object = (SplObject*)*p;
             if (object && !IS_TAGGED(object))
             {
-                markRecursive(object);
+                markFromRoot(object);
             }
         }
-        printf("\n");
+        //printf("\n");
 
         if (bottom == stackBottom)
         {
@@ -407,17 +287,17 @@ void walkStackC(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointe
         bottom = (uint64_t*)*bottom;
     }
 
-    printf("Globals:\n");
+    //printf("Globals:\n");
     uint64_t numGlobals = *globalVarTable;
     uint64_t** p = (uint64_t**)(globalVarTable + 1);
     for (size_t i = 0; i < numGlobals; ++i)
     {
-        printf("%p: %p\n", p, (void*)**p);
+        //printf("%p: %p\n", p, (void*)**p);
 
         SplObject* object = (SplObject*)**p;
         if (object && !IS_TAGGED(object))
         {
-            markRecursive(object);
+            markFromRoot(object);
         }
 
         ++p;
@@ -560,63 +440,81 @@ void checkAllocatedBlock(void* p, size_t useableSize)
     printf("Good block @ %p, size = %zx\n", p, actualSize);
 }
 
-void walkChunk(void* p)
+void gcSweep()
 {
-    uint8_t* bytes = p;
-    void* nextChunk = *((void**)bytes);
-    uint64_t chunkSize = *((uint64_t*)bytes + 1);
-    uint8_t* chunkEnd = bytes + chunkSize - 8;
+    //printf("\nHeap:\n");
 
-    printf("Chunk @ %p, next = %p, size = %llx\n", p, nextChunk, chunkSize);
-
-    uint8_t* block = bytes + 3 * 8;
-    while (block < chunkEnd)
-    {
-        uint64_t sizeAndFlag = *(uint64_t*)block;
-        uint64_t size = sizeAndFlag & ~1ULL;
-        uint64_t freeFlag = sizeAndFlag & 1;
-
-        if (freeFlag)
-        {
-            printf("Free block @ %p, size = %llx\n", block, size);
-        }
-        else
-        {
-            printf("Allocated block @ %p, size = %llx\n", block, size);
-
-            SplObject* object = (SplObject*)((uint64_t*)block + 1);
-            printf("\tconstructorTag = %zx\n", object->constructorTag);
-            printf("\trefCount = %lld\n", object->refCount);
-            printf("\tmarkBit = %lld\n", object->markBit);
-            printf("\tpointerFields = %llx\n", object->pointerFields);
-
-            if (!object->markBit)
-            {
-                printf("\tFreeing object\n");
-                myfree(object);
-            }
-        }
-
-        block += sizeAndFlag & ~1ULL;
-    }
-
-    printf("End Chunk\n");
-}
-
-#ifdef __APPLE__
-extern void walkHeap() asm("walkHeap") ;
-#endif
-
-void walkHeap()
-{
-    printf("\nHeap:\n");
+    size_t freeSize = 0;
+    size_t totalSize = 0;
 
     uint8_t* chunk = firstChunk;
     while (chunk)
     {
-        walkChunk(chunk);
+        void* nextChunk = *((void**)chunk);
+        uint64_t chunkSize = *((uint64_t*)chunk + 1);
+        uint8_t* chunkEnd = chunk + chunkSize - 8;
+
+        totalSize += chunkSize;
+
+        //printf("Chunk @ %p, next = %p, size = %llx\n", p, nextChunk, chunkSize);
+
+        uint8_t* block = chunk + 3 * 8;
+        while (block < chunkEnd)
+        {
+            uint64_t sizeAndFlag = *(uint64_t*)block;
+            uint64_t size = sizeAndFlag & ~1ULL;
+            uint64_t freeFlag = sizeAndFlag & 1;
+
+            if (freeFlag)
+            {
+                //printf("Free block @ %p, size = %llx\n", block, size);
+                freeSize += size;
+            }
+            else
+            {
+                //printf("Allocated block @ %p, size = %llx\n", block, size);
+
+                SplObject* object = (SplObject*)((uint64_t*)block + 1);
+                //printf("\tconstructorTag = %zx\n", object->constructorTag);
+                //printf("\tmarkBit = %lld\n", object->markBit);
+                //printf("\tpointerFields = %llx\n", object->pointerFields);
+
+                if (!object->markBit)
+                {
+                    //printf("\tFreeing object\n");
+                    myfree(object);
+                }
+                else
+                {
+                    object->markBit = 0;
+                }
+            }
+
+            block += sizeAndFlag & ~1ULL;
+        }
+
+        //printf("End Chunk\n");
+
         chunk = *(uint8_t**)chunk;
     }
+
+    //printf("freeSize = %zx, totalSize = %zx, pct free = %f\n", freeSize, totalSize, freeSize / (double)totalSize);
+
+    // If heap is mostly full even after collecting, double the size of the heap
+    if (freeSize <= 0.10 * totalSize)
+    {
+        createChunk(totalSize);
+    }
+}
+
+#ifdef __APPLE__
+extern void gcCollect(uint64_t*, uint64_t*, uint64_t*, uint64_t*) asm("gcCollect");
+#endif
+
+void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* framePointer, uint64_t* globalVarTable)
+{
+    gcMark(stackTop, stackBottom, framePointer, globalVarTable);
+    gcSweep();
 }
 
 void walkFreeList()
@@ -639,11 +537,15 @@ void walkFreeList()
     }
 }
 
-void* mymalloc(size_t size)
+#ifdef __APPLE__
+void* try_mymalloc(size_t) asm("try_mymalloc");
+#endif
+
+// Try to allocate memory from the free list, but don't request more memory from
+// the operating system (except on the first call)
+void* try_mymalloc(size_t size)
 {
-    //printf("mymalloc(0x%zx)\n", size);
-    //printf("Start:\n");
-    //walkFreeList();
+    //printf("try_mymalloc: %zx\n", size);
 
     size = roundUp8(size);
 
@@ -660,14 +562,12 @@ void* mymalloc(size_t size)
     void* p = freeList;
     while (p)
     {
-        //printf("Examining free block @ %p, size = 0x%llx, next = %p\n", p, freeGetSize(p), freeGetNext(p));
+        //printf("Examining block @ %p, size = %llx\n", p, freeGetSize(p));
 
         // This block is large enough.
         if (freeGetSize(p) >= size + 16)
         {
             uint64_t* result = p;
-
-            //printf("Allocating block @ %p\n", p);
 
             // If this is large enough to accomodate the current request and
             // possibly another one, then split it.
@@ -687,10 +587,10 @@ void* mymalloc(size_t size)
             }
             else // Otherwise, use the whole thing
             {
-                //printf("Using full block\n");
-
                 void* prev = freeGetPrev(p);
                 void* next = freeGetNext(p);
+
+                //printf("Using full block\n");
 
                 makeAllocatedBlock(p, freeGetSize(p));
 
@@ -706,20 +606,28 @@ void* mymalloc(size_t size)
                 if (next) freeSetPrev(next, prev);
             }
 
-            //checkAllocatedBlock(result, size);
-            //walkChunk(currentChunk);
-
-            //printf("End:\n");
-            //walkFreeList();
             return (void*)(result + 1);
         }
 
         p = freeGetNext(p);
     }
 
+    // Cannot allocate from the current free list
+    return NULL;
+}
+
+#ifdef __APPLE__
+void* mymalloc(size_t) asm("mymalloc");
+#endif
+
+void* mymalloc(size_t size)
+{
+    void* result = try_mymalloc(size);
+    if (result) return result;
+
     // Current heap is full: need to allocate another chunk
     createChunk(size + 16);
-    return mymalloc(size);
+    return try_mymalloc(size);
 }
 
 void myfree(void* p)
@@ -790,7 +698,7 @@ void myfree(void* p)
 
     // Otherwise, add to the beginning of the free list
     createFreeBlock(block, size, NULL, freeList);
-    freeSetPrev(freeList, block);
+    if (freeList) freeSetPrev(freeList, block);
     freeList = block;
 
     //printf("End:\n");

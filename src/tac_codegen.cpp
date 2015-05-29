@@ -62,8 +62,6 @@ void TACCodeGen::visit(ProgramNode* node)
     // other functions. Now generate code for those
     for (FunctionDefNode* funcDefNode : _functions)
     {
-        FunctionType* functionType = funcDefNode->functionType;
-
         _tacProgram.otherFunctions.emplace_back(funcDefNode->symbol->name);
 
         _currentFunction = &_tacProgram.otherFunctions.back();
@@ -88,10 +86,6 @@ void TACCodeGen::visit(ProgramNode* node)
             assert(param->asVariable()->isParam);
             std::shared_ptr<Address> paramAddress = getNameAddress(param);
             _currentFunction->params.push_back(paramAddress);
-
-            // We gain a reference to every parameter
-            if (param->typeScheme->type()->isBoxed())
-                incref(paramAddress);
         }
 
         // Generate code for the function body
@@ -104,32 +98,6 @@ void TACCodeGen::visit(ProgramNode* node)
         }
 
         emit(_functionEnd);
-
-        // Preserve the return value from being freed if it happens to be the
-        // same as one of the local variables.
-        if (functionType->output()->isBoxed())
-        {
-            incref(_currentFunction->returnValue);
-        }
-
-        // Going out of scope loses a reference to all of the local variables
-        // and parameters
-        for (auto& i : funcDefNode->scope->symbols.symbols)
-        {
-            const Symbol* symbol = i.second.get();
-            assert(symbol->kind == kVariable);
-
-            if (symbol->typeScheme->type()->isBoxed())
-                emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(symbol)}));
-        }
-
-        // But after the function returns, we don't have a reference to the
-        // return value, it's just in a temporary. The caller will have to
-        // assign it a reference.
-        if (functionType->output()->isBoxed())
-        {
-            emit(new TACCall(true, FOREIGN_NAME("_decrefNoFree"), {_currentFunction->returnValue}));
-        }
     }
 
     for (DataDeclaration* dataDeclaration : _dataDeclarations)
@@ -360,7 +328,7 @@ void TACCodeGen::visit(NullaryNode* node)
             // If the function is not completely applied, then this nullary node
             // evaluates to a function type -- create a closure
             size_t size = sizeof(SplObject) + 8;
-            emit(new TACCall(true, dest, FOREIGN_NAME("mymalloc"), {std::make_shared<ConstAddress>(size)}));
+            emit(new TACCall(true, dest, "gcAllocate", {std::make_shared<ConstAddress>(size)}));
 
             // SplObject header fields
             emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, constructorTag), ConstAddress::UnboxedZero));
@@ -501,12 +469,6 @@ void TACCodeGen::visit(AssignNode* node)
     if (node->symbol->type->isBoxed())
     {
         std::shared_ptr<Address> value = visitAndGet(*node->value);
-
-        // Make sure to incref before decref in case dest currently has the
-        // only reference to value
-        //emit(new TACCall(true, FOREIGN_NAME("_incref"), {value}));
-        incref(value);
-        emit(new TACCall(true, FOREIGN_NAME("_decref"), {dest}));
         emit(new TACAssign(dest, value));
     }
     else
@@ -532,11 +494,6 @@ void TACCodeGen::visit(LetNode* node)
     if (node->symbol->type->isBoxed())
     {
         std::shared_ptr<Address> value = visitAndGet(*node->value);
-
-        // Make sure to incref before decref in case dest currently has the
-        // only reference to value
-        incref(value);
-        emit(new TACCall(true, FOREIGN_NAME("_decref"), {dest}));
         emit(new TACAssign(dest, value));
     }
     else
@@ -558,18 +515,6 @@ void TACCodeGen::visit(LetNode* node)
 void TACCodeGen::visit(MatchNode* node)
 {
     std::shared_ptr<Address> body = visitAndGet(*node->body);
-
-    // Decrement references to the existing variables
-    for (size_t i = 0; i < node->symbols.size(); ++i)
-    {
-        const Symbol* member = node->symbols.at(i);
-
-        if (member->typeScheme->type()->isBoxed())
-        {
-            emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(member)}));
-        }
-    }
-
     ValueConstructor* constructor = node->valueConstructor;
 
     // Copy over each of the members of the constructor pattern
@@ -579,17 +524,6 @@ void TACCodeGen::visit(MatchNode* node)
         size_t location = constructor->members().at(i).location;
 
         emit(new TACRightIndexedAssignment(getNameAddress(member), body, sizeof(SplObject) + 8 * location));
-    }
-
-    // Increment references to the new variables
-    for (size_t i = 0; i < node->symbols.size(); ++i)
-    {
-        const Symbol* member = node->symbols.at(i);
-
-        if (member->typeScheme->type()->isBoxed())
-        {
-            incref(getNameAddress(member));
-        }
     }
 }
 
@@ -797,17 +731,6 @@ void TACCodeGen::visit(SwitchNode* node)
 
 void TACCodeGen::visit(MatchArm* node)
 {
-    // Decrement references to the existing variables
-    for (size_t i = 0; i < node->symbols.size(); ++i)
-    {
-        const Symbol* member = node->symbols.at(i);
-
-        if (member->typeScheme->type()->isBoxed())
-        {
-            emit(new TACCall(true, FOREIGN_NAME("_decref"), {getNameAddress(member)}));
-        }
-    }
-
     ValueConstructor* constructor = node->valueConstructor;
 
     // Copy over each of the members of the constructor pattern
@@ -817,17 +740,6 @@ void TACCodeGen::visit(MatchArm* node)
         size_t location = constructor->members().at(i).location;
 
         emit(new TACRightIndexedAssignment(getNameAddress(member), node->address, sizeof(SplObject) + 8 * location));
-    }
-
-    // Increment references to the new variables
-    for (size_t i = 0; i < node->symbols.size(); ++i)
-    {
-        const Symbol* member = node->symbols.at(i);
-
-        if (member->typeScheme->type()->isBoxed())
-        {
-            incref(getNameAddress(member));
-        }
     }
 
     node->body->accept(this);
@@ -851,7 +763,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     emit(new TACCall(
         true,
         _currentFunction->returnValue,
-        FOREIGN_NAME("mymalloc"),
+        "gcAllocate",
         {std::make_shared<ConstAddress>(size)}));
 
     //// Fill in the members with the constructor arguments
@@ -890,32 +802,5 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         _currentFunction->locals.push_back(param);
 
         emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, sizeof(SplObject) + 8 * location, param));
-
-        // Assigning into this structure gives a new reference to each member
-        if (member.type->isBoxed())
-        {
-            incref(param);
-        }
     }
-}
-
-void TACCodeGen::incref(std::shared_ptr<Address> operand)
-{
-    TACLabel* endLabel = new TACLabel;
-
-    emit(new TACConditionalJump(operand, "==", ConstAddress::UnboxedZero, endLabel));
-
-    std::shared_ptr<Address> mod4 = makeTemp();
-
-    // TODO: Don't do this check. Use the type information to determine if this
-    // value is boxed or not.
-    emit(new TACBinaryOperation(mod4, operand, BinaryOperation::UAND, std::make_shared<ConstAddress>(3)));
-    emit(new TACConditionalJump(mod4, "!=", ConstAddress::UnboxedZero, endLabel));
-
-    std::shared_ptr<Address> refcount = makeTemp();
-    emit(new TACRightIndexedAssignment(refcount, operand, offsetof(SplObject, refCount)));
-    emit(new TACBinaryOperation(refcount, refcount, BinaryOperation::UADD, ConstAddress::UnboxedOne));
-    emit(new TACLeftIndexedAssignment(operand, offsetof(SplObject, refCount), refcount));
-
-    emit(endLabel);
 }

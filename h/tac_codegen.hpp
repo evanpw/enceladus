@@ -141,8 +141,6 @@ private:
 
     void createConstructor(ValueConstructor* constructor, size_t constructorTag);
 
-    void incref(std::shared_ptr<Address> operand);
-
     TACProgram _tacProgram;
     TACFunction* _currentFunction;
     std::shared_ptr<Address> _returnValue;

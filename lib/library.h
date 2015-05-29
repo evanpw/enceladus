@@ -1,7 +1,11 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
-void* mymalloc(size_t size);
+#ifdef __APPLE__
+void* mymalloc(size_t) asm("mymalloc");
+#endif
+
+void* mymalloc(size_t);
 void myfree(void* p);
 
 struct SplObject;
@@ -12,7 +16,7 @@ struct SplObject;
 
 #define SplObject_HEAD \
     size_t constructorTag; \
-    int64_t refCount; \
+    void* gcNext; \
     uint64_t markBit; \
     uint64_t pointerFields;
 

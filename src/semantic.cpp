@@ -178,12 +178,9 @@ void SemanticAnalyzer::injectSymbols()
 	//// These definitions are only needed so that we list them as external
 	//// symbols in the output assembly file. They can't be called from
 	//// language.
-    scope->symbols.insert(makeExternal("_incref"));
-    scope->symbols.insert(makeExternal("_decref"));
-    scope->symbols.insert(makeExternal("_decrefNoFree"));
-    scope->symbols.insert(makeExternal("__destroyClosure"));
-    scope->symbols.insert(makeExternal("mymalloc"));
-    scope->symbols.insert(makeExternal("myfree"));
+    FunctionSymbol* gcAllocate = new FunctionSymbol("gcAllocate", _root, nullptr);
+    gcAllocate->isExternal = true;
+    scope->symbols.insert(gcAllocate);
 
     scope->symbols.insert(new FunctionSymbol("_main", _root, nullptr));
 }
