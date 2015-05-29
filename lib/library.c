@@ -579,6 +579,18 @@ void walkChunk(void* p)
     printf("End Chunk\n");
 }
 
+void walkHeap()
+{
+    printf("\nHeap:\n");
+
+    uint8_t* chunk = firstChunk;
+    while (chunk)
+    {
+        walkChunk(chunk);
+        chunk = *(uint8_t**)chunk;
+    }
+}
+
 void walkFreeList()
 {
     printf("freeList = %p\n", freeList);
