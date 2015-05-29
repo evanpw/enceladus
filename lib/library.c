@@ -82,6 +82,7 @@ void _decref(SplObject* object)
         return;
     }
 
+    /*
     if (object->constructorTag <= MAX_STRUCTURED_TAG)
     {
         destroy(object);
@@ -90,6 +91,7 @@ void _decref(SplObject* object)
     {
         myfree(object);
     }
+    */
 }
 
 // Recursively destroy object and decrement the reference count of its children.
@@ -571,13 +573,39 @@ void walkChunk(void* p)
     while (block < chunkEnd)
     {
         uint64_t sizeAndFlag = *(uint64_t*)block;
-        printf("Block @ %p, size = %llx, free = %llx\n", block, sizeAndFlag & ~1ULL, sizeAndFlag & 1);
+        uint64_t size = sizeAndFlag & ~1ULL;
+        uint64_t freeFlag = sizeAndFlag & 1;
+
+        if (freeFlag)
+        {
+            printf("Free block @ %p, size = %llx\n", block, size);
+        }
+        else
+        {
+            printf("Allocated block @ %p, size = %llx\n", block, size);
+
+            SplObject* object = (SplObject*)((uint64_t*)block + 1);
+            printf("\tconstructorTag = %zx\n", object->constructorTag);
+            printf("\trefCount = %lld\n", object->refCount);
+            printf("\tmarkBit = %lld\n", object->markBit);
+            printf("\tpointerFields = %llx\n", object->pointerFields);
+
+            if (!object->markBit)
+            {
+                printf("\tFreeing object\n");
+                myfree(object);
+            }
+        }
 
         block += sizeAndFlag & ~1ULL;
     }
 
     printf("End Chunk\n");
 }
+
+#ifdef __APPLE__
+extern void walkHeap() asm("walkHeap") ;
+#endif
 
 void walkHeap()
 {
