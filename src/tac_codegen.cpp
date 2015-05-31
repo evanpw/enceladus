@@ -332,7 +332,6 @@ void TACCodeGen::visit(NullaryNode* node)
 
             // SplObject header fields
             emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, constructorTag), ConstAddress::UnboxedZero));
-            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
             emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, markBit), ConstAddress::UnboxedZero));
 
             emit(new TACLeftIndexedAssignment(
@@ -769,7 +768,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     //// Fill in the members with the constructor arguments
 
     // SplObject header fields
-    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, refCount), ConstAddress::UnboxedZero));
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, constructorTag), std::make_shared<ConstAddress>(constructorTag)));
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, markBit), ConstAddress::UnboxedZero));
 

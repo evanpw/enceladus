@@ -525,7 +525,7 @@ void walkFreeList()
     while (p)
     {
         uint64_t sizeAndFlag = *(uint64_t*)p;
-        printf("Free block @ %p, size = %llx, free = %llx\n", p, sizeAndFlag & ~1ULL, sizeAndFlag & 1);
+        printf("Free block @ %p, size = %llx, free = %" PRIu64 "\n", p, sizeAndFlag & ~1ULL, sizeAndFlag & 1);
 
         void* next = freeGetNext(p);
         void* prev = freeGetPrev(p);

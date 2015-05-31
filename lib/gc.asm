@@ -1,7 +1,7 @@
 bits 64
 section .text
 global initGC, stackBottom, gcAllocate
-extern gcCollect, __globalVarTable, try_mymalloc, mymalloc, _die
+extern gcCollect, __globalVarTable, try_mymalloc, mymalloc, _die, die
 
 initGC:
     mov rax, rsp
@@ -35,7 +35,11 @@ gcAllocate:
 
     ; If all of this fails, the we're out of memory
     mov rdi, outOfMemoryMessage
+%ifdef __APPLE__
     call _die
+%else
+    call die
+%endif
 
 .finish:
     pop rbp
