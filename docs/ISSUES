@@ -14,15 +14,12 @@
   Don't try to infer type of structs when accessing a member.
   (see structMemberNames.spl)
 
-* Allow sum types and multiple pattern matching (see sumTypes.spl)
-
-* Allow list literals within brackets to span multiple lines, with indentation
-  ignored (see longLiteral.spl)
-
 * Remove implicit returns, and add a separate semantic-analysis pass that
   makes sure every path through a function has a return statement
 
 * Optimization: Unconditional jump to next instruction can be killed
 
-* Don't save Unit return values in a temporary, and reuse temporaries that are
-  no longer live.
+* Reuse temporaries that are no longer live.
+
+* Use the gcNext field of SplObject to store the list of global roots, rather
+  than the current data structure
