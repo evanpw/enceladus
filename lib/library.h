@@ -49,4 +49,6 @@ extern void* splcall5(void* f, void* p1, void* p2, void* p3, void* p4, void* p5)
 extern void addRoot(uint64_t* array, void** root) asm("addRoot");
 extern void removeRoots(uint64_t* array) asm("removeRoots");
 
+extern void* gcAllocate(size_t) asm("gcAllocateFromC");
+
 #endif

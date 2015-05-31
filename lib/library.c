@@ -31,12 +31,6 @@ int64_t fromInt(int64_t n)
 
 //// Strings ///////////////////////////////////////////////////////////////////
 
-#ifdef __APPLE__
-extern void* gcAllocate(size_t) asm("gcAllocate");
-#else
-extern void* gcAllocate(size_t);
-#endif
-
 char* strContent(String* s)
 {
     return (char*)(s + 1);
@@ -209,6 +203,12 @@ void die(String* s)
 void* testStackBreak(long value)
 {
     uint64_t roots[3];
+    char xs[100];
+
+    for (size_t i = 0; i < 100; ++i)
+    {
+        value += xs[i];
+    }
 
     void* result = splcall1(Some, (void*)value);
     addRoot(roots, &result);
@@ -270,31 +270,14 @@ void gcMark(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots
             }
         }
 
+        if (bottom == stackBottom)
+        {
+            break;
+        }
+
         //printf("Next frame pointer: %p\n", (void*)*bottom);
         //printf("Return value: %p\n", (void*)*(bottom + 1));
         //printf("\n");
-
-        if (bottom == stackBottom)
-        {
-            // If execution has passed through a C function, then the Simple
-            // stack may be non-contiguous
-            uint64_t* nextStackBottom = (uint64_t*)*(stackBottom - 1);
-            uint64_t* nextTop = (uint64_t*)*(stackBottom - 2);
-
-            if (nextStackBottom)
-            {
-                stackBottom = nextStackBottom;
-                top = nextTop;
-                bottom = (uint64_t*)*bottom;
-
-                //printf("Jump to: %p %p %p\n", top, bottom, stackBottom);
-                continue;
-            }
-            else
-            {
-                break;
-            }
-        }
 
         top = bottom + 2;
         bottom = (uint64_t*)*bottom;
@@ -531,9 +514,9 @@ void gcSweep()
 extern void gcCollect(uint64_t*, uint64_t*, uint64_t*) asm("gcCollect");
 #endif
 
-void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* globalVarTable)
+void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
 {
-    gcMark(stackTop, stackBottom, globalVarTable);
+    gcMark(stackTop, stackBottom, additionalRoots);
     gcSweep();
 }
 

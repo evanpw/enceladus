@@ -1,22 +1,30 @@
 bits 64
 section .text
-global main, _main, stackBottom, stackTop, gcAllocate, ccall
+global main, _main, stackBottom, gcAllocate, gcAllocateFromC, ccall
 global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
 global addRoot, removeRoots
 extern gcCollect, __globalVarTable, try_mymalloc, mymalloc, _die, die, _Z4main
+extern _malloc, _free
 
 main:
 _main:
     push rbp
     mov rbp, rsp
 
+    ; Allocate a stack for C code
+    mov rdi, 0x400000
+    call _malloc
+    mov qword [rel cstack], rax
+    mov qword [rel cstackbase], rax
+
     ; Initialize the GC
-    push qword 0
-    push qword 0
     mov qword [rel stackBottom], rbp
 
     ; The actual program
     call _Z4main
+
+    mov rdi, qword [rel cstackbase]
+    call _free
 
     ; If we reach here without calling die, then exit code = 0
     xor rax, rax
@@ -59,12 +67,12 @@ ccall:
     push rbp
     mov rbp, rsp
 
-    mov rbx, qword [rel stackTop]
-    mov qword [rel stackTop], rbp
+    mov qword [rel splstack], rsp
+    mov rsp, qword [rel cstack]
 
     call rax
 
-    mov qword [rel stackTop], rbx
+    mov rsp, qword [rel splstack]
 
     leave
     ret
@@ -80,20 +88,15 @@ splcall0:
     push r13
     push r14
     push r15
-    push rdi ; For alignment
+    push rdi
 
-    push qword [rel stackBottom]
-    push qword [rel stackTop]
-    mov qword [rel stackBottom], rbp
-    xor rax, rax
-    mov qword [rel stackTop], rax
+    mov qword [rel cstack], rsp
+    mov rsp, qword [rel splstack]
 
     call rdi
 
-    pop rsi
-    mov qword [rel stackTop], rsi
-    pop rdi
-    mov qword [rel stackBottom], rdi
+    mov qword [rel splstack], rsp
+    mov rsp, qword [rel cstack]
 
     ; Callee-save registers
     pop rdi
@@ -119,21 +122,16 @@ splcall1:
     push r15
     push rdi ; For alignment
 
-    push qword [rel stackBottom]
-    push qword [rel stackTop]
-    mov qword [rel stackBottom], rbp
-    xor rax, rax
-    mov qword [rel stackTop], rax
+    mov qword [rel cstack], rsp
+    mov rsp, qword [rel splstack]
 
     ; Shift all parameters over by one and call
     mov rax, rdi
     mov rdi, rsi
     call rax
 
-    pop rsi
-    mov qword [rel stackTop], rsi
-    pop rdi
-    mov qword [rel stackBottom], rdi
+    mov qword [rel splstack], rsp
+    mov rsp, qword [rel cstack]
 
     ; Callee-save registers
     pop rdi
@@ -159,11 +157,8 @@ splcall2:
     push r15
     push rdi ; For alignment
 
-    push qword [rel stackBottom]
-    push qword [rel stackTop]
-    mov qword [rel stackBottom], rbp
-    xor rax, rax
-    mov qword [rel stackTop], rax
+    mov qword [rel cstack], rsp
+    mov rsp, qword [rel splstack]
 
     ; Shift all parameters over by one and call
     mov rax, rdi
@@ -171,10 +166,8 @@ splcall2:
     mov rsi, rdx
     call rax
 
-    pop rsi
-    mov qword [rel stackTop], rsi
-    pop rdi
-    mov qword [rel stackBottom], rdi
+    mov qword [rel splstack], rsp
+    mov rsp, qword [rel cstack]
 
     ; Callee-save registers
     pop rdi
@@ -200,11 +193,8 @@ splcall3:
     push r15
     push rdi ; For alignment
 
-    push qword [rel stackBottom]
-    push qword [rel stackTop]
-    mov qword [rel stackBottom], rbp
-    xor rax, rax
-    mov qword [rel stackTop], rax
+    mov qword [rel cstack], rsp
+    mov rsp, qword [rel splstack]
 
     ; Shift all parameters over by one and call
     mov rax, rdi
@@ -213,10 +203,8 @@ splcall3:
     mov rdx, rcx
     call rax
 
-    pop rsi
-    mov qword [rel stackTop], rsi
-    pop rdi
-    mov qword [rel stackBottom], rdi
+    mov qword [rel splstack], rsp
+    mov rsp, qword [rel cstack]
 
     ; Callee-save registers
     pop rdi
@@ -242,11 +230,8 @@ splcall4:
     push r15
     push rdi ; For alignment
 
-    push qword [rel stackBottom]
-    push qword [rel stackTop]
-    mov qword [rel stackBottom], rbp
-    xor rax, rax
-    mov qword [rel stackTop], rax
+    mov qword [rel cstack], rsp
+    mov rsp, qword [rel splstack]
 
     ; Shift all parameters over by one and call
     mov rax, rdi
@@ -256,10 +241,8 @@ splcall4:
     mov rcx, r8
     call rax
 
-    pop rsi
-    mov qword [rel stackTop], rsi
-    pop rdi
-    mov qword [rel stackBottom], rdi
+    mov qword [rel splstack], rsp
+    mov rsp, qword [rel cstack]
 
     ; Callee-save registers
     pop rdi
@@ -285,11 +268,8 @@ splcall5:
     push r15
     push rdi ; For alignment
 
-    push qword [rel stackBottom]
-    push qword [rel stackTop]
-    mov qword [rel stackBottom], rbp
-    xor rax, rax
-    mov qword [rel stackTop], rax
+    mov qword [rel cstack], rsp
+    mov rsp, qword [rel splstack]
 
     ; Shift all parameters over by one and call
     mov rax, rdi
@@ -300,10 +280,8 @@ splcall5:
     mov r8, r9
     call rax
 
-    pop rsi
-    mov qword [rel stackTop], rsi
-    pop rdi
-    mov qword [rel stackBottom], rdi
+    mov qword [rel splstack], rsp
+    mov rsp, qword [rel cstack]
 
     ; Callee-save registers
     pop rdi
@@ -331,12 +309,46 @@ gcAllocate:
     jnz .finish
 
     ; If not successful, collect garbage
-    mov rdi, qword [rel stackTop]           ; Frame pointer at last Simple->C transition
-    test rdi, rdi
-    jnz .goodStackTop
-    mov rdi, rbp                            ; Frame pointer of gcAllocate instead
-.goodStackTop:
-    mov rsi, qword [rel stackBottom]        ; Frame pointer at last C->Simple transition
+    mov rdi, rbp                            ; Frame pointer of gcAllocate
+    mov rsi, qword [rel stackBottom]        ; Frame pointer at beginning of execution
+    mov rdx, qword [rel additionalRoots]    ; List of additional roots: globals and C-allocated heap vars
+    call gcCollect
+
+    ; Try again, allowing the allocator to request more memory from the OS
+    mov rdi, qword [rbp - 8]
+    call mymalloc
+    test rax, rax
+    jnz .finish
+
+    ; If all of this fails, the we're out of memory
+    mov rdi, outOfMemoryMessage
+%ifdef __APPLE__
+    call _die
+%else
+    call die
+%endif
+
+.finish:
+    leave
+    ret
+
+
+gcAllocateFromC:
+    push rbp
+    mov rbp, rsp
+
+    ; Save size argument and callee-save register rbx
+    push rdi
+    push rbx
+
+    ; Try to allocate from the free list
+    call try_mymalloc
+    test rax, rax
+    jnz .finish
+
+    ; If not successful, collect garbage
+    mov rdi, qword [rel splstack]           ; Frame pointer at last Simple->C transition
+    mov rsi, qword [rel stackBottom]        ; Frame pointer at beginning of execution
     mov rdx, qword [rel additionalRoots]    ; List of additional roots: globals and C-allocated heap vars
     call gcCollect
 
@@ -361,8 +373,10 @@ gcAllocate:
 
 section .data
 stackBottom:        dq 0
-stackTop:           dq 0
 additionalRoots:    dq __globalVarTable
+cstack              dq 0
+cstackbase          dq 0
+splstack            dq 0
 
 ; Type String
 outOfMemoryMessage:
