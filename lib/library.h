@@ -36,4 +36,7 @@ typedef struct List
 
 typedef SplObject String;
 
+extern void* Some(void* value) asm("_Z4Some");
+extern void* None() asm("_Z4None");
+
 #endif

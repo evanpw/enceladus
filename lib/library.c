@@ -184,6 +184,7 @@ String* show(int64_t x)
     return result;
 }
 
+
 //// I/O ///////////////////////////////////////////////////////////////////////
 
 int64_t read()
@@ -194,7 +195,7 @@ int64_t read()
     return toInt(result);
 }
 
-String* readLine()
+void* readLine()
 {
     char* line = NULL;
     size_t len = 0;
@@ -203,14 +204,14 @@ String* readLine()
 
     if (read == -1)
     {
-        return makeStr("");
+        return None();
     }
     else
     {
         String* result = makeStr(line);
         free(line);
 
-        return result;
+        return Some(result);
     }
 }
 

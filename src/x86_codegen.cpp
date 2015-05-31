@@ -25,6 +25,7 @@ void X86CodeGen::generateCode(TACProgram& program)
     EMIT_LEFT("section .text");
     EMIT_LEFT("global " << mangle("main"));
     EMIT_LEFT("global __globalVarTable");
+    EMIT_LEFT("global _Z4Some, _Z4None");
     EMIT_LEFT("extern initGC");
 
     // External references

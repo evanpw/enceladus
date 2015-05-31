@@ -6,7 +6,7 @@ import String
 def readNames() -> [String]
     line := readLine
 
-    pieces := splitBy ',' line
+    pieces := splitBy ',' $ unwrap line
 
     result := []
     for piece in pieces

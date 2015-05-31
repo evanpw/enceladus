@@ -9,11 +9,35 @@ foreign strFromList(s: [Char]) -> String
 foreign strCat(lhs: String, rhs: String) -> String
 foreign show(x: Int) -> String
 
+foreign die(msg: String) -> a
+
+## Option ##
+data Option a = Some a | None
+
+def isSome(x: Option a) -> Bool
+    match x
+        Some _ => return True
+        None   => return False
+
+def isNone(x: Option a) -> Bool
+    match x
+        Some _ => return False
+        None   => return True
+
+def unwrap(x: Option a) -> a
+    match x
+        Some y => return y
+        None   => die "*** Exception: Cannot unwrap None"
+
+def unwrapOr(x: Option a, other: a) -> a
+    match x
+        Some y => return y
+        None   => return other
+
 # I/O functions
 foreign read() -> Int
-foreign readLine() -> String
+foreign readLine() -> Option String
 foreign print(msg: String) -> Unit
-foreign die(msg: String) -> a
 
 # Basic List operations
 def head(xs: [a]) -> a
@@ -199,20 +223,3 @@ def snd(pair: Pair a) -> a
 
 def splitAt(n: Int, xs: [a]) -> Pair [a]
     return Pair (take n xs) (drop n xs)
-
-
-## Option ##
-
-data Option a = Some a | None
-
-
-def unwrap(x: Option a) -> a
-    match x
-        Some y => return y
-        None   => die "*** Exception: Cannot unwrap None"
-
-
-def unwrapOr(x: Option a, other: a) -> a
-    match x
-        Some y => return y
-        None   => return other

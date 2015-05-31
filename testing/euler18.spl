@@ -5,20 +5,19 @@ import String
 def readInput() -> [[Int]]
     pyramid := []
 
-    keepGoing := True
-    while keepGoing
+    forever
         line := readLine
 
-        if strLength line == 0
-            keepGoing = False
-        else
+        if isSome line
             xs := []
-            for s in split line
+            for s in split $ unwrap line
                 xs = (unwrap $ stringToInt s) :: xs
 
             row := reverse xs
 
             pyramid = row :: pyramid
+        else
+            break
 
     return reverse pyramid
 
