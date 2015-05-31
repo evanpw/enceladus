@@ -14,7 +14,7 @@ def readInput() -> [[Int]]
         else
             xs := []
             for s in split line
-                xs = (stringToInt s) :: xs
+                xs = (unwrap $ stringToInt s) :: xs
 
             row := reverse xs
 

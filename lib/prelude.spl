@@ -199,3 +199,20 @@ def snd(pair: Pair a) -> a
 
 def splitAt(n: Int, xs: [a]) -> Pair [a]
     return Pair (take n xs) (drop n xs)
+
+
+## Option ##
+
+data Option a = Some a | None
+
+
+def unwrap(x: Option a) -> a
+    match x
+        Some y => return y
+        None   => die "*** Exception: Cannot unwrap None"
+
+
+def unwrapOr(x: Option a, other: a) -> a
+    match x
+        Some y => return y
+        None   => return other

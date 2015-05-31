@@ -1,11 +1,11 @@
-data Option = Some Int | None
-x := Some 4
-y := None
+data MyOption = MySome Int | MyNone
+x := MySome 4
+y := MyNone
 
-def extract(val: Option) -> Int
+def extract(val: MyOption) -> Int
     match val
-        Some a => return a
-        None   => return 1
+        MySome a => return a
+        MyNone   => return 1
 
     return 0
 
