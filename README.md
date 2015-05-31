@@ -20,7 +20,7 @@ A simple compiler for a simple language.
 * Hindley-Milner type system with type inference
 * Parametric polymorphism
 * Unboxed Int and Bool types (through tagging)
-* Automatic memory management using reference counting
+* Mark-and-sweep garbage collection
 * Local and global variables are immutable, but member of data structures are immutable
 * Support for calling C functions
 * Syntax highlighting for Sublime Text (see sublime/ directory)
