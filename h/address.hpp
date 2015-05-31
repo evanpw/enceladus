@@ -30,6 +30,8 @@ struct Address
     virtual std::string str() const = 0;
 
     AddressTag tag;
+
+    static std::shared_ptr<Address> Null;
 };
 
 enum class NameTag {Local, Global, Param, Function, Static};

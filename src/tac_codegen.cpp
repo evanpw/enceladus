@@ -1,5 +1,6 @@
 #include "platform.hpp"
 #include "tac_codegen.hpp"
+#include "types.hpp"
 #include "lib/library.h"
 
 #include <iostream>
@@ -50,7 +51,7 @@ std::shared_ptr<Address> TACConditionalCodeGen::visitAndGet(AstNode& node)
 void TACCodeGen::visit(ProgramNode* node)
 {
     _currentFunction = &_tacProgram.mainFunction;
-    _currentFunction->returnValue.reset();  // No return value
+    _currentFunction->returnValue = Address::Null; // No return value
     _currentInstruction = nullptr;
 
     for (auto& child : node->children)
@@ -308,7 +309,8 @@ void TACCodeGen::visit(NullaryNode* node)
         if (node->kind == NullaryNode::FOREIGN_CALL)
         {
             std::string name;
-            if (node->symbol->asFunction()->isExternal)
+            bool external = node->symbol->asFunction()->isExternal;
+            if (external)
             {
                 name = FOREIGN_NAME(node->symbol->name);
             }
@@ -317,7 +319,7 @@ void TACCodeGen::visit(NullaryNode* node)
                 name = mangle(node->symbol->name);
             }
 
-            emit(new TACCall(true, dest, name));
+            emit(new TACCall(true, dest, name, {}, external));
         }
         else if (node->kind == NullaryNode::FUNC_CALL)
         {
@@ -560,7 +562,14 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
 
     if (!node->address)
-        node->address = makeTemp();
+    {
+        if (unwrap(node->type) != Type::Unit)
+            node->address = makeTemp();
+    }
+    else
+    {
+        assert(unwrap(node->type) != Type::Unit);
+    }
 
     std::shared_ptr<Address> result = node->address;
 
@@ -613,7 +622,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
     else if (node->symbol->kind == kFunction)
     {
         std::string name;
-        if (node->symbol->asFunction()->isExternal)
+        bool external = node->symbol->asFunction()->isExternal;
+        if (external)
         {
             name = FOREIGN_NAME(node->symbol->name);
         }
@@ -623,7 +633,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         }
 
         bool foreign = node->symbol->asFunction()->isForeign;
-        emit(new TACCall(foreign, result, name, arguments));
+        emit(new TACCall(foreign, result, name, arguments, external));
     }
     else /* node->symbol->kind == kVariable */
     {

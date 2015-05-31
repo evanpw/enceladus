@@ -17,6 +17,8 @@ TempAddress& Address::asTemp()
     return dynamic_cast<TempAddress&>(*this);
 }
 
+std::shared_ptr<Address> Address::Null;
+
 std::string NameAddress::str() const
 {
     return name;

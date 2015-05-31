@@ -132,27 +132,22 @@ void SemanticAnalyzer::injectSymbols()
     std::shared_ptr<Scope>& scope = _root->scope;
 
     //// Built-in types ////////////////////////////////////////////////////////
-    Int = BaseType::create("Int", true);
-    Bool = BaseType::create("Bool", true);
-    Unit = BaseType::create("Unit", true);
-    String = BaseType::create("String", false, STRING_TAG);
-
-    scope->types.insert(new TypeSymbol("Int", _root, Int));
-    scope->types.insert(new TypeSymbol("Bool", _root, Bool));
-    scope->types.insert(new TypeSymbol("Unit", _root, Unit));
-    scope->types.insert(new TypeSymbol("String", _root, String));
+    scope->types.insert(new TypeSymbol("Int", _root, Type::Int));
+    scope->types.insert(new TypeSymbol("Bool", _root, Type::Bool));
+    scope->types.insert(new TypeSymbol("Unit", _root, Type::Unit));
+    scope->types.insert(new TypeSymbol("String", _root, Type::String));
 
     TypeConstructor* Function = new TypeConstructor("Function", 1);
     scope->types.insert(new TypeConstructorSymbol("Function", _root, Function));
 
 	//// Create symbols for built-in functions
     FunctionSymbol* notFn = makeBuiltin("not");
-	notFn->setType(FunctionType::create({Bool}, Bool));
+	notFn->setType(FunctionType::create({Type::Bool}, Type::Bool));
 	scope->symbols.insert(notFn);
 
 	//// Integer arithmetic functions //////////////////////////////////////////
 
-    std::shared_ptr<Type> arithmeticType = FunctionType::create({Int, Int}, Int);
+    std::shared_ptr<Type> arithmeticType = FunctionType::create({Type::Int, Type::Int}, Type::Int);
 
 	FunctionSymbol* add = makeBuiltin("+");
 	add->setType(arithmeticType);
@@ -246,7 +241,7 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, std::unordered_map<st
             // With no type parameters, the return value should be Unit
             if (typeParameters.empty())
             {
-                typeParameters.push_back(Unit);
+                typeParameters.push_back(Type::Unit);
             }
 
             std::shared_ptr<Type> resultType = typeParameters.back();
@@ -594,12 +589,12 @@ void SemanticAnalyzer::visit(ProgramNode* node)
 
     for (auto& child : node->children)
     {
-        unify(child->type, Unit, child);
+        unify(child->type, Type::Unit, child);
     }
 
     exitScope();
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(ConstructorSpec* node)
@@ -630,7 +625,7 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
 
     //std::cerr << "constructor: " << node->name << " :: " << symbol->typeScheme->name() << std::endl;
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(DataDeclaration* node)
@@ -684,7 +679,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         }
     }
 
-	node->type = Unit;
+	node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(TypeAliasNode* node)
@@ -701,7 +696,7 @@ void SemanticAnalyzer::visit(TypeAliasNode* node)
     // Insert the alias into the type table
     topScope()->types.insert(new TypeSymbol(typeName, node, node->underlying->type));
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(FunctionDefNode* node)
@@ -763,7 +758,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
     //std::cerr << name << " :: " << symbol->typeScheme->name() << std::endl;
 
     unify(node->body->type, functionType->output(), node);
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(ForeignDeclNode* node)
@@ -790,7 +785,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 	insertSymbol(symbol);
 	node->symbol = symbol;
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(LetNode* node)
@@ -818,7 +813,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 
 	unify(node->value->type, symbol->type, node);
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(SwitchNode* node)
@@ -921,7 +916,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 	}
 
 	unify(node->body->type, functionType->output(), node);
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(AssignNode* node)
@@ -935,7 +930,7 @@ void SemanticAnalyzer::visit(AssignNode* node)
 
     unify(node->value->type, node->symbol->type, node);
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(FunctionCallNode* node)
@@ -1011,23 +1006,23 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 void SemanticAnalyzer::visit(ComparisonNode* node)
 {
     node->lhs->accept(this);
-    unify(node->lhs->type, Int, node);
+    unify(node->lhs->type, Type::Int, node);
 
     node->rhs->accept(this);
-    unify(node->rhs->type, Int, node);
+    unify(node->rhs->type, Type::Int, node);
 
-    node->type = Bool;
+    node->type = Type::Bool;
 }
 
 void SemanticAnalyzer::visit(LogicalNode* node)
 {
     node->lhs->accept(this);
-    unify(node->lhs->type, Bool, node);
+    unify(node->lhs->type, Type::Bool, node);
 
     node->rhs->accept(this);
-    unify(node->rhs->type, Bool, node);
+    unify(node->rhs->type, Type::Bool, node);
 
-    node->type = Bool;
+    node->type = Type::Bool;
 }
 
 void SemanticAnalyzer::visit(BlockNode* node)
@@ -1037,7 +1032,7 @@ void SemanticAnalyzer::visit(BlockNode* node)
     for (size_t i = 0; i + 1 < node->children.size(); ++i)
     {
         node->children[i]->accept(this);
-        unify(node->children[i]->type, Unit, node);
+        unify(node->children[i]->type, Type::Unit, node);
     }
 
     if (node->children.size() > 0)
@@ -1047,25 +1042,25 @@ void SemanticAnalyzer::visit(BlockNode* node)
     }
     else
     {
-        node->type = Unit;
+        node->type = Type::Unit;
     }
 }
 
 void SemanticAnalyzer::visit(IfNode* node)
 {
     node->condition->accept(this);
-    unify(node->condition->type, Bool, node);
+    unify(node->condition->type, Type::Bool, node);
 
     node->body->accept(this);
-    unify(node->body->type, Unit, node);
+    unify(node->body->type, Type::Unit, node);
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(IfElseNode* node)
 {
     node->condition->accept(this);
-    unify(node->condition->type, Bool, node);
+    unify(node->condition->type, Type::Bool, node);
 
     node->body->accept(this);
     node->else_body->accept(this);
@@ -1077,19 +1072,19 @@ void SemanticAnalyzer::visit(IfElseNode* node)
 void SemanticAnalyzer::visit(WhileNode* node)
 {
     node->condition->accept(this);
-    unify(node->condition->type, Bool, node);
+    unify(node->condition->type, Type::Bool, node);
 
     // Save the current inner-most loop so that we can restore it after
     // visiting the children of this loop.
     LoopNode* outerLoop = _enclosingLoop;
 
-    node->type = Unit;
+    node->type = Type::Unit;
 
     _enclosingLoop = node;
     node->body->accept(this);
     _enclosingLoop = outerLoop;
 
-    unify(node->body->type, Unit, node);
+    unify(node->body->type, Type::Unit, node);
 }
 
 void SemanticAnalyzer::visit(ForeverNode* node)
@@ -1106,31 +1101,31 @@ void SemanticAnalyzer::visit(ForeverNode* node)
     node->body->accept(this);
     _enclosingLoop = outerLoop;
 
-    unify(node->body->type, Unit, node);
+    unify(node->body->type, Type::Unit, node);
 }
 
 void SemanticAnalyzer::visit(BreakNode* node)
 {
     CHECK(_enclosingLoop, "break statement must be within a loop");
 
-    unify(_enclosingLoop->type, Unit, node);
+    unify(_enclosingLoop->type, Type::Unit, node);
 
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(IntNode* node)
 {
-    node->type = Int;
+    node->type = Type::Int;
 }
 
 void SemanticAnalyzer::visit(BoolNode* node)
 {
-    node->type = Bool;
+    node->type = Type::Bool;
 }
 
 void SemanticAnalyzer::visit(StringLiteralNode* node)
 {
-    node->type = String;
+    node->type = Type::String;
 
     std::string name = "__staticString" + std::to_string(node->counter);
     VariableSymbol* symbol = new VariableSymbol(name, node, nullptr);
@@ -1219,7 +1214,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     insertSymbol(symbol);
 
     node->structType = newType;
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(MemberDefNode* node)
@@ -1227,7 +1222,7 @@ void SemanticAnalyzer::visit(MemberDefNode* node)
     // All of the constructor members must refer to already-declared types
     resolveTypeName(node->typeName);
     node->memberType = node->typeName->type;
-    node->type = Unit;
+    node->type = Type::Unit;
 }
 
 void SemanticAnalyzer::visit(MemberAccessNode* node)

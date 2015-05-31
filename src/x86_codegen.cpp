@@ -27,6 +27,7 @@ void X86CodeGen::generateCode(TACProgram& program)
     EMIT_LEFT("global __globalVarTable");
     EMIT_LEFT("global _Z4Some, _Z4None");
     EMIT_LEFT("extern initGC");
+    EMIT_LEFT("extern ccall");
 
     // External references
     if (!program.externs.empty())
@@ -61,6 +62,7 @@ void X86CodeGen::generateCode(TACProgram& program)
     {
         EMIT("dq " << global->asName().name);
     }
+    EMIT("dq 0");
 
     for (auto& item : program.staticStrings)
     {
@@ -82,12 +84,6 @@ void X86CodeGen::generateCode(TACFunction& function)
     _currentFunction = &function;
 
     EMIT_LABEL(mangle(function.name));
-
-    if (function.name == "main")
-    {
-        EMIT("call initGC");
-    }
-
     EMIT("push rbp");
     EMIT("mov rbp, rsp");
 
@@ -587,7 +583,15 @@ void X86CodeGen::visit(TACCall* inst)
 
         spillAndClear();
 
-        EMIT("call " << inst->function);
+        if (inst->ccall)
+        {
+            EMIT("mov rax, " << inst->function);
+            EMIT("call ccall");
+        }
+        else
+        {
+            EMIT("call " << inst->function);
+        }
 
         if (inst->dest)
         {

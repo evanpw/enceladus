@@ -154,19 +154,19 @@ struct TACJump : public TACInstruction
 
 struct TACCall : public TACInstruction
 {
-    TACCall(bool foreign, std::shared_ptr<Address> dest, const std::string& function, const std::vector<std::shared_ptr<Address>>& params = {})
-    : foreign(foreign), dest(dest), function(function), params(params)
+    TACCall(bool foreign, std::shared_ptr<Address> dest, const std::string& function, const std::vector<std::shared_ptr<Address>>& params = {}, bool ccall = false)
+    : foreign(foreign), dest(dest), function(function), params(params), ccall(ccall)
     {
     }
 
-    TACCall(bool foreign, std::shared_ptr<Address> dest, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList)
-    : foreign(foreign), dest(dest), function(function)
+    TACCall(bool foreign, std::shared_ptr<Address> dest, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList, bool ccall = false)
+    : foreign(foreign), dest(dest), function(function), ccall(ccall)
     {
         for (auto& param : paramsList) params.push_back(param);
     }
 
-    TACCall(bool foreign, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList = {})
-    : foreign(foreign), function(function)
+    TACCall(bool foreign, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList = {}, bool ccall = false)
+    : foreign(foreign), function(function), ccall(ccall)
     {
         for (auto& param : paramsList) params.push_back(param);
     }
@@ -196,6 +196,7 @@ struct TACCall : public TACInstruction
     std::shared_ptr<Address> dest;
     std::string function;
     std::vector<std::shared_ptr<Address>> params;
+    bool ccall;
 };
 
 struct TACIndirectCall : public TACInstruction

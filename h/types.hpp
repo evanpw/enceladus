@@ -67,6 +67,12 @@ public:
         return dynamic_cast<T*>(this);
     }
 
+    // For easy access to commonly-used types
+    static std::shared_ptr<Type> Int;
+    static std::shared_ptr<Type> Bool;
+    static std::shared_ptr<Type> Unit;
+    static std::shared_ptr<Type> String;
+
 private:
     TypeTag _tag;
     std::vector<ValueConstructor*> _valueConstructors;

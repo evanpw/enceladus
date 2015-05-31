@@ -104,12 +104,6 @@ private:
     void enterScope(std::shared_ptr<Scope>& scope) { _scopes.push_back(scope); }
     void exitScope() { _scopes.pop_back(); }
 
-    // For easy access to commonly-used types
-    std::shared_ptr<Type> Int;
-    std::shared_ptr<Type> Bool;
-    std::shared_ptr<Type> Unit;
-    std::shared_ptr<Type> String;
-
     ProgramNode* _root;
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;

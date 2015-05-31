@@ -1,11 +1,17 @@
 #include "types.hpp"
-#include "ast.hpp"
 
+#include "ast.hpp"
+#include "lib/library.h"
 #include "utility.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+
+std::shared_ptr<Type> Type::Int = BaseType::create("Int", true);
+std::shared_ptr<Type> Type::Bool = BaseType::create("Bool", true);
+std::shared_ptr<Type> Type::Unit = BaseType::create("Unit", true);
+std::shared_ptr<Type> Type::String = BaseType::create("String", false, STRING_TAG);
 
 std::shared_ptr<Type> unwrap(const std::shared_ptr<Type>& type)
 {
