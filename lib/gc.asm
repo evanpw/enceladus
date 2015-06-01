@@ -4,7 +4,7 @@ global main, _main, stackBottom, gcAllocate, gcAllocateFromC, ccall
 global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
 global addRoot, removeRoots
 extern gcCollect, __globalVarTable, try_mymalloc, mymalloc, _die, die, _Z4main
-extern _malloc, _free
+extern _malloc, _free, malloc, free
 
 main:
 _main:
@@ -13,9 +13,14 @@ _main:
 
     ; Allocate a stack for C code
     mov rdi, 0x400000
+%ifdef __APPLE__
     call _malloc
-    mov qword [rel cstack], rax
+%else
+    call malloc
+%endif
     mov qword [rel cstackbase], rax
+    add rax, 0x400000
+    mov qword [rel cstack], rax
 
     ; Initialize the GC
     mov qword [rel stackBottom], rbp
@@ -24,7 +29,11 @@ _main:
     call _Z4main
 
     mov rdi, qword [rel cstackbase]
+%ifdef __APPLE__
     call _free
+%else
+    call free
+%endif
 
     ; If we reach here without calling die, then exit code = 0
     xor rax, rax
