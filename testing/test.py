@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 import re
 import sys
+import unittest
 import subprocess
-
-
-if sys.platform == 'darwin':
-    platform = 'osx'
-elif sys.platform.startswith('linux'):
-    platform = 'linux'
-else:
-    assert False
 
 
 class Regex(object):
@@ -26,96 +19,107 @@ def assert_matches(result, expected):
             raise AssertionError('{} != {}'.format(result.strip(), expected.strip()))
 
 
-def run_test(name, result=None, build_error=None, runtime_error=None, input_file=None):
-    build_cmd = '{}/build.sh {}'.format(platform, name)
-    build_proc = subprocess.Popen(build_cmd, shell=True, stderr=subprocess.PIPE)
+class TestAcceptance(object):
+    def __init__(self):
+        if sys.platform == 'darwin':
+            self.platform = 'osx'
+        elif sys.platform.startswith('linux'):
+            self.platform = 'linux'
+        else:
+            assert False
 
-    if build_error:
-        assert_matches(build_proc.stderr.read(), build_error)
-        assert build_proc.wait() != 0
-        return
-    else:
-        assert build_proc.wait() == 0
+    def run(self, name, result=None, build_error=None, runtime_error=None, input_file=None):
+        build_cmd = '{}/build.sh {}'.format(self.platform, name)
+        build_proc = subprocess.Popen(build_cmd, shell=True, stderr=subprocess.PIPE)
 
-    if input_file:
-        run_cmd = 'build/{} < {}'.format(name, input_file)
-    else:
-        run_cmd = 'build/{}'.format(name)
+        if build_error:
+            assert_matches(build_proc.stderr.read(), build_error)
+            assert build_proc.wait() != 0
+            return
+        else:
+            assert build_proc.wait() == 0
 
-    run_proc = subprocess.Popen(run_cmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        if input_file:
+            run_cmd = 'build/{} < {}'.format(name, input_file)
+        else:
+            run_cmd = 'build/{}'.format(name)
 
-    if runtime_error:
-        assert_matches(run_proc.stderr.read(), runtime_error)
-        assert run_proc.wait() != 0
-    else:
-        assert_matches(run_proc.stdout.read(), result)
-        assert run_proc.wait() == 0
+        run_proc = subprocess.Popen(run_cmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
+        if runtime_error:
+            assert_matches(run_proc.stderr.read(), runtime_error)
+            assert run_proc.wait() != 0
+        else:
+            assert_matches(run_proc.stdout.read(), result)
+            assert run_proc.wait() == 0
 
-# Fast tests ( < 100ms)
-run_test('euler1', result='233168')
-run_test('euler2', result='4613732')
-run_test('euler3', result='6857')
-run_test('euler5', result='232792560')
-run_test('euler6', result='25164150')
-run_test('euler7', result='104743')
-run_test('euler8', result='40824')
-run_test('euler9', result='31875000')
-run_test('euler11', result='70600674')
-run_test('euler13', result='5537376230', input_file='testing/euler13.txt')
-run_test('euler15', result='137846528820')
-run_test('euler16', result='1366')
-run_test('euler17', result='21124')
-run_test('euler18', result='1074', input_file='testing/euler18.txt')
-run_test('euler20', result='648')
-run_test('euler21', result='31626')
-run_test('euler22', result='871198282', input_file='testing/names.txt')
-run_test('poly', result='4')
-run_test('poly2', result='False')
-run_test('fail', runtime_error='*** Exception: Called head on empty list')
-run_test('unaryMinus', result='-5')
-run_test('localVar', result='3')
-run_test('unnamed', result='19')
-run_test('typeConstructor', result='7')
-run_test('associativity', result='10')
-run_test('closure', result='7')
-run_test('structMembers1', build_error='Error: Near line 3, column 5: symbol "x" is already defined')
-run_test('structMembers2', build_error='Error: Near line 7, column 5: symbol "y" is already defined')
-run_test('structMembers3', build_error='Error: Near line 5, column 1: symbol "x" is already defined in this scope')
-run_test('structInference', result='7')
-run_test('bigList', result='')
-run_test('multiRef', result='6')
-run_test('shortCircuit', result='Hello')
-run_test('localopt', result='22')
-run_test('functionArg', result='12')
-run_test('functionArg2', result='12')
-run_test('importSemantic', build_error='Error: Near line 4, column 1: error: cannot unify types Bool and Int')
-run_test('syntaxError', build_error='Error: Near line 1, column 2: expected tEOL, but got =')
-run_test('constructorMismatch', build_error='Error: Near line 3, column 10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
-run_test('overrideType', build_error=Regex('Error: Near line 2, column 16: error: cannot unify types Int and a\d+'))
-run_test('noReturn', result='1')
-run_test('noReturn2', build_error='Error: Near line 1, column 0: error: cannot unify types Unit and Int')
-run_test('noReturn3', build_error='Error: Near line 1, column 0: error: cannot unify types Unit and Int')
-run_test('implicitReturn', result='4')
-run_test('implicitReturn2', result='10')
-run_test('fizzBuzz', result=open('testing/fizzBuzz.correct').read())
-run_test('adt1', result='5')
-run_test('adt2', result='2')
-run_test('adt3', build_error='Error: Near line 6, column 5: cannot repeat constructors in match statement')
-run_test('adt4', build_error='Error: Near line 4, column 1: switch statement is not exhaustive')
+    # Fast tests ( < 100ms)
+    def test_fast(self):
+        self.run('euler1', result='233168')
+        self.run('euler2', result='4613732')
+        self.run('euler3', result='6857')
+        self.run('euler5', result='232792560')
+        self.run('euler6', result='25164150')
+        self.run('euler7', result='104743')
+        self.run('euler8', result='40824')
+        self.run('euler9', result='31875000')
+        self.run('euler11', result='70600674')
+        self.run('euler13', result='5537376230', input_file='testing/euler13.txt')
+        self.run('euler15', result='137846528820')
+        self.run('euler16', result='1366')
+        self.run('euler17', result='21124')
+        self.run('euler18', result='1074', input_file='testing/euler18.txt')
+        self.run('euler20', result='648')
+        self.run('euler21', result='31626')
+        self.run('euler22', result='871198282', input_file='testing/names.txt')
+        self.run('poly', result='4')
+        self.run('poly2', result='False')
+        self.run('fail', runtime_error='*** Exception: Called head on empty list')
+        self.run('unaryMinus', result='-5')
+        self.run('localVar', result='3')
+        self.run('unnamed', result='19')
+        self.run('typeConstructor', result='7')
+        self.run('associativity', result='10')
+        self.run('closure', result='7')
+        self.run('structMembers1', build_error='Error: Near line 3, column 5: symbol "x" is already defined')
+        self.run('structMembers2', build_error='Error: Near line 7, column 5: symbol "y" is already defined')
+        self.run('structMembers3', build_error='Error: Near line 5, column 1: symbol "x" is already defined in this scope')
+        self.run('structInference', result='7')
+        self.run('bigList', result='')
+        self.run('multiRef', result='6')
+        self.run('shortCircuit', result='Hello')
+        self.run('localopt', result='22')
+        self.run('functionArg', result='12')
+        self.run('functionArg2', result='12')
+        self.run('importSemantic', build_error='Error: Near line 4, column 1: error: cannot unify types Bool and Int')
+        self.run('syntaxError', build_error='Error: Near line 1, column 2: expected tEOL, but got =')
+        self.run('constructorMismatch', build_error='Error: Near line 3, column 10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
+        self.run('overrideType', build_error=Regex('Error: Near line 2, column 16: error: cannot unify types Int and a\d+'))
+        self.run('noReturn', result='1')
+        self.run('noReturn2', build_error='Error: Near line 1, column 0: error: cannot unify types Unit and Int')
+        self.run('noReturn3', build_error='Error: Near line 1, column 0: error: cannot unify types Unit and Int')
+        self.run('implicitReturn', result='4')
+        self.run('implicitReturn2', result='10')
+        self.run('fizzBuzz', result=open('testing/fizzBuzz.correct').read())
+        self.run('adt1', result='5')
+        self.run('adt2', result='2')
+        self.run('adt3', build_error='Error: Near line 6, column 5: cannot repeat constructors in match statement')
+        self.run('adt4', build_error='Error: Near line 4, column 1: switch statement is not exhaustive')
 
-# Medium tests (100ms-1s)
-run_test('euler4', result='906609')
-run_test('euler12', '76576500')
-run_test('euler19', '171')
-run_test('euler19-2', '171')
-run_test('euler26', '983')
-run_test('euler25', '4782')
+    # Medium tests (100ms-1s)
+    def test_medium(self):
+        self.run('euler4', result='906609')
+        self.run('euler12', result='76576500')
+        self.run('euler19', result='171')
+        self.run('euler19-2', result='171')
+        self.run('euler26', result='983')
+        self.run('euler25', result='4782')
 
-# Slow tests (> 1s)
-run_test('euler10', '142913828922')
-run_test('euler14', '837799')
-run_test('euler23', '4179871')
-run_test('euler24', '2783915460')
-run_test('euler27', '-59231')
+    # Slow tests (> 1s)
+    def test_slow(self):
+        self.run('euler10', result='142913828922')
+        self.run('euler14', result='837799')
+        self.run('euler23', result='4179871')
+        self.run('euler24', result='2783915460')
+        self.run('euler27', result='-59231')
 

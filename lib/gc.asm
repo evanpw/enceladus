@@ -18,7 +18,6 @@ _main:
 %else
     call malloc
 %endif
-    mov qword [rel cstackbase], rax
     add rax, 0x400000
     mov qword [rel cstack], rax
 
@@ -27,13 +26,6 @@ _main:
 
     ; The actual program
     call _Z4main
-
-    mov rdi, qword [rel cstackbase]
-%ifdef __APPLE__
-    call _free
-%else
-    call free
-%endif
 
     ; If we reach here without calling die, then exit code = 0
     xor rax, rax
@@ -384,7 +376,6 @@ section .data
 stackBottom:        dq 0
 additionalRoots:    dq __globalVarTable
 cstack              dq 0
-cstackbase          dq 0
 splstack            dq 0
 
 ; Type String
