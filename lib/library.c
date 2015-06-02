@@ -200,14 +200,13 @@ void die(String* s)
 
 //// Garbage collector /////////////////////////////////////////////////////////
 
+// Cheney-style copying collector
 uint64_t* heapStart;
 uint64_t* heapPointer;
 uint64_t* heapEnd;
 
 uint64_t* otherStart;
 uint64_t* otherEnd;
-
-int needExpansion = 0;
 
 void initializeHeap() asm("initializeHeap");
 
@@ -290,8 +289,6 @@ void* try_mymalloc(size_t) asm("try_mymalloc");
 // Try to allocate memory from the current heap
 void* try_mymalloc(size_t sizeInBytes)
 {
-    //printf("try_mymalloc: %zx\n", sizeInBytes);
-
     // Allocate in units of 8 bytes
     size_t sizeInWords = (sizeInBytes + 7) / 8;
 
