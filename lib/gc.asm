@@ -3,7 +3,8 @@ section .text
 global main, _main, stackBottom, gcAllocate, gcAllocateFromC, ccall
 global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
 global addRoot, removeRoots
-extern gcCollect, __globalVarTable, try_mymalloc, mymalloc, _die, die, _Z4main
+extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _die, die, _Z4main
+extern initializeHeap
 extern _malloc, _free, malloc, free
 
 main:
@@ -20,6 +21,9 @@ _main:
 %endif
     add rax, 0x400000
     mov qword [rel cstack], rax
+
+    ; Allocate an initial heap
+    call initializeHeap
 
     ; Initialize the GC
     mov qword [rel stackBottom], rbp
@@ -309,15 +313,13 @@ gcAllocate:
     test rax, rax
     jnz .finish
 
-    ; If not successful, collect garbage
-    mov rdi, rbp                            ; Frame pointer of gcAllocate
-    mov rsi, qword [rel stackBottom]        ; Frame pointer at beginning of execution
-    mov rdx, qword [rel additionalRoots]    ; List of additional roots: globals and C-allocated heap vars
-    call gcCollect
+    ; If not successful, collect garbage first, then allocate
+    mov rdi, qword [rbp - 8]                ; Size to allocate
+    mov rsi, rbp                            ; Frame pointer of gcAllocate
+    mov rdx, qword [rel stackBottom]        ; Frame pointer at beginning of execution
+    mov rcx, qword [rel additionalRoots]    ; List of additional roots: globals and C-allocated heap vars
+    call gcCollectAndAllocate
 
-    ; Try again, allowing the allocator to request more memory from the OS
-    mov rdi, qword [rbp - 8]
-    call mymalloc
     test rax, rax
     jnz .finish
 
@@ -348,14 +350,12 @@ gcAllocateFromC:
     jnz .finish
 
     ; If not successful, collect garbage
-    mov rdi, qword [rel splstack]           ; Frame pointer at last Simple->C transition
-    mov rsi, qword [rel stackBottom]        ; Frame pointer at beginning of execution
-    mov rdx, qword [rel additionalRoots]    ; List of additional roots: globals and C-allocated heap vars
-    call gcCollect
+    mov rdi, qword [rbp - 8]                ; Size to allocate
+    mov rsi, qword [rel splstack]           ; Frame pointer at last Simple->C transition
+    mov rdx, qword [rel stackBottom]        ; Frame pointer at beginning of execution
+    mov rcx, qword [rel additionalRoots]    ; List of additional roots: globals and C-allocated heap vars
+    call gcCollectAndAllocate
 
-    ; Try again, allowing the allocator to request more memory from the OS
-    mov rdi, qword [rbp - 8]
-    call mymalloc
     test rax, rax
     jnz .finish
 

@@ -200,73 +200,159 @@ void die(String* s)
 
 //// Garbage collector /////////////////////////////////////////////////////////
 
-void* testStackBreak(long value)
+uint64_t* heapStart;
+uint64_t* heapPointer;
+uint64_t* heapEnd;
+
+uint64_t* otherStart;
+uint64_t* otherEnd;
+
+int needExpansion = 0;
+
+void initializeHeap() asm("initializeHeap");
+
+void initializeHeap()
 {
-    uint64_t roots[3];
-    char xs[100];
+    size_t size = 4 << 20;
 
-    for (size_t i = 0; i < 100; ++i)
+    heapStart = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (heapStart == MAP_FAILED)
     {
-        value += xs[i];
+        fail("*** Exception: Cannot initialize heap");
     }
+    heapPointer = heapStart;
+    heapEnd = heapStart + size / sizeof(uint64_t);
 
-    void* result = splcall1(Some, (void*)value);
-    addRoot(roots, &result);
-
-    void* p = gcAllocate(4 << 20);
-
-    removeRoots(roots);
-    return result;
+    otherStart = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (otherStart == MAP_FAILED)
+    {
+        fail("*** Exception: Cannot initialize heap");
+    }
+    otherEnd = otherStart + size / sizeof(uint64_t);
 }
 
-void markFromRoot(SplObject* p)
+// increment should be a power of 2
+size_t roundUp(size_t size, size_t increment)
 {
-    if (p->markBit) return;
-
-    p->gcNext = NULL;
-    SplObject* markStack = p;
-
-    while (markStack)
+    if (size % increment)
     {
-        // Pop the top of the stack, mark it, and add its children to the stack
-        SplObject* object = markStack;
-        markStack = object->gcNext;
-
-        object->markBit = 1;
-
-        SplObject** p = (SplObject**)(object + 1);
-        uint64_t fields = object->pointerFields;
-        while (fields)
-        {
-            if ((fields & 1) && !IS_TAGGED(*p) && !(*p)->markBit)
-            {
-                (*p)->gcNext = markStack;
-                markStack = *p;
-            }
-
-            fields >>= 1;
-            ++p;
-        }
+        return (size - size % increment) + increment;
+    }
+    else
+    {
+        return size;
     }
 }
 
-void gcMark(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
+void expandHeap(size_t minimumSize)
+{
+    size_t currentSize = (otherEnd - otherStart) * sizeof(uint64_t);
+    munmap(otherStart, currentSize);
+
+    currentSize *= 2;
+    if (currentSize < minimumSize)
+    {
+        currentSize = roundUp(minimumSize, 4096);
+    }
+    
+    otherStart = mmap(0, currentSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (otherStart == MAP_FAILED)
+    {
+        fail("*** Exception: Cannot expand heap");
+    }
+
+    otherEnd = otherStart + (currentSize / sizeof(uint64_t));
+}
+
+// Make sure that the other heap has at least the same capacity as
+// the current heap
+void equalizeHeaps()
+{
+    size_t otherSize = (otherEnd - otherStart) * sizeof(uint64_t);
+    size_t currentSize = (heapEnd - heapStart) * sizeof(uint64_t);
+    if (otherSize >= currentSize) return;
+
+    munmap(otherStart, otherSize);
+
+    otherSize = currentSize;
+
+    otherStart = mmap(otherStart, otherSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (otherStart == MAP_FAILED)
+    {
+        fail("*** Exception: Cannot expand heap");
+    }
+
+    otherEnd = otherStart + (otherSize / sizeof(uint64_t));
+}
+
+void* try_mymalloc(size_t) asm("try_mymalloc");
+
+// Try to allocate memory from the current heap
+void* try_mymalloc(size_t sizeInBytes)
+{
+    //printf("try_mymalloc: %zx\n", sizeInBytes);
+
+    // Allocate in units of 8 bytes
+    size_t sizeInWords = (sizeInBytes + 7) / 8;
+
+    // New allocation is at the current heapPointer
+    uint64_t* p = heapPointer;
+    heapPointer += (sizeInWords + 1);
+
+    // Bump the pointer and check whether we jumped the end of the heap
+    if (heapPointer >= heapEnd)
+    {
+        return NULL;
+    }
+
+    // The first word of the allocated block contains the size in words
+    // (tagged so that we can distinguish it from a forwarding pointer)
+    *p++ = (sizeInWords | 1);
+    return p;
+}
+
+uint64_t* allocPtr;
+uint64_t* scanPtr;
+
+void* gcCopy(void* object)
+{
+    // Back up one word to the beginning of the allocated block
+    uint64_t* block = (uint64_t*)object - 1;
+    uint64_t header = *block;
+    if (!(header & 1))
+    {
+        // No tag => this is a forwarding pointer. Don't copy
+        return (void*)header;
+    }
+
+    size_t sizeInWords = header & ~1ULL;
+
+    // Copy to the "to" space
+    memcpy(allocPtr, block, (sizeInWords + 1) * sizeof(uint64_t));
+
+    // Leave a forwarding address (to the object, not the block header)
+    void* newLocation = allocPtr + 1;
+    *block = (uint64_t)newLocation;
+
+    allocPtr += (sizeInWords + 1);
+
+    return newLocation;
+}
+
+void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
 {
     uint64_t* top = stackTop;
     uint64_t* bottom = stackTop;
 
-    //printf("gcMark: %p %p %p\n", stackTop, stackBottom, additionalRoots);
     while (1)
     {
-        //printf("Stack frame: %p %p\n", top, bottom);
         for (uint64_t* p = top; p < bottom; ++p)
         {
-            //printf("%p: %p\n", p, (void*)*p);
-
             SplObject* object = (SplObject*)*p;
-            if (object && !IS_TAGGED(object))
+            if (object && IS_REFERENCE(object))
             {
-                markFromRoot(object);
+                void* newLocation = gcCopy(object);
+                *p = (uint64_t)newLocation;
             }
         }
 
@@ -275,29 +361,21 @@ void gcMark(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots
             break;
         }
 
-        //printf("Next frame pointer: %p\n", (void*)*bottom);
-        //printf("Return value: %p\n", (void*)*(bottom + 1));
-        //printf("\n");
-
         top = bottom + 2;
         bottom = (uint64_t*)*bottom;
     }
 
     while (additionalRoots)
     {
-        //printf("Additional roots: %p\n", additionalRoots);
-
         uint64_t numGlobals = *additionalRoots;
         uint64_t** p = (uint64_t**)(additionalRoots + 1);
-        //printf("count = %lld\n", numGlobals);
         for (size_t i = 0; i < numGlobals; ++i)
         {
-            //printf("%p: %p\n", p, (void*)**p);
-
             SplObject* object = (SplObject*)**p;
-            if (object && !IS_TAGGED(object))
+            if (object && IS_REFERENCE(object))
             {
-                markFromRoot(object);
+                void* newLocation = gcCopy(object);
+                **p = (uint64_t)newLocation;
             }
 
             ++p;
@@ -307,403 +385,97 @@ void gcMark(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots
     }
 }
 
-uint8_t* firstChunk = NULL;
-uint8_t* currentChunk = NULL;
-size_t chunkSize = 0;
-void* freeList = NULL;
-
-const size_t MIN_BLOCK_SIZE = 0x20;
-const size_t MIN_SPLIT_SIZE = 0x50;
-
-static void createFreeBlock(void* p, size_t size, void* prev, void* next)
+void gcScan()
 {
-    assert(size >= MIN_BLOCK_SIZE);
-
-    uint64_t* header = p;
-    *header++ = size | 1;
-    *header++ = (uint64_t)next;
-
-    // Footer
-    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 2;
-    *footer++ = (uint64_t)prev;
-    *footer++ = size | 1;
-}
-
-uint64_t freeGetSize(void* p)
-{
-    uint64_t* header = p;
-    return *header & ~1ULL;
-}
-
-void* freeGetNext(void* p)
-{
-    uint64_t* header = p;
-    return (void*)*(header + 1);
-}
-
-void freeSetNext(void* p, void* next)
-{
-    void** header = p;
-    *(header + 1) = next;
-}
-
-void* freeGetPrev(void* p)
-{
-    size_t size = freeGetSize(p);
-    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 2;
-    return (void*)*footer;
-}
-
-void freeSetPrev(void* p, void* prev)
-{
-    size_t size = freeGetSize(p);
-    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 2;
-    *footer = (uint64_t)prev;
-}
-
-int createChunk(size_t minSize)
-{
-    size_t newSize = chunkSize == 0 ? 4 << 20 : chunkSize * 2;
-    while (newSize < minSize) newSize *= 2;
-
-    void* newChunk = mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (newChunk == MAP_FAILED)
+    while (scanPtr < allocPtr)
     {
-        return 0;
-    }
+        // Skip the size word to get to the next object on the scan list
+        SplObject* object = (SplObject*)(scanPtr + 1);
 
-    //printf("mymalloc: new chunk @ %p, size = %zx\n", newChunk, newSize);
-
-    if (currentChunk)
-    {
-        *(void**)currentChunk = newChunk;
-    }
-    else
-    {
-        firstChunk = newChunk;
-    }
-
-    currentChunk = newChunk;
-    chunkSize = newSize;
-
-    // Pointer to next chunk
-    *(void**)currentChunk = NULL;                   // Pointer to next chunk
-    *((uint64_t*)currentChunk + 1) = chunkSize;     // Size of this chunk
-
-    // Fake sentinel footer and header
-    uint64_t* fakeHeader = (uint64_t*)currentChunk + 2;
-    uint64_t* fakeFooter = (uint64_t*)(currentChunk + newSize) - 1;
-    *fakeHeader = 0;
-    *fakeFooter = 0;
-    //printf("fakeHeader = %p, fakeFooter = %p\n", fakeHeader, fakeFooter);
-
-    void* newBlock = currentChunk + 3 * 8;
-    createFreeBlock(newBlock, newSize - 4 * 8, NULL, freeList);
-    if (freeList)
-    {
-        freeSetPrev(freeList, newBlock);
-    }
-    freeList = newBlock;
-
-    return 1;
-}
-
-void makeAllocatedBlock(void* p, size_t size)
-{
-    uint64_t* header = p;
-    *header = size;
-
-    uint64_t* footer = (uint64_t*)((uint8_t*)p + size) - 1;
-    *footer = size;
-}
-
-size_t roundUp8(size_t size)
-{
-    if (size & 7)
-    {
-        return (size & ~7UL) + 8;
-    }
-    else
-    {
-        return size;
-    }
-}
-
-void checkAllocatedBlock(void* p, size_t useableSize)
-{
-    uint8_t* bytes = p;
-    uint64_t* header = (uint64_t*)bytes;
-
-    size_t actualSize = *header;
-    assert(actualSize >= useableSize + 16);
-
-    uint64_t* footer = (uint64_t*)(bytes + actualSize) - 1;
-    assert(*footer == actualSize);
-
-    printf("Good block @ %p, size = %zx\n", p, actualSize);
-}
-
-void gcSweep()
-{
-    //printf("\nHeap:\n");
-
-    size_t freeSize = 0;
-    size_t totalSize = 0;
-
-    uint8_t* chunk = firstChunk;
-    while (chunk)
-    {
-        void* nextChunk = *((void**)chunk);
-        uint64_t chunkSize = *((uint64_t*)chunk + 1);
-        uint8_t* chunkEnd = chunk + chunkSize - 8;
-
-        totalSize += chunkSize;
-
-        //printf("Chunk @ %p, next = %p, size = %llx\n", p, nextChunk, chunkSize);
-
-        uint8_t* block = chunk + 3 * 8;
-        while (block < chunkEnd)
+        // Iterate over the children, and copy them to the new heap
+        SplObject** p = (SplObject**)(object + 1);
+        uint64_t fields = object->pointerFields;
+        while (fields)
         {
-            uint64_t sizeAndFlag = *(uint64_t*)block;
-            uint64_t size = sizeAndFlag & ~1ULL;
-            uint64_t freeFlag = sizeAndFlag & 1;
-
-            if (freeFlag)
+            if ((fields & 1) && IS_REFERENCE(*p))
             {
-                //printf("Free block @ %p, size = %llx\n", block, size);
-                freeSize += size;
-            }
-            else
-            {
-                //printf("Allocated block @ %p, size = %llx\n", block, size);
-
-                SplObject* object = (SplObject*)((uint64_t*)block + 1);
-                //printf("\tconstructorTag = %zx\n", object->constructorTag);
-                //printf("\tmarkBit = %lld\n", object->markBit);
-                //printf("\tpointerFields = %llx\n", object->pointerFields);
-
-                if (!object->markBit)
-                {
-                    //printf("\tFreeing object\n");
-                    myfree(object);
-                }
-                else
-                {
-                    object->markBit = 0;
-                }
+                void* newLocation = gcCopy(*p);
+                *p = (SplObject*)newLocation;
             }
 
-            block += sizeAndFlag & ~1ULL;
+            fields >>= 1;
+            ++p;
         }
 
-        //printf("End Chunk\n");
-
-        chunk = *(uint8_t**)chunk;
-    }
-
-    //printf("freeSize = %zx, totalSize = %zx, pct free = %f\n", freeSize, totalSize, freeSize / (double)totalSize);
-
-    // If heap is mostly full even after collecting, double the size of the heap
-    if (freeSize <= 0.10 * totalSize)
-    {
-        createChunk(totalSize);
+        size_t sizeInWords = *scanPtr & ~1ULL;
+        scanPtr += (sizeInWords + 1);
     }
 }
-
-#ifdef __APPLE__
-extern void gcCollect(uint64_t*, uint64_t*, uint64_t*) asm("gcCollect");
-#endif
 
 void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
 {
-    gcMark(stackTop, stackBottom, additionalRoots);
-    gcSweep();
-}
+    allocPtr = otherStart;
+    scanPtr = otherStart;
 
-void walkFreeList()
-{
-    printf("freeList = %p\n", freeList);
+    gcCopyRoots(stackTop, stackBottom, additionalRoots);
+    gcScan();
 
-    void* p = freeList;
-    while (p)
-    {
-        uint64_t sizeAndFlag = *(uint64_t*)p;
-        printf("Free block @ %p, size = %llx, free = %" PRIu64 "\n", p, sizeAndFlag & ~1ULL, sizeAndFlag & 1);
+    // Swap the heaps
+    uint64_t* tmpStart = heapStart;
+    uint64_t* tmpEnd = heapEnd;
+    
+    heapStart = otherStart;
+    heapPointer = allocPtr;
+    heapEnd = otherEnd;
 
-        void* next = freeGetNext(p);
-        void* prev = freeGetPrev(p);
-
-        if (prev) assert(freeGetNext(prev) == p);
-        if (next) assert(freeGetPrev(next) == p);
-
-        p = next;
-    }
+    otherStart = tmpStart;
+    otherEnd = tmpEnd;
 }
 
 #ifdef __APPLE__
-void* try_mymalloc(size_t) asm("try_mymalloc");
+extern void gcCollectAndAllocate(size_t, uint64_t*, uint64_t*, uint64_t*) asm("gcCollect");
 #endif
 
-// Try to allocate memory from the free list, but don't request more memory from
-// the operating system (except on the first call)
-void* try_mymalloc(size_t size)
+void* gcCollectAndAllocate(size_t sizeInBytes, uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
 {
-    //printf("try_mymalloc: %zx\n", size);
+    assert(otherEnd - otherStart >= heapEnd - heapStart);
 
-    size = roundUp8(size);
+    // This is minimum free size we need to satisfy this allocation
+    size_t bytesNeeded = roundUp(sizeInBytes, 8) + 8;
 
-    if (size < MIN_BLOCK_SIZE)
-        size = MIN_BLOCK_SIZE;
+    gcCollect(stackTop, stackBottom, additionalRoots);
 
-    // First allocation: need to create a heap
-    if (!firstChunk)
+    // If there's not much free space even after collection, increase the size
+    // of the heap
+    size_t totalSize = heapEnd - heapStart;
+    size_t usedSize = heapPointer - heapStart;
+    size_t freeSize = totalSize - usedSize;
+    if (freeSize < 0.20 * totalSize || freeSize < bytesNeeded / 8)
     {
-        if (!createChunk(0)) return NULL;
+        // Always allocate enough so that the new heap will be at most half full
+        size_t minimumSize = (usedSize * 8 + bytesNeeded) * 2;
+        expandHeap(minimumSize);
+    }
+    else
+    {
+        equalizeHeaps();
     }
 
-    // Search for a large-enough free block
-    void* p = freeList;
-    while (p)
+    void* result = try_mymalloc(sizeInBytes);
+    if (!result)
     {
-        //printf("Examining block @ %p, size = %llx\n", p, freeGetSize(p));
+        // In the unhappy case where the current heap doesn't have enough space
+        // for the current allocation, we have to copy again into the
+        // newly-enlarged other heap
+        gcCollect(stackTop, stackBottom, additionalRoots);
+        result = try_mymalloc(sizeInBytes);
 
-        // This block is large enough.
-        if (freeGetSize(p) >= size + 16)
-        {
-            uint64_t* result = p;
+        // The heap-expansion above should have guaranteed that we have enough
+        // space to make this allocation
+        assert(result);
 
-            // If this is large enough to accomodate the current request and
-            // possibly another one, then split it.
-            if (freeGetSize(p) - size - 16 >= MIN_SPLIT_SIZE)
-            {
-                size_t fullSize = freeGetSize(p);
-                void* prev = freeGetPrev(p);
-                void* next = freeGetNext(p);
-
-                void* newBlock = (uint8_t*)p + fullSize - size - 16;
-                makeAllocatedBlock(newBlock, size + 16);
-                createFreeBlock(p, fullSize - size - 16, prev, next);
-
-                //printf("Splitting block @ %p\n", newBlock);
-
-                result = newBlock;
-            }
-            else // Otherwise, use the whole thing
-            {
-                void* prev = freeGetPrev(p);
-                void* next = freeGetNext(p);
-
-                //printf("Using full block\n");
-
-                makeAllocatedBlock(p, freeGetSize(p));
-
-                if (prev)
-                {
-                    freeSetNext(prev, next);
-                }
-                else
-                {
-                    freeList = next;
-                }
-
-                if (next) freeSetPrev(next, prev);
-            }
-
-            return (void*)(result + 1);
-        }
-
-        p = freeGetNext(p);
+        equalizeHeaps();
     }
 
-    // Cannot allocate from the current free list
-    return NULL;
-}
-
-#ifdef __APPLE__
-void* mymalloc(size_t) asm("mymalloc");
-#endif
-
-void* mymalloc(size_t size)
-{
-    void* result = try_mymalloc(size);
-    if (result) return result;
-
-    // Current heap is full: need to allocate another chunk
-    createChunk(size + 16);
-    return try_mymalloc(size);
-}
-
-void myfree(void* p)
-{
-    void* block = (void*)((uint8_t*)p - 8);
-    size_t size = *(uint64_t*)block;
-
-    //printf("myfree @ %p, size = 0x%zx\n", block, size);
-    //printf("Start:\n");
-    //walkFreeList();
-
-    assert(size >= MIN_BLOCK_SIZE);
-
-    uint64_t* prevFooter = (uint64_t*)block - 1;
-    uint64_t* nextHeader = (uint64_t*)((uint8_t*)block + size);
-
-    //printf("prevFooter = %p, nextHeader = %p\n", prevFooter, nextHeader);
-
-    // If previous contiguous block is free, then coalesce
-    uint64_t prevSizeAndFlag = *prevFooter;
-    if (prevSizeAndFlag & 1)
-    {
-        size_t prevSize = prevSizeAndFlag & ~1ULL;
-        uint8_t* prevBlock = (uint8_t*)block - prevSize;
-        void* prev = freeGetPrev(prevBlock);
-        void* next = freeGetNext(prevBlock);
-
-        //printf("Coalesce with previous: %p %p %p\n", prevBlock, prev, next);
-
-        createFreeBlock(prevBlock, size + prevSize, prev, next);
-
-        //printf("End:\n");
-        //walkFreeList();
-        return;
-    }
-
-    // If next contiguous block is free, then coalesce
-    uint64_t nextSizeAndFlag = *nextHeader;
-    if (nextSizeAndFlag & 1)
-    {
-        size_t nextSize = nextSizeAndFlag & ~1ULL;
-        uint8_t* nextBlock = (uint8_t*)nextHeader;
-        void* prev = freeGetPrev(nextBlock);
-        void* next = freeGetNext(nextBlock);
-
-        //printf("Coalesce with next: %p %p %p\n", nextBlock, prev, next);
-
-        createFreeBlock(block, size + nextSize, prev, next);
-
-        if (prev)
-        {
-            freeSetNext(prev, block);
-        }
-        else
-        {
-            freeList = block;
-        }
-
-        if (next)
-        {
-            freeSetPrev(next, block);
-        }
-
-        //printf("End:\n");
-        //walkFreeList();
-        return;
-    }
-
-    // Otherwise, add to the beginning of the free list
-    createFreeBlock(block, size, NULL, freeList);
-    if (freeList) freeSetPrev(freeList, block);
-    freeList = block;
-
-    //printf("End:\n");
-    //walkFreeList();
+    return result;
 }

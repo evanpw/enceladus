@@ -20,7 +20,8 @@ struct SplObject;
     uint64_t markBit; \
     uint64_t pointerFields;
 
-#define IS_TAGGED(p) ((int64_t)p & 0x3)
+#define IS_IMMEDIATE(p) ((int64_t)p & 0x3)
+#define IS_REFERENCE(p) !((int64_t)p & 0x3)
 
 typedef struct SplObject
 {
