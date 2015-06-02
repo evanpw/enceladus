@@ -46,7 +46,7 @@ struct TACLabel : public TACInstruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << "__" << number;
+        ss << ".L" << number;
         return ss.str();
     }
 
