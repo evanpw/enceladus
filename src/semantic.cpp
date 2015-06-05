@@ -273,11 +273,12 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, bool createVariables)
 
 void SemanticAnalyzer::insertSymbol(Symbol* symbol)
 {
-    static unsigned long count = 0;
+    //static unsigned long count = 0;
 
     if (symbol->name == "_")
     {
-        symbol->name = format("_unnamed{}", count++);
+        //symbol->name = format("_unnamed{}", count++);
+        return;
     }
 
     topScope()->symbols.insert(symbol);
@@ -856,9 +857,7 @@ void SemanticAnalyzer::visit(MatchArm* node)
 
     std::shared_ptr<Type> instantiatedType = instantiate(constructorSymbol->typeScheme.get());
     FunctionType* functionType = instantiatedType->get<FunctionType>();
-    //std::cerr << "functionType: " << functionType->name() << std::endl;
     std::shared_ptr<Type> constructedType = functionType->output();
-    //std::cerr << "constructedType: " << constructedType->name() << std::endl;
     unify(constructedType, node->matchType, node);
 
     CHECK(functionType->inputs().size() == node->params.size(),
@@ -870,10 +869,17 @@ void SemanticAnalyzer::visit(MatchArm* node)
         const std::string& name = node->params[i];
         CHECK_UNDEFINED_IN_SCOPE(name);
 
-        Symbol* member = new VariableSymbol(name, node, _enclosingFunction);
-        member->setType(functionType->inputs().at(i));
-        insertSymbol(member);
-        node->symbols.push_back(member);
+        if (name != "_")
+        {
+            Symbol* member = new VariableSymbol(name, node, _enclosingFunction);
+            member->setType(functionType->inputs().at(i));
+            insertSymbol(member);
+            node->symbols.push_back(member);
+        }
+        else
+        {
+            node->symbols.push_back(nullptr);
+        }
     }
 
     // Visit body
@@ -909,10 +915,17 @@ void SemanticAnalyzer::visit(MatchNode* node)
 		const std::string& name = node->params[i];
         CHECK_UNDEFINED_IN_SCOPE(name);
 
-		Symbol* member = new VariableSymbol(name, node, _enclosingFunction);
-		member->setType(functionType->inputs().at(i));
-		insertSymbol(member);
-		node->symbols.push_back(member);
+        if (name != "_")
+        {
+    		Symbol* member = new VariableSymbol(name, node, _enclosingFunction);
+    		member->setType(functionType->inputs().at(i));
+    		insertSymbol(member);
+    		node->symbols.push_back(member);
+        }
+        else
+        {
+            node->symbols.push_back(nullptr);
+        }
 	}
 
 	unify(node->body->type, functionType->output(), node);

@@ -521,9 +521,11 @@ void TACCodeGen::visit(MatchNode* node)
     for (size_t i = 0; i < node->symbols.size(); ++i)
     {
         const Symbol* member = node->symbols.at(i);
-        size_t location = constructor->members().at(i).location;
-
-        emit(new TACRightIndexedAssignment(getNameAddress(member), body, sizeof(SplObject) + 8 * location));
+        if (member)
+        {
+            size_t location = constructor->members().at(i).location;
+            emit(new TACRightIndexedAssignment(getNameAddress(member), body, sizeof(SplObject) + 8 * location));
+        }
     }
 }
 
@@ -725,15 +727,15 @@ void TACCodeGen::visit(SwitchNode* node)
     emit(gotTag);
 
     // Jump to the appropriate case based on the tag
-    for (size_t i = 0; i < node->arms.size(); ++i)
+    size_t last = node->arms.size() - 1;
+    for (int i = last; i > 0; --i)
     {
         auto& arm = node->arms[i];
         size_t armTag = arm->constructorTag;
         emit(new TACConditionalJump(tag, "==", std::make_shared<ConstAddress>(armTag), caseLabels[i]));
     }
 
-    // If nothing matches
-    emit(new TACJump(endLabel));
+    // Fall through to first case (patterns must be exhaustive)
 
     // Individual arms
     for (size_t i = 0; i < node->arms.size(); ++i)
@@ -760,9 +762,11 @@ void TACCodeGen::visit(MatchArm* node)
     for (size_t i = 0; i < node->symbols.size(); ++i)
     {
         const Symbol* member = node->symbols.at(i);
-        size_t location = constructor->members().at(i).location;
-
-        emit(new TACRightIndexedAssignment(getNameAddress(member), node->address, sizeof(SplObject) + 8 * location));
+        if (member)
+        {
+            size_t location = constructor->members().at(i).location;
+            emit(new TACRightIndexedAssignment(getNameAddress(member), node->address, sizeof(SplObject) + 8 * location));
+        }
     }
 
     node->body->accept(this);

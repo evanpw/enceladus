@@ -163,6 +163,14 @@ void TACLocalOptimizer::visit(TACAssign* inst)
 void TACLocalOptimizer::visit(TACJump* inst)
 {
     CHECK_DEAD();
+    
+    // Unconditional jump to next instruction is a noop
+    if (inst->next == inst->target)
+    {
+        deleteCurrent();
+        return;
+    }
+
     _isDead = true;
 }
 

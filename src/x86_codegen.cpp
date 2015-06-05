@@ -23,9 +23,7 @@ void X86CodeGen::generateCode(TACProgram& program)
     //// Program prefix
     EMIT_LEFT("bits 64");
     EMIT_LEFT("section .text");
-    EMIT_LEFT("global " << mangle("main"));
     EMIT_LEFT("global __globalVarTable");
-    EMIT_LEFT("global _Z4Some, _Z4None");
     EMIT_LEFT("extern initGC");
     EMIT_LEFT("extern ccall");
 
@@ -83,6 +81,7 @@ void X86CodeGen::generateCode(TACFunction& function)
     clearRegisters();
     _currentFunction = &function;
 
+    EMIT_LEFT("global " << mangle(function.name));
     EMIT_LABEL(mangle(function.name));
     EMIT("push rbp");
     EMIT("mov rbp, rsp");
@@ -90,9 +89,7 @@ void X86CodeGen::generateCode(TACFunction& function)
     assert(function.regParams.size() <= 6);
 
     // x86_64 calling convention for C puts the first 6 arguments in registers
-    if (function.regParams.size() >= 1) EMIT("mov r10, rdi");
-    if (function.regParams.size() >= 4) EMIT("mov r11, rcx");
-    std::string registerArgs[] = {"r10", "rsi", "rdx", "r11", "r8", "r9"};
+    std::string registerArgs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
     for (size_t i = 0; i < function.regParams.size(); ++i)
     {
@@ -113,9 +110,10 @@ void X86CodeGen::generateCode(TACFunction& function)
     // We have to zero out the local variables for the reference counting
     // to work correctly
     EMIT("xor rax, rax");
-    EMIT("mov rcx, " << total);
-    EMIT("mov rdi, rsp");
-    EMIT("rep stosq");
+    for (int i = 0; i < total; ++i)
+    {
+        EMIT("mov [rsp + " << (8 * i) << "], rax");
+    }
 
     for (TACInstruction* inst = function.instructions; inst != nullptr; inst = inst->next)
     {
