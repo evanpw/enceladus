@@ -273,7 +273,7 @@ struct TACLeftIndexedAssignment : public TACInstruction
     std::shared_ptr<Address> rhs;
 };
 
-enum class BinaryOperation {BADD, BSUB, BMUL, BDIV, BMOD, UAND, UADD};
+enum class BinaryOperation {BADD, BSUB, BMUL, BDIV, BMOD, UAND, UADD, SHR};
 extern const char* binaryOperationNames[];
 
 struct TACBinaryOperation : public TACInstruction

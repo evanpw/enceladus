@@ -1,18 +1,13 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
-#ifdef __APPLE__
-void* mymalloc(size_t) asm("mymalloc");
-#endif
-
-void* mymalloc(size_t);
-void myfree(void* p);
+#include <stdint.h>
+#include <stdlib.h>
 
 struct SplObject;
 
 #define MAX_STRUCTURED_TAG      ((1L << 32) - 1)
 #define STRING_TAG              (1L << 32)
-#define FREE_BLOCK_TAG          INT64_MAX
 
 #define SplObject_HEAD \
     size_t constructorTag; \
@@ -34,6 +29,9 @@ typedef struct List
 } List;
 
 typedef SplObject String;
+
+#define TO_INT(n)   ((n << 1) + 1)
+#define FROM_INT(n) (n >> 1)
 
 extern void* Some(void* value) asm("_Z4Some");
 extern void* None() asm("_Z4None");

@@ -7,4 +7,4 @@ TACLabel::TACLabel()
 
 long TACLabel::labelCount = 0;
 
-const char* binaryOperationNames[] = {"b+", "b-", "b*", "b/", "b%", "u&", "u+"};
+const char* binaryOperationNames[] = {"b+", "b-", "b*", "b/", "b%", "u&", "u+", ">>"};

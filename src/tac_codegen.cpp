@@ -705,9 +705,24 @@ void TACCodeGen::visit(SwitchNode* node)
 
     std::shared_ptr<Address> expr = visitAndGet(*node->expr);
 
-    // Get constructor tag of expr
+    // Get constructor tag of expr (either as a immediate, or from the object
+    // header)
     std::shared_ptr<Address> tag = makeTemp();
+    TACLabel* gotTag = new TACLabel;
+    TACLabel* untagged = new TACLabel;
+
+    // Check for immediate, and remove tag bit
+    std::shared_ptr<Address> checked = makeTemp();
+    emit(new TACBinaryOperation(checked, expr, BinaryOperation::UAND, ConstAddress::UnboxedOne));
+    emit(new TACConditionalJump(checked, "==", ConstAddress::UnboxedZero, untagged));
+    emit(new TACBinaryOperation(tag, expr, BinaryOperation::SHR, ConstAddress::UnboxedOne));
+    emit(new TACJump(gotTag));
+
+    // Otherwise, extract tag from object header
+    emit(untagged);
     emit(new TACRightIndexedAssignment(tag, expr, offsetof(SplObject, constructorTag)));
+
+    emit(gotTag);
 
     // Jump to the appropriate case based on the tag
     for (size_t i = 0; i < node->arms.size(); ++i)
@@ -762,12 +777,19 @@ void TACCodeGen::visit(StringLiteralNode* node)
 void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constructorTag)
 {
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
+    _currentFunction->returnValue = makeTemp();
+
+    // Value constructors with no parameters are represented as immediates
+    if (members.size() == 0)
+    {
+        emit(new TACAssign(_currentFunction->returnValue, std::make_shared<ConstAddress>(TO_INT(constructorTag))));
+        return;
+    }
 
     // For now, every member takes up exactly 8 bytes (either directly or as a pointer).
     size_t size = sizeof(SplObject) + 8 * members.size();
 
     // Allocate room for the object
-    _currentFunction->returnValue = makeTemp();
     emit(new TACCall(
         true,
         _currentFunction->returnValue,

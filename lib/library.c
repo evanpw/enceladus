@@ -1,6 +1,7 @@
 // For non-standard getline
 #define _GNU_SOURCE
 
+#include "library.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
@@ -9,24 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
-#include "library.h"
 
 void fail(const char* str)
 {
     puts(str);
     exit(1);
-}
-
-//// Ints //////////////////////////////////////////////////////////////////////
-
-int64_t toInt(int64_t n)
-{
-    return (n << 1) + 1;
-}
-
-int64_t fromInt(int64_t n)
-{
-    return n >> 1;
 }
 
 //// Strings ///////////////////////////////////////////////////////////////////
@@ -48,13 +36,13 @@ String* makeStr(const char* data)
 
 int64_t strLength(String* s)
 {
-    return toInt(strlen(strContent(s)));
+    return TO_INT(strlen(strContent(s)));
 }
 
 String* strSlice(String* s, int64_t tPos, int64_t tLength)
 {
-    int64_t pos = fromInt(tPos);
-    int64_t length = fromInt(tLength);
+    int64_t pos = FROM_INT(tPos);
+    int64_t length = FROM_INT(tLength);
 
     if (pos < 0 || pos >= strLength(s))
     {
@@ -94,14 +82,14 @@ String* strCat(String* lhs, String* rhs)
 
 int64_t strAt(String* s, int64_t n)
 {
-    int64_t idx = fromInt(n);
+    int64_t idx = FROM_INT(n);
 
     if (idx < 0 || idx >= strLength(s))
     {
         fail("*** Exception: String index out of range");
     }
 
-    return toInt(strContent(s)[idx]);
+    return TO_INT(strContent(s)[idx]);
 }
 
 #define IS_EMPTY(xs) ((xs)->constructorTag == 1)
@@ -124,7 +112,7 @@ String* strFromList(List* list)
     char* out = strContent(result);
     while (!IS_EMPTY(list))
     {
-        int64_t c = fromInt((int64_t)list->value);
+        int64_t c = FROM_INT((int64_t)list->value);
         if (c < 0 || c > 255)
         {
             fail("*** Exception: Char value out of range");
@@ -141,7 +129,7 @@ String* strFromList(List* list)
 
 String* show(int64_t x)
 {
-    int64_t value = fromInt(x);
+    int64_t value = FROM_INT(x);
 
     String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
     result->constructorTag = STRING_TAG;
@@ -159,7 +147,7 @@ int64_t read()
     int64_t result;
     scanf("%" PRId64, &result);
 
-    return toInt(result);
+    return TO_INT(result);
 }
 
 void* readLine()

@@ -810,6 +810,18 @@ void X86CodeGen::visit(TACBinaryOperation* inst)
         SAFE_MOV(dest, lhs);
         EMIT("and " << dest << ", " << rhs);
     }
+    else if (inst->op == BinaryOperation::SHR)
+    {
+        assert(isConst(inst->rhs));
+        long shiftCount = inst->rhs->asConst().value;
+        assert((shiftCount >= 0) && (shiftCount < 64));
+
+        lhs = access(inst->lhs);
+
+        dest = getRegisterFor(inst->dest, WRITE);
+        SAFE_MOV(dest, lhs);
+        EMIT("shr " << dest << ", " << shiftCount);
+    }
 
     freeRegister(lhs);
     freeRegister(rhs);
