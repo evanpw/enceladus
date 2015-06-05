@@ -40,8 +40,7 @@ String* makeStr(const char* data)
 {
     String* result = gcAllocate(sizeof(SplObject) + strlen(data) + 1);
     result->constructorTag = STRING_TAG;
-    result->pointerFields = 0;
-    result->markBit = 0;
+    result->sizeInWords = 0; // Unstructured data
     strcpy(strContent(result), data);
 
     return result;
@@ -68,8 +67,7 @@ String* strSlice(String* s, int64_t tPos, int64_t tLength)
 
     String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->pointerFields = 0;
-    result->markBit = 0;
+    result->sizeInWords = 0;
 
     strncpy(strContent(result), strContent(s) + pos, length);
     strContent(result)[length] = '\0';
@@ -84,8 +82,7 @@ String* strCat(String* lhs, String* rhs)
 
     String* result = gcAllocate(sizeof(SplObject) + n1 + n2 + 1);
     result->constructorTag = STRING_TAG;
-    result->pointerFields = 0;
-    result->markBit = 0;
+    result->sizeInWords = 0;
 
     char* dest = strContent(result);
     strncpy(dest, strContent(lhs), n1);
@@ -122,8 +119,7 @@ String* strFromList(List* list)
 
     String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->pointerFields = 0;
-    result->markBit = 0;
+    result->sizeInWords = 0;
 
     char* out = strContent(result);
     while (!IS_EMPTY(list))
@@ -149,8 +145,7 @@ String* show(int64_t x)
 
     String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
     result->constructorTag = STRING_TAG;
-    result->pointerFields = 0;
-    result->markBit = 0;
+    result->sizeInWords = 0;
 
     sprintf(strContent(result), "%" PRId64, value);
     return result;
@@ -391,16 +386,15 @@ void gcScan()
 
         // Iterate over the children, and copy them to the new heap
         SplObject** p = (SplObject**)(object + 1);
-        uint64_t fields = object->pointerFields;
-        while (fields)
+        SplObject** pend = p + object->sizeInWords;
+        while (p < pend)
         {
-            if ((fields & 1) && IS_REFERENCE(*p))
+            if (IS_REFERENCE(*p))
             {
                 void* newLocation = gcCopy(*p);
                 *p = (SplObject*)newLocation;
             }
 
-            fields >>= 1;
             ++p;
         }
 

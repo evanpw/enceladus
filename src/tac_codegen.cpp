@@ -334,11 +334,10 @@ void TACCodeGen::visit(NullaryNode* node)
 
             // SplObject header fields
             emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, constructorTag), ConstAddress::UnboxedZero));
-            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, markBit), ConstAddress::UnboxedZero));
 
             emit(new TACLeftIndexedAssignment(
                 dest,
-                offsetof(SplObject, pointerFields),
+                offsetof(SplObject, sizeInWords),
                 ConstAddress::UnboxedZero));
 
             // Address of the function as an unboxed member
@@ -779,24 +778,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
 
     // SplObject header fields
     emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, constructorTag), std::make_shared<ConstAddress>(constructorTag)));
-    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, markBit), ConstAddress::UnboxedZero));
-
-    uint64_t pointerFields = 0;
-    for (size_t i = 0; i < members.size(); ++i)
-    {
-        auto& member = members[i];
-        size_t location = member.location;
-
-        if (member.type->isBoxed())
-        {
-            pointerFields |= (1 << location);
-        }
-    }
-
-    emit(new TACLeftIndexedAssignment(
-        _currentFunction->returnValue,
-        offsetof(SplObject, pointerFields),
-        std::make_shared<ConstAddress>(pointerFields)));
+    emit(new TACLeftIndexedAssignment(_currentFunction->returnValue, offsetof(SplObject, sizeInWords), std::make_shared<ConstAddress>(members.size())));
 
     // Individual members
     for (size_t i = 0; i < members.size(); ++i)
@@ -805,7 +787,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         size_t location = member.location;
 
         std::shared_ptr<Address> param(new NameAddress(member.name, NameTag::Local));
-        //_currentFunction->params.push_back(param);
         _currentFunction->regParams.push_back(param);
         _currentFunction->locals.push_back(param);
 

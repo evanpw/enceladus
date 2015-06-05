@@ -20,6 +20,3 @@
 * Optimization: Unconditional jump to next instruction can be killed
 
 * Reuse temporaries that are no longer live.
-
-* Use the gcNext field of SplObject to store the list of global roots, rather
-  than the current data structure

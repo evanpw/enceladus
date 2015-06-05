@@ -33,6 +33,18 @@ def permutations(digits: [Int]) -> [[Int]]
 
     return reverse $ result
 
-allPermutations := permutations $ range 0 9
+def permutationAt(n: Int, digits: [Int]) -> [Int]
+    assert $ length digits != 1
 
-print $ show $ toInt $ at 999999 allPermutations
+    count := 0
+    for digit in digits
+        ps := permutations $ delete digit digits
+        for p in ps
+            if count == n
+                return (digit :: p)
+            else
+                count += 1
+
+    die "Unreachable"
+
+print $ show $ toInt $ permutationAt 999999 (range 0 9)

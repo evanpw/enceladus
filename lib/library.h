@@ -16,9 +16,7 @@ struct SplObject;
 
 #define SplObject_HEAD \
     size_t constructorTag; \
-    void* gcNext; \
-    uint64_t markBit; \
-    uint64_t pointerFields;
+    uint64_t sizeInWords;
 
 #define IS_IMMEDIATE(p) ((int64_t)p & 0x3)
 #define IS_REFERENCE(p) !((int64_t)p & 0x3)
