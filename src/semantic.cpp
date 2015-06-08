@@ -137,8 +137,8 @@ void SemanticAnalyzer::injectSymbols()
     scope->types.insert(new TypeSymbol("Unit", _root, Type::Unit));
     scope->types.insert(new TypeSymbol("String", _root, Type::String));
 
-    TypeConstructor* Function = new TypeConstructor("Function", 1);
-    scope->types.insert(new TypeConstructorSymbol("Function", _root, Function));
+    scope->types.insert(new TypeConstructorSymbol("Function", _root, TypeConstructor::Function));
+    scope->types.insert(new TypeConstructorSymbol("Array", _root, TypeConstructor::Array));
 
 	//// Create symbols for built-in functions
     FunctionSymbol* notFn = makeBuiltin("not");
@@ -210,7 +210,7 @@ void SemanticAnalyzer::resolveBaseType(TypeName* typeName, std::unordered_map<st
     }
 }
 
-TypeConstructor* SemanticAnalyzer::getTypeConstructor(const TypeName* typeName)
+std::shared_ptr<TypeConstructor> SemanticAnalyzer::getTypeConstructor(const TypeName* typeName)
 {
     const std::string& name = typeName->name;
 
@@ -218,7 +218,7 @@ TypeConstructor* SemanticAnalyzer::getTypeConstructor(const TypeName* typeName)
     CHECK_AT(typeName->location, symbol, "Type constructor \"{}\" is not defined", name);
     CHECK_AT(typeName->location, symbol->kind == kTypeConstructor, "Symbol \"{}\" is not a type constructor", name);
 
-    return symbol->asTypeConstructor()->typeConstructor.get();
+    return symbol->asTypeConstructor()->typeConstructor;
 }
 
 void SemanticAnalyzer::resolveTypeName(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
@@ -251,7 +251,7 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, std::unordered_map<st
         }
         else
         {
-            const TypeConstructor* typeConstructor = getTypeConstructor(typeName);
+            std::shared_ptr<TypeConstructor> typeConstructor = getTypeConstructor(typeName);
 
             CHECK_AT(typeName->location,
                      typeConstructor->parameters() == typeParameters.size(),
@@ -273,11 +273,8 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, bool createVariables)
 
 void SemanticAnalyzer::insertSymbol(Symbol* symbol)
 {
-    //static unsigned long count = 0;
-
     if (symbol->name == "_")
     {
-        //symbol->name = format("_unnamed{}", count++);
         return;
     }
 
@@ -664,7 +661,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
             typeContext.emplace(typeParameter, var);
         }
 
-        TypeConstructor* typeConstructor = new TypeConstructor(name, node->typeParameters.size());
+        std::shared_ptr<TypeConstructor> typeConstructor = TypeConstructor::create(name, node->typeParameters.size());
         TypeConstructorSymbol* symbol = new TypeConstructorSymbol(name, node, typeConstructor);
         topScope()->types.insert(symbol);
 

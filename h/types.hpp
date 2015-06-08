@@ -85,9 +85,9 @@ std::shared_ptr<Type> unwrap(const std::shared_ptr<Type>& type);
 class BaseType : public Type
 {
 public:
-    static std::shared_ptr<Type> create(const std::string& name, bool primitive = false, size_t constructorTag = 0)
+    static std::shared_ptr<Type> create(const std::string& name, bool primitive = false)
     {
-        return std::shared_ptr<Type>(new BaseType(name, primitive, constructorTag));
+        return std::shared_ptr<Type>(new BaseType(name, primitive));
     }
 
     virtual std::string name() const
@@ -100,20 +100,14 @@ public:
         return !_primitive;
     }
 
-    size_t constructorTag() const
-    {
-        return _constructorTag;
-    }
-
 private:
-    BaseType(const std::string& name, bool primitive, size_t constructorTag)
-    : Type(ttBase), _name(name), _primitive(primitive), _constructorTag(constructorTag)
+    BaseType(const std::string& name, bool primitive)
+    : Type(ttBase), _name(name), _primitive(primitive)
     {
     }
 
     std::string _name;
     bool _primitive;
-    size_t _constructorTag;
 };
 
 // The type of a function from one type to another
@@ -152,12 +146,12 @@ private:
 class ConstructedType : public Type
 {
 public:
-    static std::shared_ptr<Type> create(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
+    static std::shared_ptr<Type> create(const std::shared_ptr<TypeConstructor>& typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
     {
         return std::shared_ptr<Type>(new ConstructedType(typeConstructor, typeParameters));
     }
 
-    static std::shared_ptr<Type> create(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
+    static std::shared_ptr<Type> create(const std::shared_ptr<TypeConstructor>& typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
     {
         return std::shared_ptr<Type>(new ConstructedType(typeConstructor, typeParameters));
     }
@@ -169,7 +163,7 @@ public:
         return true;
     }
 
-    const TypeConstructor* typeConstructor() const
+    const std::shared_ptr<TypeConstructor>& typeConstructor() const
     {
         return _typeConstructor;
     }
@@ -180,10 +174,10 @@ public:
     }
 
 private:
-    ConstructedType(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters);
-    ConstructedType(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters);
+    ConstructedType(const std::shared_ptr<TypeConstructor>& typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters);
+    ConstructedType(const std::shared_ptr<TypeConstructor>& typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters);
 
-    const TypeConstructor* _typeConstructor;
+    std::shared_ptr<TypeConstructor> _typeConstructor;
     std::vector<std::shared_ptr<Type>> _typeParameters;
 };
 
@@ -415,9 +409,10 @@ private:
 class TypeConstructor
 {
 public:
-    TypeConstructor(const std::string& name, size_t parameters = 0)
-    : _name(name), _parameters(parameters)
-    {}
+    static std::shared_ptr<TypeConstructor> create(const std::string& name, size_t parameters = 0)
+    {
+        return std::shared_ptr<TypeConstructor>(new TypeConstructor(name, parameters));
+    }
 
     const std::string& name() const
     {
@@ -439,7 +434,15 @@ public:
         _valueConstructors.emplace_back(valueConstructor);
     }
 
+    // For easy access to commonly-used types
+    static std::shared_ptr<TypeConstructor> Function;
+    static std::shared_ptr<TypeConstructor> Array;
+
 private:
+    TypeConstructor(const std::string& name, size_t parameters = 0)
+    : _name(name), _parameters(parameters)
+    {}
+
     std::string _name;
     size_t _parameters;
     std::vector<ValueConstructor*> _valueConstructors;

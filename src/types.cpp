@@ -11,7 +11,7 @@
 std::shared_ptr<Type> Type::Int = BaseType::create("Int", true);
 std::shared_ptr<Type> Type::Bool = BaseType::create("Bool", true);
 std::shared_ptr<Type> Type::Unit = BaseType::create("Unit", true);
-std::shared_ptr<Type> Type::String = BaseType::create("String", false, STRING_TAG);
+std::shared_ptr<Type> Type::String = BaseType::create("String", false);
 
 std::shared_ptr<Type> unwrap(const std::shared_ptr<Type>& type)
 {
@@ -114,7 +114,8 @@ std::set<TypeVariable*> TypeScheme::freeVars() const
     return allVars;
 }
 
-std::pair<size_t, ValueConstructor*> Type::getValueConstructor(const std::string& name) const
+std::pair<size_t, ValueConstructor*> Type::getValueConstructor(
+        const std::string& name) const
 {
     for (size_t i = 0; i < _valueConstructors.size(); ++i)
     {
@@ -159,7 +160,9 @@ std::string FunctionType::name() const
     return ss.str();
 }
 
-ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, std::initializer_list<std::shared_ptr<Type>> typeParameters)
+ConstructedType::ConstructedType(
+        const std::shared_ptr<TypeConstructor>& typeConstructor,
+        std::initializer_list<std::shared_ptr<Type>> typeParameters)
 : Type(ttConstructed), _typeConstructor(typeConstructor)
 {
     for (const std::shared_ptr<Type>& parameter : typeParameters)
@@ -173,7 +176,9 @@ ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, std::in
     }
 }
 
-ConstructedType::ConstructedType(const TypeConstructor* typeConstructor, const std::vector<std::shared_ptr<Type>> typeParameters)
+ConstructedType::ConstructedType(
+        const std::shared_ptr<TypeConstructor>& typeConstructor,
+        const std::vector<std::shared_ptr<Type>> typeParameters)
 : Type(ttConstructed), _typeConstructor(typeConstructor)
 {
     for (const std::shared_ptr<Type>& parameter : typeParameters)
@@ -210,7 +215,10 @@ std::string ConstructedType::name() const
 
 int TypeVariable::_count;
 
-ValueConstructor::ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames)
+ValueConstructor::ValueConstructor(
+        const std::string& name,
+        const std::vector<std::shared_ptr<Type>>& memberTypes,
+        const std::vector<std::string>& memberNames)
 : _name(name)
 {
     assert(memberNames.empty() || (memberNames.size() == memberTypes.size()));
@@ -222,3 +230,6 @@ ValueConstructor::ValueConstructor(const std::string& name, const std::vector<st
         _members.emplace_back(memberName, type, i);
     }
 }
+
+std::shared_ptr<TypeConstructor> TypeConstructor::Function = TypeConstructor::create("Function", 1);
+std::shared_ptr<TypeConstructor> TypeConstructor::Array = TypeConstructor::create("Array", 1);

@@ -90,7 +90,7 @@ private:
     FunctionSymbol* makeExternal(const std::string& name);
     void injectSymbols();
 
-    TypeConstructor* getTypeConstructor(const TypeName* typeName);
+    std::shared_ptr<TypeConstructor> getTypeConstructor(const TypeName* typeName);
     void resolveBaseType(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
     void resolveTypeName(TypeName* typeName, bool createVariables=false);
     void resolveTypeName(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);

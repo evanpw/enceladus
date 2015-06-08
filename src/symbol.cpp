@@ -67,7 +67,7 @@ TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, std::shared_ptr<T
     this->type = type;
 }
 
-TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
+TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, const std::shared_ptr<TypeConstructor>& typeConstructor)
 : Symbol(name, kTypeConstructor, node, nullptr)
 , typeConstructor(typeConstructor)
 {

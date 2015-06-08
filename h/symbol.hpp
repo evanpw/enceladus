@@ -103,9 +103,9 @@ struct TypeSymbol : public Symbol
 struct TypeConstructorSymbol : public Symbol
 {
     // Takes ownership of the pointer
-    TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
+    TypeConstructorSymbol(const std::string& name, AstNode* node, const std::shared_ptr<TypeConstructor>& typeConstructor);
 
-    std::unique_ptr<TypeConstructor> typeConstructor;
+    std::shared_ptr<TypeConstructor> typeConstructor;
 };
 
 struct MemberSymbol : public Symbol

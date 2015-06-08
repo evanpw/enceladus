@@ -17,6 +17,7 @@
 * Remove implicit returns, and add a separate semantic-analysis pass that
   makes sure every path through a function has a return statement
 
-* Optimization: Unconditional jump to next instruction can be killed
-
 * Reuse temporaries that are no longer live.
+
+* Optimization: Remove labels which are never referenced (can eliminate spills
+  or enable other optimizations)

@@ -17,6 +17,32 @@ void fail(const char* str)
     exit(1);
 }
 
+//// Arrays ////////////////////////////////////////////////////////////////////
+
+uint64_t* arrayContent(Array* s)
+{
+    return (uint64_t*)(s + 1);
+}
+
+Array* makeArray(int64_t n, uint64_t value)
+{
+    int64_t size = FROM_INT(n);
+
+    if (size < 0) fail("*** Exception: Cannot create array of negative size");
+
+    Array* result = gcAllocate(sizeof(SplObject) + n * 8);
+    result->constructorTag = ARRAY_TAG;
+    result->sizeInWords = size;
+
+    uint64_t* p = arrayContent(result);
+    for (size_t i = 0; i < (size_t)size; ++i)
+    {
+        *p++ = value;
+    }
+
+    return result;
+}
+
 //// Strings ///////////////////////////////////////////////////////////////////
 
 char* strContent(String* s)

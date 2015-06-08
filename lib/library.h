@@ -4,17 +4,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-struct SplObject;
-
 #define MAX_STRUCTURED_TAG      ((1L << 32) - 1)
-#define STRING_TAG              (1L << 32)
+#define STRING_TAG              (MAX_STRUCTURED_TAG + 1)
+#define ARRAY_TAG               (MAX_STRUCTURED_TAG + 2)
 
 #define SplObject_HEAD \
     size_t constructorTag; \
     uint64_t sizeInWords;
-
-#define IS_IMMEDIATE(p) ((int64_t)p & 0x3)
-#define IS_REFERENCE(p) !((int64_t)p & 0x3)
 
 typedef struct SplObject
 {
@@ -29,6 +25,10 @@ typedef struct List
 } List;
 
 typedef SplObject String;
+typedef SplObject Array;
+
+#define IS_IMMEDIATE(p) ((int64_t)p & 0x3)
+#define IS_REFERENCE(p) !((int64_t)p & 0x3)
 
 #define TO_INT(n)   ((n << 1) + 1)
 #define FROM_INT(n) (n >> 1)

@@ -1,6 +1,6 @@
 data List a = Cons a (List a) | Nil
 
-# String functions
+## String ##
 type Char = Int
 foreign strLength(s: String) -> Int
 foreign strSlice(s: String, pos: Int, len: Int) -> String
@@ -8,6 +8,10 @@ foreign strAt(s: String, n: Int) -> Char
 foreign strFromList(s: [Char]) -> String
 foreign strCat(lhs: String, rhs: String) -> String
 foreign show(x: Int) -> String
+
+## Array ##
+#foreign makeArray(n: Int, value: a) -> Array a
+
 
 foreign die(msg: String) -> a
 
