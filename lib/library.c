@@ -236,7 +236,7 @@ void expandHeap(size_t minimumSize)
     {
         currentSize = roundUp(minimumSize, 4096);
     }
-    
+
     otherStart = mmap(0, currentSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (otherStart == MAP_FAILED)
     {
@@ -402,7 +402,7 @@ void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRo
     // Swap the heaps
     uint64_t* tmpStart = heapStart;
     uint64_t* tmpEnd = heapEnd;
-    
+
     heapStart = otherStart;
     heapPointer = allocPtr;
     heapEnd = otherEnd;
@@ -411,9 +411,7 @@ void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRo
     otherEnd = tmpEnd;
 }
 
-#ifdef __APPLE__
-extern void gcCollectAndAllocate(size_t, uint64_t*, uint64_t*, uint64_t*) asm("gcCollect");
-#endif
+extern void* gcCollectAndAllocate(size_t, uint64_t*, uint64_t*, uint64_t*) asm("gcCollectAndAllocate");
 
 void* gcCollectAndAllocate(size_t sizeInBytes, uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
 {

@@ -12,6 +12,11 @@ TACCodeGen::TACCodeGen()
 
 std::shared_ptr<Address> TACCodeGen::getNameAddress(const Symbol* symbol)
 {
+    if (!symbol)
+    {
+        return Address::Null;
+    }
+
     auto i = _names.find(symbol);
     if (i != _names.end())
     {
@@ -491,7 +496,11 @@ void TACCodeGen::visit(LetNode* node)
 {
     std::shared_ptr<Address> dest = getNameAddress(node->symbol);
 
-    if (node->symbol->type->isBoxed())
+    if (!node->symbol)
+    {
+        visitAndGet(*node->value);
+    }
+    else if (node->symbol->type->isBoxed())
     {
         std::shared_ptr<Address> value = visitAndGet(*node->value);
         emit(new TACAssign(dest, value));
@@ -500,12 +509,12 @@ void TACCodeGen::visit(LetNode* node)
     {
         // Try to make the rhs of this assignment construct its result directly
         // in the right spot
-        node->value->address = getNameAddress(node->symbol);
+        node->value->address = dest;
         std::shared_ptr<Address> value = visitAndGet(*node->value);
 
         // If it was stored somewhere else (for example, if no computation was
         // done, in a statement like x = y), then actually do the assignment
-        if (value != getNameAddress(node->symbol))
+        if (value != dest)
         {
             emit(new TACAssign(dest, value));
         }
