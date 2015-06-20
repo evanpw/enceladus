@@ -313,7 +313,8 @@ void* try_mymalloc(size_t sizeInBytes)
 
     // The first word of the allocated block contains the size in words
     // (tagged so that we can distinguish it from a forwarding pointer)
-    *p++ = (sizeInWords | 1);
+    *p++ = ((sizeInWords << 1) | 1);
+
     return p;
 }
 
@@ -322,6 +323,8 @@ uint64_t* scanPtr;
 
 void* gcCopy(void* object)
 {
+    assert((otherEnd - otherStart) >= (heapEnd - heapStart));
+
     // Back up one word to the beginning of the allocated block
     uint64_t* block = (uint64_t*)object - 1;
     uint64_t header = *block;
@@ -331,7 +334,7 @@ void* gcCopy(void* object)
         return (void*)header;
     }
 
-    size_t sizeInWords = header & ~1ULL;
+    size_t sizeInWords = header >> 1;
 
     // Copy to the "to" space
     memcpy(allocPtr, block, (sizeInWords + 1) * sizeof(uint64_t));
@@ -412,7 +415,7 @@ void gcScan()
             ++p;
         }
 
-        size_t sizeInWords = *scanPtr & ~1ULL;
+        size_t sizeInWords = *scanPtr >> 1;
         scanPtr += (sizeInWords + 1);
     }
 }

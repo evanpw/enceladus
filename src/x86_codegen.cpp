@@ -657,9 +657,15 @@ void X86CodeGen::visit(TACIndirectCall* inst)
         EMIT("push " << access(*i));
     }
 
+    // HACK: We don't want to spill the function address onto the stack,
+    // because it will break the GC
+    std::string functionReg = getRegisterFor(inst->function);
+    freeRegister(functionReg);
+    _registers[functionReg].isDirty = false;
+
     spillAndClear();
 
-    EMIT("call " << access(inst->function));
+    EMIT("call " << functionReg);
 
     // Remove the function parameters from the stack
     if (paramsOnStack > 0)

@@ -339,11 +339,7 @@ void TACCodeGen::visit(NullaryNode* node)
 
             // SplObject header fields
             emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, constructorTag), ConstAddress::UnboxedZero));
-
-            emit(new TACLeftIndexedAssignment(
-                dest,
-                offsetof(SplObject, sizeInWords),
-                ConstAddress::UnboxedZero));
+            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, sizeInWords), ConstAddress::UnboxedZero));
 
             // Address of the function as an unboxed member
             emit(new TACLeftIndexedAssignment(dest, sizeof(SplObject), getNameAddress(node->symbol)));
