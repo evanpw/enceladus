@@ -273,8 +273,13 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, bool createVariables)
 
 void SemanticAnalyzer::insertSymbol(Symbol* symbol)
 {
+    if (!symbol) return;
+
+    static unsigned long count = 0;
+
     if (symbol->name == "_")
     {
+        symbol->name = format("_unnamed{}", count++);
         return;
     }
 
@@ -792,24 +797,31 @@ void SemanticAnalyzer::visit(LetNode* node)
 	AstVisitor::visit(node);
 
 	const std::string& target = node->target;
-    CHECK_UNDEFINED_IN_SCOPE(target);
+    if (target != "_")
+    {
+        CHECK_UNDEFINED_IN_SCOPE(target);
 
-	Symbol* symbol = new VariableSymbol(target, node, _enclosingFunction);
+    	Symbol* symbol = new VariableSymbol(target, node, _enclosingFunction);
 
-	if (node->typeName)
-	{
-		resolveTypeName(node->typeName);
-		symbol->setType(node->typeName->type);
-	}
-	else
-	{
-		symbol->setType(TypeVariable::create());
-	}
+    	if (node->typeName)
+    	{
+    		resolveTypeName(node->typeName);
+    		symbol->setType(node->typeName->type);
+    	}
+    	else
+    	{
+    		symbol->setType(TypeVariable::create());
+    	}
 
-	insertSymbol(symbol);
-	node->symbol = symbol;
+    	insertSymbol(symbol);
+    	node->symbol = symbol;
 
-	unify(node->value->type, symbol->type, node);
+    	unify(node->value->type, symbol->type, node);
+    }
+    else
+    {
+        node->symbol = nullptr;
+    }
 
     node->type = Type::Unit;
 }
