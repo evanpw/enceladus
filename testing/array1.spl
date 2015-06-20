@@ -1,0 +1,2 @@
+arr := makeArray 10 12345
+print $ show arr.[0]

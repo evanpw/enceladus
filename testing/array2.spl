@@ -1,0 +1,6 @@
+arr := makeArray 100 0
+
+for i in range 0 99
+    arraySet arr i i
+
+print $ show arr.[15]
