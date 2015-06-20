@@ -231,8 +231,8 @@ struct TACIndirectCall : public TACInstruction
 
 struct TACRightIndexedAssignment : public TACInstruction
 {
-    TACRightIndexedAssignment(std::shared_ptr<Address> lhs, std::shared_ptr<Address> rhs, size_t offset)
-    : lhs(lhs), rhs(rhs), offset(offset)
+    TACRightIndexedAssignment(std::shared_ptr<Address> lhs, std::shared_ptr<Address> rhs, int64_t offset, int64_t scale = 1)
+    : lhs(lhs), rhs(rhs), offset(offset), scale(scale)
     {
         assert(lhs->tag != AddressTag::Const && rhs->tag != AddressTag::Const);
     }
@@ -248,7 +248,8 @@ struct TACRightIndexedAssignment : public TACInstruction
 
     std::shared_ptr<Address> lhs;
     std::shared_ptr<Address> rhs;
-    size_t offset;
+    int64_t offset;
+    int64_t scale;
 };
 
 struct TACLeftIndexedAssignment : public TACInstruction
@@ -273,7 +274,7 @@ struct TACLeftIndexedAssignment : public TACInstruction
     std::shared_ptr<Address> rhs;
 };
 
-enum class BinaryOperation {BADD, BSUB, BMUL, BDIV, BMOD, UAND, UADD, SHR};
+enum class BinaryOperation {BADD, BSUB, BMUL, BDIV, BMOD, UAND, UADD, SHR, SHL};
 extern const char* binaryOperationNames[];
 
 struct TACBinaryOperation : public TACInstruction

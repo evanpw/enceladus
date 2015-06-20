@@ -38,6 +38,7 @@ public:
     virtual void visit(StructDefNode* node);
 
     // Internal nodes
+    virtual void visit(ArrayIndexNode* node);
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(ComparisonNode* node);

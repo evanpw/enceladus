@@ -4,6 +4,7 @@
 #include <vector>
 #include "scope.hpp"
 
+class ArrayIndexNode;
 class AssignNode;
 class BlockNode;
 class BoolNode;
@@ -40,6 +41,7 @@ class AstVisitor
 {
 public:
 	// Default implementations do nothing but visit each child
+	virtual void visit(ArrayIndexNode* node);
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(ComparisonNode* node);

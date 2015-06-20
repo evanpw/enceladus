@@ -186,6 +186,7 @@ unary_expression
     | inline_list
     | INT_LIT
     | STRING_LIT
+    | LIDENT '[' expression ']'
 
 inline_list
     : '[' list_interior ']'

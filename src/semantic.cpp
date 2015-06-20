@@ -1247,6 +1247,28 @@ void SemanticAnalyzer::visit(MemberDefNode* node)
     node->type = Type::Unit;
 }
 
+void SemanticAnalyzer::visit(ArrayIndexNode* node)
+{
+    const std::string& name = node->varName;
+
+    Symbol* varSymbol = resolveSymbol(name);
+    CHECK(varSymbol, "symbol \"{}\" is not defined in this scope", name);
+    CHECK(varSymbol->kind == kVariable, "\"{}\" is not the name of a variable", name);
+    node->varSymbol = varSymbol->asVariable();
+
+    // Index is an integer
+    node->index->accept(this);
+    unify(node->index->type, Type::Int, node);
+
+    // Variable is an array
+    std::shared_ptr<Type> valueType = TypeVariable::create();
+    std::shared_ptr<Type> arrayType = ConstructedType::create(TypeConstructor::Array, {valueType});
+    unify(varSymbol->type, arrayType, node);
+
+    // If variable has type Array a, then type of this node is a
+    node->type = valueType;
+}
+
 void SemanticAnalyzer::visit(MemberAccessNode* node)
 {
     const std::string& name = node->varName;

@@ -1023,6 +1023,15 @@ ExpressionNode* Parser::unary_expression()
 
             return new MemberAccessNode(_context, getLocation(), varName.value.str, memberName.value.str);
         }
+        else if (peekType() == tLIDENT && peek2ndType() == '[')
+        {
+            Token varName = expect(tLIDENT);
+            expect('[');
+            ExpressionNode* index = expression();
+            expect(']');
+
+            return new ArrayIndexNode(_context, getLocation(), varName.value.str, index);
+        }
         else
         {
             return new NullaryNode(_context, getLocation(), ident());

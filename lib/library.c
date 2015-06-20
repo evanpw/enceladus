@@ -43,6 +43,19 @@ Array* makeArray(int64_t n, uint64_t value)
     return result;
 }
 
+uint64_t arrayAt(Array* arr, int64_t n)
+{
+    int64_t index = FROM_INT(n);
+
+    if (index < 0 || index > arr->sizeInWords)
+    {
+        fail("*** Exception: Out-of-bounds array access");
+    }
+
+    uint64_t* p = arrayContent(arr);
+    return p[index];
+}
+
 //// Strings ///////////////////////////////////////////////////////////////////
 
 char* strContent(String* s)

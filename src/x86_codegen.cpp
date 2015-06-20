@@ -684,7 +684,15 @@ void X86CodeGen::visit(TACRightIndexedAssignment* inst)
     std::string lhs = getRegisterFor(inst->lhs, WRITE);
     std::string rhs = getRegisterFor(inst->rhs, READ);
 
-    EMIT("mov " << lhs <<  ", [" << rhs << " + " << inst->offset << "]");
+    if (inst->scale == 1)
+    {
+        EMIT("mov " << lhs <<  ", [" << rhs << " + " << inst->offset << "]");
+    }
+    else
+    {
+        assert(inst->scale == 2 || inst->scale == 4 || inst->scale == 8);
+        EMIT("mov " << lhs << ", [" << rhs << " * " << inst->scale << " + " << inst->offset << "]");
+    }
 
     freeRegister(lhs);
     freeRegister(rhs);
@@ -825,6 +833,18 @@ void X86CodeGen::visit(TACBinaryOperation* inst)
         dest = getRegisterFor(inst->dest, WRITE);
         SAFE_MOV(dest, lhs);
         EMIT("shr " << dest << ", " << shiftCount);
+    }
+    else if (inst->op == BinaryOperation::SHL)
+    {
+        assert(isConst(inst->rhs));
+        long shiftCount = inst->rhs->asConst().value;
+        assert((shiftCount >= 0) && (shiftCount < 64));
+
+        lhs = access(inst->lhs);
+
+        dest = getRegisterFor(inst->dest, WRITE);
+        SAFE_MOV(dest, lhs);
+        EMIT("shl " << dest << ", " << shiftCount);
     }
 
     freeRegister(lhs);

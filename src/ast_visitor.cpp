@@ -138,3 +138,7 @@ void AstVisitor::visit(DataDeclaration* node)
 	}
 }
 
+void AstVisitor::visit(ArrayIndexNode* node)
+{
+	node->index->accept(this);
+}
