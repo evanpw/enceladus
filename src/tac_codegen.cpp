@@ -664,21 +664,6 @@ void TACCodeGen::visit(VariableNode* node)
     node->address = getNameAddress(node->symbol);
 }
 
-void TACCodeGen::visit(ArrayIndexNode* node)
-{
-    std::shared_ptr<Address> offset = visitAndGet(*node->index);
-    std::shared_ptr<Address> varAddress = getNameAddress(node->varSymbol);
-
-    if (!node->address)
-        node->address = makeTemp();
-
-    // offset = FROM_INT(x) * 8 + sizeof(SplObject)
-    // => offset = (x >> 1) << 3 + sizeof(SplObject)
-    // => offset = (x << 2) - (1 << 2) + sizeof(SplObject)
-    // => offset = (x * 4) + (sizeof(SplObject) - 4)
-    emit(new TACRightIndexedAssignment(node->address, varAddress, sizeof(SplObject) - 4, 4));
-}
-
 void TACCodeGen::visit(MemberAccessNode* node)
 {
     std::shared_ptr<Address> varAddress(getNameAddress(node->varSymbol));

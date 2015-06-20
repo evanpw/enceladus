@@ -944,7 +944,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 void SemanticAnalyzer::visit(AssignNode* node)
 {
     Symbol* symbol = resolveSymbol(node->target);
-    CHECK(symbol != nullptr, "symbol \"{}\" is not defined in this scope", node->target);
+    CHECK(symbol != nullptr, "symbol \"{}\" is not defined in this scope. Did you mean to define it here?", node->target);
     CHECK(symbol->kind == kVariable, "symbol \"{}\" is not a variable", node->target);
     node->symbol = symbol;
 
@@ -1245,28 +1245,6 @@ void SemanticAnalyzer::visit(MemberDefNode* node)
     resolveTypeName(node->typeName);
     node->memberType = node->typeName->type;
     node->type = Type::Unit;
-}
-
-void SemanticAnalyzer::visit(ArrayIndexNode* node)
-{
-    const std::string& name = node->varName;
-
-    Symbol* varSymbol = resolveSymbol(name);
-    CHECK(varSymbol, "symbol \"{}\" is not defined in this scope", name);
-    CHECK(varSymbol->kind == kVariable, "\"{}\" is not the name of a variable", name);
-    node->varSymbol = varSymbol->asVariable();
-
-    // Index is an integer
-    node->index->accept(this);
-    unify(node->index->type, Type::Int, node);
-
-    // Variable is an array
-    std::shared_ptr<Type> valueType = TypeVariable::create();
-    std::shared_ptr<Type> arrayType = ConstructedType::create(TypeConstructor::Array, {valueType});
-    unify(varSymbol->type, arrayType, node);
-
-    // If variable has type Array a, then type of this node is a
-    node->type = valueType;
 }
 
 void SemanticAnalyzer::visit(MemberAccessNode* node)

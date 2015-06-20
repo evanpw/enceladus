@@ -231,8 +231,9 @@ struct TACIndirectCall : public TACInstruction
 
 struct TACRightIndexedAssignment : public TACInstruction
 {
-    TACRightIndexedAssignment(std::shared_ptr<Address> lhs, std::shared_ptr<Address> rhs, int64_t offset, int64_t scale = 1)
-    : lhs(lhs), rhs(rhs), offset(offset), scale(scale)
+    TACRightIndexedAssignment(std::shared_ptr<Address> lhs, std::shared_ptr<Address> rhs, int64_t offset,
+                              std::shared_ptr<Address> index = Address::Null, int64_t scale = 1)
+    : lhs(lhs), rhs(rhs), offset(offset), index(index), scale(scale)
     {
         assert(lhs->tag != AddressTag::Const && rhs->tag != AddressTag::Const);
     }
@@ -249,6 +250,7 @@ struct TACRightIndexedAssignment : public TACInstruction
     std::shared_ptr<Address> lhs;
     std::shared_ptr<Address> rhs;
     int64_t offset;
+    std::shared_ptr<Address> index;
     int64_t scale;
 };
 

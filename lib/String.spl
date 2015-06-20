@@ -93,7 +93,7 @@ def join(sep: String, xs: [String]) -> String
     elif length xs == 1
         return head xs
     else
-        return head xs . sep . join sep $ tail xs
+        return head xs ^ sep ^ join sep $ tail xs
 
 
 def stringToInt(s: String) -> Option Int

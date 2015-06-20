@@ -137,8 +137,3 @@ void AstVisitor::visit(DataDeclaration* node)
 		spec->accept(this);
 	}
 }
-
-void AstVisitor::visit(ArrayIndexNode* node)
-{
-	node->index->accept(this);
-}

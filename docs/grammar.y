@@ -168,7 +168,7 @@ multiplicative_expression
 
 concat_expression
     : negation_expression [ CONCAT concat_expression ]
-    | negation_expression [ '.' concat_expression ]
+    | negation_expression [ '^' concat_expression ]
 
 negation_expression
     : [ '-' ] func_call_expression
@@ -186,7 +186,7 @@ unary_expression
     | inline_list
     | INT_LIT
     | STRING_LIT
-    | LIDENT '[' expression ']'
+    | LIDENT DOT_BRACKET expression ']'
 
 inline_list
     : '[' list_interior ']'

@@ -684,14 +684,15 @@ void X86CodeGen::visit(TACRightIndexedAssignment* inst)
     std::string lhs = getRegisterFor(inst->lhs, WRITE);
     std::string rhs = getRegisterFor(inst->rhs, READ);
 
-    if (inst->scale == 1)
+    if (inst->index == Address::Null)
     {
         EMIT("mov " << lhs <<  ", [" << rhs << " + " << inst->offset << "]");
     }
     else
     {
-        assert(inst->scale == 2 || inst->scale == 4 || inst->scale == 8);
-        EMIT("mov " << lhs << ", [" << rhs << " * " << inst->scale << " + " << inst->offset << "]");
+        assert(inst->scale == 1 || inst->scale == 2 || inst->scale == 4 || inst->scale == 8);
+        std::string index = getRegisterFor(inst->index);
+        EMIT("mov " << lhs << ", [" << rhs << " + " << index << " * " << inst->scale << " + " << inst->offset << "]");
     }
 
     freeRegister(lhs);

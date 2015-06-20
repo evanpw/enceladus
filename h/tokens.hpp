@@ -18,6 +18,7 @@ enum TokenType : int
     tDEDENT,
     tDEF,
     tDIV_EQUAL,
+    tDOT_BRACKET,
     tELIF,
     tELSE,
     tEOL,

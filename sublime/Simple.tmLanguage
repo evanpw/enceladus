@@ -523,10 +523,8 @@
 			<string>#infix_op</string>
 		</dict>
 		<dict>
-			<key>comment</key>
-			<string>In case this regex seems overly general, note that Simple permits the definition of new operators which can be nearly any string of punctuation characters, such as $%^&amp;*.</string>
 			<key>match</key>
-			<string>[|!%$?~+:\-.=&lt;/&gt;\\]+|mod</string>
+			<string>[|!%$?~+:\-.=&lt;/&gt;\\^]+|mod|@</string>
 			<key>name</key>
 			<string>keyword.operator.simple</string>
 		</dict>

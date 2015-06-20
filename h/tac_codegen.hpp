@@ -21,7 +21,6 @@ public:
     : _mainCodeGen(mainCodeGen)
     {}
 
-    UNSUPPORTED(ArrayIndexNode);
     UNSUPPORTED(AssignNode);
     UNSUPPORTED(BlockNode);
     UNSUPPORTED(BreakNode);
@@ -88,7 +87,6 @@ class TACCodeGen : public AstVisitor
 public:
     TACCodeGen();
 
-    virtual void visit(ArrayIndexNode* node);
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(BreakNode* node);

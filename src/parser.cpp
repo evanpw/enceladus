@@ -896,7 +896,7 @@ ExpressionNode* Parser::concat_expression()
     {
         return new FunctionCallNode(_context, getLocation(), "concat", {lhs, concat_expression()});
     }
-    else if (accept('.'))
+    else if (accept('^'))
     {
         return new FunctionCallNode(_context, getLocation(), "strCat", {lhs, concat_expression()});
     }
@@ -960,6 +960,8 @@ ExpressionNode* Parser::func_call_expression()
 
 ExpressionNode* Parser::unary_expression()
 {
+    YYLTYPE location = getLocation();
+
     switch (peekType())
     {
     case '(':
@@ -973,17 +975,17 @@ ExpressionNode* Parser::unary_expression()
 
     case tTRUE:
         expect(tTRUE);
-        return new BoolNode(_context, getLocation(), true);
+        return new BoolNode(_context, location, true);
 
     case tFALSE:
         expect(tFALSE);
-        return new BoolNode(_context, getLocation(), false);
+        return new BoolNode(_context, location, false);
 
     case '[':
         expect('[');
         if (accept(']'))
         {
-            return new FunctionCallNode(_context, getLocation(), "Nil", {});
+            return new FunctionCallNode(_context, location, "Nil", {});
         }
         else
         {
@@ -997,19 +999,19 @@ ExpressionNode* Parser::unary_expression()
 
             expect(']');
 
-            return makeList(_context, getLocation(), argList);
+            return makeList(_context, location, argList);
         }
 
     case tINT_LIT:
     {
         Token token = expect(tINT_LIT);
-        return new IntNode(_context, getLocation(), token.value.number);
+        return new IntNode(_context, location, token.value.number);
     }
 
     case tSTRING_LIT:
     {
         Token token = expect(tSTRING_LIT);
-        return new StringLiteralNode(_context, getLocation(), token.value.str);
+        return new StringLiteralNode(_context, location, token.value.str);
     }
 
     case tLIDENT:
@@ -1021,26 +1023,25 @@ ExpressionNode* Parser::unary_expression()
             Token memberName = expect(tLIDENT);
             expect('}');
 
-            return new MemberAccessNode(_context, getLocation(), varName.value.str, memberName.value.str);
+            return new MemberAccessNode(_context, location, varName.value.str, memberName.value.str);
         }
-        else if (peekType() == tLIDENT && peek2ndType() == '[')
+        else if (peekType() == tLIDENT && peek2ndType() == tDOT_BRACKET)
         {
             Token varName = expect(tLIDENT);
-            expect('[');
+            expect(tDOT_BRACKET);
             ExpressionNode* index = expression();
             expect(']');
 
-            return new ArrayIndexNode(_context, getLocation(), varName.value.str, index);
+            return new FunctionCallNode(_context, location, "arrayAt",
+                {new VariableNode(_context, location, varName.value.str), index});
         }
         else
         {
-            return new NullaryNode(_context, getLocation(), ident());
+            return new NullaryNode(_context, location, ident());
         }
 
     default:
     {
-        YYLTYPE location = getLocation();
-
         std::stringstream ss;
 
         ss << "Near line " << location.first_line << ", "

@@ -106,6 +106,9 @@ class TestAcceptance(object):
     def test_euler22(self):
         self.run('euler22', result='871198282', input_file='testing/names.txt')
 
+    def test_euler24(self):
+        self.run('euler24', result='2783915460')
+
     def test_poly(self):
         self.run('poly', result='4')
 
@@ -205,10 +208,19 @@ class TestAcceptance(object):
     def test_adt4(self):
         self.run('adt4', build_error='Error: Near line 4, column 1: switch statement is not exhaustive')
 
+    def test_array1(self):
+        self.run('array1', result='12345')
+
+    def test_array2(self):
+        self.run('array2', result='15')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
         self.run('euler4', result='906609')
+
+    def test_euler10(self):
+        self.run('euler10', result='142913828922')
 
     def test_euler12(self):
         self.run('euler12', result='76576500')
@@ -227,17 +239,11 @@ class TestAcceptance(object):
 
     # Slow tests (> 1s)
 
-    def test_euler10(self):
-        self.run('euler10', result='142913828922')
-
     def test_euler14(self):
         self.run('euler14', result='837799')
 
     def test_euler23(self):
         self.run('euler23', result='4179871')
-
-    def test_euler24(self):
-        self.run('euler24', result='2783915460')
 
     def test_euler27(self):
         self.run('euler27', result='-59231')

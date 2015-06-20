@@ -56,6 +56,19 @@ uint64_t arrayAt(Array* arr, int64_t n)
     return p[index];
 }
 
+void arraySet(Array* arr, int64_t n, uint64_t value)
+{
+    int64_t index = FROM_INT(n);
+
+    if (index < 0 || index > arr->sizeInWords)
+    {
+        fail("*** Exception: Out-of-bounds array access");
+    }
+
+    uint64_t* p = arrayContent(arr);
+    p[index] = value;
+}
+
 //// Strings ///////////////////////////////////////////////////////////////////
 
 char* strContent(String* s)

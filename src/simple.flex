@@ -114,7 +114,8 @@ int yycolumn = 1;
 "{"     { return '{'; }
 "}"     { return '}'; }
 "|"     { return '|'; }
-"."     { return '.'; }
+"^"     { return '^'; }
+".["    { return tDOT_BRACKET; }
 "mod"   { return tMOD; }
 "->"    { return tRARROW; }
 "=>"    { return tDARROW; }
@@ -194,9 +195,9 @@ int yycolumn = 1;
 \"[^"]*\"                { yylval.str = StringTable::add(trim_quotes(yytext)); return tSTRING_LIT; }
 \'([^']|\\[nrt])\'       { yylval.number = char_literal(yytext); return tINT_LIT; }
 
-[a-z][a-zA-Z0-9.']*      { yylval.str = StringTable::add(yytext); return tLIDENT; }
+[a-z][a-zA-Z0-9']*       { yylval.str = StringTable::add(yytext); return tLIDENT; }
 "_"                      { yylval.str = StringTable::add(yytext); return tLIDENT; }
-[A-Z][a-zA-Z0-9.']*      { yylval.str = StringTable::add(yytext); return tUIDENT; }
+[A-Z][a-zA-Z0-9']*       { yylval.str = StringTable::add(yytext); return tUIDENT; }
 \\\n                     { yycolumn = 1; }
 \n                       { yycolumn = 1; if (unclosedBrackets == 0) return tEOL; }
 [ \t]+                   { yylval.number = count_whitespace(yytext, yyleng); return tWHITESPACE; }

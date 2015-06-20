@@ -1,5 +1,4 @@
 # Solves Project Euler #23
-
 import List
 
 def divisors(n: Int) -> [Int]

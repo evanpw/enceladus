@@ -554,21 +554,5 @@ public:
 	size_t memberLocation;
 };
 
-class ArrayIndexNode : public ExpressionNode
-{
-public:
-	ArrayIndexNode(AstContext& context, const YYLTYPE& location, const std::string& varName, ExpressionNode* index)
-	: ExpressionNode(context, location), varName(varName), index(index)
-	{}
-
-	AST_VISITABLE();
-
-	std::string varName;
-	ExpressionNode* index;
-
-	// Annotations
-	VariableSymbol* varSymbol;
-};
-
 
 #endif
