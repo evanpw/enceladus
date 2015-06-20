@@ -21,3 +21,5 @@
 
 * Optimization: Remove labels which are never referenced (can eliminate spills
   or enable other optimizations)
+
+* Separate scope containing for-loop induction variable
