@@ -626,8 +626,6 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     symbol->setTypeScheme(std::make_shared<TypeScheme>(FunctionType::create(node->memberTypes, node->resultType), variables));
     insertSymbol(symbol);
 
-    //std::cerr << "constructor: " << node->name << " :: " << symbol->typeScheme->name() << std::endl;
-
     node->type = Type::Unit;
 }
 
@@ -816,7 +814,7 @@ void SemanticAnalyzer::visit(LetNode* node)
     	insertSymbol(symbol);
     	node->symbol = symbol;
 
-    	unify(node->value->type, symbol->type, node);
+    	unify(node->rhs->type, symbol->type, node);
     }
     else
     {
@@ -948,9 +946,9 @@ void SemanticAnalyzer::visit(AssignNode* node)
     CHECK(symbol->kind == kVariable, "symbol \"{}\" is not a variable", node->target);
     node->symbol = symbol;
 
-	node->value->accept(this);
+	node->rhs->accept(this);
 
-    unify(node->value->type, node->symbol->type, node);
+    unify(node->rhs->type, node->symbol->type, node);
 
     node->type = Type::Unit;
 }

@@ -1,27 +1,43 @@
 #ifndef TAC_INSTRUCTION_HPP
 #define TAC_INSTRUCTION_HPP
 
-#include "address.hpp"
+#include "basic_block.hpp"
 #include "scope.hpp"
 #include "tac_visitor.hpp"
+#include "value.hpp"
 
 #include <string>
 
-struct TACInstruction
+struct Instruction
 {
-    virtual ~TACInstruction() { delete next; }
+    virtual ~Instruction() {}
 
     virtual void accept(TACVisitor* visitor) = 0;
 
     virtual std::string str() const = 0;
 
-    // Instructions in a single function form an instrusive linked list
-    TACInstruction* next = nullptr;
+    void insertAfter(Instruction* inst)
+    {
+        assert(inst);
+        Instruction* myNext = inst->next;
+
+        inst->next = this;
+        this->prev = inst;
+
+        this->next = myNext;
+        if (myNext) myNext->prev = this;
+    }
+
+    BasicBlock* parent;
+
+    // Instructions in a single basic block form an instrusive linked list
+    Instruction* prev = nullptr;
+    Instruction* next = nullptr;
 };
 
 #define MAKE_VISITABLE() virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
-struct TACComment : public TACInstruction
+struct TACComment : public Instruction
 {
     TACComment(const std::string& text)
     : text(text)
@@ -37,27 +53,10 @@ struct TACComment : public TACInstruction
     std::string text;
 };
 
-struct TACLabel : public TACInstruction
+struct TACConditionalJump : public Instruction
 {
-    TACLabel();
-
-    MAKE_VISITABLE();
-
-    virtual std::string str() const override
-    {
-        std::stringstream ss;
-        ss << ".L" << number;
-        return ss.str();
-    }
-
-    long number;
-    static long labelCount;
-};
-
-struct TACConditionalJump : public TACInstruction
-{
-    TACConditionalJump(std::shared_ptr<Address> lhs, const std::string& op, std::shared_ptr<Address> rhs, TACLabel* target)
-    : lhs(lhs), op(op), rhs(rhs), target(target)
+    TACConditionalJump(Value* lhs, const std::string& op, Value* rhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
+    : lhs(lhs), op(op), rhs(rhs), ifTrue(ifTrue), ifFalse(ifFalse)
     {}
 
     MAKE_VISITABLE();
@@ -65,20 +64,21 @@ struct TACConditionalJump : public TACInstruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << "if " << lhs->str() << " " << op << " " << rhs->str() << " goto " << target->str();
+        ss << "br " << lhs->str() << " " << op << " " << rhs->str() << ", " << ifTrue->str() << ", " << ifFalse->str();
         return ss.str();
     }
 
-    std::shared_ptr<Address> lhs;
+    Value* lhs;
     std::string op;
-    std::shared_ptr<Address> rhs;
-    TACLabel* target;
+    Value* rhs;
+    BasicBlock* ifTrue;
+    BasicBlock* ifFalse;
 };
 
-struct TACJumpIf : public TACInstruction
+struct TACJumpIf : public Instruction
 {
-    TACJumpIf(std::shared_ptr<Address> lhs, TACLabel* target)
-    : lhs(lhs), target(target)
+    TACJumpIf(Value* lhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
+    : lhs(lhs), ifTrue(ifTrue), ifFalse(ifFalse)
     {}
 
     MAKE_VISITABLE();
@@ -86,39 +86,20 @@ struct TACJumpIf : public TACInstruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << "if " << lhs->str() << " goto " << target->str();
+        ss << "br " << lhs->str() << ", " << ifTrue->str() << ", " << ifFalse->str();
         return ss.str();
     }
 
-    std::shared_ptr<Address> lhs;
-    TACLabel* target;
+    Value* lhs;
+    BasicBlock* ifTrue;
+    BasicBlock* ifFalse;
 };
 
-struct TACJumpIfNot : public TACInstruction
+struct TACAssign : public Instruction
 {
-    TACJumpIfNot(std::shared_ptr<Address> lhs, TACLabel* target)
-    : lhs(lhs), target(target)
-    {}
-
-    MAKE_VISITABLE();
-
-    virtual std::string str() const override
-    {
-        std::stringstream ss;
-        ss << "ifnot " << lhs->str() << " goto " << target->str();
-        return ss.str();
-    }
-
-    std::shared_ptr<Address> lhs;
-    TACLabel* target;
-};
-
-struct TACAssign : public TACInstruction
-{
-    TACAssign(std::shared_ptr<Address> lhs, std::shared_ptr<Address> rhs)
+    TACAssign(Value* lhs, Value* rhs)
     : lhs(lhs), rhs(rhs)
     {
-        assert(lhs->tag != AddressTag::Const);
     }
 
     MAKE_VISITABLE();
@@ -130,13 +111,39 @@ struct TACAssign : public TACInstruction
         return ss.str();
     }
 
-    std::shared_ptr<Address> lhs;
-    std::shared_ptr<Address> rhs;
+    Value* lhs;
+    Value* rhs;
 };
 
-struct TACJump : public TACInstruction
+struct TACReturn : public Instruction
 {
-    TACJump(TACLabel* target)
+    TACReturn(Value* value = nullptr)
+    : value(value)
+    {
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        if (value)
+        {
+            std::stringstream ss;
+            ss << "return " << value->str();
+            return ss.str();
+        }
+        else
+        {
+            return "return";
+        }
+    }
+
+    Value* value;
+};
+
+struct TACJump : public Instruction
+{
+    TACJump(BasicBlock* target)
     : target(target)
     {}
 
@@ -149,23 +156,23 @@ struct TACJump : public TACInstruction
         return ss.str();
     }
 
-    TACLabel* target;
+    BasicBlock* target;
 };
 
-struct TACCall : public TACInstruction
+struct TACCall : public Instruction
 {
-    TACCall(bool foreign, std::shared_ptr<Address> dest, const std::string& function, const std::vector<std::shared_ptr<Address>>& params = {}, bool ccall = false)
+    TACCall(bool foreign, Value* dest, Value* function, const std::vector<Value*>& params = {}, bool ccall = false)
     : foreign(foreign), dest(dest), function(function), params(params), ccall(ccall)
     {
     }
 
-    TACCall(bool foreign, std::shared_ptr<Address> dest, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList, bool ccall = false)
+    TACCall(bool foreign, Value* dest, Value* function, std::initializer_list<Value*> paramsList, bool ccall = false)
     : foreign(foreign), dest(dest), function(function), ccall(ccall)
     {
         for (auto& param : paramsList) params.push_back(param);
     }
 
-    TACCall(bool foreign, const std::string& function, std::initializer_list<std::shared_ptr<Address>> paramsList = {}, bool ccall = false)
+    TACCall(bool foreign, Value* function, std::initializer_list<Value*> paramsList = {}, bool ccall = false)
     : foreign(foreign), function(function), ccall(ccall)
     {
         for (auto& param : paramsList) params.push_back(param);
@@ -178,9 +185,9 @@ struct TACCall : public TACInstruction
         std::stringstream ss;
 
         if (dest)
-            ss << dest->str() << " = call " << function << "(";
+            ss << dest->str() << " = call " << function->str() << "(";
         else
-            ss << "call " << function << "(";
+            ss << "call " << function->str() << "(";
 
         for (size_t i = 0; i < params.size(); ++i)
         {
@@ -193,18 +200,17 @@ struct TACCall : public TACInstruction
     }
 
     bool foreign;
-    std::shared_ptr<Address> dest;
-    std::string function;
-    std::vector<std::shared_ptr<Address>> params;
+    Value* dest;
+    Value* function;
+    std::vector<Value*> params;
     bool ccall;
 };
 
-struct TACIndirectCall : public TACInstruction
+struct TACIndirectCall : public Instruction
 {
-    TACIndirectCall(std::shared_ptr<Address> dest, std::shared_ptr<Address> function, const std::vector<std::shared_ptr<Address>>& params)
+    TACIndirectCall(Value* dest, Value* function, const std::vector<Value*>& params)
     : dest(dest), function(function), params(params)
     {
-        assert(function->tag == AddressTag::Temp);
     }
 
     MAKE_VISITABLE();
@@ -212,7 +218,7 @@ struct TACIndirectCall : public TACInstruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << dest->str() << " = call " << function << "(";
+        ss << dest->str() << " = call " << function->str() << "(";
 
         for (size_t i = 0; i < params.size(); ++i)
         {
@@ -224,18 +230,17 @@ struct TACIndirectCall : public TACInstruction
         return ss.str();
     }
 
-    std::shared_ptr<Address> dest;
-    std::shared_ptr<Address> function;
-    std::vector<std::shared_ptr<Address>> params;
+    Value* dest;
+    Value* function;
+    std::vector<Value*> params;
 };
 
-struct TACRightIndexedAssignment : public TACInstruction
+struct TACRightIndexedAssignment : public Instruction
 {
-    TACRightIndexedAssignment(std::shared_ptr<Address> lhs, std::shared_ptr<Address> rhs, int64_t offset,
-                              std::shared_ptr<Address> index = Address::Null, int64_t scale = 1)
+    TACRightIndexedAssignment(Value* lhs, Value* rhs, int64_t offset,
+                              Value* index = nullptr, int64_t scale = 1)
     : lhs(lhs), rhs(rhs), offset(offset), index(index), scale(scale)
     {
-        assert(lhs->tag != AddressTag::Const && rhs->tag != AddressTag::Const);
     }
 
     MAKE_VISITABLE();
@@ -243,23 +248,22 @@ struct TACRightIndexedAssignment : public TACInstruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << lhs->str() << " = " << rhs->str() << "[" << offset << "]";
+        ss << lhs->str() << " = " << "[" << rhs->str() << " + " << offset << "]";
         return ss.str();
     }
 
-    std::shared_ptr<Address> lhs;
-    std::shared_ptr<Address> rhs;
+    Value* lhs;
+    Value* rhs;
     int64_t offset;
-    std::shared_ptr<Address> index;
+    Value* index;
     int64_t scale;
 };
 
-struct TACLeftIndexedAssignment : public TACInstruction
+struct TACLeftIndexedAssignment : public Instruction
 {
-    TACLeftIndexedAssignment(std::shared_ptr<Address> lhs, size_t offset, std::shared_ptr<Address> rhs)
+    TACLeftIndexedAssignment(Value* lhs, size_t offset, Value* rhs)
     : lhs(lhs), offset(offset), rhs(rhs)
     {
-        assert(lhs->tag != AddressTag::Const);
     }
 
     MAKE_VISITABLE();
@@ -267,21 +271,21 @@ struct TACLeftIndexedAssignment : public TACInstruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << lhs->str() << "[" << offset << "] = " << rhs->str();
+        ss << "[" << lhs->str() << " + " << offset << "] = " << rhs->str();
         return ss.str();
     }
 
-    std::shared_ptr<Address> lhs;
+    Value* lhs;
     size_t offset;
-    std::shared_ptr<Address> rhs;
+    Value* rhs;
 };
 
-enum class BinaryOperation {BADD, BSUB, BMUL, BDIV, BMOD, UAND, UADD, SHR, SHL};
+enum class BinaryOperation {TADD, TSUB, TMUL, TDIV, TMOD, UAND, UADD, SHR, SHL};
 extern const char* binaryOperationNames[];
 
-struct TACBinaryOperation : public TACInstruction
+struct TACBinaryOperation : public Instruction
 {
-    TACBinaryOperation(std::shared_ptr<Address> dest, std::shared_ptr<Address> lhs, BinaryOperation op, std::shared_ptr<Address> rhs)
+    TACBinaryOperation(Value* dest, Value* lhs, BinaryOperation op, Value* rhs)
     : dest(dest), lhs(lhs), op(op), rhs(rhs)
     {}
 
@@ -300,10 +304,10 @@ struct TACBinaryOperation : public TACInstruction
         return ss.str();
     }
 
-    std::shared_ptr<Address> dest;
-    std::shared_ptr<Address> lhs;
+    Value* dest;
+    Value* lhs;
     BinaryOperation op;
-    std::shared_ptr<Address> rhs;
+    Value* rhs;
 };
 
 #endif

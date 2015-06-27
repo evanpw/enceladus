@@ -17,10 +17,6 @@ class TypeConstructor;
 class Type;
 class TypeScheme;
 class TypeVariable;
-class TypeVariable;
-class TypeVariable;
-class ValueConstructor;
-class ValueConstructor;
 class ValueConstructor;
 
 enum TypeTag {ttBase, ttFunction, ttVariable, ttConstructed};

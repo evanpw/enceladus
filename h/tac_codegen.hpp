@@ -1,12 +1,12 @@
 #ifndef TAC_CODE_GEN_HPP
 #define TAC_CODE_GEN_HPP
 
-#include "address.hpp"
 #include "ast.hpp"
 #include "ast_visitor.hpp"
 #include "mangler.hpp"
 #include "tac_instruction.hpp"
 #include "tac_program.hpp"
+#include "value.hpp"
 
 #include <boost/lexical_cast.hpp>
 
@@ -42,19 +42,19 @@ public:
     UNSUPPORTED(SwitchNode);
     UNSUPPORTED(MatchArm);
 
-    virtual void visit(BoolNode* node) { wrapper(*node); }
-    virtual void visit(MemberAccessNode* node) { wrapper(*node); }
-    virtual void visit(NullaryNode* node) { wrapper(*node); }
-    virtual void visit(VariableNode* node) { wrapper(*node); }
+    virtual void visit(BoolNode* node) { wrapper(node); }
+    virtual void visit(MemberAccessNode* node) { wrapper(node); }
+    virtual void visit(NullaryNode* node) { wrapper(node); }
+    virtual void visit(VariableNode* node) { wrapper(node); }
 
     virtual void visit(FunctionCallNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(LogicalNode* node);
 
-    void visitCondition(AstNode& node, TACLabel* trueBranch, TACLabel* falseBranch)
+    void visitCondition(AstNode& node, BasicBlock* trueBranch, BasicBlock* falseBranch)
     {
-        TACLabel* saveTrueBranch = _trueBranch;
-        TACLabel* saveFalseBranch = _falseBranch;
+        BasicBlock* saveTrueBranch = _trueBranch;
+        BasicBlock* saveFalseBranch = _falseBranch;
 
         _trueBranch = trueBranch;
         _falseBranch = falseBranch;
@@ -65,19 +65,21 @@ public:
         _falseBranch = saveFalseBranch;
     }
 
-    void wrapper(AstNode& node)
+    void wrapper(AstNode* node)
     {
-        std::shared_ptr<Address> address = visitAndGet(node);
-        emit(new TACJumpIf(address, _trueBranch));
-        emit(new TACJump(_falseBranch));
+        Value* value = visitAndGet(node);
+        emit(new TACJumpIf(value, _trueBranch, _falseBranch));
     }
 
 private:
-    void emit(TACInstruction* inst);
-    std::shared_ptr<Address> visitAndGet(AstNode& node);
+    void setBlock(BasicBlock* block);
 
-    TACLabel* _trueBranch;
-    TACLabel* _falseBranch;
+    void emit(Instruction* inst);
+    Value* visitAndGet(AstNode* node);
+    BasicBlock* makeBlock();
+
+    BasicBlock* _trueBranch;
+    BasicBlock* _falseBranch;
 
     TACCodeGen* _mainCodeGen;
 };
@@ -118,19 +120,19 @@ public:
     TACProgram& getResult() { return _tacProgram; }
 
 private:
-    // We cache the NameAddress corresponding to each symbol so that the address
+    // We cache the Value corresponding to each symbol so that the value
     // uniquely identifies a location
-    std::unordered_map<const Symbol*, std::shared_ptr<Address>> _names;
-    std::shared_ptr<Address> getNameAddress(const Symbol* symbol);
+    std::unordered_map<const Symbol*, Value*> _names;
+    Value* getValue(const Symbol* symbol);
 
     // The exit label of the current loop (used by break statements)
-    TACLabel* _currentLoopEnd;
+    BasicBlock* _currentLoopExit;
 
-    // Visit the given node and return its address
-    std::shared_ptr<Address> visitAndGet(AstNode& node)
+    // Visit the given node and return its value
+    Value* visitAndGet(AstNode* node)
     {
-        node.accept(this);
-        return node.address;
+        node->accept(this);
+        return node->value;
     }
 
     // We accumulate these lists while walking through the top level, and then
@@ -142,18 +144,19 @@ private:
     void createConstructor(ValueConstructor* constructor, size_t constructorTag);
 
     TACProgram _tacProgram;
-    TACFunction* _currentFunction;
-    std::shared_ptr<Address> _returnValue;
-    TACLabel* _functionEnd;
+    Function* _currentFunction;
 
     TACConditionalCodeGen _conditionalCodeGen;
     friend class TACConditionalCodeGen;
 
-    // Number of temporary variables used so far in the current function
-    std::shared_ptr<Address> makeTemp() { return std::make_shared<TempAddress>(_currentFunction->numberOfTemps++); }
+    int64_t _nextSeqNumber = 0;
+    Value* makeTemp() { return new Value(_nextSeqNumber++); }
+    BasicBlock* makeBlock() { return new BasicBlock(_nextSeqNumber++); }
 
-    TACInstruction* _currentInstruction = nullptr;
-    void emit(TACInstruction* inst);
+    void setBlock(BasicBlock* block) { _currentBlock = block; }
+    BasicBlock* _currentBlock = nullptr;
+
+    void emit(Instruction* inst);
 };
 
 #endif

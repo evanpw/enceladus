@@ -58,10 +58,21 @@ struct ConstAddress : public Address
 
     long value;
 
-    static std::shared_ptr<ConstAddress> True;
-    static std::shared_ptr<ConstAddress> False;
     static std::shared_ptr<ConstAddress> UnboxedZero;
     static std::shared_ptr<ConstAddress> UnboxedOne;
+};
+
+struct ConstBoolAddress : public ConstAddress
+{
+    static std::shared_ptr<ConstAddress> True;
+    static std::shared_ptr<ConstAddress> False;
+
+    virtual std::string str() const override;
+
+private:
+    ConstBoolAddress(long intValue)
+    : ConstAddress(intValue)
+    {}
 };
 
 struct TempAddress : public Address

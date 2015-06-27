@@ -64,12 +64,12 @@ void AstVisitor::visit(ForeverNode* node)
 
 void AstVisitor::visit(AssignNode* node)
 {
-	node->value->accept(this);
+	node->rhs->accept(this);
 }
 
 void AstVisitor::visit(LetNode* node)
 {
-	node->value->accept(this);
+	node->rhs->accept(this);
 	if (node->typeName)
 		node->typeName->accept(this);
 }

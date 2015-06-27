@@ -225,7 +225,7 @@ ValueConstructor::ValueConstructor(
 
     for (size_t i = 0; i < memberTypes.size(); ++i)
     {
-        std::string memberName = memberNames.empty() ? "_" : memberNames[i];
+        std::string memberName = memberNames.empty() ? "" : memberNames[i];
         std::shared_ptr<Type> type = memberTypes[i];
         _members.emplace_back(memberName, type, i);
     }

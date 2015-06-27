@@ -36,7 +36,6 @@ BlockNode* makeForNode(AstContext& context, const YYLTYPE& location, const std::
     // We need a unique variable name for the variable which holds the list
     // we are iterating over
     static int uniqueId = 0;
-
     std::string listVar = std::string("_for_list_") + boost::lexical_cast<std::string>(uniqueId++);
 
     std::vector<ExpressionNode*> headArgList;

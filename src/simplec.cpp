@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <deque>
+#include <set>
 #include <iostream>
 #include "ast.hpp"
 #include "ast_context.hpp"
@@ -7,8 +9,8 @@
 #include "scope.hpp"
 #include "semantic.hpp"
 #include "tac_codegen.hpp"
-#include "tac_local_optimizer.hpp"
-#include "x86_codegen.hpp"
+//#include "tac_local_optimizer.hpp"
+//#include "x86_codegen.hpp"
 
 using namespace std;
 
@@ -39,6 +41,41 @@ extern "C" int yywrap()
 
 		return 0;
 	}
+}
+
+void dumpFunction(const Function* function)
+{
+	std::cerr << function->name << ":" << std::endl;
+
+	std::deque<BasicBlock*> open = {function->firstBlock};
+	std::set<BasicBlock*> closed;
+	while (!open.empty())
+	{
+		BasicBlock* block = open.front();
+		open.pop_front();
+
+		if (closed.count(block) > 0)
+			continue;
+
+		std::cerr << block->str() << ":" << std::endl;
+		Instruction* inst = block->first;
+		while (inst != nullptr)
+		{
+			std::cerr << "\t" << inst->str() << std::endl;
+			inst = inst->next;
+		}
+
+		closed.insert(block);
+
+		std::vector<BasicBlock*> successors = block->getSuccessors();
+		for (auto& successor : successors)
+		{
+			if (closed.count(successor) == 0)
+				open.push_back(successor);
+		}
+	}
+
+	std::cerr << std::endl << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -111,27 +148,20 @@ int main(int argc, char* argv[])
 
 		TACProgram& intermediateCode = tacGen.getResult();
 
-		/*
-		for (const TACFunction& function : intermediateCode.otherFunctions)
+		for (Function* function : intermediateCode.otherFunctions)
 		{
-			std::cerr << function.name << ":" << std::endl;
-
-			TACInstruction* inst = function.instructions;
-			while (inst != nullptr)
-			{
-				std::cerr << inst->str() << std::endl;
-				inst = inst->next;
-			}
-
-			std::cerr << std::endl << std::endl;
+			dumpFunction(function);
 		}
-		*/
 
+		dumpFunction(intermediateCode.mainFunction);
+
+		/*
 		TACLocalOptimizer localOptimizer;
 		localOptimizer.optimizeCode(intermediateCode);
 
 		X86CodeGen x86Gen;
 		x86Gen.generateCode(intermediateCode);
+		*/
 	}
 
 	fclose(yyin);

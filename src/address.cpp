@@ -75,11 +75,26 @@ std::string ConstAddress::str() const
 std::string TempAddress::str() const
 {
     std::stringstream ss;
-    ss << "_t" << number;
+    ss << "%" << number;
     return ss.str();
 }
 
-std::shared_ptr<ConstAddress> ConstAddress::True(new ConstAddress(3));
-std::shared_ptr<ConstAddress> ConstAddress::False(new ConstAddress(1));
+std::shared_ptr<ConstAddress> ConstBoolAddress::True(new ConstBoolAddress(3));
+std::shared_ptr<ConstAddress> ConstBoolAddress::False(new ConstBoolAddress(1));
+
 std::shared_ptr<ConstAddress> ConstAddress::UnboxedZero(new ConstAddress(0));
 std::shared_ptr<ConstAddress> ConstAddress::UnboxedOne(new ConstAddress(1));
+
+std::string ConstBoolAddress::str() const
+{
+    if (value == 1)
+    {
+        return "true";
+    }
+    else if (value == 3)
+    {
+        return "false";
+    }
+
+    assert(false);
+}

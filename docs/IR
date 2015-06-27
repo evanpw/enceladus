@@ -1,0 +1,23 @@
+Types survive into the IR, but not the symbol table.
+
+Function:
+* List of basic blocks
+* Pointer to first basic block
+
+BasicBlock
+* Pointer to the enclosing function
+* List of instructions
+* Must end with a branch or a return
+
+Instruction
+* Pointer to the enclosing basic block
+* Conditional branches specify both true and false branches
+* Target of a conditional branch is a basic block
+* Subclasses for each instruction type
+
+Value
+* Subclasses: BasicBlock, Instruction(?), Constant, Argument
+* Can have a name (local variable), or not (temporary)
+
+Constant
+* Subclasses: GlobalValue (function, global variable), ConstantInt

@@ -12,6 +12,7 @@
 #include "scope.hpp"
 #include "tokens.hpp"
 #include "types.hpp"
+#include "value.hpp"
 
 class AstContext;
 
@@ -31,7 +32,7 @@ public:
 	std::shared_ptr<Type> type;
 
 	// For code generation
-	std::shared_ptr<Address> address;
+	Value* value = nullptr;
 };
 
 #define AST_VISITABLE() virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
@@ -186,25 +187,25 @@ public:
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(AstContext& context, const YYLTYPE& location, long value)
-	: ExpressionNode(context, location), value(value)
+	IntNode(AstContext& context, const YYLTYPE& location, int64_t intValue)
+	: ExpressionNode(context, location), intValue(intValue)
 	{}
 
 	AST_VISITABLE();
 
-	long value;
+	int64_t intValue;
 };
 
 class BoolNode : public ExpressionNode
 {
 public:
-	BoolNode(AstContext& context, const YYLTYPE& location, bool value)
-	: ExpressionNode(context, location), value(value)
+	BoolNode(AstContext& context, const YYLTYPE& location, bool boolValue)
+	: ExpressionNode(context, location), boolValue(boolValue)
 	{}
 
 	AST_VISITABLE();
 
-	bool value;
+	bool boolValue;
 };
 
 // Syntactic sugar for list and string literals
@@ -336,15 +337,15 @@ BlockNode* makeForNode(AstContext& context, const YYLTYPE& location, const std::
 class AssignNode : public StatementNode
 {
 public:
-	AssignNode(AstContext& context, const YYLTYPE& location, const std::string& target, ExpressionNode* value)
-	: StatementNode(context, location), target(target), value(value)
+	AssignNode(AstContext& context, const YYLTYPE& location, const std::string& target, ExpressionNode* rhs)
+	: StatementNode(context, location), target(target), rhs(rhs)
 	{
 	}
 
 	AST_VISITABLE();
 
 	std::string target;
-	ExpressionNode* value;
+	ExpressionNode* rhs;
 
 	// Annotations
 	Symbol* symbol = nullptr;
@@ -353,15 +354,15 @@ public:
 class LetNode : public StatementNode
 {
 public:
-	LetNode(AstContext& context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* value)
-	: StatementNode(context, location), target(target), typeName(typeName), value(value)
+	LetNode(AstContext& context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* rhs)
+	: StatementNode(context, location), target(target), typeName(typeName), rhs(rhs)
 	{}
 
 	AST_VISITABLE();
 
 	std::string target;
 	TypeName* typeName;
-	ExpressionNode* value;
+	ExpressionNode* rhs;
 
 	// Annotations
 	Symbol* symbol = nullptr;

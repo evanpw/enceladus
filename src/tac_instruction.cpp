@@ -1,10 +1,3 @@
 #include "tac_instruction.hpp"
 
-TACLabel::TACLabel()
-: number(labelCount++)
-{
-}
-
-long TACLabel::labelCount = 0;
-
-const char* binaryOperationNames[] = {"b+", "b-", "b*", "b/", "b%", "u&", "u+", ">>"};
+const char* binaryOperationNames[] = {"tadd", "tsub", "tmul", "tdiv", "tmod", "uand", "uadd", "shr", "shl"};

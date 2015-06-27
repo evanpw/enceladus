@@ -23,3 +23,5 @@
   or enable other optimizations)
 
 * Separate scope containing for-loop induction variable
+
+* Add a module system
