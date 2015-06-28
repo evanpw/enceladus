@@ -4,11 +4,13 @@
 #include <iostream>
 #include "ast.hpp"
 #include "ast_context.hpp"
+#include "context.hpp"
 #include "exceptions.hpp"
 #include "parser.hpp"
 #include "scope.hpp"
 #include "semantic.hpp"
 #include "tac_codegen.hpp"
+#include "tac_validator.hpp"
 //#include "tac_local_optimizer.hpp"
 //#include "x86_codegen.hpp"
 
@@ -45,18 +47,10 @@ extern "C" int yywrap()
 
 void dumpFunction(const Function* function)
 {
-	std::cerr << function->name << ":" << std::endl;
+	std::cerr << "function " << function->name << ":" << std::endl;
 
-	std::deque<BasicBlock*> open = {function->firstBlock};
-	std::set<BasicBlock*> closed;
-	while (!open.empty())
+	for (BasicBlock* block : function->blocks)
 	{
-		BasicBlock* block = open.front();
-		open.pop_front();
-
-		if (closed.count(block) > 0)
-			continue;
-
 		std::cerr << block->str() << ":" << std::endl;
 		Instruction* inst = block->first;
 		while (inst != nullptr)
@@ -64,14 +58,48 @@ void dumpFunction(const Function* function)
 			std::cerr << "\t" << inst->str() << std::endl;
 			inst = inst->next;
 		}
+	}
 
-		closed.insert(block);
-
-		std::vector<BasicBlock*> successors = block->getSuccessors();
-		for (auto& successor : successors)
+	if (!function->locals.empty())
+	{
+		std::cerr << "locals:" << std::endl;
+		for (Value* value : function->locals)
 		{
-			if (closed.count(successor) == 0)
-				open.push_back(successor);
+			std::cerr << "\t" << value->str() << ":" << std::endl;
+			assert(!value->definition);
+
+			for (Instruction* inst : value->uses)
+			{
+				if (dynamic_cast<LoadInst*>(inst))
+				{
+					std::cerr << "\t\t(load) " << inst->str() << std::endl;
+				}
+				else if (dynamic_cast<StoreInst*>(inst))
+				{
+					std::cerr << "\t\t(store) " << inst->str() << std::endl;
+				}
+				else
+				{
+					assert(false);
+				}
+			}
+		}
+	}
+
+	if (!function->temps.empty())
+	{
+		std::cerr << "temps:" << std::endl;
+		for (Value* value : function->temps)
+		{
+			std::cerr << "\t" << value->str() << ":" << std::endl;
+			
+			assert(value->definition);
+			std::cerr << "\t\t(defn) " << value->definition->str() << std::endl;
+
+			for (Instruction* inst : value->uses)
+			{
+				std::cerr << "\t\t(use) " << inst->str() << std::endl;
+			}
 		}
 	}
 
@@ -141,19 +169,20 @@ int main(int argc, char* argv[])
 
 	if (semantic_success)
 	{
-		TACCodeGen tacGen;
+		TACContext context;
+		TACCodeGen tacGen(&context);
 		root->accept(&tacGen);
 
 		return_value = 0;
 
-		TACProgram& intermediateCode = tacGen.getResult();
-
-		for (Function* function : intermediateCode.otherFunctions)
+		TACValidator validator(&context);
+		if (validator.isValid())
 		{
-			dumpFunction(function);
+			for (Function* function : context.functions)
+			{
+				dumpFunction(function);
+			}
 		}
-
-		dumpFunction(intermediateCode.mainFunction);
 
 		/*
 		TACLocalOptimizer localOptimizer;

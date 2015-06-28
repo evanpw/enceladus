@@ -1,36 +1,42 @@
 #ifndef TAC_VISITOR_HPP
 #define TAC_VISITOR_HPP
 
-struct TACAssign;
-struct TACBinaryOperation;
-struct TACCall;
-struct TACComment;
-struct TACConditionalJump;
-struct TACIndirectCall;
-struct TACJump;
-struct TACJumpIf;
-struct TACJumpIfNot;
-struct TACLeftIndexedAssignment;
-struct TACProgram;
-struct TACReturn;
-struct TACRightIndexedAssignment;
+struct AssignInst;
+struct BinaryOperationInst;
+struct CallInst;
+struct ConditionalJumpInst;
+struct IndexedLoadInst;
+struct IndexedStoreInst;
+struct IndirectCallInst;
+struct JumpIfInst;
+struct JumpIfNotInst;
+struct JumpInst;
+struct LoadInst;
+struct PhiInst;
+struct ProgramInst;
+struct ReturnInst;
+struct StoreInst;
+struct UnreachableInst;
 
 struct TACVisitor
 {
     virtual ~TACVisitor() {}
 
-    virtual void visit(TACAssign* inst) = 0;
-    virtual void visit(TACBinaryOperation* inst) = 0;
-    virtual void visit(TACCall* inst) = 0;
-    virtual void visit(TACComment* inst) {}
-    virtual void visit(TACConditionalJump* inst) = 0;
-    virtual void visit(TACIndirectCall* inst) = 0;
-    virtual void visit(TACJump* inst) = 0;
-    virtual void visit(TACJumpIf* inst) = 0;
-    virtual void visit(TACJumpIfNot* inst) = 0;
-    virtual void visit(TACLeftIndexedAssignment* inst) = 0;
-    virtual void visit(TACReturn* inst) {}
-    virtual void visit(TACRightIndexedAssignment* inst) = 0;
+    virtual void visit(AssignInst* inst) = 0;
+    virtual void visit(BinaryOperationInst* inst) = 0;
+    virtual void visit(CallInst* inst) = 0;
+    virtual void visit(ConditionalJumpInst* inst) = 0;
+    virtual void visit(IndexedLoadInst* inst) = 0;
+    virtual void visit(IndexedStoreInst* inst) = 0;
+    virtual void visit(IndirectCallInst* inst) = 0;
+    virtual void visit(JumpIfInst* inst) = 0;
+    virtual void visit(JumpIfNotInst* inst) = 0;
+    virtual void visit(JumpInst* inst) = 0;
+    virtual void visit(LoadInst* inst) = 0;
+    virtual void visit(PhiInst* inst) = 0;
+    virtual void visit(ReturnInst* inst) {}
+    virtual void visit(StoreInst* inst) = 0;
+    virtual void visit(UnreachableInst* inst) = 0;
 };
 
 #endif

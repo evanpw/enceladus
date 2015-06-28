@@ -5,8 +5,8 @@
 
 #include <iostream>
 
-TACCodeGen::TACCodeGen()
-: _conditionalCodeGen(this)
+TACCodeGen::TACCodeGen(TACContext* context)
+: _context(context), _conditionalCodeGen(this)
 {
 }
 
@@ -29,25 +29,33 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
         {
             if (symbol->asVariable()->isStatic)
             {
-                result = new GlobalValue(symbol->name, GlobalTag::Static);
+                result = _context->makeStaticString(symbol->name, symbol->asVariable()->contents);
             }
             else if (symbol->asVariable()->isParam)
             {
-                result = new Argument(symbol->name);
+                result = _context->makeArgument(symbol->name);
             }
             else if (symbol->enclosingFunction == nullptr)
             {
-                result = new GlobalValue(symbol->name, GlobalTag::Variable);
+                result = _context->makeGlobal(symbol->name);
             }
             else
             {
-                // Local variable
-                result = new Value(symbol->name);
+                result = _context->makeLocal(symbol->name);
+                _currentFunction->locals.push_back(result);
             }
         }
         else if (symbol->kind == kFunction)
         {
-            result = new Function(symbol->name);
+            const FunctionSymbol* functionSymbol = symbol->asFunction();
+            if (functionSymbol->isExternal)
+            {
+                result = _context->makeExternFunction(symbol->name);
+            }
+            else
+            {
+                result = _context->makeFunction(symbol->name);
+            }
         }
         else
         {
@@ -89,40 +97,26 @@ BasicBlock* TACConditionalCodeGen::makeBlock()
 
 void TACCodeGen::visit(ProgramNode* node)
 {
-    Function* main = new Function("main");
-    _currentFunction = _tacProgram.mainFunction = main;
+    Function* main = _context->makeFunction("main");
+    _currentFunction = main;
     _nextSeqNumber = 0;
-    _currentFunction->firstBlock = makeBlock();
-    setBlock(_currentFunction->firstBlock);
+    setBlock(makeBlock());
 
     for (auto& child : node->children)
     {
         child->accept(this);
     }
 
-    emit(new TACReturn());
+    emit(new ReturnInst());
 
     // The previous loop will have filled in _functions with a list of all
     // other functions. Now generate code for those
     for (FunctionDefNode* funcDefNode : _functions)
     {
-        Function* function = new Function(funcDefNode->symbol->name);
-        _tacProgram.otherFunctions.push_back(function);
+        Function* function = (Function*)getValue(funcDefNode->symbol);
         _currentFunction = function;
         _nextSeqNumber = 0;
-        _currentFunction->firstBlock = makeBlock();
-        setBlock(_currentFunction->firstBlock);
-
-        // Collect all local variables
-        for (auto& local : funcDefNode->scope->symbols.symbols)
-        {
-            const Symbol* symbol = local.second.get();
-
-            if (symbol->kind == kVariable && !symbol->asVariable()->isParam)
-            {
-                _currentFunction->locals.push_back(getValue(symbol));
-            }
-        }
+        setBlock(makeBlock());
 
         // Collect all function parameters
         for (Symbol* param : funcDefNode->parameterSymbols)
@@ -136,7 +130,10 @@ void TACCodeGen::visit(ProgramNode* node)
         funcDefNode->body->accept(this);
 
         // Handle implicit return values
-        emit(new TACReturn(funcDefNode->body->value));
+        if (!_currentBlock->isTerminated())
+        {
+            emit(new ReturnInst(funcDefNode->body->value));
+        }
 
         std::cerr << "end function" << std::endl << std::endl;
     }
@@ -147,13 +144,10 @@ void TACCodeGen::visit(ProgramNode* node)
         {
             ValueConstructor* constructor = dataDeclaration->valueConstructors[i];
 
-            // TODO: Fix this fake FunctionSymbol
-            Function* function = new Function(constructor->name());
-            _tacProgram.otherFunctions.push_back(function);
+            Function* function = (Function*)getValue(constructor->symbol());
             _currentFunction = function;
             _nextSeqNumber = 0;
-            _currentFunction->firstBlock = makeBlock();
-            setBlock(_currentFunction->firstBlock);
+            setBlock(makeBlock());
 
             std::cerr << "constructor " << constructor->name() << std::endl;
             createConstructor(constructor, i);
@@ -165,40 +159,14 @@ void TACCodeGen::visit(ProgramNode* node)
     {
         ValueConstructor* constructor = structDeclaration->valueConstructor;
 
-        // TODO: Fix this fake FunctionSymbol
-        Function* function = new Function(constructor->name());
-        _tacProgram.otherFunctions.push_back(function);
+        Function* function = (Function*)getValue(constructor->symbol());
         _currentFunction = function;
         _nextSeqNumber = 0;
-        _currentFunction->firstBlock = makeBlock();
-        setBlock(_currentFunction->firstBlock);
+        setBlock(makeBlock());
 
         std::cerr << "constructor " << constructor->name() << std::endl;
         createConstructor(structDeclaration->valueConstructor, 0);
         std::cerr << "end constructor" << std::endl << std::endl;
-    }
-
-    // Gather up all references to external functions and all global variables
-    for (auto& i : node->scope->symbols.symbols)
-    {
-        const std::string& name = i.first;
-        const Symbol* symbol = i.second.get();
-
-        if (symbol->kind == kFunction && symbol->asFunction()->isExternal)
-        {
-            if (!symbol->asFunction()->isForeign)
-            {
-                _tacProgram.externs.push_back(name);
-            }
-            else
-            {
-                _tacProgram.externs.push_back(FOREIGN_NAME(name));
-            }
-        }
-        else if (symbol->kind == kVariable)
-        {
-            _tacProgram.globals.push_back(getValue(symbol));
-        }
     }
 }
 
@@ -210,27 +178,27 @@ void TACConditionalCodeGen::visit(ComparisonNode* node)
     switch(node->op)
     {
         case ComparisonNode::kGreater:
-            emit(new TACConditionalJump(lhs, ">", rhs, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(lhs, ">", rhs, _trueBranch, _falseBranch));
             break;
 
         case ComparisonNode::kLess:
-            emit(new TACConditionalJump(lhs, "<", rhs, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(lhs, "<", rhs, _trueBranch, _falseBranch));
             break;
 
         case ComparisonNode::kEqual:
-            emit(new TACConditionalJump(lhs, "==", rhs, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(lhs, "==", rhs, _trueBranch, _falseBranch));
             break;
 
         case ComparisonNode::kGreaterOrEqual:
-            emit(new TACConditionalJump(lhs, ">=", rhs, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(lhs, ">=", rhs, _trueBranch, _falseBranch));
             break;
 
         case ComparisonNode::kLessOrEqual:
-            emit(new TACConditionalJump(lhs, "<=", rhs, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(lhs, "<=", rhs, _trueBranch, _falseBranch));
             break;
 
         case ComparisonNode::kNotEqual:
-            emit(new TACConditionalJump(lhs, "!=", rhs, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(lhs, "!=", rhs, _trueBranch, _falseBranch));
             break;
 
         default:
@@ -271,9 +239,6 @@ void TACCodeGen::visit(ComparisonNode* node)
             assert(false);
     }
 
-    if (!node->value)
-        node->value = makeTemp();
-
     Value* lhs = visitAndGet(node->lhs);
     Value* rhs = visitAndGet(node->rhs);
 
@@ -281,17 +246,20 @@ void TACCodeGen::visit(ComparisonNode* node)
     BasicBlock* falseBranch = makeBlock();
     BasicBlock* continueAt = makeBlock();
 
-    emit(new TACConditionalJump(lhs, operation, rhs, trueBranch, falseBranch));
+    emit(new ConditionalJumpInst(lhs, operation, rhs, trueBranch, falseBranch));
 
     setBlock(falseBranch);
-    emit(new TACAssign(node->value, ConstantInt::False));
-    emit(new TACJump(continueAt));
+    emit(new JumpInst(continueAt));
 
     setBlock(trueBranch);
-    emit(new TACAssign(node->value, ConstantInt::True));
-    emit(new TACJump(continueAt));
+    emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
+    node->value = makeTemp();
+    PhiInst* phi = new PhiInst(node->value);
+    phi->addSource(falseBranch, ConstantInt::False);
+    phi->addSource(trueBranch, ConstantInt::True);
+    emit(phi);
 }
 
 void TACConditionalCodeGen::visit(LogicalNode* node)
@@ -320,97 +288,90 @@ void TACConditionalCodeGen::visit(LogicalNode* node)
 
 void TACCodeGen::visit(LogicalNode* node)
 {
-    if (!node->value)
-        node->value = makeTemp();
-
-    Value* result = node->value;
-
     BasicBlock* continueAt = makeBlock();
     BasicBlock* testSecond = makeBlock();
+    BasicBlock* trueBranch = makeBlock();
+    BasicBlock* falseBranch = makeBlock();
 
     if (node->op == LogicalNode::kAnd)
     {
-        BasicBlock* isTrue = makeBlock();
-
-        emit(new TACAssign(result, ConstantInt::False));
         Value* lhs = visitAndGet(node->lhs);
-        emit(new TACJumpIf(lhs, testSecond, continueAt));
+        emit(new JumpIfInst(lhs, testSecond, falseBranch));
 
         setBlock(testSecond);
         Value* rhs = visitAndGet(node->rhs);
-        emit(new TACJumpIf(rhs, isTrue, continueAt));
-
-        setBlock(isTrue);
-        emit(new TACAssign(result, ConstantInt::True));
-        emit(new TACJump(continueAt));
+        emit(new JumpIfInst(rhs, trueBranch, falseBranch));
     }
     else if (node->op == LogicalNode::kOr)
     {
-        BasicBlock* isFalse = makeBlock();
-
-        emit(new TACAssign(result, ConstantInt::True));
         Value* lhs = visitAndGet(node->lhs);
-        emit(new TACJumpIf(lhs, continueAt, testSecond));
+        emit(new JumpIfInst(lhs, trueBranch, testSecond));
 
         setBlock(testSecond);
         Value* rhs = visitAndGet(node->rhs);
-        emit(new TACJumpIf(rhs, continueAt, isFalse));
-
-        setBlock(isFalse);
-        emit(new TACAssign(result, ConstantInt::False));
-        emit(new TACJump(continueAt));
+        emit(new JumpIfInst(rhs, trueBranch, falseBranch));
     }
     else
     {
         assert (false);
     }
 
+    setBlock(trueBranch);
+    emit(new JumpInst(continueAt));
+
+    setBlock(falseBranch);
+    emit(new JumpInst(continueAt));
+
     setBlock(continueAt);
+    node->value = makeTemp();
+    PhiInst* phi = new PhiInst(node->value);
+    phi->addSource(falseBranch, ConstantInt::False);
+    phi->addSource(trueBranch, ConstantInt::True);
+    emit(phi);
+
 }
 
 void TACCodeGen::visit(NullaryNode* node)
 {
     if (node->kind == NullaryNode::VARIABLE)
     {
-        node->value = getValue(node->symbol);
+        node->value = makeTemp();
+        emit(new LoadInst(node->value, getValue(node->symbol)));
     }
     else
     {
-        if (!node->value)
-            node->value = makeTemp();
-
-        Value* dest = node->value;
+        Value* dest = node->value = makeTemp();
 
         if (node->kind == NullaryNode::FOREIGN_CALL)
         {
             bool external = node->symbol->asFunction()->isExternal;
-            emit(new TACCall(true, dest, getValue(node->symbol), {}, external));
+            emit(new CallInst(true, dest, getValue(node->symbol), {}, external));
         }
         else if (node->kind == NullaryNode::FUNC_CALL)
         {
-            emit(new TACCall(false, dest, getValue(node->symbol)));
+            emit(new CallInst(false, dest, getValue(node->symbol)));
         }
         else /* node->kind == NullaryNode::CLOSURE */
         {
             // If the function is not completely applied, then this nullary node
             // evaluates to a function type -- create a closure
             size_t size = sizeof(SplObject) + 8;
-            // TODO: Fix this fake FunctionSymbol
-            emit(new TACCall(true, dest, new Function("gcAllocate"), {new ConstantInt(size)}));
+            // TODO: Fix this
+            emit(new CallInst(true, dest, _context->makeExternFunction("gcAllocate"), {_context->makeConstantInt(size)}));
 
             // SplObject header fields
-            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, constructorTag), ConstantInt::Zero));
-            emit(new TACLeftIndexedAssignment(dest, offsetof(SplObject, sizeInWords), ConstantInt::Zero));
+            emit(new IndexedStoreInst(dest, offsetof(SplObject, constructorTag), ConstantInt::Zero));
+            emit(new IndexedStoreInst(dest, offsetof(SplObject, sizeInWords), ConstantInt::Zero));
 
             // Address of the function as an unboxed member
-            emit(new TACLeftIndexedAssignment(dest, sizeof(SplObject), getValue(node->symbol)));
+            emit(new IndexedStoreInst(dest, sizeof(SplObject), getValue(node->symbol)));
         }
     }
 }
 
 void TACCodeGen::visit(IntNode* node)
 {
-    node->value = new ConstantInt(TO_INT(node->intValue));
+    node->value = _context->makeConstantInt(TO_INT(node->intValue));
 }
 
 void TACCodeGen::visit(BoolNode* node)
@@ -447,7 +408,7 @@ void TACCodeGen::visit(IfNode* node)
 
     setBlock(trueBranch);
     node->body->accept(this);
-    emit(new TACJump(continueAt));
+    emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
 }
@@ -456,23 +417,46 @@ void TACCodeGen::visit(IfElseNode* node)
 {
     BasicBlock* trueBranch = makeBlock();
     BasicBlock* falseBranch = makeBlock();
-    BasicBlock* continueAt = makeBlock();
-
-    if (!node->value) node->value = makeTemp();
 
     _conditionalCodeGen.visitCondition(*node->condition, trueBranch, falseBranch);
 
+    BasicBlock* continueAt = nullptr;
+
     setBlock(trueBranch);
     Value* bodyValue = visitAndGet(node->body);
-    if (bodyValue) emit(new TACAssign(node->value, bodyValue));
-    emit(new TACJump(continueAt));
+    if (!_currentBlock->isTerminated())
+    {
+        continueAt = makeBlock();
 
+        trueBranch = _currentBlock;
+        emit(new JumpInst(continueAt));
+    }
+    
     setBlock(falseBranch);
     Value* elseValue = visitAndGet(node->else_body);
-    if (elseValue) emit(new TACAssign(node->value, elseValue));
-    emit(new TACJump(continueAt));
+    if (!_currentBlock->isTerminated())
+    {
+        if (!continueAt)
+            continueAt = makeBlock();
 
-    setBlock(continueAt);
+        falseBranch = _currentBlock;
+        emit(new JumpInst(continueAt));
+    }
+    
+    if (continueAt)
+    {
+        setBlock(continueAt);
+        if (bodyValue)
+        {
+            assert(elseValue);
+
+            node->value = makeTemp();
+            PhiInst* phi = new PhiInst(node->value);
+            phi->addSource(trueBranch, bodyValue);
+            phi->addSource(falseBranch, elseValue);
+            emit(phi);
+        }
+    }
 }
 
 void TACCodeGen::visit(WhileNode* node)
@@ -480,7 +464,7 @@ void TACCodeGen::visit(WhileNode* node)
     BasicBlock* loopBegin = makeBlock();
     BasicBlock* loopExit = makeBlock();
 
-    emit(new TACJump(loopBegin));
+    emit(new JumpInst(loopBegin));
     setBlock(loopBegin);
 
     BasicBlock* loopBody = makeBlock();
@@ -492,7 +476,7 @@ void TACCodeGen::visit(WhileNode* node)
 
     setBlock(loopBody);
     node->body->accept(this);
-    emit(new TACJump(loopBegin));
+    emit(new JumpInst(loopBegin));
 
     _currentLoopExit = prevLoopExit;
 
@@ -504,7 +488,7 @@ void TACCodeGen::visit(ForeverNode* node)
     BasicBlock* loopBody = makeBlock();
     BasicBlock* loopExit = makeBlock();
 
-    emit(new TACJump(loopBody));
+    emit(new JumpInst(loopBody));
     setBlock(loopBody);
 
     // Push a new inner loop on the (implicit) stack
@@ -512,7 +496,7 @@ void TACCodeGen::visit(ForeverNode* node)
     _currentLoopExit = loopExit;
 
     node->body->accept(this);
-    emit(new TACJump(loopBody));
+    emit(new JumpInst(loopBody));
 
     _currentLoopExit = prevLoopExit;
 
@@ -521,33 +505,16 @@ void TACCodeGen::visit(ForeverNode* node)
 
 void TACCodeGen::visit(BreakNode* node)
 {
-    emit(new TACJump(_currentLoopExit));
+    emit(new JumpInst(_currentLoopExit));
     setBlock(makeBlock());
 }
 
 void TACCodeGen::visit(AssignNode* node)
 {
     Value* dest = getValue(node->symbol);
+    Value* value = visitAndGet(node->rhs);
 
-    if (node->symbol->type->isBoxed())
-    {
-        Value* value = visitAndGet(node->rhs);
-        emit(new TACAssign(dest, value));
-    }
-    else
-    {
-        // Try to make the rhs of this assignment construct its result directly
-        // in the right spot
-        node->rhs->value = getValue(node->symbol);
-        Value* value = visitAndGet(node->rhs);
-
-        // If it was stored somewhere else (for example, if no computation was
-        // done, in a statement like x = y), then actually do the assignment
-        if (value != getValue(node->symbol))
-        {
-            emit(new TACAssign(dest, value));
-        }
-    }
+    emit(new StoreInst(dest, value));
 }
 
 void TACCodeGen::visit(LetNode* node)
@@ -558,24 +525,10 @@ void TACCodeGen::visit(LetNode* node)
     {
         visitAndGet(node->rhs);
     }
-    else if (node->symbol->type->isBoxed())
-    {
-        Value* value = visitAndGet(node->rhs);
-        emit(new TACAssign(dest, value));
-    }
     else
     {
-        // Try to make the rhs of this assignment construct its result directly
-        // in the right spot
-        node->rhs->value = dest;
         Value* value = visitAndGet(node->rhs);
-
-        // If it was stored somewhere else (for example, if no computation was
-        // done, in a statement like x = y), then actually do the assignment
-        if (value != dest)
-        {
-            emit(new TACAssign(dest, value));
-        }
+        emit(new StoreInst(dest, value));
     }
 }
 
@@ -591,7 +544,9 @@ void TACCodeGen::visit(MatchNode* node)
         if (member)
         {
             size_t location = constructor->members().at(i).location;
-            emit(new TACRightIndexedAssignment(getValue(member), body, sizeof(SplObject) + 8 * location));
+            Value* tmp = makeTemp();
+            emit(new IndexedLoadInst(tmp, body, sizeof(SplObject) + 8 * location));
+            emit(new StoreInst(getValue(member), tmp));
         }
     }
 }
@@ -611,7 +566,7 @@ void TACConditionalCodeGen::visit(FunctionCallNode* node)
             assert(node->arguments.size() == 1);
             Value* arg = visitAndGet(node->arguments[0]);
 
-            emit(new TACConditionalJump(arg, "==", ConstantInt::Zero, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(arg, "==", ConstantInt::Zero, _trueBranch, _falseBranch));
             return;
         }
     }
@@ -628,15 +583,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
         arguments.push_back(i->value);
     }
 
-    if (!node->value)
-    {
-        if (unwrap(node->type) != Type::Unit)
-            node->value = makeTemp();
-    }
-    else
-    {
-        assert(unwrap(node->type) != Type::Unit);
-    }
+    if (unwrap(node->type) != Type::Unit)
+        node->value = makeTemp();
 
     Value* result = node->value;
 
@@ -650,41 +598,45 @@ void TACCodeGen::visit(FunctionCallNode* node)
             BasicBlock* falseBranch = makeBlock();
             BasicBlock* continueAt = makeBlock();
 
-            emit(new TACJumpIf(arguments[0], trueBranch, falseBranch));
+            emit(new JumpIfInst(arguments[0], trueBranch, falseBranch));
 
             setBlock(falseBranch);
-            emit(new TACAssign(result, ConstantInt::True));
-            emit(new TACJump(continueAt));
+            emit(new JumpInst(continueAt));
 
             setBlock(trueBranch);
-            emit(new TACAssign(result, ConstantInt::False));
+            emit(new JumpInst(continueAt));
 
             setBlock(continueAt);
+            PhiInst* phi = new PhiInst(node->value);
+            phi->addSource(trueBranch, ConstantInt::False);
+            phi->addSource(falseBranch, ConstantInt::True);
+            emit(phi);
+
         }
         else if (node->target == "+")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::TADD, arguments[1]));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TADD, arguments[1]));
         }
         else if (node->target == "-")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::TSUB, arguments[1]));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TSUB, arguments[1]));
         }
         else if (node->target == "*")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::TMUL, arguments[1]));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TMUL, arguments[1]));
         }
         else if (node->target == "/")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::TDIV, arguments[1]));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TDIV, arguments[1]));
         }
         else if (node->target == "%")
         {
             assert(arguments.size() == 2);
-            emit(new TACBinaryOperation(result, arguments[0], BinaryOperation::TMOD, arguments[1]));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TMOD, arguments[1]));
         }
         else
         {
@@ -695,40 +647,37 @@ void TACCodeGen::visit(FunctionCallNode* node)
     {
         bool external = node->symbol->asFunction()->isExternal;
         bool foreign = node->symbol->asFunction()->isForeign;
-        emit(new TACCall(foreign, result, getValue(node->symbol), arguments, external));
+        emit(new CallInst(foreign, result, getValue(node->symbol), arguments, external));
     }
     else /* node->symbol->kind == kVariable */
     {
         // The variable represents a closure, so extract the actual function
         // address
         Value* functionAddress = makeTemp();
-        emit(new TACRightIndexedAssignment(functionAddress, getValue(node->symbol), sizeof(SplObject)));
-        emit(new TACIndirectCall(result, functionAddress, arguments));
+        emit(new IndexedLoadInst(functionAddress, getValue(node->symbol), sizeof(SplObject)));
+        emit(new IndirectCallInst(result, functionAddress, arguments));
     }
 }
 
 void TACCodeGen::visit(ReturnNode* node)
 {
     Value* result = visitAndGet(node->expression);
-    emit(new TACReturn(result));
-
-    setBlock(makeBlock());
+    emit(new ReturnInst(result));
 }
 
 void TACCodeGen::visit(VariableNode* node)
 {
     assert(node->symbol->kind == kVariable);
-    node->value = getValue(node->symbol);
+    node->value = makeTemp();
+    emit(new LoadInst(node->value, getValue(node->symbol)));
 }
 
 void TACCodeGen::visit(MemberAccessNode* node)
 {
     Value* varAddress = getValue(node->varSymbol);
 
-    if (!node->value)
-        node->value = makeTemp();
-
-    emit(new TACRightIndexedAssignment(node->value, varAddress, sizeof(SplObject) + 8 * node->memberLocation));
+    node->value = makeTemp();
+    emit(new IndexedLoadInst(node->value, varAddress, sizeof(SplObject) + 8 * node->memberLocation));
 }
 
 void TACCodeGen::visit(StructDefNode* node)
@@ -769,52 +718,66 @@ void TACCodeGen::visit(SwitchNode* node)
 
     // Get constructor tag of expr (either as a immediate, or from the object
     // header)
-    Value* tag = makeTemp();
-
     BasicBlock* gotTag = makeBlock();
-    BasicBlock* untagged = makeBlock();
-    BasicBlock* tagged = makeBlock();
+    BasicBlock* isImmediate = makeBlock();
+    BasicBlock* isObject = makeBlock();
 
     // Check for immediate, and remove tag bit
     Value* checked = makeTemp();
-    emit(new TACBinaryOperation(checked, expr, BinaryOperation::UAND, ConstantInt::One));
-    emit(new TACConditionalJump(checked, "==", ConstantInt::Zero, untagged, tagged));
+    emit(new BinaryOperationInst(checked, expr, BinaryOperation::UAND, ConstantInt::One));
+    emit(new ConditionalJumpInst(checked, "==", ConstantInt::Zero, isObject, isImmediate));
 
-    setBlock(tagged);
-    emit(new TACBinaryOperation(tag, expr, BinaryOperation::SHR, ConstantInt::One));
-    emit(new TACJump(gotTag));
+    setBlock(isImmediate);
+    Value* tag1 = makeTemp();
+    emit(new BinaryOperationInst(tag1, expr, BinaryOperation::SHR, ConstantInt::One));
+    emit(new JumpInst(gotTag));
 
     // Otherwise, extract tag from object header
-    setBlock(untagged);
-    emit(new TACRightIndexedAssignment(tag, expr, offsetof(SplObject, constructorTag)));
-    emit(new TACJump(gotTag));
+    setBlock(isObject);
+    Value* tag2 = makeTemp();
+    emit(new IndexedLoadInst(tag2, expr, offsetof(SplObject, constructorTag)));
+    emit(new JumpInst(gotTag));
 
     setBlock(gotTag);
+    Value* tag = makeTemp();
+    PhiInst* phi = new PhiInst(tag);
+    phi->addSource(isImmediate, tag1);
+    phi->addSource(isObject, tag2);
+    emit(phi);
 
     // Jump to the appropriate case based on the tag
     BasicBlock* nextTest = _currentBlock;
-    for (int i = 0; i < node->arms.size(); ++i)
+    for (size_t i = 0; i < node->arms.size(); ++i)
     {
         auto& arm = node->arms[i];
         size_t armTag = arm->constructorTag;
 
         setBlock(nextTest);
         nextTest = makeBlock();
-        emit(new TACConditionalJump(tag, "==", new ConstantInt(armTag), caseLabels[i], nextTest));
+        emit(new ConditionalJumpInst(tag, "==", _context->makeConstantInt(armTag), caseLabels[i], nextTest));
     }
 
+    // Match must be exhaustive, so we should never fail all tests
+    setBlock(nextTest);
+    emit(new UnreachableInst);
+
     // Individual arms
+    Value* lastSwitchExpr = _currentSwitchExpr;
+    _currentSwitchExpr = expr;
     for (size_t i = 0; i < node->arms.size(); ++i)
     {
         auto& arm = node->arms[i];
 
-        // The arm needs to know the expression so that it can extract fields
-        arm->value = expr;
-
         setBlock(caseLabels[i]);
         arm->accept(this);
-        emit(new TACJump(continueAt));
+
+        if (!_currentBlock->isTerminated())
+        {
+            emit(new JumpInst(continueAt));
+        }
     }
+
+    _currentSwitchExpr = lastSwitchExpr;
 
     setBlock(continueAt);
 }
@@ -830,7 +793,10 @@ void TACCodeGen::visit(MatchArm* node)
         if (member)
         {
             size_t location = constructor->members().at(i).location;
-            emit(new TACRightIndexedAssignment(getValue(member), node->value, sizeof(SplObject) + 8 * location));
+
+            Value* tmp = makeTemp();
+            emit(new IndexedLoadInst(tmp, _currentSwitchExpr, sizeof(SplObject) + 8 * location));
+            emit(new StoreInst(getValue(member), tmp));
         }
     }
 
@@ -840,7 +806,6 @@ void TACCodeGen::visit(MatchArm* node)
 void TACCodeGen::visit(StringLiteralNode* node)
 {
     node->value = getValue(node->symbol);
-    _tacProgram.staticStrings.emplace_back(node->value, node->content);
 }
 
 void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constructorTag)
@@ -850,7 +815,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     // Value constructors with no parameters are represented as immediates
     if (members.size() == 0)
     {
-        emit(new TACReturn(new ConstantInt(TO_INT(constructorTag))));
+        emit(new ReturnInst(_context->makeConstantInt(TO_INT(constructorTag))));
         return;
     }
 
@@ -860,17 +825,17 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     size_t size = sizeof(SplObject) + 8 * members.size();
 
     // Allocate room for the object
-    emit(new TACCall(
+    emit(new CallInst(
         true,
         result,
-        new Function("gcAllocate"), // TODO: Fix this
-        {new ConstantInt(size)}));
+        _context->makeExternFunction("gcAllocate"), // TODO: Fix this
+        {_context->makeConstantInt(size)}));
 
     //// Fill in the members with the constructor arguments
 
     // SplObject header fields
-    emit(new TACLeftIndexedAssignment(result, offsetof(SplObject, constructorTag), new ConstantInt(constructorTag)));
-    emit(new TACLeftIndexedAssignment(result, offsetof(SplObject, sizeInWords), new ConstantInt(members.size())));
+    emit(new IndexedStoreInst(result, offsetof(SplObject, constructorTag), _context->makeConstantInt(constructorTag)));
+    emit(new IndexedStoreInst(result, offsetof(SplObject, sizeInWords), _context->makeConstantInt(members.size())));
 
     // Individual members
     for (size_t i = 0; i < members.size(); ++i)
@@ -878,21 +843,11 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         auto& member = members[i];
         size_t location = member.location;
 
-        Value* param;
-        if (member.name.empty())
-        {
-            param = makeTemp();
-        }
-        else
-        {
-            param = new Value(member.name);
-        }
+        Value* param = _context->makeArgument(member.name);
+        _currentFunction->params.push_back(param);
 
-        _currentFunction->regParams.push_back(param);
-        _currentFunction->locals.push_back(param);
-
-        emit(new TACLeftIndexedAssignment(result, sizeof(SplObject) + 8 * location, param));
+        emit(new IndexedStoreInst(result, sizeof(SplObject) + 8 * location, param));
     }
 
-    emit(new TACReturn(result));
+    emit(new ReturnInst(result));
 }

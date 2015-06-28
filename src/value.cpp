@@ -36,6 +36,24 @@ std::string GlobalValue::str() const
     return ss.str();
 }
 
+LocalValue::LocalValue(const std::string& name)
+: Constant(name)
+{}
+
+std::string LocalValue::str() const
+{
+    std::stringstream ss;
+    ss << "$" << name;
+    return ss.str();
+}
+
+std::string Argument::str() const
+{
+    std::stringstream ss;
+    ss << "$" << name;
+    return ss.str();
+}
+
 ConstantInt* ConstantInt::True = new ConstantInt(3);
 ConstantInt* ConstantInt::False = new ConstantInt(1);
 

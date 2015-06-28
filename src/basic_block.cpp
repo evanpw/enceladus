@@ -46,24 +46,38 @@ void BasicBlock::append(Instruction* inst)
     }
 }
 
+bool BasicBlock::isTerminated()
+{
+    return dynamic_cast<ConditionalJumpInst*>(last) ||
+           dynamic_cast<JumpIfInst*>(last) ||
+           dynamic_cast<JumpInst*>(last) ||
+           dynamic_cast<ReturnInst*>(last) ||
+           dynamic_cast<UnreachableInst*>(last);
+}
+
 std::vector<BasicBlock*> BasicBlock::getSuccessors()
 {
     if (!last) return {};
 
-    if (TACConditionalJump* inst = dynamic_cast<TACConditionalJump*>(last))
+    if (ConditionalJumpInst* inst = dynamic_cast<ConditionalJumpInst*>(last))
     {
         return {inst->ifTrue, inst->ifFalse};
     }
-    else if (TACJumpIf* inst = dynamic_cast<TACJumpIf*>(last))
+    else if (JumpIfInst* inst = dynamic_cast<JumpIfInst*>(last))
     {
         return {inst->ifTrue, inst->ifFalse};
     }
-    else if (TACJump* inst = dynamic_cast<TACJump*>(last))
+    else if (JumpInst* inst = dynamic_cast<JumpInst*>(last))
     {
         return {inst->target};
     }
-    else if (dynamic_cast<TACReturn*>(last))
+    else if (dynamic_cast<ReturnInst*>(last))
     {
+        return {};
+    }
+    else if (dynamic_cast<UnreachableInst*>(last))
+    {
+        assert(first == last);
         return {};
     }
     else

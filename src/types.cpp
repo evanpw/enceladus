@@ -215,11 +215,9 @@ std::string ConstructedType::name() const
 
 int TypeVariable::_count;
 
-ValueConstructor::ValueConstructor(
-        const std::string& name,
-        const std::vector<std::shared_ptr<Type>>& memberTypes,
-        const std::vector<std::string>& memberNames)
-: _name(name)
+ValueConstructor::ValueConstructor(Symbol* symbol, const std::vector<std::shared_ptr<Type>>& memberTypes,
+                                   const std::vector<std::string>& memberNames)
+: _symbol(symbol)
 {
     assert(memberNames.empty() || (memberNames.size() == memberTypes.size()));
 
@@ -229,6 +227,11 @@ ValueConstructor::ValueConstructor(
         std::shared_ptr<Type> type = memberTypes[i];
         _members.emplace_back(memberName, type, i);
     }
+}
+
+std::string ValueConstructor::name() const
+{
+    return _symbol->name;
 }
 
 std::shared_ptr<TypeConstructor> TypeConstructor::Function = TypeConstructor::create("Function", 1);
