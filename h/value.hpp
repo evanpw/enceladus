@@ -4,6 +4,9 @@
 #include <cassert>
 #include <cstdint>
 #include <string>
+#include <vector>
+
+struct Instruction;
 
 struct Value
 {
@@ -19,8 +22,11 @@ struct Value
 
     virtual std::string str() const;
 
+    std::vector<Instruction*> uses;
+
     // Optional
     std::string name;
+    Instruction* definition = nullptr;
 
     int64_t seqNumber = -1;
 };
@@ -61,11 +67,20 @@ struct GlobalValue : public Constant
     GlobalTag tag;
 };
 
-struct Argument : public Value
+struct LocalValue : public Constant
+{
+    LocalValue(const std::string& name);
+
+    virtual std::string str() const;
+};
+
+struct Argument : public Constant
 {
     Argument(const std::string& name)
-    : Value(name)
+    : Constant(name)
     {}
+
+    virtual std::string str() const;
 };
 
 #endif

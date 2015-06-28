@@ -611,10 +611,6 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
         node->memberTypes.push_back(member->type);
     }
 
-    ValueConstructor* valueConstructor = new ValueConstructor(node->name, node->memberTypes);
-    node->valueConstructor = valueConstructor;
-    node->resultType->addValueConstructor(valueConstructor);
-
     // Create a symbol for the constructor
     FunctionSymbol* symbol = new FunctionSymbol(node->name, node, nullptr);
     symbol->isForeign = true;
@@ -625,6 +621,10 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     }
     symbol->setTypeScheme(std::make_shared<TypeScheme>(FunctionType::create(node->memberTypes, node->resultType), variables));
     insertSymbol(symbol);
+
+    ValueConstructor* valueConstructor = new ValueConstructor(symbol, node->memberTypes);
+    node->valueConstructor = valueConstructor;
+    node->resultType->addValueConstructor(valueConstructor);
 
     node->type = Type::Unit;
 }
@@ -1150,6 +1150,8 @@ void SemanticAnalyzer::visit(StringLiteralNode* node)
     std::string name = "__staticString" + std::to_string(node->counter);
     VariableSymbol* symbol = new VariableSymbol(name, node, nullptr);
     symbol->isStatic = true;
+    symbol->contents = node->content;
+    insertSymbol(symbol);
     node->symbol = symbol;
 }
 
@@ -1214,7 +1216,13 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         memberSymbols.push_back(memberSymbol);
     }
 
-    ValueConstructor* valueConstructor = new ValueConstructor(typeName, memberTypes, memberNames);
+    // Create a symbol for the constructor
+    FunctionSymbol* symbol = new FunctionSymbol(typeName, node, nullptr);
+    symbol->isForeign = true;
+    symbol->setType(FunctionType::create(memberTypes, newType));
+    insertSymbol(symbol);
+
+    ValueConstructor* valueConstructor = new ValueConstructor(symbol, memberTypes, memberNames);
     node->valueConstructor = valueConstructor;
     newType->addValueConstructor(valueConstructor);
 
@@ -1226,12 +1234,6 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 
         memberSymbols[i]->location = member.location;
     }
-
-    // Create a symbol for the constructor
-    FunctionSymbol* symbol = new FunctionSymbol(typeName, node, nullptr);
-    symbol->isForeign = true;
-    symbol->setType(FunctionType::create(memberTypes, newType));
-    insertSymbol(symbol);
 
     node->structType = newType;
     node->type = Type::Unit;

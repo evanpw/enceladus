@@ -11,11 +11,11 @@ struct Function : public GlobalValue
     : GlobalValue(name, GlobalTag::Function)
     {}
 
-    BasicBlock* firstBlock;
+    std::vector<BasicBlock*> blocks;
 
     std::vector<Value*> locals;
     std::vector<Value*> params;
-    std::vector<Value*> regParams;
+    std::vector<Value*> temps;
 };
 
 #endif

@@ -305,14 +305,18 @@ private:
     static int _count;
 };
 
+struct Symbol;
+
 class ValueConstructor
 {
 public:
-    ValueConstructor(const std::string& name, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames = {});
+    ValueConstructor(Symbol* symbol, const std::vector<std::shared_ptr<Type>>& memberTypes, const std::vector<std::string>& memberNames = {});
 
-    virtual std::string name() const
+    virtual std::string name() const;
+
+    Symbol* symbol() const
     {
-        return _name;
+        return _symbol;
     }
 
     struct MemberDesc
@@ -332,7 +336,7 @@ public:
     }
 
 private:
-    std::string _name;
+    Symbol* _symbol;
     std::vector<MemberDesc> _members;
 };
 

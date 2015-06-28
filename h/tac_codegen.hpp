@@ -3,9 +3,9 @@
 
 #include "ast.hpp"
 #include "ast_visitor.hpp"
+#include "context.hpp"
 #include "mangler.hpp"
 #include "tac_instruction.hpp"
-#include "tac_program.hpp"
 #include "value.hpp"
 
 #include <boost/lexical_cast.hpp>
@@ -68,7 +68,7 @@ public:
     void wrapper(AstNode* node)
     {
         Value* value = visitAndGet(node);
-        emit(new TACJumpIf(value, _trueBranch, _falseBranch));
+        emit(new JumpIfInst(value, _trueBranch, _falseBranch));
     }
 
 private:
@@ -87,7 +87,7 @@ private:
 class TACCodeGen : public AstVisitor
 {
 public:
-    TACCodeGen();
+    TACCodeGen(TACContext* context);
 
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
@@ -117,8 +117,6 @@ public:
     virtual void visit(SwitchNode* node);
     virtual void visit(MatchArm* node);
 
-    TACProgram& getResult() { return _tacProgram; }
-
 private:
     // We cache the Value corresponding to each symbol so that the value
     // uniquely identifies a location
@@ -143,15 +141,27 @@ private:
 
     void createConstructor(ValueConstructor* constructor, size_t constructorTag);
 
-    TACProgram _tacProgram;
+    TACContext* _context;
     Function* _currentFunction;
+    Value* _currentSwitchExpr = nullptr;
 
     TACConditionalCodeGen _conditionalCodeGen;
     friend class TACConditionalCodeGen;
 
     int64_t _nextSeqNumber = 0;
-    Value* makeTemp() { return new Value(_nextSeqNumber++); }
-    BasicBlock* makeBlock() { return new BasicBlock(_nextSeqNumber++); }
+    Value* makeTemp()
+    {
+        Value* tmp = _context->makeTemp(_nextSeqNumber++);
+        _currentFunction->temps.push_back(tmp);
+        return tmp;
+    }
+
+    BasicBlock* makeBlock()
+    {
+        BasicBlock* block = _context->makeBlock(_nextSeqNumber++);
+        _currentFunction->blocks.push_back(block);
+        return block;
+    }
 
     void setBlock(BasicBlock* block) { _currentBlock = block; }
     BasicBlock* _currentBlock = nullptr;

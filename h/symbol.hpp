@@ -82,6 +82,9 @@ struct VariableSymbol : public Symbol
     // Used by the code generator to assign a place on the stack (relative to rbp) for all of
     // the local variables.
     int offset = -1;
+
+    // For static strings
+    std::string contents;
 };
 
 struct FunctionSymbol : public Symbol

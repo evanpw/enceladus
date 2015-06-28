@@ -37,27 +37,14 @@ struct Instruction
 
 #define MAKE_VISITABLE() virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
 
-struct TACComment : public Instruction
+struct ConditionalJumpInst : public Instruction
 {
-    TACComment(const std::string& text)
-    : text(text)
-    {}
-
-    MAKE_VISITABLE();
-
-    virtual std::string str() const override
-    {
-        return "comment " + text;
-    }
-
-    std::string text;
-};
-
-struct TACConditionalJump : public Instruction
-{
-    TACConditionalJump(Value* lhs, const std::string& op, Value* rhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
+    ConditionalJumpInst(Value* lhs, const std::string& op, Value* rhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
     : lhs(lhs), op(op), rhs(rhs), ifTrue(ifTrue), ifFalse(ifFalse)
-    {}
+    {
+        lhs->uses.push_back(this);
+        rhs->uses.push_back(this);
+    }
 
     MAKE_VISITABLE();
 
@@ -75,11 +62,13 @@ struct TACConditionalJump : public Instruction
     BasicBlock* ifFalse;
 };
 
-struct TACJumpIf : public Instruction
+struct JumpIfInst : public Instruction
 {
-    TACJumpIf(Value* lhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
+    JumpIfInst(Value* lhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
     : lhs(lhs), ifTrue(ifTrue), ifFalse(ifFalse)
-    {}
+    {
+        lhs->uses.push_back(this);
+    }
 
     MAKE_VISITABLE();
 
@@ -95,11 +84,15 @@ struct TACJumpIf : public Instruction
     BasicBlock* ifFalse;
 };
 
-struct TACAssign : public Instruction
+struct AssignInst : public Instruction
 {
-    TACAssign(Value* lhs, Value* rhs)
+    AssignInst(Value* lhs, Value* rhs)
     : lhs(lhs), rhs(rhs)
     {
+        assert(!lhs->definition);
+        lhs->definition = this;
+
+        rhs->uses.push_back(this);
     }
 
     MAKE_VISITABLE();
@@ -115,11 +108,13 @@ struct TACAssign : public Instruction
     Value* rhs;
 };
 
-struct TACReturn : public Instruction
+struct ReturnInst : public Instruction
 {
-    TACReturn(Value* value = nullptr)
+    ReturnInst(Value* value = nullptr)
     : value(value)
     {
+        if (value)
+            value->uses.push_back(this);
     }
 
     MAKE_VISITABLE();
@@ -141,9 +136,9 @@ struct TACReturn : public Instruction
     Value* value;
 };
 
-struct TACJump : public Instruction
+struct JumpInst : public Instruction
 {
-    TACJump(BasicBlock* target)
+    JumpInst(BasicBlock* target)
     : target(target)
     {}
 
@@ -159,23 +154,51 @@ struct TACJump : public Instruction
     BasicBlock* target;
 };
 
-struct TACCall : public Instruction
+struct CallInst : public Instruction
 {
-    TACCall(bool foreign, Value* dest, Value* function, const std::vector<Value*>& params = {}, bool ccall = false)
+    CallInst(bool foreign, Value* dest, Value* function, const std::vector<Value*>& params = {}, bool ccall = false)
     : foreign(foreign), dest(dest), function(function), params(params), ccall(ccall)
     {
+        if (dest)
+        {
+            assert(!dest->definition);
+            dest->definition = this;
+        }
+
+        function->uses.push_back(this);
+
+        for (auto& param : params)
+        {
+            param->uses.push_back(this);
+        }
     }
 
-    TACCall(bool foreign, Value* dest, Value* function, std::initializer_list<Value*> paramsList, bool ccall = false)
+    CallInst(bool foreign, Value* dest, Value* function, std::initializer_list<Value*> paramsList, bool ccall = false)
     : foreign(foreign), dest(dest), function(function), ccall(ccall)
     {
-        for (auto& param : paramsList) params.push_back(param);
+        if (dest)
+        {
+            assert(!dest->definition);
+            dest->definition = this;
+        }
+
+        function->uses.push_back(this);
+
+        for (auto& param : paramsList)
+        {
+            params.push_back(param);
+            param->uses.push_back(this);
+        }
     }
 
-    TACCall(bool foreign, Value* function, std::initializer_list<Value*> paramsList = {}, bool ccall = false)
+    CallInst(bool foreign, Value* function, std::initializer_list<Value*> paramsList = {}, bool ccall = false)
     : foreign(foreign), function(function), ccall(ccall)
     {
-        for (auto& param : paramsList) params.push_back(param);
+        for (auto& param : paramsList)
+        {
+            params.push_back(param);
+            param->uses.push_back(this);
+        }
     }
 
     MAKE_VISITABLE();
@@ -206,11 +229,15 @@ struct TACCall : public Instruction
     bool ccall;
 };
 
-struct TACIndirectCall : public Instruction
+struct IndirectCallInst : public Instruction
 {
-    TACIndirectCall(Value* dest, Value* function, const std::vector<Value*>& params)
+    IndirectCallInst(Value* dest, Value* function, const std::vector<Value*>& params)
     : dest(dest), function(function), params(params)
     {
+        assert(!dest->definition);
+        dest->definition = this;
+
+        function->uses.push_back(this);
     }
 
     MAKE_VISITABLE();
@@ -235,12 +262,64 @@ struct TACIndirectCall : public Instruction
     std::vector<Value*> params;
 };
 
-struct TACRightIndexedAssignment : public Instruction
+struct LoadInst : public Instruction
 {
-    TACRightIndexedAssignment(Value* lhs, Value* rhs, int64_t offset,
-                              Value* index = nullptr, int64_t scale = 1)
+    LoadInst(Value* dest, Value* src)
+    : dest(dest), src(src)
+    {
+        assert(!dest->definition);
+        dest->definition = this;
+
+        src->uses.push_back(this);
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        std::stringstream ss;
+        ss << dest->str() << " = [" << src->str() << "]";
+        return ss.str();
+    }
+
+    Value* dest;
+    Value* src;
+};
+
+struct StoreInst : public Instruction
+{
+    StoreInst(Value* dest, Value* src)
+    : dest(dest), src(src)
+    {
+        dest->uses.push_back(this);
+        src->uses.push_back(this);
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        std::stringstream ss;
+        ss << "[" << dest->str() << "] = " << src->str();
+        return ss.str();
+    }
+
+    Value* dest;
+    Value* src;
+};
+
+struct IndexedLoadInst : public Instruction
+{
+    IndexedLoadInst(Value* lhs, Value* rhs, int64_t offset,
+                    Value* index = nullptr, int64_t scale = 1)
     : lhs(lhs), rhs(rhs), offset(offset), index(index), scale(scale)
     {
+        assert(!lhs->definition);
+        lhs->definition = this;
+
+        rhs->uses.push_back(this);
+        if (index)
+            index->uses.push_back(this);
     }
 
     MAKE_VISITABLE();
@@ -259,11 +338,13 @@ struct TACRightIndexedAssignment : public Instruction
     int64_t scale;
 };
 
-struct TACLeftIndexedAssignment : public Instruction
+struct IndexedStoreInst : public Instruction
 {
-    TACLeftIndexedAssignment(Value* lhs, size_t offset, Value* rhs)
+    IndexedStoreInst(Value* lhs, size_t offset, Value* rhs)
     : lhs(lhs), offset(offset), rhs(rhs)
     {
+        lhs->uses.push_back(this);
+        rhs->uses.push_back(this);
     }
 
     MAKE_VISITABLE();
@@ -283,11 +364,17 @@ struct TACLeftIndexedAssignment : public Instruction
 enum class BinaryOperation {TADD, TSUB, TMUL, TDIV, TMOD, UAND, UADD, SHR, SHL};
 extern const char* binaryOperationNames[];
 
-struct TACBinaryOperation : public Instruction
+struct BinaryOperationInst : public Instruction
 {
-    TACBinaryOperation(Value* dest, Value* lhs, BinaryOperation op, Value* rhs)
+    BinaryOperationInst(Value* dest, Value* lhs, BinaryOperation op, Value* rhs)
     : dest(dest), lhs(lhs), op(op), rhs(rhs)
-    {}
+    {
+        assert(!dest->definition);
+        dest->definition = this;
+
+        lhs->uses.push_back(this);
+        rhs->uses.push_back(this);
+    }
 
     MAKE_VISITABLE();
 
@@ -308,6 +395,71 @@ struct TACBinaryOperation : public Instruction
     Value* lhs;
     BinaryOperation op;
     Value* rhs;
+};
+
+struct UnreachableInst : public Instruction
+{
+    UnreachableInst()
+    {}
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        return "unreachable";
+    }
+};
+
+class PhiInst : public Instruction
+{
+public:
+    PhiInst(Value* dest)
+    : dest(dest)
+    {
+        assert(!dest->definition);
+        dest->definition = this;
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        std::stringstream ss;
+        ss << dest->str() << " = phi";
+
+        for (size_t i = 0; i < _sources.size(); ++i)
+        {
+            if (i == 0)
+            {
+                ss << " ";
+            }
+            else
+            {
+                ss << ", ";
+            }
+
+            ss << "(" << _sources[i].first->str()
+               << ", " << _sources[i].second->str() << ")";
+        }
+
+        return ss.str();
+    }
+
+    void addSource(BasicBlock* block, Value* value)
+    {
+        value->uses.push_back(this);
+        _sources.emplace_back(block, value);
+    }
+
+    std::vector<std::pair<BasicBlock*, Value*>> sources()
+    {
+        return _sources;
+    }
+
+    Value* dest;
+
+private:
+    std::vector<std::pair<BasicBlock*, Value*>> _sources;
 };
 
 #endif
