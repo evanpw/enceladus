@@ -35,7 +35,12 @@ void Function::replaceReferences(Value* from, Value* to)
     }
 
     // There are no more references, so we can safely remove this variable
-    assert(from->uses.empty());
-    assert(!from->definition);
-    temps.erase(std::remove(temps.begin(), temps.end(), from), temps.end());
+    killTemp(from);
+}
+
+void Function::killTemp(Value* temp)
+{
+    assert(temp->uses.empty());
+    assert(!temp->definition);
+    temps.erase(std::remove(temps.begin(), temps.end(), temp), temps.end());
 }

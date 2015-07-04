@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <deque>
+#include <fstream>
 #include <iostream>
 #include <set>
 #include <set>
@@ -316,13 +317,10 @@ phis_t calculatePhiNodes(const Function* function, const df_t& df)
 		// Gather all blocks containing an assignment to this variable
 		for (Instruction* inst : local->uses)
 		{
-			if (StoreInst* store = dynamic_cast<StoreInst*>(inst))
+			if (dynamic_cast<StoreInst*>(inst))
 			{
-				if (!dynamic_cast<Argument*>(store->dest))
-				{
-					everOnWorkList.insert(inst->parent);
-					workList.push_back(inst->parent);
-				}
+				everOnWorkList.insert(inst->parent);
+				workList.push_back(inst->parent);
 			}
 		}
 
@@ -341,6 +339,56 @@ phis_t calculatePhiNodes(const Function* function, const df_t& df)
 					continue;
 
 				result[v].emplace_back(local);
+				alreadyInserted.insert(v);
+
+				if (everOnWorkList.find(v) == everOnWorkList.end())
+				{
+					everOnWorkList.insert(v);
+					workList.push_back(v);
+				}
+			}
+		}
+	}
+
+	for (Value* param : function->params)
+	{
+		std::deque<BasicBlock*> workList;
+		std::set<BasicBlock*> everOnWorkList;
+		std::set<BasicBlock*> alreadyInserted;
+
+		// Gather all blocks containing an assignment to this variable
+		for (Instruction* inst : param->uses)
+		{
+			if (dynamic_cast<StoreInst*>(inst))
+			{
+				everOnWorkList.insert(inst->parent);
+				workList.push_back(inst->parent);
+			}
+		}
+
+		// Function arguments have an ssumed assignment in the entry node
+		BasicBlock* entry = function->blocks[0];
+		if (everOnWorkList.find(entry) == everOnWorkList.end())
+		{
+			everOnWorkList.insert(entry);
+			workList.push_back(entry);
+		}
+
+		while (!workList.empty())
+		{
+			BasicBlock* next = workList.front();
+			workList.pop_front();
+
+			if (df.find(next) == df.end())
+				continue;
+
+			// Loop over the dominance frontier of this block
+			for (BasicBlock* v : df.at(next))
+			{
+				if (alreadyInserted.find(v) != alreadyInserted.end())
+					continue;
+
+				result[v].emplace_back(param);
 				alreadyInserted.insert(v);
 
 				if (everOnWorkList.find(v) == everOnWorkList.end())
@@ -400,9 +448,19 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 	{
 		if (LoadInst* load = dynamic_cast<LoadInst*>(inst))
 		{
-			if (!dynamic_cast<Argument*>(load->src))
+			if (phiStack[load->src].empty())
 			{
-				assert(!phiStack[load->src].empty());
+				// A load without a previous store should only be possible for
+				// a function parameter
+				assert(dynamic_cast<Argument*>(load->src));
+
+				// For any node dominated by this one, don't re-load, just
+				// use this value
+				phiStack[load->src].push(load->dest);
+				toPop.push_back(load->dest);
+			}
+			else
+			{
 				Value* newName = phiStack[load->src].top();
 
 				load->removeFromParent();
@@ -411,13 +469,10 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 		}
 		else if (StoreInst* store = dynamic_cast<StoreInst*>(inst))
 		{
-			if (!dynamic_cast<Argument*>(store->dest))
-			{
-				phiStack[store->dest].push(store->src);
-				toPop.push_back(store->dest);
+			phiStack[store->dest].push(store->src);
+			toPop.push_back(store->dest);
 
-				store->removeFromParent();
-			}
+			store->removeFromParent();
 		}
 	}
 
@@ -456,23 +511,62 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 	}
 }
 
-void insertPhis(Function* function, const phis_t& phis)
+void insertPhis(Function* function, phis_t& phis)
 {
 	for (auto& item : phis)
 	{
 		BasicBlock* block = item.first;
 
-		for (const PhiDescription& phiDesc : item.second)
+		for (PhiDescription& phiDesc : item.second)
 		{
 			assert(phiDesc.dest);
 
 			PhiInst* phi = new PhiInst(phiDesc.dest);
 			for (auto& source : phiDesc.sources)
 			{
+				if (!source.second)
+				{
+					// For some path leading to this block, there is no definition
+					// to merge in this phi node.
+
+					// Case 1: Function argument -- in this case, there is an
+					// implicit store at the beginning of the function. Add an
+					// explicit load in the predecessor
+					if (dynamic_cast<Argument*>(phiDesc.original))
+					{
+						Value* tmp = generateName(function, phiDesc.original);
+						LoadInst* inst = new LoadInst(tmp, phiDesc.original);
+						inst->insertBefore(source.first->last);
+						source.second = tmp;
+					}
+
+					// Case 2: Local variable -- in this case, the value really is
+					// undefined, so the result variable better be dead, or we'll
+					// have undefined behavior
+					else
+					{
+						assert(phiDesc.dest->uses.empty());
+
+						Value* deadValue = phiDesc.dest;
+
+						// If the result is dead, then we don't need the phi
+						phi->dropReferences();
+						delete phi;
+
+						// And we don't need the value
+						assert(!deadValue->definition);
+						function->temps.erase(std::remove(function->temps.begin(), function->temps.end(), deadValue), function->temps.end());
+
+						phi = nullptr;
+						break;
+					}
+				}
+
 				phi->addSource(source.first, source.second);
 			}
 
-			block->prepend(phi);
+			if (phi)
+				block->prepend(phi);
 		}
 	}
 }
@@ -491,6 +585,47 @@ void analyzeFunction(Function* function)
 		assert(local->uses.empty());
 	}
 	function->locals.clear();
+}
+
+void generateDot(Function* function)
+{
+	std::string fname = std::string("dots/") + function->name + ".dot";
+	fstream f(fname.c_str(), std::ios::out);
+
+	f << "digraph {" << std::endl;
+	f << "node[fontname=\"Inconsolata\"]" << std::endl;
+
+	for (BasicBlock* block : function->blocks)
+	{
+		f << "L" << block->seqNumber << " [label=\"";
+		f << block->str() << "\\l";
+
+		Instruction* inst = block->first;
+		while (inst != nullptr)
+		{
+			f << "    " << inst->str() << "\\l";
+			inst = inst->next;
+		}
+
+		f << "\"]" << std::endl;
+
+		auto successors = block->successors();
+
+		if (!successors.empty())
+		{
+			f << "L" << block->seqNumber << " -> {";
+			for (size_t i = 0; i < successors.size(); ++i)
+			{
+				if (i != 0)
+					f << ", ";
+
+				f << "L" << successors[i]->seqNumber;
+			}
+			f << "}" << std::endl;
+		}
+	}
+
+	f << "}" << std::endl;
 }
 
 
@@ -571,6 +706,7 @@ int main(int argc, char* argv[])
 				dumpFunction(function);
 				analyzeFunction(function);
 				dumpFunction(function);
+				generateDot(function);
 			}
 		}
 

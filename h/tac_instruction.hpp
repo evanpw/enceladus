@@ -705,7 +705,8 @@ public:
 
         for (auto& item : _sources)
         {
-            item.second->uses.erase(this);
+            if (item.second)
+                item.second->uses.erase(this);
         }
     }
 

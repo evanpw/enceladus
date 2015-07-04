@@ -23,6 +23,8 @@ struct Function : public GlobalValue
 
     void replaceReferences(Value* from, Value* to);
 
+    void killTemp(Value* temp);
+
 private:
     int64_t _nextSeqNumber = 0;
 };
