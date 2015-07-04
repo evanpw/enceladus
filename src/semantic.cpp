@@ -129,21 +129,21 @@ FunctionSymbol* SemanticAnalyzer::makeExternal(const std::string& name)
 
 void SemanticAnalyzer::injectSymbols()
 {
-    std::shared_ptr<Scope>& scope = _root->scope;
+    Scope& scope = _root->scope;
 
     //// Built-in types ////////////////////////////////////////////////////////
-    scope->types.insert(new TypeSymbol("Int", _root, Type::Int));
-    scope->types.insert(new TypeSymbol("Bool", _root, Type::Bool));
-    scope->types.insert(new TypeSymbol("Unit", _root, Type::Unit));
-    scope->types.insert(new TypeSymbol("String", _root, Type::String));
+    scope.types.insert(new TypeSymbol("Int", _root, Type::Int));
+    scope.types.insert(new TypeSymbol("Bool", _root, Type::Bool));
+    scope.types.insert(new TypeSymbol("Unit", _root, Type::Unit));
+    scope.types.insert(new TypeSymbol("String", _root, Type::String));
 
-    scope->types.insert(new TypeConstructorSymbol("Function", _root, TypeConstructor::Function));
-    scope->types.insert(new TypeConstructorSymbol("Array", _root, TypeConstructor::Array));
+    scope.types.insert(new TypeConstructorSymbol("Function", _root, TypeConstructor::Function));
+    scope.types.insert(new TypeConstructorSymbol("Array", _root, TypeConstructor::Array));
 
 	//// Create symbols for built-in functions
     FunctionSymbol* notFn = makeBuiltin("not");
 	notFn->setType(FunctionType::create({Type::Bool}, Type::Bool));
-	scope->symbols.insert(notFn);
+	scope.symbols.insert(notFn);
 
 	//// Integer arithmetic functions //////////////////////////////////////////
 
@@ -151,23 +151,23 @@ void SemanticAnalyzer::injectSymbols()
 
 	FunctionSymbol* add = makeBuiltin("+");
 	add->setType(arithmeticType);
-	scope->symbols.insert(add);
+	scope.symbols.insert(add);
 
 	FunctionSymbol* subtract = makeBuiltin("-");
 	subtract->setType(arithmeticType);
-	scope->symbols.insert(subtract);
+	scope.symbols.insert(subtract);
 
 	FunctionSymbol* multiply = makeBuiltin("*");
 	multiply->setType(arithmeticType);
-	scope->symbols.insert(multiply);
+	scope.symbols.insert(multiply);
 
 	FunctionSymbol* divide = makeBuiltin("/");
 	divide->setType(arithmeticType);
-	scope->symbols.insert(divide);
+	scope.symbols.insert(divide);
 
 	FunctionSymbol* modulus = makeBuiltin("%");
 	modulus->setType(arithmeticType);
-	scope->symbols.insert(modulus);
+	scope.symbols.insert(modulus);
 
 
 	//// These definitions are only needed so that we list them as external
@@ -175,9 +175,9 @@ void SemanticAnalyzer::injectSymbols()
 	//// language.
     FunctionSymbol* gcAllocate = new FunctionSymbol("gcAllocate", _root, nullptr);
     gcAllocate->isExternal = true;
-    scope->symbols.insert(gcAllocate);
+    scope.symbols.insert(gcAllocate);
 
-    scope->symbols.insert(new FunctionSymbol("_main", _root, nullptr));
+    scope.symbols.insert(new FunctionSymbol("_main", _root, nullptr));
 }
 
 void SemanticAnalyzer::resolveBaseType(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables)
@@ -359,14 +359,14 @@ std::set<TypeVariable*> SemanticAnalyzer::getFreeVars(Symbol& symbol)
     return freeVars;
 }
 
-std::unique_ptr<TypeScheme> SemanticAnalyzer::generalize(const std::shared_ptr<Type>& type, const std::vector<std::shared_ptr<Scope>>& scopes)
+std::unique_ptr<TypeScheme> SemanticAnalyzer::generalize(const std::shared_ptr<Type>& type, const std::vector<Scope*>& scopes)
 {
     std::set<TypeVariable*> typeFreeVars = type->freeVars();
 
     std::set<TypeVariable*> envFreeVars;
     for (auto i = scopes.rbegin(); i != scopes.rend(); ++i)
     {
-        const std::shared_ptr<Scope>& scope = *i;
+        Scope* scope = *i;
         for (auto& j : scope->symbols.symbols)
         {
             const std::unique_ptr<Symbol>& symbol = j.second;
@@ -584,7 +584,7 @@ void SemanticAnalyzer::unify(const std::shared_ptr<Type>& a, const std::shared_p
 
 void SemanticAnalyzer::visit(ProgramNode* node)
 {
-    enterScope(node->scope);
+    enterScope(&node->scope);
 	injectSymbols();
 
 	//// Recurse down into children
@@ -726,7 +726,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	insertSymbol(symbol);
 	node->symbol = symbol;
 
-	enterScope(node->scope);
+	enterScope(&node->scope);
 
 	// Add symbols corresponding to the formal parameters to the
 	// function's scope
@@ -870,6 +870,8 @@ void SemanticAnalyzer::visit(MatchArm* node)
     CHECK(functionType->inputs().size() == node->params.size(),
         "constructor pattern \"{}\" does not have the correct number of arguments", constructorName);
 
+    enterScope(&node->bodyScope);
+
     // And create new variables for each of the members of the constructor
     for (size_t i = 0; i < node->params.size(); ++i)
     {
@@ -891,6 +893,8 @@ void SemanticAnalyzer::visit(MatchArm* node)
 
     // Visit body
     AstVisitor::visit(node);
+
+    exitScope();
 
     node->type = node->body->type;
 }
@@ -1071,7 +1075,9 @@ void SemanticAnalyzer::visit(IfNode* node)
     node->condition->accept(this);
     unify(node->condition->type, Type::Bool, node);
 
+    enterScope(&node->bodyScope);
     node->body->accept(this);
+    exitScope();
     unify(node->body->type, Type::Unit, node);
 
     node->type = Type::Unit;
@@ -1082,10 +1088,15 @@ void SemanticAnalyzer::visit(IfElseNode* node)
     node->condition->accept(this);
     unify(node->condition->type, Type::Bool, node);
 
+    enterScope(&node->bodyScope);
     node->body->accept(this);
-    node->else_body->accept(this);
+    exitScope();
 
-    unify(node->body->type, node->else_body->type, node);
+    enterScope(&node->elseScope);
+    node->elseBody->accept(this);
+    exitScope();
+
+    unify(node->body->type, node->elseBody->type, node);
     node->type = node->body->type;
 }
 
@@ -1101,7 +1112,11 @@ void SemanticAnalyzer::visit(WhileNode* node)
     node->type = Type::Unit;
 
     _enclosingLoop = node;
+    enterScope(&node->bodyScope);
+
     node->body->accept(this);
+
+    exitScope();
     _enclosingLoop = outerLoop;
 
     unify(node->body->type, Type::Unit, node);
@@ -1118,7 +1133,11 @@ void SemanticAnalyzer::visit(ForeverNode* node)
     node->type = TypeVariable::create();
 
     _enclosingLoop = node;
+    enterScope(&node->bodyScope);
+
     node->body->accept(this);
+
+    exitScope();
     _enclosingLoop = outerLoop;
 
     unify(node->body->type, Type::Unit, node);

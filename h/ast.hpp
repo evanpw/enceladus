@@ -110,7 +110,7 @@ class ProgramNode : public AstNode
 {
 public:
 	ProgramNode(AstContext& context, const YYLTYPE& location)
-	: AstNode(context, location), scope(new Scope)
+	: AstNode(context, location)
 	{}
 
 	AST_VISITABLE();
@@ -118,7 +118,7 @@ public:
 	std::vector<AstNode*> children;
 
 	// Annotations
-	std::shared_ptr<Scope> scope;
+	Scope scope;
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
@@ -280,20 +280,27 @@ public:
 
 	ExpressionNode* condition;
 	StatementNode* body;
+
+	// Annotations
+	Scope bodyScope;
 };
 
 class IfElseNode : public StatementNode
 {
 public:
-	IfElseNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* else_body)
-	: StatementNode(context, location), condition(condition), body(body), else_body(else_body)
+	IfElseNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* elseBody)
+	: StatementNode(context, location), condition(condition), body(body), elseBody(elseBody)
 	{}
 
 	AST_VISITABLE();
 
 	ExpressionNode* condition;
 	StatementNode* body;
-	StatementNode* else_body;
+	StatementNode* elseBody;
+
+	// Annotations
+	Scope bodyScope;
+	Scope elseScope;
 };
 
 class WhileNode : public LoopNode
@@ -307,6 +314,9 @@ public:
 
 	ExpressionNode* condition;
 	StatementNode* body;
+
+	// Annotations
+	Scope bodyScope;
 };
 
 class ForeverNode : public LoopNode
@@ -319,6 +329,9 @@ public:
 	AST_VISITABLE();
 
 	StatementNode* body;
+
+	// Annotations
+	Scope bodyScope;
 };
 
 class BreakNode : public StatementNode
@@ -372,7 +385,7 @@ class FunctionDefNode : public StatementNode
 {
 public:
 	FunctionDefNode(AstContext& context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& params, TypeName* typeName)
-	: StatementNode(context, location), name(name), body(body), params(params), typeName(typeName), scope(new Scope)
+	: StatementNode(context, location), name(name), body(body), params(params), typeName(typeName)
 	{}
 
 	AST_VISITABLE();
@@ -385,7 +398,7 @@ public:
 	// Annotations
 	Symbol* symbol = nullptr;
 	std::vector<Symbol*> parameterSymbols;
-	std::shared_ptr<Scope> scope;
+	Scope scope;
 	FunctionType* functionType;
 };
 
@@ -425,6 +438,7 @@ public:
 	std::vector<Symbol*> symbols;
 	size_t constructorTag;
 	ValueConstructor* valueConstructor = nullptr;
+	Scope bodyScope;
 };
 
 class SwitchNode : public StatementNode

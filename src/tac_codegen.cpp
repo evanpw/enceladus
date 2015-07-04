@@ -439,9 +439,9 @@ void TACCodeGen::visit(IfElseNode* node)
         trueBranch = _currentBlock;
         emit(new JumpInst(continueAt));
     }
-    
+
     setBlock(falseBranch);
-    Value* elseValue = visitAndGet(node->else_body);
+    Value* elseValue = visitAndGet(node->elseBody);
     if (!_currentBlock->isTerminated())
     {
         if (!continueAt)
@@ -450,7 +450,7 @@ void TACCodeGen::visit(IfElseNode* node)
         falseBranch = _currentBlock;
         emit(new JumpInst(continueAt));
     }
-    
+
     if (continueAt)
     {
         setBlock(continueAt);

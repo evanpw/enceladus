@@ -1,0 +1,6 @@
+if False
+    x := 4
+else
+    x := 5
+
+print $ show x

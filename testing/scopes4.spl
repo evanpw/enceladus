@@ -1,0 +1,5 @@
+forever
+    x := 4
+    break
+
+print $ show x

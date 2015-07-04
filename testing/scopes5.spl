@@ -1,0 +1,7 @@
+data Either a b = Left a | Right b
+
+a := Left 1
+
+match a
+    Left x  => print $ show x
+    Right x => print $ show x

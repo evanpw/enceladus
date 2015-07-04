@@ -74,7 +74,7 @@ private:
     void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
     void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
 
-    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<std::shared_ptr<Scope>>& scopes);
+    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<Scope*>& scopes);
     std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);
     std::shared_ptr<Type> instantiate(TypeScheme* scheme);
 
@@ -98,16 +98,16 @@ private:
     void insertSymbol(Symbol* symbol);
     void releaseSymbol(Symbol* symbol);
 
-    std::shared_ptr<Scope> topScope() { return _scopes.back(); }
+    Scope* topScope() { return _scopes.back(); }
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);
-    void enterScope(std::shared_ptr<Scope>& scope) { _scopes.push_back(scope); }
+    void enterScope(Scope* scope) { _scopes.push_back(scope); }
     void exitScope() { _scopes.pop_back(); }
 
     ProgramNode* _root;
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;
-    std::vector<std::shared_ptr<Scope>> _scopes;
+    std::vector<Scope*> _scopes;
 };
 
 class TypeInferenceError : public std::exception

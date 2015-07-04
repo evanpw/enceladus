@@ -1,0 +1,4 @@
+if False
+    x := 4
+
+print $ show x
