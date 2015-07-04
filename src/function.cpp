@@ -1,10 +1,18 @@
 #include "function.hpp"
 #include "context.hpp"
 #include <algorithm>
+#include <sstream>
 
 Value* Function::makeTemp()
 {
     Value* tmp = _context->makeTemp(_nextSeqNumber++);
+    temps.push_back(tmp);
+    return tmp;
+}
+
+Value* Function::makeTemp(const std::string& name)
+{
+    Value* tmp = _context->makeTemp(name);
     temps.push_back(tmp);
     return tmp;
 }

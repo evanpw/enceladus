@@ -18,6 +18,7 @@ struct Function : public GlobalValue
     std::vector<Value*> temps;
 
     Value* makeTemp();
+    Value* makeTemp(const std::string& name);
     BasicBlock* makeBlock();
 
     void replaceReferences(Value* from, Value* to);

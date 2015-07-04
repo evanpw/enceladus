@@ -91,6 +91,13 @@ Value* TACContext::makeTemp(int64_t number)
     return result;
 }
 
+Value* TACContext::makeTemp(const std::string& name)
+{
+    Value* result = new Value(this, name);
+    _values.push_back(result);
+    return result;
+}
+
 BasicBlock* TACContext::makeBlock(int64_t number)
 {
     BasicBlock* result = new BasicBlock(this, number);

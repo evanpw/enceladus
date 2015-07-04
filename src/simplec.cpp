@@ -316,10 +316,13 @@ phis_t calculatePhiNodes(const Function* function, const df_t& df)
 		// Gather all blocks containing an assignment to this variable
 		for (Instruction* inst : local->uses)
 		{
-			if (dynamic_cast<StoreInst*>(inst))
+			if (StoreInst* store = dynamic_cast<StoreInst*>(inst))
 			{
-				everOnWorkList.insert(inst->parent);
-				workList.push_back(inst->parent);
+				if (!dynamic_cast<Argument*>(store->dest))
+				{
+					everOnWorkList.insert(inst->parent);
+					workList.push_back(inst->parent);
+				}
 			}
 		}
 
@@ -354,10 +357,15 @@ phis_t calculatePhiNodes(const Function* function, const df_t& df)
 
 std::unordered_map<Value*, std::stack<Value*>> phiStack;
 std::unordered_set<BasicBlock*> visited;
+std::unordered_map<Value*, int> counter;
 
 Value* generateName(Function* function, Value* variable)
 {
-	Value* newName = function->makeTemp();
+	int i = counter[variable]++;
+	std::stringstream ss;
+	ss << variable->name << "." << i;
+
+	Value* newName = function->makeTemp(ss.str());
 	phiStack[variable].push(newName);
 
 	return newName;

@@ -26,6 +26,7 @@ struct TACContext
     GlobalValue* makeStaticString(const std::string& name, const std::string& contents);
     LocalValue* makeLocal(const std::string& name);
     Value* makeTemp(int64_t number);
+    Value* makeTemp(const std::string& name);
     BasicBlock* makeBlock(int64_t number);
 
     // Convenience references
