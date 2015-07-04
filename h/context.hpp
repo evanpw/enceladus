@@ -15,10 +15,11 @@ struct TACContext
     std::vector<std::pair<Value*, std::string>> staticStrings;
     std::vector<Value*> externs;
 
+    TACContext();
     ~TACContext();
 
     Argument* makeArgument(const std::string& name);
-    ConstantInt* makeConstantInt(int64_t value);
+    ConstantInt* getConstantInt(int64_t value);
     Function* makeExternFunction(const std::string& name);
     Function* makeFunction(const std::string& name);
     GlobalValue* makeGlobal(const std::string& name);
@@ -27,7 +28,18 @@ struct TACContext
     Value* makeTemp(int64_t number);
     BasicBlock* makeBlock(int64_t number);
 
+    // Convenience references
+    ConstantInt* True;
+    ConstantInt* False;
+    ConstantInt* One;
+    ConstantInt* Zero;
+
 private:
+    ConstantInt* makeConstantInt(int64_t value);
+
+    // Interning of constant values
+    std::unordered_map<int64_t, ConstantInt*> _constants;
+
     // This contains every value, will have overlaps with members above
     std::vector<Value*> _values;
 };

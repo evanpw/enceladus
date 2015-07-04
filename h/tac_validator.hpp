@@ -22,6 +22,12 @@ private:
     // Every temporary has a defining instruction
     bool tempsDefined();
 
+    // Every block successor has a corresponding predecessor, and vice-versa
+    bool blockLinksGood();
+
+    // Every block in every function is reachable from the entry block
+    bool allBlocksReachable();
+
     TACContext* _context;
 };
 

@@ -25,8 +25,8 @@ std::string ConstantInt::str() const
     return std::to_string(value);
 }
 
-GlobalValue::GlobalValue(const std::string& name, GlobalTag tag)
-: Constant(name), tag(tag)
+GlobalValue::GlobalValue(TACContext* context, const std::string& name, GlobalTag tag)
+: Constant(context, name), tag(tag)
 {}
 
 std::string GlobalValue::str() const
@@ -36,8 +36,8 @@ std::string GlobalValue::str() const
     return ss.str();
 }
 
-LocalValue::LocalValue(const std::string& name)
-: Constant(name)
+LocalValue::LocalValue(TACContext* context, const std::string& name)
+: Constant(context, name)
 {}
 
 std::string LocalValue::str() const
@@ -53,10 +53,3 @@ std::string Argument::str() const
     ss << "$" << name;
     return ss.str();
 }
-
-ConstantInt* ConstantInt::True = new ConstantInt(3);
-ConstantInt* ConstantInt::False = new ConstantInt(1);
-
-ConstantInt* ConstantInt::One = new ConstantInt(1);
-ConstantInt* ConstantInt::Zero = new ConstantInt(0);
-

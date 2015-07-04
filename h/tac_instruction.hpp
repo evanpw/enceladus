@@ -16,23 +16,134 @@ struct Instruction
 
     virtual std::string str() const = 0;
 
+    // Remove this instruction as the definition or user of any values, usually
+    // in preparation for removing it
+    virtual void dropReferences() = 0;
+
+    virtual void replaceReferences(Value* from, Value* to) = 0;
+
+    // Insert self before the given instruction
+    void insertBefore(Instruction* inst)
+    {
+        assert(inst && inst->parent);
+        parent = inst->parent;
+
+        Instruction* instPrev = inst->prev;
+
+        inst->prev = this;
+        this->next = inst;
+
+        this->prev = instPrev;
+        if (instPrev)
+        {
+            instPrev->next = this;
+        }
+        else
+        {
+            assert(inst == parent->first);
+            parent->first = this;
+        }
+    }
+
+    // Insert self after the given instruction
     void insertAfter(Instruction* inst)
     {
-        assert(inst);
-        Instruction* myNext = inst->next;
+        assert(inst && inst->parent);
+        parent = inst->parent;
+
+        Instruction* instNext = inst->next;
 
         inst->next = this;
         this->prev = inst;
 
-        this->next = myNext;
-        if (myNext) myNext->prev = this;
+        this->next = instNext;
+        if (instNext)
+        {
+            instNext->prev = this;
+        }
+        else
+        {
+            assert(inst == parent->last);
+            parent->last = this;
+        }
     }
 
-    BasicBlock* parent;
+    void replaceWith(Instruction* inst)
+    {
+        assert(parent);
+
+        if (prev)
+        {
+            prev->next = inst;
+        }
+        else
+        {
+            assert(parent->first == this);
+            parent->first = inst;
+        }
+
+        if (next)
+        {
+            next->prev = inst;
+        }
+        else
+        {
+            assert(parent->last == this);
+            parent->last = inst;
+        }
+
+        inst->parent = parent;
+        inst->next = next;
+        inst->prev = prev;
+
+        dropReferences();
+        delete this;
+    }
+
+    void removeFromParent()
+    {
+        assert(parent);
+
+        if (prev)
+        {
+            prev->next = next;
+        }
+        else
+        {
+            assert(parent->first == this);
+            parent->first = next;
+        }
+
+        if (next)
+        {
+            next->prev = prev;
+        }
+        else
+        {
+            assert(parent->last == this);
+            parent->last = prev;
+        }
+
+        dropReferences();
+        delete this;
+    }
+
+    BasicBlock* parent = nullptr;
 
     // Instructions in a single basic block form an instrusive linked list
     Instruction* prev = nullptr;
     Instruction* next = nullptr;
+
+protected:
+    void replaceReference(Value*& reference, Value* from, Value* to)
+    {
+        if (reference == from)
+        {
+            reference = to;
+            from->uses.erase(this);
+            to->uses.insert(this);
+        }
+    }
 };
 
 #define MAKE_VISITABLE() virtual void accept(TACVisitor* visitor) { visitor->visit(this); }
@@ -42,8 +153,20 @@ struct ConditionalJumpInst : public Instruction
     ConditionalJumpInst(Value* lhs, const std::string& op, Value* rhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
     : lhs(lhs), op(op), rhs(rhs), ifTrue(ifTrue), ifFalse(ifFalse)
     {
-        lhs->uses.push_back(this);
-        rhs->uses.push_back(this);
+        lhs->uses.insert(this);
+        rhs->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        lhs->uses.erase(this);
+        rhs->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        replaceReference(lhs, from, to);
+        replaceReference(rhs, from, to);
     }
 
     MAKE_VISITABLE();
@@ -67,7 +190,17 @@ struct JumpIfInst : public Instruction
     JumpIfInst(Value* lhs, BasicBlock* ifTrue, BasicBlock* ifFalse)
     : lhs(lhs), ifTrue(ifTrue), ifFalse(ifFalse)
     {
-        lhs->uses.push_back(this);
+        lhs->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        lhs->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        replaceReference(lhs, from, to);
     }
 
     MAKE_VISITABLE();
@@ -89,10 +222,23 @@ struct AssignInst : public Instruction
     AssignInst(Value* lhs, Value* rhs)
     : lhs(lhs), rhs(rhs)
     {
-        assert(!lhs->definition);
         lhs->definition = this;
 
-        rhs->uses.push_back(this);
+        rhs->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (this == lhs->definition)
+            lhs->definition = nullptr;
+
+        rhs->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(lhs != from);
+        replaceReference(rhs, from, to);
     }
 
     MAKE_VISITABLE();
@@ -114,7 +260,18 @@ struct ReturnInst : public Instruction
     : value(value)
     {
         if (value)
-            value->uses.push_back(this);
+            value->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (value)
+            value->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        replaceReference(value, from, to);
     }
 
     MAKE_VISITABLE();
@@ -142,6 +299,9 @@ struct JumpInst : public Instruction
     : target(target)
     {}
 
+    virtual void dropReferences() {}
+    virtual void replaceReferences(Value* from, Value* to) {}
+
     MAKE_VISITABLE();
 
     virtual std::string str() const override
@@ -161,15 +321,14 @@ struct CallInst : public Instruction
     {
         if (dest)
         {
-            assert(!dest->definition);
             dest->definition = this;
         }
 
-        function->uses.push_back(this);
+        function->uses.insert(this);
 
         for (auto& param : params)
         {
-            param->uses.push_back(this);
+            param->uses.insert(this);
         }
     }
 
@@ -178,16 +337,15 @@ struct CallInst : public Instruction
     {
         if (dest)
         {
-            assert(!dest->definition);
             dest->definition = this;
         }
 
-        function->uses.push_back(this);
+        function->uses.insert(this);
 
         for (auto& param : paramsList)
         {
             params.push_back(param);
-            param->uses.push_back(this);
+            param->uses.insert(this);
         }
     }
 
@@ -197,7 +355,32 @@ struct CallInst : public Instruction
         for (auto& param : paramsList)
         {
             params.push_back(param);
-            param->uses.push_back(this);
+            param->uses.insert(this);
+        }
+    }
+
+    virtual void dropReferences()
+    {
+        if (dest && this == dest->definition)
+            dest->definition = nullptr;
+
+        function->uses.erase(this);
+
+        for (auto& param : params)
+        {
+            param->uses.erase(this);
+        }
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+
+        replaceReference(function, from, to);
+
+        for (size_t i = 0; i < params.size(); ++i)
+        {
+            replaceReference(params[i], from, to);
         }
     }
 
@@ -234,10 +417,34 @@ struct IndirectCallInst : public Instruction
     IndirectCallInst(Value* dest, Value* function, const std::vector<Value*>& params)
     : dest(dest), function(function), params(params)
     {
-        assert(!dest->definition);
         dest->definition = this;
 
-        function->uses.push_back(this);
+        function->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (this == dest->definition)
+            dest->definition = nullptr;
+
+        function->uses.erase(this);
+
+        for (auto& param : params)
+        {
+            param->uses.erase(this);
+        }
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+
+        replaceReference(function, from, to);
+
+        for (size_t i = 0; i < params.size(); ++i)
+        {
+            replaceReference(params[i], from, to);
+        }
     }
 
     MAKE_VISITABLE();
@@ -267,10 +474,24 @@ struct LoadInst : public Instruction
     LoadInst(Value* dest, Value* src)
     : dest(dest), src(src)
     {
-        assert(!dest->definition);
         dest->definition = this;
 
-        src->uses.push_back(this);
+        src->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (this == dest->definition)
+            dest->definition = nullptr;
+
+        src->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+
+        replaceReference(src, from, to);
     }
 
     MAKE_VISITABLE();
@@ -291,8 +512,20 @@ struct StoreInst : public Instruction
     StoreInst(Value* dest, Value* src)
     : dest(dest), src(src)
     {
-        dest->uses.push_back(this);
-        src->uses.push_back(this);
+        dest->uses.insert(this);
+        src->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        dest->uses.erase(this);
+        src->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        replaceReference(dest, from, to);
+        replaceReference(src, from, to);
     }
 
     MAKE_VISITABLE();
@@ -314,12 +547,29 @@ struct IndexedLoadInst : public Instruction
                     Value* index = nullptr, int64_t scale = 1)
     : lhs(lhs), rhs(rhs), offset(offset), index(index), scale(scale)
     {
-        assert(!lhs->definition);
         lhs->definition = this;
 
-        rhs->uses.push_back(this);
+        rhs->uses.insert(this);
         if (index)
-            index->uses.push_back(this);
+            index->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (this == lhs->definition)
+            lhs->definition = nullptr;
+
+        rhs->uses.erase(this);
+        if (index)
+            index->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(lhs != from);
+
+        replaceReference(rhs, from, to);
+        replaceReference(index, from, to);
     }
 
     MAKE_VISITABLE();
@@ -343,8 +593,20 @@ struct IndexedStoreInst : public Instruction
     IndexedStoreInst(Value* lhs, size_t offset, Value* rhs)
     : lhs(lhs), offset(offset), rhs(rhs)
     {
-        lhs->uses.push_back(this);
-        rhs->uses.push_back(this);
+        lhs->uses.insert(this);
+        rhs->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        lhs->uses.erase(this);
+        rhs->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        replaceReference(lhs, from, to);
+        replaceReference(rhs, from, to);
     }
 
     MAKE_VISITABLE();
@@ -369,11 +631,26 @@ struct BinaryOperationInst : public Instruction
     BinaryOperationInst(Value* dest, Value* lhs, BinaryOperation op, Value* rhs)
     : dest(dest), lhs(lhs), op(op), rhs(rhs)
     {
-        assert(!dest->definition);
         dest->definition = this;
 
-        lhs->uses.push_back(this);
-        rhs->uses.push_back(this);
+        lhs->uses.insert(this);
+        rhs->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (this == dest->definition)
+            dest->definition = nullptr;
+
+        lhs->uses.erase(this);
+        rhs->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+        replaceReference(lhs, from, to);
+        replaceReference(rhs, from, to);
     }
 
     MAKE_VISITABLE();
@@ -399,8 +676,10 @@ struct BinaryOperationInst : public Instruction
 
 struct UnreachableInst : public Instruction
 {
-    UnreachableInst()
-    {}
+    UnreachableInst() {}
+
+    virtual void dropReferences() {}
+    virtual void replaceReferences(Value* from, Value* to) {}
 
     MAKE_VISITABLE();
 
@@ -416,8 +695,28 @@ public:
     PhiInst(Value* dest)
     : dest(dest)
     {
-        assert(!dest->definition);
         dest->definition = this;
+    }
+
+    virtual void dropReferences()
+    {
+        if (this == dest->definition)
+            dest->definition = nullptr;
+
+        for (auto& item : _sources)
+        {
+            item.second->uses.erase(this);
+        }
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+
+        for (auto& item : _sources)
+        {
+            replaceReference(item.second, from, to);
+        }
     }
 
     MAKE_VISITABLE();
@@ -438,8 +737,11 @@ public:
                 ss << ", ";
             }
 
-            ss << "(" << _sources[i].first->str()
-               << ", " << _sources[i].second->str() << ")";
+            ss << "("
+               << _sources[i].first->str()
+               << ", "
+               << (_sources[i].second ? _sources[i].second->str() : "null")
+               << ")";
         }
 
         return ss.str();
@@ -447,7 +749,9 @@ public:
 
     void addSource(BasicBlock* block, Value* value)
     {
-        value->uses.push_back(this);
+        if (value)
+            value->uses.insert(this);
+
         _sources.emplace_back(block, value);
     }
 

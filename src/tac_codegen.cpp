@@ -10,6 +10,12 @@ TACCodeGen::TACCodeGen(TACContext* context)
 {
 }
 
+TACConditionalCodeGen::TACConditionalCodeGen(TACCodeGen* mainCodeGen)
+: _mainCodeGen(mainCodeGen)
+{
+    _context = _mainCodeGen->_context;
+}
+
 Value* TACCodeGen::getValue(const Symbol* symbol)
 {
     if (!symbol)
@@ -257,8 +263,8 @@ void TACCodeGen::visit(ComparisonNode* node)
     setBlock(continueAt);
     node->value = makeTemp();
     PhiInst* phi = new PhiInst(node->value);
-    phi->addSource(falseBranch, ConstantInt::False);
-    phi->addSource(trueBranch, ConstantInt::True);
+    phi->addSource(falseBranch, _context->False);
+    phi->addSource(trueBranch, _context->True);
     emit(phi);
 }
 
@@ -325,8 +331,8 @@ void TACCodeGen::visit(LogicalNode* node)
     setBlock(continueAt);
     node->value = makeTemp();
     PhiInst* phi = new PhiInst(node->value);
-    phi->addSource(falseBranch, ConstantInt::False);
-    phi->addSource(trueBranch, ConstantInt::True);
+    phi->addSource(falseBranch, _context->False);
+    phi->addSource(trueBranch, _context->True);
     emit(phi);
 
 }
@@ -357,11 +363,11 @@ void TACCodeGen::visit(NullaryNode* node)
             // evaluates to a function type -- create a closure
             size_t size = sizeof(SplObject) + 8;
             // TODO: Fix this
-            emit(new CallInst(true, dest, _context->makeExternFunction("gcAllocate"), {_context->makeConstantInt(size)}));
+            emit(new CallInst(true, dest, _context->makeExternFunction("gcAllocate"), {_context->getConstantInt(size)}));
 
             // SplObject header fields
-            emit(new IndexedStoreInst(dest, offsetof(SplObject, constructorTag), ConstantInt::Zero));
-            emit(new IndexedStoreInst(dest, offsetof(SplObject, sizeInWords), ConstantInt::Zero));
+            emit(new IndexedStoreInst(dest, offsetof(SplObject, constructorTag), _context->Zero));
+            emit(new IndexedStoreInst(dest, offsetof(SplObject, sizeInWords), _context->Zero));
 
             // Address of the function as an unboxed member
             emit(new IndexedStoreInst(dest, sizeof(SplObject), getValue(node->symbol)));
@@ -371,18 +377,18 @@ void TACCodeGen::visit(NullaryNode* node)
 
 void TACCodeGen::visit(IntNode* node)
 {
-    node->value = _context->makeConstantInt(TO_INT(node->intValue));
+    node->value = _context->getConstantInt(TO_INT(node->intValue));
 }
 
 void TACCodeGen::visit(BoolNode* node)
 {
     if (node->boolValue)
     {
-        node->value = ConstantInt::True;
+        node->value = _context->True;
     }
     else
     {
-        node->value = ConstantInt::False;
+        node->value = _context->False;
     }
 }
 
@@ -408,7 +414,9 @@ void TACCodeGen::visit(IfNode* node)
 
     setBlock(trueBranch);
     node->body->accept(this);
-    emit(new JumpInst(continueAt));
+
+    if (!_currentBlock->isTerminated())
+        emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
 }
@@ -476,7 +484,9 @@ void TACCodeGen::visit(WhileNode* node)
 
     setBlock(loopBody);
     node->body->accept(this);
-    emit(new JumpInst(loopBegin));
+
+    if (!_currentBlock->isTerminated())
+        emit(new JumpInst(loopBegin));
 
     _currentLoopExit = prevLoopExit;
 
@@ -496,7 +506,9 @@ void TACCodeGen::visit(ForeverNode* node)
     _currentLoopExit = loopExit;
 
     node->body->accept(this);
-    emit(new JumpInst(loopBody));
+
+    if (!_currentBlock->isTerminated())
+        emit(new JumpInst(loopBody));
 
     _currentLoopExit = prevLoopExit;
 
@@ -506,7 +518,6 @@ void TACCodeGen::visit(ForeverNode* node)
 void TACCodeGen::visit(BreakNode* node)
 {
     emit(new JumpInst(_currentLoopExit));
-    setBlock(makeBlock());
 }
 
 void TACCodeGen::visit(AssignNode* node)
@@ -566,7 +577,7 @@ void TACConditionalCodeGen::visit(FunctionCallNode* node)
             assert(node->arguments.size() == 1);
             Value* arg = visitAndGet(node->arguments[0]);
 
-            emit(new ConditionalJumpInst(arg, "==", ConstantInt::Zero, _trueBranch, _falseBranch));
+            emit(new ConditionalJumpInst(arg, "==", _context->Zero, _trueBranch, _falseBranch));
             return;
         }
     }
@@ -608,8 +619,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
 
             setBlock(continueAt);
             PhiInst* phi = new PhiInst(node->value);
-            phi->addSource(trueBranch, ConstantInt::False);
-            phi->addSource(falseBranch, ConstantInt::True);
+            phi->addSource(trueBranch, _context->False);
+            phi->addSource(falseBranch, _context->True);
             emit(phi);
 
         }
@@ -724,12 +735,12 @@ void TACCodeGen::visit(SwitchNode* node)
 
     // Check for immediate, and remove tag bit
     Value* checked = makeTemp();
-    emit(new BinaryOperationInst(checked, expr, BinaryOperation::UAND, ConstantInt::One));
-    emit(new ConditionalJumpInst(checked, "==", ConstantInt::Zero, isObject, isImmediate));
+    emit(new BinaryOperationInst(checked, expr, BinaryOperation::UAND, _context->One));
+    emit(new ConditionalJumpInst(checked, "==", _context->Zero, isObject, isImmediate));
 
     setBlock(isImmediate);
     Value* tag1 = makeTemp();
-    emit(new BinaryOperationInst(tag1, expr, BinaryOperation::SHR, ConstantInt::One));
+    emit(new BinaryOperationInst(tag1, expr, BinaryOperation::SHR, _context->One));
     emit(new JumpInst(gotTag));
 
     // Otherwise, extract tag from object header
@@ -754,7 +765,7 @@ void TACCodeGen::visit(SwitchNode* node)
 
         setBlock(nextTest);
         nextTest = makeBlock();
-        emit(new ConditionalJumpInst(tag, "==", _context->makeConstantInt(armTag), caseLabels[i], nextTest));
+        emit(new ConditionalJumpInst(tag, "==", _context->getConstantInt(armTag), caseLabels[i], nextTest));
     }
 
     // Match must be exhaustive, so we should never fail all tests
@@ -772,9 +783,7 @@ void TACCodeGen::visit(SwitchNode* node)
         arm->accept(this);
 
         if (!_currentBlock->isTerminated())
-        {
             emit(new JumpInst(continueAt));
-        }
     }
 
     _currentSwitchExpr = lastSwitchExpr;
@@ -815,7 +824,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     // Value constructors with no parameters are represented as immediates
     if (members.size() == 0)
     {
-        emit(new ReturnInst(_context->makeConstantInt(TO_INT(constructorTag))));
+        emit(new ReturnInst(_context->getConstantInt(TO_INT(constructorTag))));
         return;
     }
 
@@ -829,13 +838,13 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         true,
         result,
         _context->makeExternFunction("gcAllocate"), // TODO: Fix this
-        {_context->makeConstantInt(size)}));
+        {_context->getConstantInt(size)}));
 
     //// Fill in the members with the constructor arguments
 
     // SplObject header fields
-    emit(new IndexedStoreInst(result, offsetof(SplObject, constructorTag), _context->makeConstantInt(constructorTag)));
-    emit(new IndexedStoreInst(result, offsetof(SplObject, sizeInWords), _context->makeConstantInt(members.size())));
+    emit(new IndexedStoreInst(result, offsetof(SplObject, constructorTag), _context->getConstantInt(constructorTag)));
+    emit(new IndexedStoreInst(result, offsetof(SplObject, sizeInWords), _context->getConstantInt(members.size())));
 
     // Individual members
     for (size_t i = 0; i < members.size(); ++i)

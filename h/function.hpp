@@ -7,8 +7,8 @@
 
 struct Function : public GlobalValue
 {
-    Function(const std::string& name)
-    : GlobalValue(name, GlobalTag::Function)
+    Function(TACContext* context, const std::string& name)
+    : GlobalValue(context, name, GlobalTag::Function)
     {}
 
     std::vector<BasicBlock*> blocks;
@@ -16,6 +16,14 @@ struct Function : public GlobalValue
     std::vector<Value*> locals;
     std::vector<Value*> params;
     std::vector<Value*> temps;
+
+    Value* makeTemp();
+    BasicBlock* makeBlock();
+
+    void replaceReferences(Value* from, Value* to);
+
+private:
+    int64_t _nextSeqNumber = 0;
 };
 
 #endif

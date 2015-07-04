@@ -1,7 +1,10 @@
 #include <cstdio>
 #include <deque>
-#include <set>
 #include <iostream>
+#include <set>
+#include <set>
+#include <stack>
+#include <unordered_map>
 #include "ast.hpp"
 #include "ast_context.hpp"
 #include "context.hpp"
@@ -92,7 +95,7 @@ void dumpFunction(const Function* function)
 		for (Value* value : function->temps)
 		{
 			std::cerr << "\t" << value->str() << ":" << std::endl;
-			
+
 			assert(value->definition);
 			std::cerr << "\t\t(defn) " << value->definition->str() << std::endl;
 
@@ -103,8 +106,385 @@ void dumpFunction(const Function* function)
 		}
 	}
 
+	std::cerr << "blocks:" << std::endl;
+	for (BasicBlock* block : function->blocks)
+	{
+		std::cerr << "\t" << block->str() << " -> ";
+
+		auto successors = block->successors();
+
+		if (!successors.empty())
+		{
+			for (size_t i = 0; i < successors.size(); ++i)
+			{
+				if (i != 0)
+					std::cerr << ", ";
+
+				std::cerr << "(" << successors[i]->str() << ")";
+			}
+			std::cerr << std::endl;
+		}
+		else
+		{
+			std::cerr << "(no successors)" << std::endl;
+		}
+	}
+
 	std::cerr << std::endl << std::endl;
 }
+
+ostream& operator<<(ostream& out, const std::set<BasicBlock*> blocks)
+{
+	out << "{";
+	for (BasicBlock* block : blocks)
+	{
+		out << block->seqNumber << ",";
+	}
+	out << "}";
+
+	return out;
+}
+
+// Got a lot of stuff from here: http://www.cs.utexas.edu/users/mckinley/380C/
+
+struct PhiDescription
+{
+	PhiDescription(Value* original)
+	: original(original)
+	{}
+
+	Value* original;
+
+	Value* dest = nullptr;
+	std::vector<std::pair<BasicBlock*, Value*>> sources;
+};
+
+typedef std::unordered_map<BasicBlock*, std::set<BasicBlock*>> dom_t;
+typedef std::unordered_map<BasicBlock*, BasicBlock*> idom_t;
+typedef std::unordered_map<BasicBlock*, std::vector<BasicBlock*>> df_t;
+typedef std::unordered_map<BasicBlock*, std::vector<PhiDescription>> phis_t;
+
+// Compute the dominators of each basic block
+dom_t findDominators(const Function* function)
+{
+	dom_t dom;
+	std::vector<BasicBlock*> blocks = function->blocks;
+	BasicBlock* entry = blocks[0];
+
+	// Only dominator of the entry block is itself
+	dom[entry] = {entry};
+
+	// The dominators of the rest of the blocks are a subset of the whole set
+	for (size_t i = 1; i < blocks.size(); ++i)
+	{
+		dom[blocks[i]].insert(blocks.begin(), blocks.end());
+	}
+
+	// Simple N^2 algorithm based on the recursive definition of DOM
+	bool changed;
+	do
+	{
+		changed = false;
+
+		for (size_t i = 1; i < blocks.size(); ++i)
+		{
+			BasicBlock* block = blocks[i];
+			auto predecessors = block->predecessors();
+
+			std::set<BasicBlock*> oldDom = dom[block];
+
+			// The set of strict dominators of block is equal to the intersection
+			// of the set of dominators of each of its predecessors
+			std::set<BasicBlock*> newDom;
+			if (!predecessors.empty())
+			{
+				newDom = dom[predecessors[0]];
+
+				for (size_t i = 1; i < predecessors.size(); ++i)
+				{
+					std::set<BasicBlock*> lhs = newDom;
+					const std::set<BasicBlock*>& rhs = dom[predecessors[i]];
+
+					newDom.clear();
+					std::set_intersection(
+						lhs.begin(), lhs.end(),
+						rhs.begin(), rhs.end(),
+						std::inserter(newDom, newDom.begin()));
+				}
+			}
+
+			newDom.insert(block);
+
+			if (oldDom != newDom)
+			{
+				changed = true;
+				dom[block] = newDom;
+			}
+		}
+
+	} while (changed);
+
+	return dom;
+}
+
+idom_t getImmediateDominators(const dom_t& dom)
+{
+	idom_t idom;
+
+	for (auto& item : dom)
+	{
+		BasicBlock* block = item.first;
+		const std::set<BasicBlock*>& dominators = item.second;
+
+		// A copy
+		std::set<BasicBlock*> working = item.second;
+
+		// IDOM must be a strict dominator
+		working.erase(block);
+
+		// Remove all elements which are strictly dominated by a dominator
+		for (BasicBlock* d1 : dominators)
+		{
+			if (d1 == block) continue;
+
+			const std::set<BasicBlock*>& dominators1 = dom.at(d1);
+
+			for (BasicBlock* d2 : dominators)
+			{
+				if (d1 != d2 && dominators1.find(d2) != dominators1.end())
+				{
+					working.erase(d2);
+				}
+			}
+		}
+
+		if (working.size() == 1)
+		{
+			idom[block] = *(working.begin());
+		}
+		else if (working.size() == 0)
+		{
+			// Should only happen for the entry block
+			assert(block->predecessors().empty());
+			idom[block] = nullptr;
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+
+	return idom;
+}
+
+df_t getDominanceFrontiers(const idom_t& idom)
+{
+	df_t df;
+
+	for (auto& item : idom)
+	{
+		BasicBlock* block = item.first;
+		BasicBlock* dominator = item.second;
+
+		if (block->predecessors().size() < 2)
+			continue;
+
+		for (BasicBlock* predecessor : block->predecessors())
+		{
+			BasicBlock* runner = predecessor;
+			while (runner != dominator)
+			{
+				df[runner].emplace_back(block);
+				runner = idom.at(runner);
+			}
+		}
+	}
+
+	return df;
+}
+
+phis_t calculatePhiNodes(const Function* function, const df_t& df)
+{
+	phis_t result;
+
+	for (Value* local : function->locals)
+	{
+		std::deque<BasicBlock*> workList;
+		std::set<BasicBlock*> everOnWorkList;
+		std::set<BasicBlock*> alreadyInserted;
+
+		// Gather all blocks containing an assignment to this variable
+		for (Instruction* inst : local->uses)
+		{
+			if (dynamic_cast<StoreInst*>(inst))
+			{
+				everOnWorkList.insert(inst->parent);
+				workList.push_back(inst->parent);
+			}
+		}
+
+		while (!workList.empty())
+		{
+			BasicBlock* next = workList.front();
+			workList.pop_front();
+
+			if (df.find(next) == df.end())
+				continue;
+
+			// Loop over the dominance frontier of this block
+			for (BasicBlock* v : df.at(next))
+			{
+				if (alreadyInserted.find(v) != alreadyInserted.end())
+					continue;
+
+				result[v].emplace_back(local);
+				alreadyInserted.insert(v);
+
+				if (everOnWorkList.find(v) == everOnWorkList.end())
+				{
+					everOnWorkList.insert(v);
+					workList.push_back(v);
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
+std::unordered_map<Value*, std::stack<Value*>> phiStack;
+std::unordered_set<BasicBlock*> visited;
+
+Value* generateName(Function* function, Value* variable)
+{
+	Value* newName = function->makeTemp();
+	phiStack[variable].push(newName);
+
+	return newName;
+}
+
+void rename(Function* function, BasicBlock* block, phis_t& phis)
+{
+	if (visited.find(block) == visited.end())
+	{
+		visited.insert(block);
+	}
+	else
+	{
+		return;
+	}
+
+	// Keep track of the names we've created so that we can easily undo it
+	std::vector<Value*> toPop;
+
+	// Rename the LHS of phi nodes
+	if (phis.find(block) != phis.end())
+	{
+		for (PhiDescription& phiDesc : phis.at(block))
+		{
+			phiDesc.dest = generateName(function, phiDesc.original);
+			toPop.push_back(phiDesc.original);
+		}
+	}
+
+	// Rewrite load and store instructions with new names
+	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+	{
+		if (LoadInst* load = dynamic_cast<LoadInst*>(inst))
+		{
+			if (!dynamic_cast<Argument*>(load->src))
+			{
+				assert(!phiStack[load->src].empty());
+				Value* newName = phiStack[load->src].top();
+
+				load->removeFromParent();
+				function->replaceReferences(load->dest, newName);
+			}
+		}
+		else if (StoreInst* store = dynamic_cast<StoreInst*>(inst))
+		{
+			if (!dynamic_cast<Argument*>(store->dest))
+			{
+				phiStack[store->dest].push(store->src);
+				toPop.push_back(store->dest);
+
+				store->removeFromParent();
+			}
+		}
+	}
+
+	// Fix-up phi nodes of successors
+	for (BasicBlock* next : block->successors())
+	{
+		if (phis.find(next) != phis.end())
+		{
+			for (PhiDescription& phiDesc : phis.at(next))
+			{
+				if (!phiStack[phiDesc.original].empty())
+				{
+					phiDesc.sources.emplace_back(block, phiStack[phiDesc.original].top());
+				}
+				else
+				{
+					// It's possible that some predecessor doesn't define the variable at all.
+					// This is probably an indication that the variable isn't live, and we
+					// don't need the phi node, but let's postpone that analysis
+					phiDesc.sources.emplace_back(block, nullptr);
+				}
+			}
+		}
+	}
+
+	// Recurse
+	for (BasicBlock* next : block->successors())
+	{
+		rename(function, next, phis);
+	}
+
+	// Remove names from the stack
+	for (Value* value : toPop)
+	{
+		phiStack[value].pop();
+	}
+}
+
+void insertPhis(Function* function, const phis_t& phis)
+{
+	for (auto& item : phis)
+	{
+		BasicBlock* block = item.first;
+
+		for (const PhiDescription& phiDesc : item.second)
+		{
+			assert(phiDesc.dest);
+
+			PhiInst* phi = new PhiInst(phiDesc.dest);
+			for (auto& source : phiDesc.sources)
+			{
+				phi->addSource(source.first, source.second);
+			}
+
+			block->prepend(phi);
+		}
+	}
+}
+
+void analyzeFunction(Function* function)
+{
+	dom_t dom = findDominators(function);
+	idom_t idom = getImmediateDominators(dom);
+	df_t df = getDominanceFrontiers(idom);
+	phis_t allPhis = calculatePhiNodes(function, df);
+	rename(function, function->blocks[0], allPhis);
+	insertPhis(function, allPhis);
+
+	for (auto& local : function->locals)
+	{
+		assert(local->uses.empty());
+	}
+	function->locals.clear();
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -180,6 +560,8 @@ int main(int argc, char* argv[])
 		{
 			for (Function* function : context.functions)
 			{
+				dumpFunction(function);
+				analyzeFunction(function);
 				dumpFunction(function);
 			}
 		}

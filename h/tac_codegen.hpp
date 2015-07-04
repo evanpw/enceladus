@@ -17,9 +17,7 @@ class TACCodeGen;
 class TACConditionalCodeGen : public AstVisitor
 {
 public:
-    TACConditionalCodeGen(TACCodeGen* mainCodeGen)
-    : _mainCodeGen(mainCodeGen)
-    {}
+    TACConditionalCodeGen(TACCodeGen* mainCodeGen);
 
     UNSUPPORTED(AssignNode);
     UNSUPPORTED(BlockNode);
@@ -82,6 +80,7 @@ private:
     BasicBlock* _falseBranch;
 
     TACCodeGen* _mainCodeGen;
+    TACContext* _context;
 };
 
 class TACCodeGen : public AstVisitor
@@ -151,16 +150,12 @@ private:
     int64_t _nextSeqNumber = 0;
     Value* makeTemp()
     {
-        Value* tmp = _context->makeTemp(_nextSeqNumber++);
-        _currentFunction->temps.push_back(tmp);
-        return tmp;
+        return _currentFunction->makeTemp();
     }
 
     BasicBlock* makeBlock()
     {
-        BasicBlock* block = _context->makeBlock(_nextSeqNumber++);
-        _currentFunction->blocks.push_back(block);
-        return block;
+        return _currentFunction->makeBlock();
     }
 
     void setBlock(BasicBlock* block) { _currentBlock = block; }

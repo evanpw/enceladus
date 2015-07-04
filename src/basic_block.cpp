@@ -2,8 +2,8 @@
 #include "tac_instruction.hpp"
 #include <sstream>
 
-BasicBlock::BasicBlock(int64_t seqNumber)
-: seqNumber(seqNumber)
+BasicBlock::BasicBlock(TACContext* context, int64_t seqNumber)
+: Value(context, seqNumber)
 {
 }
 
@@ -33,12 +33,11 @@ std::string BasicBlock::str() const
     }
 }
 
-void BasicBlock::append(Instruction* inst)
+void BasicBlock::prepend(Instruction* inst)
 {
-    if (last)
+    if (first)
     {
-        inst->insertAfter(last);
-        last = inst;
+        inst->insertBefore(first);
     }
     else
     {
@@ -46,42 +45,63 @@ void BasicBlock::append(Instruction* inst)
     }
 }
 
-bool BasicBlock::isTerminated()
+void BasicBlock::append(Instruction* inst)
 {
-    return dynamic_cast<ConditionalJumpInst*>(last) ||
-           dynamic_cast<JumpIfInst*>(last) ||
-           dynamic_cast<JumpInst*>(last) ||
-           dynamic_cast<ReturnInst*>(last) ||
-           dynamic_cast<UnreachableInst*>(last);
-}
+    assert(_successors.empty());
 
-std::vector<BasicBlock*> BasicBlock::getSuccessors()
-{
-    if (!last) return {};
-
-    if (ConditionalJumpInst* inst = dynamic_cast<ConditionalJumpInst*>(last))
+    if (last)
     {
-        return {inst->ifTrue, inst->ifFalse};
-    }
-    else if (JumpIfInst* inst = dynamic_cast<JumpIfInst*>(last))
-    {
-        return {inst->ifTrue, inst->ifFalse};
-    }
-    else if (JumpInst* inst = dynamic_cast<JumpInst*>(last))
-    {
-        return {inst->target};
-    }
-    else if (dynamic_cast<ReturnInst*>(last))
-    {
-        return {};
-    }
-    else if (dynamic_cast<UnreachableInst*>(last))
-    {
-        assert(first == last);
-        return {};
+        inst->insertAfter(last);
     }
     else
     {
-        assert(false);
+        first = last = inst;
     }
+
+    // If we've terminated this block, add successors, and tell those blocks
+    // that we're a predecessor
+    std::vector<BasicBlock*> targets;
+    if (getTargets(inst, targets))
+    {
+        for (BasicBlock* target : targets)
+        {
+            _successors.push_back(target);
+            target->addPredecessor(this);
+        }
+    }
+}
+
+bool BasicBlock::isTerminated()
+{
+    std::vector<BasicBlock*> dummy;
+    return getTargets(last, dummy);
+}
+
+bool BasicBlock::getTargets(Instruction* inst, std::vector<BasicBlock*>& targets)
+{
+    targets.clear();
+
+    if (ConditionalJumpInst* branch = dynamic_cast<ConditionalJumpInst*>(inst))
+    {
+        targets.push_back(branch->ifTrue);
+        targets.push_back(branch->ifFalse);
+        return true;
+    }
+    else if (JumpIfInst* branch = dynamic_cast<JumpIfInst*>(inst))
+    {
+        targets.push_back(branch->ifTrue);
+        targets.push_back(branch->ifFalse);
+        return true;
+    }
+    else if (JumpInst* branch = dynamic_cast<JumpInst*>(inst))
+    {
+        targets.push_back(branch->target);
+        return true;
+    }
+    else if (dynamic_cast<ReturnInst*>(inst) || dynamic_cast<UnreachableInst*>(inst))
+    {
+        return true;
+    }
+
+    return false;
 }

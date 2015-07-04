@@ -1,4 +1,5 @@
 #include "tac_validator.hpp"
+#include <algorithm>
 
 bool TACValidator::isValid()
 {
@@ -17,6 +18,16 @@ bool TACValidator::isValid()
     if (!tempsDefined())
     {
         std::cerr << "Not all temporaries have a definition" << std::endl;
+    }
+
+    if (!blockLinksGood())
+    {
+        std::cerr << "Not all links between blocks are bidirectional" << std::endl;
+    }
+
+    if (!allBlocksReachable())
+    {
+        std::cerr << "Not all basic blocks are reachable" << std::endl;
     }
 
     return true;
@@ -67,6 +78,67 @@ bool TACValidator::tempsDefined()
             if (!value->definition)
                 return false;
         }
+    }
+
+    return true;
+}
+
+bool TACValidator::blockLinksGood()
+{
+    for (Function* function : _context->functions)
+    {
+        for (BasicBlock* block : function->blocks)
+        {
+            const std::vector<BasicBlock*> successors = block->successors();
+            const std::vector<BasicBlock*> predecessors = block->predecessors();
+
+            for (BasicBlock* successor : successors)
+            {
+                const std::vector<BasicBlock*> sp = successor->predecessors();
+
+                if (std::find(sp.begin(), sp.end(), block) == sp.end())
+                    return false;
+            }
+
+            for (BasicBlock* predecessor : predecessors)
+            {
+                const std::vector<BasicBlock*> ps = predecessor->successors();
+
+                if (std::find(ps.begin(), ps.end(), block) == ps.end())
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+// Helper function for allBlocksReachable
+static void gatherBlocks(BasicBlock* block, std::set<BasicBlock*>& reached)
+{
+    if (reached.find(block) != reached.end())
+        return;
+
+    reached.insert(block);
+
+    for (BasicBlock* successor : block->successors())
+    {
+        gatherBlocks(successor, reached);
+    }
+}
+
+bool TACValidator::allBlocksReachable()
+{
+    for (Function* function : _context->functions)
+    {
+        std::set<BasicBlock*> allBlocks;
+        allBlocks.insert(function->blocks.begin(), function->blocks.end());
+
+        std::set<BasicBlock*> reachableBlocks;
+        gatherBlocks(function->blocks[0], reachableBlocks);
+
+        if (allBlocks != reachableBlocks)
+            return false;
     }
 
     return true;
