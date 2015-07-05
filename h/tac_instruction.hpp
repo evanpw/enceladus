@@ -689,9 +689,8 @@ struct UnreachableInst : public Instruction
     }
 };
 
-class PhiInst : public Instruction
+struct PhiInst : public Instruction
 {
-public:
     PhiInst(Value* dest)
     : dest(dest)
     {
