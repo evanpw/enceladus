@@ -27,7 +27,7 @@ struct Value
     TACContext* context() { return _context; }
 
 protected:
-    friend class TACContext;
+    friend struct TACContext;
 
     Value(TACContext* context, const std::string& name)
     : name(name), _context(context)
@@ -43,7 +43,7 @@ protected:
 struct Constant : public Value
 {
 protected:
-    friend class TACContext;
+    friend struct TACContext;
 
     Constant(TACContext* context)
     : Value(context)
@@ -61,7 +61,7 @@ struct ConstantInt : public Constant
     virtual std::string str() const;
 
 protected:
-    friend class TACContext;
+    friend struct TACContext;
 
     ConstantInt(TACContext* context, int64_t value)
     : Constant(context)
@@ -78,7 +78,7 @@ struct GlobalValue : public Constant
     GlobalTag tag;
 
 protected:
-    friend class TACContext;
+    friend struct TACContext;
 
     GlobalValue(TACContext* context, const std::string& name, GlobalTag tag);
 };
@@ -88,7 +88,7 @@ struct LocalValue : public Constant
     virtual std::string str() const;
 
 protected:
-    friend class TACContext;
+    friend struct TACContext;
 
     LocalValue(TACContext* context, const std::string& name);
 };
@@ -98,7 +98,7 @@ struct Argument : public Constant
     virtual std::string str() const;
 
 protected:
-    friend class TACContext;
+    friend struct TACContext;
 
     Argument(TACContext* context, const std::string& name)
     : Constant(context, name)

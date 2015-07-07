@@ -39,7 +39,7 @@ struct BasicBlock : public Value
     Instruction* last = nullptr;
 
 private:
-    friend class TACContext;
+    friend struct TACContext;
     BasicBlock(TACContext* context, int64_t seqNumber);
 
     static bool getTargets(Instruction* inst, std::vector<BasicBlock*>& targets);
