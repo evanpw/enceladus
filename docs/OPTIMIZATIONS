@@ -1,0 +1,8 @@
+* Branch (conditional or unconditional) to a block whose only entry is an unconditional jump:
+    rewrite destination as destination of unconditional jump
+
+* Conditional branch with constant condition: unconditional jump or delete
+
+* Two blocks with first's only successor = second and second's only predecessor = first: merge
+
+* Keep intermediate calculations as untagged? Maybe add tag / untag instructions to keep track

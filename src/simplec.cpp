@@ -546,20 +546,23 @@ void insertPhis(Function* function, phis_t& phis)
 					else
 					{
 						assert(phiDesc.dest->uses.empty());
-
-						Value* deadValue = phiDesc.dest;
-
-						// If the result is dead, then we don't need the phi
-						phi->dropReferences();
-						delete phi;
-
-						// And we don't need the value
-						assert(!deadValue->definition);
-						function->temps.erase(std::remove(function->temps.begin(), function->temps.end(), deadValue), function->temps.end());
-
-						phi = nullptr;
-						break;
 					}
+				}
+
+				if (phiDesc.dest->uses.empty())
+				{
+					Value* deadValue = phiDesc.dest;
+
+					// If the result is dead, then we don't need the phi
+					phi->dropReferences();
+					delete phi;
+
+					// And we don't need the value
+					assert(!deadValue->definition);
+					function->temps.erase(std::remove(function->temps.begin(), function->temps.end(), deadValue), function->temps.end());
+
+					phi = nullptr;
+					break;
 				}
 
 				phi->addSource(source.first, source.second);
