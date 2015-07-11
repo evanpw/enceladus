@@ -1,3 +1,13 @@
+#include "ast.hpp"
+#include "ast_context.hpp"
+#include "context.hpp"
+#include "exceptions.hpp"
+#include "machine_codegen.hpp"
+#include "parser.hpp"
+#include "scope.hpp"
+#include "semantic.hpp"
+#include "tac_codegen.hpp"
+#include "tac_validator.hpp"
 #include <cstdio>
 #include <deque>
 #include <fstream>
@@ -6,17 +16,6 @@
 #include <set>
 #include <stack>
 #include <unordered_map>
-#include "ast.hpp"
-#include "ast_context.hpp"
-#include "context.hpp"
-#include "exceptions.hpp"
-#include "parser.hpp"
-#include "scope.hpp"
-#include "semantic.hpp"
-#include "tac_codegen.hpp"
-#include "tac_validator.hpp"
-//#include "tac_local_optimizer.hpp"
-//#include "x86_codegen.hpp"
 
 using namespace std;
 
@@ -574,6 +573,44 @@ void insertPhis(Function* function, phis_t& phis)
 	}
 }
 
+void eliminatePhis(Function* function)
+{
+	for (BasicBlock* block : function->blocks)
+	{
+		Instruction* inst = block->first;
+		while (inst != nullptr)
+		{
+			if (PhiInst* phi = dynamic_cast<PhiInst*>(inst))
+			{
+				// Each predecessor will copy into this variable, and then the
+				// phi node will be replaced with a copy from this variable to
+				// the phi destination. This is usually overkill (compared to
+				// just a single copy in each predecessor), but it helps avoid
+				// problems in some corner cases, and the extra copies will
+				// hopefully be coalesced during register allocation.
+				Value* temp = function->makeTemp();
+
+				for (auto& source : phi->sources())
+				{
+					BasicBlock* pred = source.first;
+					Value* value = source.second;
+
+					CopyInst* copy = new CopyInst(temp, value);
+					copy->insertBefore(pred->last);
+				}
+
+				// And delete the phi node
+				inst = inst->next;
+				phi->replaceWith(new CopyInst(phi->dest, temp));
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+}
+
 void analyzeFunction(Function* function)
 {
 	dom_t dom = findDominators(function);
@@ -588,6 +625,8 @@ void analyzeFunction(Function* function)
 		assert(local->uses.empty());
 	}
 	function->locals.clear();
+
+	eliminatePhis(function);
 }
 
 void generateDot(Function* function)
@@ -710,6 +749,9 @@ int main(int argc, char* argv[])
 				analyzeFunction(function);
 				dumpFunction(function);
 				generateDot(function);
+
+				std::cerr << "Machine code:" << std::endl;
+				MachineCodeGen codeGen(function);
 			}
 		}
 

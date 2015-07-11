@@ -350,12 +350,14 @@ void TACCodeGen::visit(NullaryNode* node)
 
         if (node->kind == NullaryNode::FOREIGN_CALL)
         {
-            bool external = node->symbol->asFunction()->isExternal;
-            emit(new CallInst(true, dest, getValue(node->symbol), {}, external));
+            CallInst* inst = new CallInst(dest, getValue(node->symbol), {});
+            inst->foreign = true;
+            inst->ccall = node->symbol->asFunction()->isExternal;
+            emit(inst);
         }
         else if (node->kind == NullaryNode::FUNC_CALL)
         {
-            emit(new CallInst(false, dest, getValue(node->symbol)));
+            emit(new CallInst(dest, getValue(node->symbol)));
         }
         else /* node->kind == NullaryNode::CLOSURE */
         {
@@ -363,7 +365,7 @@ void TACCodeGen::visit(NullaryNode* node)
             // evaluates to a function type -- create a closure
             size_t size = sizeof(SplObject) + 8;
             // TODO: Fix this
-            emit(new CallInst(true, dest, _context->makeExternFunction("gcAllocate"), {_context->getConstantInt(size)}));
+            emit(new CallInst(dest, _context->makeExternFunction("gcAllocate"), {_context->getConstantInt(size)}));
 
             // SplObject header fields
             emit(new IndexedStoreInst(dest, offsetof(SplObject, constructorTag), _context->Zero));
@@ -627,27 +629,58 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "+")
         {
             assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TADD, arguments[1]));
+            Value* lhs = makeTemp();
+            Value* rhs = makeTemp();
+            Value* tempResult = makeTemp();
+            emit(new UntagInst(lhs, arguments[0]));
+            emit(new UntagInst(rhs, arguments[1]));
+            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::ADD, rhs));
+            emit(new TagInst(result, tempResult));
+
         }
         else if (node->target == "-")
         {
             assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TSUB, arguments[1]));
+            Value* lhs = makeTemp();
+            Value* rhs = makeTemp();
+            Value* tempResult = makeTemp();
+            emit(new UntagInst(lhs, arguments[0]));
+            emit(new UntagInst(rhs, arguments[1]));
+            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::SUB, rhs));
+            emit(new TagInst(result, tempResult));
         }
         else if (node->target == "*")
         {
             assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TMUL, arguments[1]));
+            Value* lhs = makeTemp();
+            Value* rhs = makeTemp();
+            Value* tempResult = makeTemp();
+            emit(new UntagInst(lhs, arguments[0]));
+            emit(new UntagInst(rhs, arguments[1]));
+            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MUL, rhs));
+            emit(new TagInst(result, tempResult));
         }
         else if (node->target == "/")
         {
             assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TDIV, arguments[1]));
+            Value* lhs = makeTemp();
+            Value* rhs = makeTemp();
+            Value* tempResult = makeTemp();
+            emit(new UntagInst(lhs, arguments[0]));
+            emit(new UntagInst(rhs, arguments[1]));
+            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::DIV, rhs));
+            emit(new TagInst(result, tempResult));
         }
         else if (node->target == "%")
         {
             assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::TMOD, arguments[1]));
+            Value* lhs = makeTemp();
+            Value* rhs = makeTemp();
+            Value* tempResult = makeTemp();
+            emit(new UntagInst(lhs, arguments[0]));
+            emit(new UntagInst(rhs, arguments[1]));
+            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MOD, rhs));
+            emit(new TagInst(result, tempResult));
         }
         else
         {
@@ -656,17 +689,23 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
     else if (node->symbol->kind == kFunction)
     {
-        bool external = node->symbol->asFunction()->isExternal;
-        bool foreign = node->symbol->asFunction()->isForeign;
-        emit(new CallInst(foreign, result, getValue(node->symbol), arguments, external));
+        CallInst* inst = new CallInst(result, getValue(node->symbol), arguments);
+        inst->foreign = node->symbol->asFunction()->isForeign;
+        inst->ccall = node->symbol->asFunction()->isExternal;
+        emit(inst);
     }
     else /* node->symbol->kind == kVariable */
     {
         // The variable represents a closure, so extract the actual function
         // address
         Value* functionAddress = makeTemp();
-        emit(new IndexedLoadInst(functionAddress, getValue(node->symbol), sizeof(SplObject)));
-        emit(new IndirectCallInst(result, functionAddress, arguments));
+        Value* closure = makeTemp();
+        emit(new LoadInst(closure, getValue(node->symbol)));
+        emit(new IndexedLoadInst(functionAddress, closure, sizeof(SplObject)));
+
+        CallInst* inst = new CallInst(result, functionAddress, arguments);
+        inst->indirect = true;
+        emit(inst);
     }
 }
 
@@ -735,7 +774,7 @@ void TACCodeGen::visit(SwitchNode* node)
 
     // Check for immediate, and remove tag bit
     Value* checked = makeTemp();
-    emit(new BinaryOperationInst(checked, expr, BinaryOperation::UAND, _context->One));
+    emit(new BinaryOperationInst(checked, expr, BinaryOperation::AND, _context->One));
     emit(new ConditionalJumpInst(checked, "==", _context->Zero, isObject, isImmediate));
 
     setBlock(isImmediate);
@@ -834,11 +873,12 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     size_t size = sizeof(SplObject) + 8 * members.size();
 
     // Allocate room for the object
-    emit(new CallInst(
-        true,
+    CallInst* inst = new CallInst(
         result,
         _context->makeExternFunction("gcAllocate"), // TODO: Fix this
-        {_context->getConstantInt(size)}));
+        {_context->getConstantInt(size)});
+    inst->foreign = true;
+    emit(inst);
 
     //// Fill in the members with the constructor arguments
 
@@ -852,10 +892,15 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         auto& member = members[i];
         size_t location = member.location;
 
-        Value* param = _context->makeArgument(member.name);
+        std::string name = member.name;
+        if (name.empty()) name = std::to_string(i);
+
+        Value* param = _context->makeArgument(name);
         _currentFunction->params.push_back(param);
 
-        emit(new IndexedStoreInst(result, sizeof(SplObject) + 8 * location, param));
+        Value* temp = makeTemp();
+        emit(new LoadInst(temp, param));
+        emit(new IndexedStoreInst(result, sizeof(SplObject) + 8 * location, temp));
     }
 
     emit(new ReturnInst(result));

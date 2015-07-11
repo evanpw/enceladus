@@ -7,7 +7,6 @@
 #include <memory>
 #include <string>
 
-#include "address.hpp"
 #include "ast_visitor.hpp"
 #include "scope.hpp"
 #include "tokens.hpp"

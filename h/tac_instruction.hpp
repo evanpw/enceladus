@@ -217,43 +217,6 @@ struct JumpIfInst : public Instruction
     BasicBlock* ifFalse;
 };
 
-struct AssignInst : public Instruction
-{
-    AssignInst(Value* lhs, Value* rhs)
-    : lhs(lhs), rhs(rhs)
-    {
-        lhs->definition = this;
-
-        rhs->uses.insert(this);
-    }
-
-    virtual void dropReferences()
-    {
-        if (this == lhs->definition)
-            lhs->definition = nullptr;
-
-        rhs->uses.erase(this);
-    }
-
-    virtual void replaceReferences(Value* from, Value* to)
-    {
-        assert(lhs != from);
-        replaceReference(rhs, from, to);
-    }
-
-    MAKE_VISITABLE();
-
-    virtual std::string str() const override
-    {
-        std::stringstream ss;
-        ss << lhs->str() << " = " << rhs->str();
-        return ss.str();
-    }
-
-    Value* lhs;
-    Value* rhs;
-};
-
 struct ReturnInst : public Instruction
 {
     ReturnInst(Value* value = nullptr)
@@ -314,10 +277,118 @@ struct JumpInst : public Instruction
     BasicBlock* target;
 };
 
+struct CopyInst : public Instruction
+{
+    CopyInst(Value* dest, Value* src)
+    : dest(dest), src(src)
+    {
+        dest->definition = this;
+        src->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (dest && this == dest->definition)
+            dest->definition = nullptr;
+
+        src->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+        replaceReference(src, from, to);
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        std::stringstream ss;
+        ss << dest->str() << " = " << src->str();
+        return ss.str();
+    }
+
+    Value* dest;
+    Value* src;
+};
+
+struct UntagInst : public Instruction
+{
+    UntagInst(Value* dest, Value* src)
+    : dest(dest), src(src)
+    {
+        dest->definition = this;
+        src->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (dest && this == dest->definition)
+            dest->definition = nullptr;
+
+        src->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+        replaceReference(src, from, to);
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        std::stringstream ss;
+        ss << dest->str() << " = untag " << src->str();
+        return ss.str();
+    }
+
+    Value* dest;
+    Value* src;
+};
+
+struct TagInst : public Instruction
+{
+    TagInst(Value* dest, Value* src)
+    : dest(dest), src(src)
+    {
+        dest->definition = this;
+        src->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        if (dest && this == dest->definition)
+            dest->definition = nullptr;
+
+        src->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        assert(dest != from);
+        replaceReference(src, from, to);
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const override
+    {
+        std::stringstream ss;
+        ss << dest->str() << " = tag " << src->str();
+        return ss.str();
+    }
+
+    Value* dest;
+    Value* src;
+};
+
 struct CallInst : public Instruction
 {
-    CallInst(bool foreign, Value* dest, Value* function, const std::vector<Value*>& params = {}, bool ccall = false)
-    : foreign(foreign), dest(dest), function(function), params(params), ccall(ccall)
+    CallInst(Value* dest, Value* function, const std::vector<Value*>& params = {})
+    : dest(dest), function(function), params(params)
     {
         if (dest)
         {
@@ -332,8 +403,8 @@ struct CallInst : public Instruction
         }
     }
 
-    CallInst(bool foreign, Value* dest, Value* function, std::initializer_list<Value*> paramsList, bool ccall = false)
-    : foreign(foreign), dest(dest), function(function), ccall(ccall)
+    CallInst(Value* dest, Value* function, std::initializer_list<Value*> paramsList)
+    : dest(dest), function(function)
     {
         if (dest)
         {
@@ -349,8 +420,8 @@ struct CallInst : public Instruction
         }
     }
 
-    CallInst(bool foreign, Value* function, std::initializer_list<Value*> paramsList = {}, bool ccall = false)
-    : foreign(foreign), function(function), ccall(ccall)
+    CallInst(Value* function, std::initializer_list<Value*> paramsList = {})
+    : function(function)
     {
         for (auto& param : paramsList)
         {
@@ -391,9 +462,22 @@ struct CallInst : public Instruction
         std::stringstream ss;
 
         if (dest)
-            ss << dest->str() << " = call " << function->str() << "(";
+        {
+            ss << dest->str() << " = ";
+        }
+
+        ss << "call ";
+
+        if (indirect)
+        {
+            ss << "[" << function->str() << "]";
+        }
         else
-            ss << "call " << function->str() << "(";
+        {
+            ss << function->str();
+        }
+
+        ss << "(";
 
         for (size_t i = 0; i < params.size(); ++i)
         {
@@ -405,64 +489,9 @@ struct CallInst : public Instruction
         return ss.str();
     }
 
-    bool foreign;
-    Value* dest;
-    Value* function;
-    std::vector<Value*> params;
-    bool ccall;
-};
-
-struct IndirectCallInst : public Instruction
-{
-    IndirectCallInst(Value* dest, Value* function, const std::vector<Value*>& params)
-    : dest(dest), function(function), params(params)
-    {
-        dest->definition = this;
-
-        function->uses.insert(this);
-    }
-
-    virtual void dropReferences()
-    {
-        if (this == dest->definition)
-            dest->definition = nullptr;
-
-        function->uses.erase(this);
-
-        for (auto& param : params)
-        {
-            param->uses.erase(this);
-        }
-    }
-
-    virtual void replaceReferences(Value* from, Value* to)
-    {
-        assert(dest != from);
-
-        replaceReference(function, from, to);
-
-        for (size_t i = 0; i < params.size(); ++i)
-        {
-            replaceReference(params[i], from, to);
-        }
-    }
-
-    MAKE_VISITABLE();
-
-    virtual std::string str() const override
-    {
-        std::stringstream ss;
-        ss << dest->str() << " = call " << function->str() << "(";
-
-        for (size_t i = 0; i < params.size(); ++i)
-        {
-            ss << params[i]->str();
-            if (i + 1 != params.size()) ss << ", ";
-        }
-        ss << ")";
-
-        return ss.str();
-    }
+    bool foreign = false;
+    bool ccall = false;
+    bool indirect = false;
 
     Value* dest;
     Value* function;
@@ -543,15 +572,12 @@ struct StoreInst : public Instruction
 
 struct IndexedLoadInst : public Instruction
 {
-    IndexedLoadInst(Value* lhs, Value* rhs, int64_t offset,
-                    Value* index = nullptr, int64_t scale = 1)
-    : lhs(lhs), rhs(rhs), offset(offset), index(index), scale(scale)
+    IndexedLoadInst(Value* lhs, Value* rhs, int64_t offset)
+    : lhs(lhs), rhs(rhs), offset(offset)
     {
         lhs->definition = this;
 
         rhs->uses.insert(this);
-        if (index)
-            index->uses.insert(this);
     }
 
     virtual void dropReferences()
@@ -560,8 +586,6 @@ struct IndexedLoadInst : public Instruction
             lhs->definition = nullptr;
 
         rhs->uses.erase(this);
-        if (index)
-            index->uses.erase(this);
     }
 
     virtual void replaceReferences(Value* from, Value* to)
@@ -569,7 +593,6 @@ struct IndexedLoadInst : public Instruction
         assert(lhs != from);
 
         replaceReference(rhs, from, to);
-        replaceReference(index, from, to);
     }
 
     MAKE_VISITABLE();
@@ -584,8 +607,6 @@ struct IndexedLoadInst : public Instruction
     Value* lhs;
     Value* rhs;
     int64_t offset;
-    Value* index;
-    int64_t scale;
 };
 
 struct IndexedStoreInst : public Instruction
@@ -623,7 +644,7 @@ struct IndexedStoreInst : public Instruction
     Value* rhs;
 };
 
-enum class BinaryOperation {TADD, TSUB, TMUL, TDIV, TMOD, UAND, UADD, SHR, SHL};
+enum class BinaryOperation {ADD, SUB, MUL, DIV, MOD, AND, SHR, SHL};
 extern const char* binaryOperationNames[];
 
 struct BinaryOperationInst : public Instruction
