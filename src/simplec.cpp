@@ -443,7 +443,7 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 	}
 
 	// Rewrite load and store instructions with new names
-	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+	for (Instruction* inst = block->first; inst != nullptr;)
 	{
 		if (LoadInst* load = dynamic_cast<LoadInst*>(inst))
 		{
@@ -456,14 +456,17 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 				// For any node dominated by this one, don't re-load, just
 				// use this value
 				phiStack[load->src].push(load->dest);
-				toPop.push_back(load->dest);
+				toPop.push_back(load->src);
 			}
 			else
 			{
 				Value* newName = phiStack[load->src].top();
 
+				inst = inst->next;
 				load->removeFromParent();
 				function->replaceReferences(load->dest, newName);
+
+				continue;
 			}
 		}
 		else if (StoreInst* store = dynamic_cast<StoreInst*>(inst))
@@ -471,8 +474,13 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 			phiStack[store->dest].push(store->src);
 			toPop.push_back(store->dest);
 
+			inst = inst->next;
 			store->removeFromParent();
+
+			continue;
 		}
+
+		inst = inst->next;
 	}
 
 	// Fix-up phi nodes of successors
@@ -506,6 +514,7 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 	// Remove names from the stack
 	for (Value* value : toPop)
 	{
+		assert(!phiStack[value].empty());
 		phiStack[value].pop();
 	}
 }
@@ -622,6 +631,7 @@ void analyzeFunction(Function* function)
 
 	for (auto& local : function->locals)
 	{
+		std::cerr << local->str() << std::endl;
 		assert(local->uses.empty());
 	}
 	function->locals.clear();
