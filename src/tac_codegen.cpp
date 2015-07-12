@@ -82,8 +82,6 @@ void TACCodeGen::emit(Instruction* inst)
 {
     inst->parent = _currentBlock;
     _currentBlock->append(inst);
-
-    std::cerr << "(" << _currentBlock->str() << ")\t" << inst->str() << std::endl;
 }
 
 Value* TACConditionalCodeGen::visitAndGet(AstNode* node)
@@ -132,7 +130,6 @@ void TACCodeGen::visit(ProgramNode* node)
         }
 
         // Generate code for the function body
-        std::cerr << "function " << funcDefNode->symbol->name << std::endl;
         funcDefNode->body->accept(this);
 
         // Handle implicit return values
@@ -140,8 +137,6 @@ void TACCodeGen::visit(ProgramNode* node)
         {
             emit(new ReturnInst(funcDefNode->body->value));
         }
-
-        std::cerr << "end function" << std::endl << std::endl;
     }
 
     for (DataDeclaration* dataDeclaration : _dataDeclarations)
@@ -155,9 +150,7 @@ void TACCodeGen::visit(ProgramNode* node)
             _nextSeqNumber = 0;
             setBlock(makeBlock());
 
-            std::cerr << "constructor " << constructor->name() << std::endl;
             createConstructor(constructor, i);
-            std::cerr << "end constructor" << std::endl << std::endl;
         }
     }
 
@@ -170,9 +163,7 @@ void TACCodeGen::visit(ProgramNode* node)
         _nextSeqNumber = 0;
         setBlock(makeBlock());
 
-        std::cerr << "constructor " << constructor->name() << std::endl;
         createConstructor(structDeclaration->valueConstructor, 0);
-        std::cerr << "end constructor" << std::endl << std::endl;
     }
 }
 
@@ -814,6 +805,7 @@ void TACCodeGen::visit(SwitchNode* node)
     // Individual arms
     Value* lastSwitchExpr = _currentSwitchExpr;
     _currentSwitchExpr = expr;
+    bool canReach = false;
     for (size_t i = 0; i < node->arms.size(); ++i)
     {
         auto& arm = node->arms[i];
@@ -822,12 +814,19 @@ void TACCodeGen::visit(SwitchNode* node)
         arm->accept(this);
 
         if (!_currentBlock->isTerminated())
+        {
+            canReach = true;
             emit(new JumpInst(continueAt));
+        }
     }
 
     _currentSwitchExpr = lastSwitchExpr;
 
     setBlock(continueAt);
+    if (!canReach)
+    {
+        emit(new UnreachableInst);
+    }
 }
 
 void TACCodeGen::visit(MatchArm* node)

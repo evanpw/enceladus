@@ -6,3 +6,5 @@
 * Two blocks with first's only successor = second and second's only predecessor = first: merge
 
 * Keep intermediate calculations as untagged? Maybe add tag / untag instructions to keep track
+
+* Remove blocks terminated with UnreachableInst, and remove jumps to them

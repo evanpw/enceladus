@@ -31,6 +31,46 @@ const char* opcodeNames[] = {
     "TEST",
 };
 
+bool MachineInst::isJump() const
+{
+    switch (opcode)
+    {
+        case Opcode::JE:
+        case Opcode::JG:
+        case Opcode::JGE:
+        case Opcode::JL:
+        case Opcode::JLE:
+        case Opcode::JMP:
+        case Opcode::JNE:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+std::vector<MachineBB*> MachineBB::successors() const
+{
+    std::vector<MachineBB*> successors;
+
+    for (auto i = instructions.rbegin(); i != instructions.rend(); ++i)
+    {
+        if ((*i)->isJump())
+        {
+            MachineBB* target = dynamic_cast<MachineBB*>((*i)->inputs[0]);
+            assert(target);
+
+            successors.push_back(target);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return successors;
+}
+
 std::ostream& operator<<(std::ostream& out, const MachineOperand& operand)
 {
     operand.print(out);

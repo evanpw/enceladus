@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 // Postfix codes:
 // m: indirect memory location
@@ -155,6 +156,8 @@ struct MachineBB : public MachineOperand
         out << "." << id;
     }
 
+    std::vector<MachineBB*> successors() const;
+
     int64_t id;
     std::vector<MachineInst*> instructions;
 };
@@ -168,13 +171,24 @@ struct MachineInst
     {
     }
 
+    bool isJump() const;
+
     Opcode opcode;
     std::vector<MachineOperand*> outputs;
     std::vector<MachineOperand*> inputs;
 };
 
-std::ostream& operator<<(std::ostream& out, const std::vector<MachineOperand*>& operands);
+struct MachineFunction
+{
+    MachineFunction(const std::string& name)
+    : name(name)
+    {}
 
+    std::string name;
+    std::vector<MachineBB*> blocks;
+};
+
+std::ostream& operator<<(std::ostream& out, const std::vector<MachineOperand*>& operands);
 std::ostream& operator<<(std::ostream& out, const MachineInst& inst);
 
 #endif

@@ -4,6 +4,8 @@
 
 MachineCodeGen::MachineCodeGen(Function* function)
 {
+    _function = new MachineFunction(function->name);
+
     rax = new HardwareRegister("rax");
     rdx = new HardwareRegister("rdx");
     rsp = new HardwareRegister("rsp");
@@ -11,7 +13,7 @@ MachineCodeGen::MachineCodeGen(Function* function)
     for (BasicBlock* irBlock : function->blocks)
     {
         _currentBlock = getBlock(irBlock);
-        std::cerr << irBlock->str() << std::endl;
+        _function->blocks.push_back(_currentBlock);
 
         for (Instruction* inst = irBlock->first; inst != nullptr; inst = inst->next)
         {

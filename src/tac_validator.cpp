@@ -18,16 +18,19 @@ bool TACValidator::isValid()
     if (!tempsDefined())
     {
         std::cerr << "Not all temporaries have a definition" << std::endl;
+        return false;
     }
 
     if (!blockLinksGood())
     {
         std::cerr << "Not all links between blocks are bidirectional" << std::endl;
+        return false;
     }
 
     if (!allBlocksReachable())
     {
         std::cerr << "Not all basic blocks are reachable" << std::endl;
+        return false;
     }
 
     return true;
@@ -137,8 +140,17 @@ bool TACValidator::allBlocksReachable()
         std::set<BasicBlock*> reachableBlocks;
         gatherBlocks(function->blocks[0], reachableBlocks);
 
-        if (allBlocks != reachableBlocks)
-            return false;
+        std::set<BasicBlock*> unreachableBlocks;
+        std::set_difference(
+            allBlocks.begin(), allBlocks.end(),
+            reachableBlocks.begin(), reachableBlocks.end(),
+            std::inserter(unreachableBlocks, unreachableBlocks.begin()));
+
+        for (BasicBlock* unreachable : unreachableBlocks)
+        {
+            if (!dynamic_cast<UnreachableInst*>(unreachable->last))
+                return false;
+        }
     }
 
     return true;

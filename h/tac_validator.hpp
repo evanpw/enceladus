@@ -25,7 +25,8 @@ private:
     // Every block successor has a corresponding predecessor, and vice-versa
     bool blockLinksGood();
 
-    // Every block in every function is reachable from the entry block
+    // Every block in every function is reachable from the entry block, or is
+    // terminated with an UnreachableInst
     bool allBlocksReachable();
 
     TACContext* _context;

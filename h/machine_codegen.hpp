@@ -15,6 +15,8 @@ class MachineCodeGen : public TACVisitor
 public:
     MachineCodeGen(Function* function);
 
+    MachineFunction* getResult() { return _function; }
+
     virtual void visit(BinaryOperationInst* inst);
     virtual void visit(CallInst* inst);
     virtual void visit(ConditionalJumpInst* inst);
@@ -31,9 +33,8 @@ public:
     virtual void visit(UnreachableInst* inst);
     virtual void visit(UntagInst* inst);
 
-    std::vector<MachineInst*> instructions;
-
 private:
+    MachineFunction* _function;
     MachineBB* _currentBlock = nullptr;
 
     void emit(Opcode opcode,
@@ -41,7 +42,6 @@ private:
               std::initializer_list<MachineOperand*> inputs)
     {
         MachineInst* inst = new MachineInst(opcode, std::move(outputs), std::move(inputs));
-        std::cerr << "\t" << *inst << std::endl;
         _currentBlock->instructions.push_back(inst);
     }
 
