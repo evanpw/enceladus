@@ -1,13 +1,16 @@
+#include "asm_printer.hpp"
 #include "ast.hpp"
 #include "ast_context.hpp"
 #include "context.hpp"
 #include "exceptions.hpp"
 #include "machine_codegen.hpp"
 #include "parser.hpp"
+#include "reg_alloc.hpp"
 #include "scope.hpp"
 #include "semantic.hpp"
 #include "tac_codegen.hpp"
 #include "tac_validator.hpp"
+
 #include <cstdio>
 #include <deque>
 #include <fstream>
@@ -679,339 +682,6 @@ void generateDot(Function* function)
 	f << "}" << std::endl;
 }
 
-typedef std::set<MachineOperand*> RegSet;
-
-ostream& operator<<(ostream& out, const RegSet& regs)
-{
-	out << "{";
-
-	bool first = true;
-	for (MachineOperand* reg : regs)
-	{
-		if (first)
-		{
-			out << *reg;
-			first = false;
-		}
-		else
-		{
-			out << ", " << *reg;
-		}
-	}
-	out << "}";
-
-	return out;
-}
-
-RegSet& operator+=(RegSet& lhs, const RegSet& rhs)
-{
-	std::set_union(
-		lhs.begin(), lhs.end(),
-		rhs.begin(), rhs.end(),
-		std::inserter(lhs, lhs.end()));
-
-	return lhs;
-}
-
-RegSet& operator-=(RegSet& lhs, const RegSet& rhs)
-{
-	RegSet tmp;
-
-	std::set_difference(
-		lhs.begin(), lhs.end(),
-		rhs.begin(), rhs.end(),
-		std::inserter(tmp, tmp.begin()));
-
-	lhs.swap(tmp);
-	return lhs;
-}
-
-RegSet def(MachineBB* block)
-{
-    RegSet result;
-
-    for (MachineInst* inst : block->instructions)
-    {
-        for (MachineOperand* output : inst->outputs)
-        {
-            if (output->isRegister())
-                result.insert(output);
-        }
-    }
-
-    return result;
-}
-
-RegSet ref(MachineBB* block)
-{
-    RegSet result;
-    RegSet defined;
-
-    for (MachineInst* inst : block->instructions)
-    {
-        for (MachineOperand* input : inst->inputs)
-        {
-            if (input->isRegister() && (defined.find(input) == defined.end()))
-                result.insert(input);
-        }
-
-        for (MachineOperand* output : inst->outputs)
-        {
-        	if (output->isRegister())
-        		defined.insert(output);
-        }
-    }
-
-    return result;
-}
-
-void dumpLiveness(MachineFunction* function, const std::unordered_map<MachineBB*, RegSet>& live)
-{
-	std::cerr << "Liveness:" << std::endl;
-	for (MachineBB* block : function->blocks)
-	{
-		std::cerr << "label " << *block << ":" << std::endl;
-
-		std::cerr << "\tref: " << ref(block) << std::endl;
-		std::cerr << "\tdef: " << def(block) << std::endl;
-		std::cerr << "\tlive: " << live.at(block) << std::endl;
-	}
-}
-
-std::unordered_map<MachineBB*, RegSet> computeBlockLiveness(MachineFunction* function)
-{
-	std::unordered_map<MachineBB*, RegSet> live;
-
-	while (true)
-	{
-		bool changed = false;
-
-		for (MachineBB* block : function->blocks)
-		{
-			RegSet regs;
-
-			// Data flow equation:
-			// live[n] = (U_{s in succ[n]}  live[s]) - def[n] + ref[n]
-			for (MachineBB* succ : block->successors())
-			{
-				regs += live[succ];
-			}
-
-			regs -= def(block);
-			regs += ref(block);
-
-			if (live[block] != regs)
-			{
-				live[block] = regs;
-				changed = true;
-			}
-		}
-
-		if (!changed)
-			break;
-	}
-
-	dumpLiveness(function, live);
-	std::cerr << std::endl;
-
-	return live;
-}
-
-std::unordered_map<MachineOperand*, std::unordered_set<MachineOperand*>> computeInterference(MachineFunction* function, const std::unordered_map<MachineBB*, RegSet>& live)
-{
-	std::unordered_map<MachineOperand*, std::unordered_set<MachineOperand*>> igraph;
-
-	std::cerr << "Instruction-level liveness" << std::endl;
-	for (MachineBB* block : function->blocks)
-	{
-		std::cerr << "block " << *block << ":" << std::endl;
-
-		// Compute live regs at the end of this block
-		RegSet regs;
-		for (MachineBB* succ : block->successors())
-		{
-			regs += live.at(succ);
-		}
-
-		std::deque<RegSet> liveRegs;
-
-		// Step through the instructions from back to front, updating live regs
-		for (auto i = block->instructions.rbegin(); i != block->instructions.rend(); ++i)
-		{
-			MachineInst* inst = *i;
-
-			// Data flow equation:
-			// live[n] = (U_{s in succ[n]}  live[s]) - def[n] + ref[n]
-
-			for (MachineOperand* output : inst->outputs)
-	        {
-	        	if (output->isRegister())
-	        	{
-	        		if (regs.find(output) != regs.end())
-	        			regs.erase(output);
-	        	}
-	        }
-
-			for (MachineOperand* input : inst->inputs)
-	        {
-	            if (input->isRegister())
-	            {
-	                regs.insert(input);
-	            }
-	        }
-
-	        liveRegs.push_front(regs);
-	    }
-
-	    for (size_t i = 0; i < block->instructions.size(); ++i)
-	    {
-	    	std::stringstream ss;
-	    	ss << *block->instructions[i];
-
-	        std::cerr << "\t" << std::setw(40) << std::left << ss.str() << "\t" << liveRegs[i] << std::endl;
-
-	        for (MachineOperand* reg1 : liveRegs[i])
-	        {
-	        	for (MachineOperand* reg2 : liveRegs[i])
-	        	{
-	        		if (reg1 == reg2) continue;
-
-	        		igraph[reg1].insert(reg2);
-	        		igraph[reg2].insert(reg1);
-	        	}
-	        }
-		}
-	}
-	std::cerr << std::endl;
-
-	return igraph;
-}
-
-std::string palette[16] =
-{
-	"#000000",
-	"#9D9D9D",
-	"#FFFFFF",
-	"#BE2633",
-	"#E06F8B",
-	"#493C2B",
-	"#A46422",
-	"#EB8931",
-	"#F7E26B",
-	"#2F484E",
-	"#44891A",
-	"#A3CE27",
-	"#FF00FF",
-	"#005784",
-	"#31A2F2",
-	"#B2DCEF",
-};
-
-bool whiteText[16] =
-{
-	true,
-    false,
-    false,
-    true,
-    false,
-    true,
-    false,
-    false,
-    false,
-    true,
-    true,
-    false,
-    false,
-    true,
-    false,
-    false,
-};
-
-std::string colorNames[16] =
-{
-	"rax",
-	"rbx",
-	"rcx",
-	"rdx",
-	"rsi",
-	"rdi",
-	"rbp",
-	"rsp",
-	"r8",
-	"r9",
-	"r10",
-	"r11",
-	"r12",
-	"r13",
-	"r14",
-	"r15",
-}
-
-// Really simple greedy algorithm
-std::unordered_map<MachineOperand*, size_t> colorGraph(const std::unordered_map<MachineOperand*, std::unordered_set<MachineOperand*>>& igraph)
-{
-	std::unordered_map<MachineOperand*, size_t> coloring;
-
-	for (auto& item : igraph)
-	{
-		MachineOperand* reg = item.first;
-		auto others = item.second;
-
-		std::unordered_set<size_t> available;
-		for (size_t i = 0; i < 16; ++i) available.insert(i);
-
-		for (MachineOperand* other : others)
-		{
-			if (coloring.find(other) != coloring.end())
-			{
-				size_t color = coloring[other];
-				if (available.find(color) != available.end())
-					available.erase(color);
-			}
-		}
-
-		assert(!available.empty());
-
-		coloring[reg] = *(available.begin());
-	}
-
-	return coloring;
-}
-
-void dumpGraph(const std::string& name, const std::unordered_map<MachineOperand*, std::unordered_set<MachineOperand*>>& igraph, const std::unordered_map<MachineOperand*, size_t>& coloring)
-{
-	std::string fname = std::string("dots/") + "interference-" + name + ".dot";
-	fstream f(fname.c_str(), std::ios::out);
-
-	f << "graph {" << std::endl;
-	f << "node[fontname=\"Inconsolata\"]" << ";" << std::endl;
-
-	std::unordered_set<MachineOperand*> finished;
-
-	for (auto& item : igraph)
-	{
-		MachineOperand* reg = item.first;
-		auto others = item.second;
-
-		size_t color = coloring.at(reg);
-
-		f << "\"\\" << *reg << "\" [fillcolor=\"" << palette[color] << "\", style=filled";
-		if (whiteText[color])
-			f << ", fontcolor=white";
-		f << "];" << std::endl;
-
-		for (MachineOperand* other : others)
-		{
-			if (finished.find(other) == finished.end())
-				f << "\"\\" << *reg << "\" -- " << "\"\\" << *other << "\"" << ";" << std::endl;
-		}
-
-		finished.insert(reg);
-	}
-
-	f << "}" << std::endl;
-}
-
 int main(int argc, char* argv[])
 {
 	if (argc < 1)
@@ -1084,6 +754,8 @@ int main(int argc, char* argv[])
 		TACValidator validator(&context);
 		if (validator.isValid())
 		{
+			MachineContext machineContext;
+
 			for (Function* function : context.functions)
 			{
 				dumpFunction(function);
@@ -1091,7 +763,7 @@ int main(int argc, char* argv[])
 				dumpFunction(function);
 				generateDot(function);
 
-				MachineCodeGen codeGen(function);
+				MachineCodeGen codeGen(&machineContext, function);
 				MachineFunction* mf = codeGen.getResult();
 
 				std::cerr << "Machine code:" << std::endl;
@@ -1105,10 +777,24 @@ int main(int argc, char* argv[])
 				}
 				std::cerr << std::endl;
 
-				std::unordered_map<MachineBB*, RegSet> live = computeBlockLiveness(mf);
-				std::unordered_map<MachineOperand*, std::unordered_set<MachineOperand*>> igraph = computeInterference(mf, live);
-				std::unordered_map<MachineOperand*, size_t> coloring = colorGraph(igraph);
-				dumpGraph(function->name, igraph, coloring);
+				RegAlloc regAlloc;
+				regAlloc.run(mf);
+				//regAlloc.dumpGraph();
+
+				std::cerr << "After register allocation:" << std::endl;
+				for (MachineBB* mbb : mf->blocks)
+				{
+					std::cerr << "label " << *mbb << ":" << std::endl;
+					for (MachineInst* inst : mbb->instructions)
+					{
+						std::cerr << "\t" << *inst << std::endl;
+					}
+				}
+				std::cerr << std::endl;
+
+				std::cerr << "In nasm format:" << std::endl;
+				AsmPrinter asmPrinter(std::cerr);
+				asmPrinter.printFunction(mf);
 			}
 		}
 	}

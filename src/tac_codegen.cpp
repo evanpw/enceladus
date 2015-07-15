@@ -344,6 +344,7 @@ void TACCodeGen::visit(NullaryNode* node)
             CallInst* inst = new CallInst(dest, getValue(node->symbol), {});
             inst->foreign = true;
             inst->ccall = node->symbol->asFunction()->isExternal;
+            inst->regpass = inst->ccall;
             emit(inst);
         }
         else if (node->kind == NullaryNode::FUNC_CALL)
@@ -355,8 +356,10 @@ void TACCodeGen::visit(NullaryNode* node)
             // If the function is not completely applied, then this nullary node
             // evaluates to a function type -- create a closure
             size_t size = sizeof(SplObject) + 8;
-            // TODO: Fix this
-            emit(new CallInst(dest, _context->makeExternFunction("gcAllocate"), {_context->getConstantInt(size)}));
+            CallInst* callInst = new CallInst(dest, _context->makeExternFunction("gcAllocate"), {_context->getConstantInt(size)});
+            callInst->foreign = true;
+            callInst->regpass = true;
+            emit(callInst);
 
             // SplObject header fields
             emit(new IndexedStoreInst(dest, offsetof(SplObject, constructorTag), _context->Zero));
@@ -683,6 +686,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         CallInst* inst = new CallInst(result, getValue(node->symbol), arguments);
         inst->foreign = node->symbol->asFunction()->isForeign;
         inst->ccall = node->symbol->asFunction()->isExternal;
+        inst->regpass = inst->ccall;
         emit(inst);
     }
     else /* node->symbol->kind == kVariable */
@@ -877,6 +881,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         _context->makeExternFunction("gcAllocate"), // TODO: Fix this
         {_context->getConstantInt(size)});
     inst->foreign = true;
+    inst->regpass = true;
     emit(inst);
 
     //// Fill in the members with the constructor arguments

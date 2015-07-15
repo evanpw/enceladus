@@ -3,6 +3,7 @@
 
 #include "basic_block.hpp"
 #include "function.hpp"
+#include "machine_context.hpp"
 #include "machine_instruction.hpp"
 #include "tac_visitor.hpp"
 #include "value.hpp"
@@ -13,7 +14,7 @@
 class MachineCodeGen : public TACVisitor
 {
 public:
-    MachineCodeGen(Function* function);
+    MachineCodeGen(MachineContext* _context, Function* function);
 
     MachineFunction* getResult() { return _function; }
 
@@ -34,6 +35,7 @@ public:
     virtual void visit(UntagInst* inst);
 
 private:
+    MachineContext* _context;
     MachineFunction* _function;
     MachineBB* _currentBlock = nullptr;
 
@@ -48,17 +50,20 @@ private:
     // Convert an IR Value to a machine operand
     MachineOperand* getOperand(Value* value);
 
-    int64_t _nextVregNumber = 1;
     std::unordered_map<Value*, VirtualRegister*> _vregs;
 
     // Maps IR basic blocks to machine basic blocks
     std::unordered_map<BasicBlock*, MachineBB*> _blocks;
     MachineBB* getBlock(BasicBlock* block);
 
+    // Maps IR function arguments to machine arguments
+    std::unordered_map<Argument*, StackParameter*> _params;
+
     // For convenient access
     HardwareRegister* rax;
     HardwareRegister* rdx;
     HardwareRegister* rsp;
+    HardwareRegister* rbp;
 };
 
 #endif

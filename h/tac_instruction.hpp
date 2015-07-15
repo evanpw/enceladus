@@ -491,6 +491,7 @@ struct CallInst : public Instruction
 
     bool foreign = false;
     bool ccall = false;
+    bool regpass = false;
     bool indirect = false;
 
     Value* dest;

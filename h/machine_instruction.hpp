@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <iostream>
+#include <list>
 #include <string>
 #include <unordered_set>
 
@@ -21,7 +22,6 @@ enum class Opcode {
     CALLm,
     CMP,
     CQO,
-    DEC,
     IDIV,
     IMUL,
     INC,
@@ -32,7 +32,6 @@ enum class Opcode {
     JLE,
     JMP,
     JNE,
-    LEA,
     MOVrd,
     MOVrm,
     MOVmd,
@@ -49,6 +48,8 @@ extern const char* opcodeNames[];
 
 struct MachineOperand
 {
+    virtual ~MachineOperand() {}
+
     virtual void print(std::ostream& out) const = 0;
 
     virtual bool isVreg() const { return false; }
@@ -56,6 +57,7 @@ struct MachineOperand
     virtual bool isRegister() const { return isVreg() || isHreg(); }
     virtual bool isAddress() const { return false; }
     virtual bool isStackLocation() const { return false; }
+    virtual bool isStackParameter() const { return false; }
     virtual bool isImmediate() const { return false; }
     virtual bool isLabel() const { return false; }
 };
@@ -126,6 +128,17 @@ struct StackLocation : public MachineOperand
     std::string name;
 };
 
+struct StackParameter : public StackLocation
+{
+    StackParameter(const std::string& name, size_t index)
+    : StackLocation(name), index(index)
+    {}
+
+    virtual bool isStackParameter() const { return true; }
+
+    size_t index;
+};
+
 struct Immediate : public MachineOperand
 {
     Immediate(int64_t value)
@@ -159,7 +172,7 @@ struct MachineBB : public MachineOperand
     std::vector<MachineBB*> successors() const;
 
     int64_t id;
-    std::vector<MachineInst*> instructions;
+    std::list<MachineInst*> instructions;
 };
 
 struct MachineInst
@@ -178,14 +191,23 @@ struct MachineInst
     std::vector<MachineOperand*> inputs;
 };
 
+class MachineContext;
+
 struct MachineFunction
 {
-    MachineFunction(const std::string& name)
-    : name(name)
+    MachineFunction(MachineContext* context, const std::string& name)
+    : name(name), context(context)
     {}
 
     std::string name;
     std::vector<MachineBB*> blocks;
+
+    MachineContext* context;
+
+    VirtualRegister* makeVreg() { return new VirtualRegister(_nextVregNumber++); }
+
+private:
+    int64_t _nextVregNumber = 1;
 };
 
 std::ostream& operator<<(std::ostream& out, const std::vector<MachineOperand*>& operands);

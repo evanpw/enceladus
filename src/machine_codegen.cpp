@@ -2,18 +2,35 @@
 #include "tac_instruction.hpp"
 #include "value.hpp"
 
-MachineCodeGen::MachineCodeGen(Function* function)
+MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
 {
-    _function = new MachineFunction(function->name);
+    _context = context;
+    _function = new MachineFunction(_context, function->name);
 
-    rax = new HardwareRegister("rax");
-    rdx = new HardwareRegister("rdx");
-    rsp = new HardwareRegister("rsp");
+    rax = _context->rax;
+    rdx = _context->rdx;
+    rsp = _context->rsp;
+    rbp = _context->rbp;
 
+    // Convert parameters from IR format to machine format
+    for (size_t i = 0; i < function->params.size(); ++i)
+    {
+        Argument* arg = dynamic_cast<Argument*>(function->params[i]);
+        _params[arg] = new StackParameter(arg->name, i);
+    }
+
+    bool entry = true;
     for (BasicBlock* irBlock : function->blocks)
     {
         _currentBlock = getBlock(irBlock);
         _function->blocks.push_back(_currentBlock);
+
+        if (entry)
+        {
+            emit(Opcode::PUSH, {}, {rbp});
+            emit(Opcode::MOVrd, {rbp}, {rsp});
+            entry = false;
+        }
 
         for (Instruction* inst = irBlock->first; inst != nullptr; inst = inst->next)
         {
@@ -40,7 +57,7 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
     }
     else if (Argument* arg = dynamic_cast<Argument*>(value))
     {
-        return new StackLocation(arg->name);
+        return _params.at(arg);
     }
     else if (BasicBlock* block = dynamic_cast<BasicBlock*>(value))
     {
@@ -54,7 +71,7 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
             return i->second;
         }
 
-        VirtualRegister* vreg = new VirtualRegister(_nextVregNumber++);
+        VirtualRegister* vreg = _function->makeVreg();
         _vregs[value] = vreg;
 
         return vreg;
@@ -152,65 +169,109 @@ void MachineCodeGen::visit(CallInst* inst)
     MachineOperand* target = getOperand(inst->function);
     assert(dest->isRegister());
 
-    if (!inst->indirect)
+    // ccall: pass arguments in registers, indirectly through ccall
+    if (inst->regpass)
     {
+        assert(!inst->indirect);
         assert(target->isAddress());
-    }
-    else
-    {
-        assert(target->isAddress() || target->isRegister());
-    }
 
-    size_t paramsOnStack = inst->params.size();
+        // x86_64 calling convention for C puts the first 6 arguments in registers
+        MachineOperand* registerArgs[] = {
+            _context->rdi,
+            _context->rsi,
+            _context->rdx,
+            _context->rcx,
+            _context->r8,
+            _context->r9
+        };
 
-    // Keep 16-byte alignment
-    if (paramsOnStack % 2)
-    {
-        emit(Opcode::PUSH, {}, {new Immediate(0)});
-    }
+        assert(inst->params.size() <= 6);
 
-    for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
-    {
-        MachineOperand* param = getOperand(*i);
-
-        // No 64-bit immediate push
-        if (param->isAddress() ||
-            (param->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(param)->value)))
+        for (size_t i = 0; i < inst->params.size(); ++i)
         {
-            VirtualRegister* vreg = new VirtualRegister(_nextVregNumber++);
-            emit(Opcode::MOVrd, {vreg}, {param});
-            emit(Opcode::PUSH, {}, {vreg});
+            MachineOperand* param = getOperand(inst->params[i]);
+            assert(param->isAddress() || param->isImmediate() || param->isRegister());
+
+            emit(Opcode::MOVrd, {registerArgs[i]}, {param});
         }
-        else if (param->isRegister())
+
+        if (inst->ccall)
         {
-            emit(Opcode::PUSH, {}, {param});
-        }
-        else if (param->isImmediate())
-        {
-            emit(Opcode::PUSH, {}, {param});
+            // Indirect call so that we can switch to the C stack
+            emit(Opcode::MOVrd, {rax}, {target});
+            emit(Opcode::CALLi, {rax}, {new Address("ccall")});
         }
         else
         {
-            // We don't do direct push-from-memory
-            assert(false);
+            emit(Opcode::CALLi, {rax}, {target});
         }
-    }
 
-    if (!inst->indirect)
-    {
-        emit(Opcode::CALLi, {rax}, {target});
+        emit(Opcode::MOVrd, {dest}, {rax});
     }
-    else
+    else // native call convention: all arguments on the stack
     {
-        emit(Opcode::CALLm, {rax}, {target});
-    }
+        assert(!inst->ccall);
 
-    emit(Opcode::MOVrd, {dest}, {rax});
+        if (!inst->indirect)
+        {
+            assert(target->isAddress());
+        }
+        else
+        {
+            assert(target->isAddress() || target->isRegister());
+        }
 
-    // Remove the function parameters from the stack
-    if (paramsOnStack > 0)
-    {
-        emit(Opcode::ADD, {rsp}, {rsp, new Immediate(8 * paramsOnStack)});
+        size_t paramsOnStack = inst->params.size();
+
+        // Keep 16-byte alignment
+        if (paramsOnStack % 2)
+        {
+            emit(Opcode::PUSH, {}, {new Immediate(0)});
+        }
+
+        for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
+        {
+            MachineOperand* param = getOperand(*i);
+
+            // No 64-bit immediate push
+            if (param->isAddress() ||
+                (param->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(param)->value)))
+            {
+                VirtualRegister* vreg = _function->makeVreg();
+                emit(Opcode::MOVrd, {vreg}, {param});
+                emit(Opcode::PUSH, {}, {vreg});
+            }
+            else if (param->isRegister())
+            {
+                emit(Opcode::PUSH, {}, {param});
+            }
+            else if (param->isImmediate())
+            {
+                emit(Opcode::PUSH, {}, {param});
+            }
+            else
+            {
+                // We don't do direct push-from-memory
+                assert(false);
+            }
+        }
+
+        if (!inst->indirect)
+        {
+            emit(Opcode::CALLi, {rax}, {target});
+        }
+        else
+        {
+            emit(Opcode::CALLm, {rax}, {target});
+        }
+
+        emit(Opcode::MOVrd, {dest}, {rax});
+
+        // Remove the function parameters from the stack
+        if (paramsOnStack > 0)
+        {
+            emit(Opcode::ADD, {rsp}, {rsp, new Immediate(8 * paramsOnStack)});
+        }
     }
 }
 
@@ -390,6 +451,8 @@ void MachineCodeGen::visit(ReturnInst* inst)
         }
     }
 
+    emit(Opcode::MOVrd, {rsp}, {rbp});
+    emit(Opcode::POP, {rbp}, {});
     emit(Opcode::RET, {}, {rax});
 }
 
