@@ -6,6 +6,7 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
 {
     _context = context;
     _function = new MachineFunction(_context, function->name);
+    _context->functions.push_back(_function);
 
     rax = _context->rax;
     rdx = _context->rdx;
@@ -172,7 +173,6 @@ void MachineCodeGen::visit(CallInst* inst)
     // ccall: pass arguments in registers, indirectly through ccall
     if (inst->regpass)
     {
-        assert(!inst->indirect);
         assert(target->isAddress());
 
         // x86_64 calling convention for C puts the first 6 arguments in registers
@@ -187,23 +187,27 @@ void MachineCodeGen::visit(CallInst* inst)
 
         assert(inst->params.size() <= 6);
 
+        std::vector<MachineOperand*> uses = {nullptr};
         for (size_t i = 0; i < inst->params.size(); ++i)
         {
             MachineOperand* param = getOperand(inst->params[i]);
             assert(param->isAddress() || param->isImmediate() || param->isRegister());
 
             emit(Opcode::MOVrd, {registerArgs[i]}, {param});
+            uses.push_back(registerArgs[i]);
         }
 
         if (inst->ccall)
         {
             // Indirect call so that we can switch to the C stack
             emit(Opcode::MOVrd, {rax}, {target});
-            emit(Opcode::CALLi, {rax}, {new Address("ccall")});
+            uses[0] = new Address("ccall");
+            emit(Opcode::CALL, {rax}, std::move(uses));
         }
         else
         {
-            emit(Opcode::CALLi, {rax}, {target});
+            uses[0] = target;
+            emit(Opcode::CALL, {rax}, std::move(uses));
         }
 
         emit(Opcode::MOVrd, {dest}, {rax});
@@ -211,15 +215,7 @@ void MachineCodeGen::visit(CallInst* inst)
     else // native call convention: all arguments on the stack
     {
         assert(!inst->ccall);
-
-        if (!inst->indirect)
-        {
-            assert(target->isAddress());
-        }
-        else
-        {
-            assert(target->isAddress() || target->isRegister());
-        }
+        assert(target->isAddress() || target->isRegister());
 
         size_t paramsOnStack = inst->params.size();
 
@@ -227,6 +223,7 @@ void MachineCodeGen::visit(CallInst* inst)
         if (paramsOnStack % 2)
         {
             emit(Opcode::PUSH, {}, {new Immediate(0)});
+            ++paramsOnStack;
         }
 
         for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
@@ -256,15 +253,7 @@ void MachineCodeGen::visit(CallInst* inst)
             }
         }
 
-        if (!inst->indirect)
-        {
-            emit(Opcode::CALLi, {rax}, {target});
-        }
-        else
-        {
-            emit(Opcode::CALLm, {rax}, {target});
-        }
-
+        emit(Opcode::CALL, {rax}, {target});
         emit(Opcode::MOVrd, {dest}, {rax});
 
         // Remove the function parameters from the stack
@@ -282,8 +271,13 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     assert(lhs->isRegister() || lhs->isImmediate());
     assert(rhs->isRegister() || rhs->isImmediate());
 
-    // cmp imm, imm is illegal
-    assert(!lhs->isImmediate() || !rhs->isImmediate());
+    // cmp imm, imm is illegal (this should really be optimized away)
+    if (lhs->isImmediate() && rhs->isImmediate())
+    {
+        VirtualRegister* newLhs = _function->makeVreg();
+        emit(Opcode::MOVrd, {newLhs}, {lhs});
+        lhs = newLhs;
+    }
 
     emit(Opcode::CMP, {}, {lhs, rhs});
 
@@ -344,6 +338,7 @@ void MachineCodeGen::visit(IndexedLoadInst* inst)
     MachineOperand* dest = getOperand(inst->lhs);
     MachineOperand* base = getOperand(inst->rhs);
     MachineOperand* offset = new Immediate(inst->offset);
+
     assert(dest->isRegister());
     assert(base->isAddress() || base->isRegister());
 
@@ -385,7 +380,17 @@ void MachineCodeGen::visit(StoreInst* inst)
 
     if (src->isRegister() || src->isImmediate() || src->isAddress())
     {
-        emit(Opcode::MOVmd, {}, {base, src});
+        // MOV [mem], imm64 is illegal
+        if (src->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(src)->value))
+        {
+            VirtualRegister* vreg = _function->makeVreg();
+            emit(Opcode::MOVrd, {vreg}, {src});
+            emit(Opcode::MOVmd, {}, {base, vreg});
+        }
+        else
+        {
+            emit(Opcode::MOVmd, {}, {base, src});
+        }
     }
     else
     {

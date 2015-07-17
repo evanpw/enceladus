@@ -21,8 +21,8 @@ def numInWords(x: Int) -> String
         else
             return (at tens multiplesOfTen)
     elif x < 1000
-        ones = x mod 10
-        tens = (x / 10) mod 10
+        ones := x mod 10
+        tens := (x / 10) mod 10
         hundreds := x / 100
         rest := x mod 100
 

@@ -3,8 +3,7 @@
 const char* opcodeNames[] = {
     "ADD",
     "AND",
-    "CALLi",
-    "CALLm",
+    "CALL",
     "CMP",
     "CQO",
     "IDIV",

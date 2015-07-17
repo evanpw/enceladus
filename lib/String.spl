@@ -59,6 +59,7 @@ def split(s: String) -> [String]
     result := []
     start := 0
 
+    len := strLength s
     for i in range 0 (strLength s)
         if isSpace $ strAt s i
             len := i - start
@@ -75,6 +76,7 @@ def splitBy(sep: Char, s: String) -> [String]
     result := []
     start := 0
 
+    len := strLength s
     for i in range 0 (strLength s)
         if strAt s i == sep
             len := i - start

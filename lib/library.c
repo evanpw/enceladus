@@ -197,7 +197,11 @@ String* show(int64_t x)
 int64_t read()
 {
     int64_t result;
-    scanf("%" PRId64, &result);
+    int n = scanf("%" PRId64, &result);
+    if (n != 1)
+    {
+        fail("*** Exception: Invalid input");
+    }
 
     return TO_INT(result);
 }
@@ -324,6 +328,8 @@ void* try_mymalloc(size_t) asm("try_mymalloc");
 // Try to allocate memory from the current heap
 void* try_mymalloc(size_t sizeInBytes)
 {
+     return malloc(sizeInBytes);
+
     // Allocate in units of 8 bytes
     size_t sizeInWords = (sizeInBytes + 7) / 8;
 

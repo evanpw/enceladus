@@ -114,7 +114,7 @@ void RegAlloc::spillAroundCalls()
                 }
             }
 
-            if (inst->opcode == Opcode::CALLi || inst->opcode == Opcode::CALLm)
+            if (inst->opcode == Opcode::CALL)
             {
                 int64_t offset = startOffset;
 
@@ -126,13 +126,18 @@ void RegAlloc::spillAroundCalls()
                     if (liveReg == _context->rbp || liveReg == _context->rsp)
                         continue;
 
+                    // If the function has a return value, then rax is redefined by this instruction, so
+                    // we don't need to save it
+                    if (!inst->outputs.empty() && liveReg == _context->rax)
+                        continue;
+
                     offset -= 8;
                     _currentOffset = std::min(_currentOffset, offset);
 
-                    MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {_context->rsp, liveReg, new Immediate(offset)});
+                    MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {_context->rbp, liveReg, new Immediate(offset)});
                     saves.push_back(saveInst);
 
-                    MachineInst* restoreInst = new MachineInst(Opcode::MOVrm, {liveReg}, {_context->rsp, new Immediate(offset)});
+                    MachineInst* restoreInst = new MachineInst(Opcode::MOVrm, {liveReg}, {_context->rbp, new Immediate(offset)});
                     restores.push_back(restoreInst);
                 }
 
@@ -226,9 +231,6 @@ void RegAlloc::assignStackLocations()
             // Replace outputs
             for (size_t j = 0; j < inst->outputs.size(); ++j)
             {
-                if (inst->outputs[j]->isStackLocation())
-                    std::cerr << *inst << std::endl;
-
                 assert(!inst->outputs[j]->isStackLocation());
             }
         }
@@ -363,7 +365,7 @@ void RegAlloc::computeLiveness()
             break;
     }
 
-    dumpLiveness();
+    //dumpLiveness();
 }
 
 void RegAlloc::dumpLiveness() const
@@ -386,19 +388,14 @@ void RegAlloc::computeInterference()
     _igraph.clear();
     _precolored.clear();
 
-    std::cerr << "Instruction-level liveness" << std::endl;
     for (MachineBB* block : _function->blocks)
     {
-        std::cerr << "block " << *block << ":" << std::endl;
-
         // Compute live regs at the end of this block
-        RegSet regs;
+        RegSet liveOut;
         for (MachineBB* succ : block->successors())
         {
-            regs += _live.at(succ);
+            liveOut += _live.at(succ);
         }
-
-        std::deque<RegSet> liveRegs;
 
         // Step through the instructions from back to front, updating live regs
         for (auto i = block->instructions.rbegin(); i != block->instructions.rend(); ++i)
@@ -408,12 +405,32 @@ void RegAlloc::computeInterference()
             // Data flow equation:
             // live[n] = (U_{s in succ[n]}  live[s]) - def[n] + ref[n]
 
+            RegSet newLiveOut = liveOut;
+
             for (Reg* output : inst->outputs)
             {
                 if (output->isRegister())
                 {
-                    if (regs.find(output) != regs.end())
-                        regs.erase(output);
+                    // Destinations interfere with all live-out registers
+                    for (Reg* live : liveOut)
+                    {
+                        // Exception: if one register is moved to another, then the destination and source
+                        // don't necessarily interfere
+                        if (inst->opcode == Opcode::MOVrd &&
+                            std::find(inst->inputs.begin(), inst->inputs.end(), live) != inst->inputs.end())
+                        {
+                            continue;
+                        }
+
+                        if (live != output)
+                        {
+                            _igraph[live].insert(output);
+                            _igraph[output].insert(live);
+                        }
+                    }
+
+                    if (newLiveOut.find(output) != newLiveOut.end())
+                        newLiveOut.erase(output);
                 }
             }
 
@@ -421,36 +438,13 @@ void RegAlloc::computeInterference()
             {
                 if (input->isRegister())
                 {
-                    regs.insert(input);
+                    newLiveOut.insert(input);
                 }
             }
 
-            liveRegs.push_front(regs);
-        }
-
-        auto itr = block->instructions.begin();
-        for (size_t i = 0; i < block->instructions.size(); ++i)
-        {
-            std::stringstream ss;
-            ss << *(*itr);
-
-            std::cerr << "\t" << std::setw(40) << std::left << ss.str() << "\t" << liveRegs[i] << std::endl;
-
-            for (Reg* reg1 : liveRegs[i])
-            {
-                for (Reg* reg2 : liveRegs[i])
-                {
-                    if (reg1 == reg2) continue;
-
-                    _igraph[reg1].insert(reg2);
-                    _igraph[reg2].insert(reg1);
-                }
-            }
-
-            ++itr;
+            liveOut = newLiveOut;
         }
     }
-    std::cerr << std::endl;
 
     // All hardware registers are pre-colored
     for (size_t i = 0; i < 16; ++i)
@@ -527,8 +521,6 @@ static std::string colorNames[16] =
     "rdx",
     "rsi",
     "rdi",
-    "rbp",
-    "rsp",
     "r8",
     "r9",
     "r10",
@@ -537,6 +529,8 @@ static std::string colorNames[16] =
     "r13",
     "r14",
     "r15",
+    "rsp",
+    "rbp"
 };
 
 void RegAlloc::removeFromGraph(IntGraph& graph, Reg* reg)

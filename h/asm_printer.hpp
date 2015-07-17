@@ -12,6 +12,7 @@ public:
     : _out(out)
     {}
 
+    void printProgram(MachineContext* context);
     void printFunction(MachineFunction* function);
 
 private:

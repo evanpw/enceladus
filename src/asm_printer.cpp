@@ -1,10 +1,46 @@
 #include "asm_printer.hpp"
+#include "lib/library.h"
+
+void AsmPrinter::printProgram(MachineContext* context)
+{
+    _out << "bits 64" << std::endl;
+    _out << "section .text" << std::endl << std::endl;
+
+    for (const std::string externName : context->externs)
+    {
+        _out << "extern $" << externName << std::endl;
+    }
+    _out << std::endl;
+
+    for (MachineFunction* function : context->functions)
+    {
+        printFunction(function);
+    }
+
+    _out << "section .data" << std::endl;
+
+    for (const std::string& globalName : context->globals)
+    {
+        _out << "$" << globalName << ": dq 0" << std::endl;
+    }
+
+    for (auto& item : context->staticStrings)
+    {
+        const std::string& name = item.first;
+        const std::string& content = item.second;
+
+        _out << "$" << name << ":" << std::endl;
+        _out << "\tdq " << STRING_TAG << ", 0" << std::endl;
+        _out << "\tdb \"" << content << "\", 0" << std::endl;
+    }
+}
 
 void AsmPrinter::printFunction(MachineFunction* function)
 {
     _context = function->context;
 
-    _out << function->name << ":" << std::endl;
+    _out << "global " << "$" << function->name << std::endl;
+    _out << "$" << function->name << ":" << std::endl;
 
     for (MachineBB* block : function->blocks)
     {
@@ -37,7 +73,7 @@ void AsmPrinter::printSimpleOperand(MachineOperand* operand)
     else if (operand->isAddress())
     {
         // TODO: Name mangling
-        _out << dynamic_cast<Address*>(operand)->name;
+        _out << "$" << dynamic_cast<Address*>(operand)->name;
     }
     else
     {
@@ -272,13 +308,6 @@ void AsmPrinter::printInstruction(MachineInst* inst)
 
             break;
 
-        case Opcode::CALLm:
-            assert(inst->outputs.size() == 1);
-            assert(inst->inputs.size() == 1);
-            assert(inst->outputs[0] == _context->rax);
-            printCallm(inst->inputs[0]);
-            break;
-
 
         // Miscellaneous
         case Opcode::MOVrd:
@@ -287,10 +316,15 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             printBinary("mov", inst->outputs[0], inst->inputs[0]);
             break;
 
-        case Opcode::CALLi:
+        case Opcode::CALL:
             assert(inst->outputs.size() == 1);
-            assert(inst->inputs.size() == 1);
+            assert(inst->inputs.size() >= 1);
             assert(inst->outputs[0] == _context->rax);
+
+            // Register arguments
+            for (size_t i = 1; i < inst->inputs.size(); ++i)
+                assert(inst->inputs[i]->isHreg());
+
             printSimpleInstruction("call", {inst->inputs[0]});
             break;
 

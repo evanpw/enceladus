@@ -8,6 +8,11 @@ class MachineContext
 public:
     ~MachineContext();
 
+    std::vector<MachineFunction*> functions;
+    std::vector<std::string> externs;
+    std::vector<std::pair<std::string, std::string>> staticStrings;
+    std::vector<std::string> globals;
+
     HardwareRegister* rax = new HardwareRegister("rax");
     HardwareRegister* rbx = new HardwareRegister("rbx");
     HardwareRegister* rcx = new HardwareRegister("rcx");
@@ -26,8 +31,8 @@ public:
     HardwareRegister* r15 = new HardwareRegister("r15");
 
     HardwareRegister* hregs[16] = {
-        rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp,
-        r8, r9, r10, r11, r12, r13, r14, r15
+        rax, rbx, rcx, rdx, rsi, rdi, r8, r9,
+        r10, r11, r12, r13, r14, r15, rbp, rsp
     };
 };
 

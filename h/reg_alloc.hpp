@@ -31,7 +31,8 @@ private:
     MachineFunction* _function;
     MachineContext* _context;
 
-    static constexpr size_t AVAILABLE_COLORS = 6;
+    // Never allocate rsp and rbp
+    static constexpr size_t AVAILABLE_COLORS = 14;
 
     // For debugging: show live variables at each machine instruction
     void dumpLiveness() const;

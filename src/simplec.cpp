@@ -109,6 +109,23 @@ void dumpFunction(const Function* function)
 		}
 	}
 
+	if (!function->params.empty())
+	{
+		std::cerr << "params:" << std::endl;
+		for (Value* value : function->params)
+		{
+			std::cerr << "\t" << value->str() << ":" << std::endl;
+
+			if (value->definition)
+				std::cerr << "\t\t(defn) " << value->definition->str() << std::endl;
+
+			for (Instruction* inst : value->uses)
+			{
+				std::cerr << "\t\t(use) " << inst->str() << std::endl;
+			}
+		}
+	}
+
 	std::cerr << "blocks:" << std::endl;
 	for (BasicBlock* block : function->blocks)
 	{
@@ -363,6 +380,8 @@ phis_t calculatePhiNodes(const Function* function, const df_t& df)
 		{
 			if (dynamic_cast<StoreInst*>(inst))
 			{
+				//std::cerr << param->str() << ": store in block " << inst->parent->str() << std::endl;
+
 				everOnWorkList.insert(inst->parent);
 				workList.push_back(inst->parent);
 			}
@@ -389,6 +408,8 @@ phis_t calculatePhiNodes(const Function* function, const df_t& df)
 			{
 				if (alreadyInserted.find(v) != alreadyInserted.end())
 					continue;
+
+				//std::cerr << param->str() << ": need phi in block " << v->str() << std::endl;
 
 				result[v].emplace_back(param);
 				alreadyInserted.insert(v);
@@ -452,8 +473,15 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 		{
 			if (phiStack[load->src].empty())
 			{
+				// Don't rewrite loads from global variables
+				if (dynamic_cast<GlobalValue*>(load->src))
+				{
+					inst = inst->next;
+					continue;
+				}
+
 				// A load without a previous store should only be possible for
-				// a function parameter
+				// a function parameter or a global
 				assert(dynamic_cast<Argument*>(load->src));
 
 				// For any node dominated by this one, don't re-load, just
@@ -474,6 +502,13 @@ void rename(Function* function, BasicBlock* block, phis_t& phis)
 		}
 		else if (StoreInst* store = dynamic_cast<StoreInst*>(inst))
 		{
+			// Don't rewrite stores to global variables
+			if (dynamic_cast<GlobalValue*>(store->dest))
+			{
+				inst = inst->next;
+				continue;
+			}
+
 			phiStack[store->dest].push(store->src);
 			toPop.push_back(store->dest);
 
@@ -532,6 +567,8 @@ void insertPhis(Function* function, phis_t& phis)
 		{
 			assert(phiDesc.dest);
 
+			//std::cerr << "Inserting phi for " << phiDesc.original->str() << " in block " << block->str() << std::endl;
+
 			PhiInst* phi = new PhiInst(phiDesc.dest);
 			for (auto& source : phiDesc.sources)
 			{
@@ -556,24 +593,9 @@ void insertPhis(Function* function, phis_t& phis)
 					// have undefined behavior
 					else
 					{
-						assert(phiDesc.dest->uses.empty());
+						phi = nullptr;
+						break;
 					}
-				}
-
-				if (phiDesc.dest->uses.empty())
-				{
-					Value* deadValue = phiDesc.dest;
-
-					// If the result is dead, then we don't need the phi
-					phi->dropReferences();
-					delete phi;
-
-					// And we don't need the value
-					assert(!deadValue->definition);
-					function->temps.erase(std::remove(function->temps.begin(), function->temps.end(), deadValue), function->temps.end());
-
-					phi = nullptr;
-					break;
 				}
 
 				phi->addSource(source.first, source.second);
@@ -581,6 +603,37 @@ void insertPhis(Function* function, phis_t& phis)
 
 			if (phi)
 				block->prepend(phi);
+		}
+	}
+}
+
+void killDeadPhis(Function* function)
+{
+	for (BasicBlock* block : function->blocks)
+	{
+		Instruction* inst = block->first;
+		while (inst != nullptr)
+		{
+			if (PhiInst* phi = dynamic_cast<PhiInst*>(inst))
+			{
+				inst = inst->next;
+
+				if (phi->dest->uses.empty())
+				{
+					Value* deadValue = phi->dest;
+
+					// If the result is dead, then we don't need the phi
+					phi->removeFromParent();
+
+					// And we don't need the value
+					assert(!deadValue->definition);
+					function->temps.erase(std::remove(function->temps.begin(), function->temps.end(), deadValue), function->temps.end());
+				}
+			}
+			else
+			{
+				break;
+			}
 		}
 	}
 }
@@ -631,6 +684,7 @@ void analyzeFunction(Function* function)
 	phis_t allPhis = calculatePhiNodes(function, df);
 	rename(function, function->blocks[0], allPhis);
 	insertPhis(function, allPhis);
+	killDeadPhis(function);
 
 	for (auto& local : function->locals)
 	{
@@ -758,44 +812,60 @@ int main(int argc, char* argv[])
 
 			for (Function* function : context.functions)
 			{
-				dumpFunction(function);
+				//dumpFunction(function);
 				analyzeFunction(function);
-				dumpFunction(function);
-				generateDot(function);
+				//dumpFunction(function);
+				//generateDot(function);
 
 				MachineCodeGen codeGen(&machineContext, function);
 				MachineFunction* mf = codeGen.getResult();
 
-				std::cerr << "Machine code:" << std::endl;
-				for (MachineBB* mbb : mf->blocks)
-				{
-					std::cerr << "label " << *mbb << ":" << std::endl;
-					for (MachineInst* inst : mbb->instructions)
-					{
-						std::cerr << "\t" << *inst << std::endl;
-					}
-				}
-				std::cerr << std::endl;
+				// std::cerr << "Machine code:" << std::endl;
+				// for (MachineBB* mbb : mf->blocks)
+				// {
+				// 	std::cerr << "label " << *mbb << ":" << std::endl;
+				// 	for (MachineInst* inst : mbb->instructions)
+				// 	{
+				// 		std::cerr << "\t" << *inst << std::endl;
+				// 	}
+				// }
+				// std::cerr << std::endl;
 
 				RegAlloc regAlloc;
 				regAlloc.run(mf);
+
 				//regAlloc.dumpGraph();
 
-				std::cerr << "After register allocation:" << std::endl;
-				for (MachineBB* mbb : mf->blocks)
-				{
-					std::cerr << "label " << *mbb << ":" << std::endl;
-					for (MachineInst* inst : mbb->instructions)
-					{
-						std::cerr << "\t" << *inst << std::endl;
-					}
-				}
-				std::cerr << std::endl;
-
-				std::cerr << "In nasm format:" << std::endl;
-				AsmPrinter asmPrinter(std::cerr);
-				asmPrinter.printFunction(mf);
+				// std::cerr << "After register allocation:" << std::endl;
+				// for (MachineBB* mbb : mf->blocks)
+				// {
+				// 	std::cerr << "label " << *mbb << ":" << std::endl;
+				// 	for (MachineInst* inst : mbb->instructions)
+				// 	{
+				// 		std::cerr << "\t" << *inst << std::endl;
+				// 	}
+				// }
+				// std::cerr << std::endl;
 			}
+
+			for (Value* externFunction : context.externs)
+			{
+				machineContext.externs.push_back(externFunction->name);
+			}
+			machineContext.externs.push_back("ccall");
+
+			for (auto& item : context.staticStrings)
+			{
+				machineContext.staticStrings.emplace_back(item.first->name, item.second);
+			}
+
+			for (Value* global : context.globals)
+			{
+				machineContext.globals.push_back(global->name);
+			}
+
+			AsmPrinter asmPrinter(std::cout);
+			asmPrinter.printProgram(&machineContext);
 		}
 	}
 

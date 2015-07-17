@@ -101,7 +101,7 @@ BasicBlock* TACConditionalCodeGen::makeBlock()
 
 void TACCodeGen::visit(ProgramNode* node)
 {
-    Function* main = _context->makeFunction("main");
+    Function* main = _context->makeFunction("splmain");
     _currentFunction = main;
     _nextSeqNumber = 0;
     setBlock(makeBlock());
@@ -699,7 +699,6 @@ void TACCodeGen::visit(FunctionCallNode* node)
         emit(new IndexedLoadInst(functionAddress, closure, sizeof(SplObject)));
 
         CallInst* inst = new CallInst(result, functionAddress, arguments);
-        inst->indirect = true;
         emit(inst);
     }
 }
@@ -719,10 +718,11 @@ void TACCodeGen::visit(VariableNode* node)
 
 void TACCodeGen::visit(MemberAccessNode* node)
 {
-    Value* varAddress = getValue(node->varSymbol);
-
     node->value = makeTemp();
-    emit(new IndexedLoadInst(node->value, varAddress, sizeof(SplObject) + 8 * node->memberLocation));
+
+    Value* structure = makeTemp();
+    emit(new LoadInst(structure, getValue(node->varSymbol)));
+    emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * node->memberLocation));
 }
 
 void TACCodeGen::visit(StructDefNode* node)

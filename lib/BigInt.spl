@@ -39,8 +39,9 @@ def singleProduct(xs: BigInt, y: Int) -> BigInt
     result := []
 
     while not (null xs and carry == 0)
+        z := 0
         if null xs
-            z := carry
+            z = carry
         else
             x := head xs
             z = x * y + carry

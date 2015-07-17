@@ -466,18 +466,7 @@ struct CallInst : public Instruction
             ss << dest->str() << " = ";
         }
 
-        ss << "call ";
-
-        if (indirect)
-        {
-            ss << "[" << function->str() << "]";
-        }
-        else
-        {
-            ss << function->str();
-        }
-
-        ss << "(";
+        ss << "call " << function->str() << "(";
 
         for (size_t i = 0; i < params.size(); ++i)
         {
@@ -492,7 +481,6 @@ struct CallInst : public Instruction
     bool foreign = false;
     bool ccall = false;
     bool regpass = false;
-    bool indirect = false;
 
     Value* dest;
     Value* function;

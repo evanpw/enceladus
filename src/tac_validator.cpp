@@ -30,7 +30,7 @@ bool TACValidator::isValid()
     if (!allBlocksReachable())
     {
         std::cerr << "Not all basic blocks are reachable" << std::endl;
-        return false;
+        //return false;
     }
 
     return true;

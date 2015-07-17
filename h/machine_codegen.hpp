@@ -47,6 +47,14 @@ private:
         _currentBlock->instructions.push_back(inst);
     }
 
+    void emit(Opcode opcode,
+              std::vector<MachineOperand*>&& outputs,
+              std::vector<MachineOperand*>&& inputs)
+    {
+        MachineInst* inst = new MachineInst(opcode, std::move(outputs), std::move(inputs));
+        _currentBlock->instructions.push_back(inst);
+    }
+
     // Convert an IR Value to a machine operand
     MachineOperand* getOperand(Value* value);
 

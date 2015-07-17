@@ -3,7 +3,7 @@ section .text
 global main, _main, stackBottom, gcAllocate, gcAllocateFromC, ccall
 global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
 global addRoot, removeRoots
-extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _die, die, _Z4main
+extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _die, die, splmain
 extern initializeHeap
 extern _malloc, _free, malloc, free
 
@@ -29,7 +29,7 @@ _main:
     mov qword [rel stackBottom], rbp
 
     ; The actual program
-    call _Z4main
+    call splmain
 
     ; If we reach here without calling die, then exit code = 0
     xor rax, rax
@@ -132,8 +132,11 @@ splcall1:
 
     ; Shift all parameters over by one and call
     mov rax, rdi
-    mov rdi, rsi
+
+    push qword 0
+    push rsi
     call rax
+    add rsp, 16
 
     mov qword [rel splstack], rsp
     mov rsp, qword [rel cstack]
@@ -167,9 +170,11 @@ splcall2:
 
     ; Shift all parameters over by one and call
     mov rax, rdi
-    mov rdi, rsi
-    mov rsi, rdx
+
+    push rdx
+    push rsi
     call rax
+    add rsp, 16
 
     mov qword [rel splstack], rsp
     mov rsp, qword [rel cstack]
@@ -203,10 +208,13 @@ splcall3:
 
     ; Shift all parameters over by one and call
     mov rax, rdi
-    mov rdi, rsi
-    mov rsi, rdx
-    mov rdx, rcx
+
+    push qword 0
+    push rcx
+    push rdx
+    push rsi
     call rax
+    add rsp, 32
 
     mov qword [rel splstack], rsp
     mov rsp, qword [rel cstack]
@@ -240,11 +248,13 @@ splcall4:
 
     ; Shift all parameters over by one and call
     mov rax, rdi
-    mov rdi, rsi
-    mov rsi, rdx
-    mov rdx, rcx
-    mov rcx, r8
+
+    push r8
+    push rcx
+    push rdx
+    push rsi
     call rax
+    add rsp, 32
 
     mov qword [rel splstack], rsp
     mov rsp, qword [rel cstack]
@@ -278,12 +288,15 @@ splcall5:
 
     ; Shift all parameters over by one and call
     mov rax, rdi
-    mov rdi, rsi
-    mov rsi, rdx
-    mov rdx, rcx
-    mov rcx, r8
-    mov r8, r9
+
+    push qword 0
+    push r9
+    push r8
+    push rcx
+    push rdx
+    push rsi
     call rax
+    add rsp, 48
 
     mov qword [rel splstack], rsp
     mov rsp, qword [rel cstack]
@@ -374,7 +387,7 @@ gcAllocateFromC:
 
 section .data
 stackBottom:        dq 0
-additionalRoots:    dq __globalVarTable
+additionalRoots:    dq 0 ;__globalVarTable
 cstack              dq 0
 splstack            dq 0
 

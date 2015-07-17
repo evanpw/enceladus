@@ -18,8 +18,7 @@
 enum class Opcode {
     ADD,
     AND,
-    CALLi,
-    CALLm,
+    CALL,
     CMP,
     CQO,
     IDIV,
@@ -180,6 +179,13 @@ struct MachineInst
     MachineInst(Opcode opcode,
                 const std::initializer_list<MachineOperand*>&& outputs,
                 const std::initializer_list<MachineOperand*>&& inputs)
+    : opcode(opcode), outputs(outputs), inputs(inputs)
+    {
+    }
+
+    MachineInst(Opcode opcode,
+                const std::vector<MachineOperand*>&& outputs,
+                const std::vector<MachineOperand*>&& inputs)
     : opcode(opcode), outputs(outputs), inputs(inputs)
     {
     }

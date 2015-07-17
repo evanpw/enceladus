@@ -34,4 +34,3 @@ def bestRouteFrom(x: Int, y: Int, pyramid: [[Int]]) -> Int
         return (max left right) + here
 
 print $ show $ bestRouteFrom 0 0 readInput
-
