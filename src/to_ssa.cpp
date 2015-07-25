@@ -419,6 +419,7 @@ void ToSSA::insertPhis(PhiList& phis)
                     // have undefined behavior
                     else
                     {
+                        delete phi;
                         phi = nullptr;
                         break;
                     }
