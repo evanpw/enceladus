@@ -126,36 +126,36 @@ int main(int argc, char* argv[])
 			FromSSA fromSSA(function);
 			fromSSA.run();
 
-			// MachineCodeGen codeGen(&machineContext, function);
-			// MachineFunction* mf = codeGen.getResult();
+			MachineCodeGen codeGen(&machineContext, function);
+			MachineFunction* mf = codeGen.getResult();
 
-			// RegAlloc regAlloc(mf);
-			// regAlloc.run();
+			RegAlloc regAlloc(mf);
+			regAlloc.run();
 
-			// RedundantMoves redundantMoves(mf);
-			// redundantMoves.run();
+			RedundantMoves redundantMoves(mf);
+			redundantMoves.run();
 		}
 
-		// for (Value* externFunction : tacContext->externs)
-		// {
-		// 	machineContext.externs.push_back(externFunction->name);
-		// }
-		// machineContext.externs.push_back("ccall");
+		for (Value* externFunction : tacContext->externs)
+		{
+			machineContext.externs.push_back(externFunction->name);
+		}
+		machineContext.externs.push_back("ccall");
 
-		// for (auto& item : tacContext->staticStrings)
-		// {
-		// 	machineContext.staticStrings.emplace_back(item.first->name, item.second);
-		// }
+		for (auto& item : tacContext->staticStrings)
+		{
+			machineContext.staticStrings.emplace_back(item.first->name, item.second);
+		}
 
-		// for (Value* global : tacContext->globals)
-		// {
-		// 	machineContext.globals.push_back(global->name);
-		// }
+		for (Value* global : tacContext->globals)
+		{
+			machineContext.globals.push_back(global->name);
+		}
 
 		delete tacContext;
 
-		// AsmPrinter asmPrinter(std::cout);
-		// asmPrinter.printProgram(&machineContext);
+		AsmPrinter asmPrinter(std::cout);
+		asmPrinter.printProgram(&machineContext);
 	}
 
 	fclose(yyin);
