@@ -3,7 +3,7 @@ set -e
 
 mkdir -p build
 
-./simplec testing/$1.spl > build/$1.asm
+build/simplec testing/$1.spl > build/$1.asm
 nasm -fmacho64 build/$1.asm -o build/$1.o
 gcc -O2 -c lib/library.c -o build/library.o -O -DNDEBUG
 nasm -fmacho64 lib/gc.asm -d__APPLE__ -o build/gc.o
