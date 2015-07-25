@@ -4,6 +4,7 @@
 class AstNode;
 class ProgramNode;
 
+#include "types.hpp"
 #include <memory>
 #include <utility>
 #include <vector>
@@ -17,9 +18,12 @@ public:
     // The context takes ownership of this pointer
     void addToContext(AstNode* node);
 
+    TypeTable* typeTable() { return &_typeTable; }
+
 private:
     ProgramNode* _root = nullptr;
     std::vector<std::unique_ptr<AstNode>> _nodes;
+    TypeTable _typeTable;
 };
 
 #endif

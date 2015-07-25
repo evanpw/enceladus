@@ -28,7 +28,7 @@ public:
 	YYLTYPE location;
 
 	// For semantic analysis
-	std::shared_ptr<Type> type;
+	Type* type;
 
 	// For code generation
 	Value* value = nullptr;
@@ -81,7 +81,7 @@ public:
     std::vector<TypeName*> parameters;
 
     // Annotations
-    std::shared_ptr<Type> type;
+    Type* type;
 };
 
 class ConstructorSpec : public AstNode
@@ -97,10 +97,10 @@ public:
 	std::vector<TypeName*> members;
 
 	// Annotations
-	std::unordered_map<std::string, std::shared_ptr<Type>> typeContext;
-	std::shared_ptr<Type> resultType;
-	std::vector<std::shared_ptr<Type>> memberTypes;
-	ValueConstructor* valueConstructor = nullptr;
+	std::unordered_map<std::string, Type*> typeContext;
+	Type* resultType;
+	std::vector<Type*> memberTypes;
+	ValueConstructor* valueConstructor;
 };
 
 ////// Top-level nodes /////////////////////////////////////////////////////////
@@ -416,7 +416,7 @@ public:
 
 	// Annotations
 	std::vector<Symbol*> symbols;
-	ValueConstructor* valueConstructor = nullptr;
+	ValueConstructor* valueConstructor;
 };
 
 class MatchArm : public AstNode
@@ -433,10 +433,10 @@ public:
 	StatementNode* body;
 
 	// Annotations
-	std::shared_ptr<Type> matchType;
+	Type* matchType;
 	std::vector<Symbol*> symbols;
 	size_t constructorTag;
-	ValueConstructor* valueConstructor = nullptr;
+	ValueConstructor* valueConstructor;
 	Scope bodyScope;
 };
 
@@ -529,7 +529,7 @@ public:
 	TypeName* typeName;
 
 	// Annotations
-	std::shared_ptr<Type> memberType;
+	Type* memberType;
 };
 
 class StructDefNode : public StatementNode
@@ -545,7 +545,7 @@ public:
 	std::vector<MemberDefNode*> members;
 
 	// Annotations
-	std::shared_ptr<Type> structType;
+	Type* structType;
 	ValueConstructor* valueConstructor;
 };
 

@@ -38,18 +38,18 @@ struct Symbol
     FunctionDefNode* enclosingFunction;
 
     // Type (possibly polymorphic) of this variable or function
-    std::shared_ptr<TypeScheme> typeScheme;
-    std::shared_ptr<Type> type;
+    TypeScheme* typeScheme = nullptr;
+    Type* type = nullptr;
 
-    void setType(const std::shared_ptr<Type>& newType)
+    void setType(Type* newType)
     {
         type = newType;
-        typeScheme = TypeScheme::trivial(newType);
+        typeScheme = newType->table()->createTypeScheme(newType);
     }
 
-    void setTypeScheme(const std::shared_ptr<TypeScheme>& newTypeScheme)
+    void setTypeScheme(TypeScheme* newTypeScheme)
     {
-        type.reset();
+        type = nullptr;
         typeScheme = newTypeScheme;
     }
 
@@ -100,15 +100,15 @@ struct FunctionSymbol : public Symbol
 
 struct TypeSymbol : public Symbol
 {
-    TypeSymbol(const std::string& name, AstNode* node, std::shared_ptr<Type> type);
+    TypeSymbol(const std::string& name, AstNode* node, Type* type);
 };
 
 struct TypeConstructorSymbol : public Symbol
 {
     // Takes ownership of the pointer
-    TypeConstructorSymbol(const std::string& name, AstNode* node, const std::shared_ptr<TypeConstructor>& typeConstructor);
+    TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 
-    std::shared_ptr<TypeConstructor> typeConstructor;
+    TypeConstructor* typeConstructor;
 };
 
 struct MemberSymbol : public Symbol

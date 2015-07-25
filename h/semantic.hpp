@@ -26,7 +26,7 @@ private:
 class SemanticAnalyzer : public AstVisitor
 {
 public:
-    SemanticAnalyzer(ProgramNode* root);
+    SemanticAnalyzer(ProgramNode* root, AstContext* context);
     bool analyze();
 
     // Declarations
@@ -66,17 +66,17 @@ public:
 
 private:
     //// Type Inference ////////////////////////////////////////////////////////
-    std::shared_ptr<Type> newVariable();
+    Type* newVariable();
 
     static void inferenceError(AstNode* node, const std::string& msg);
 
-    static bool occurs(TypeVariable* variable, const std::shared_ptr<Type>& value);
-    void unify(const std::shared_ptr<Type>& lhs, const std::shared_ptr<Type>& rhs, AstNode* node);
-    void bindVariable(const std::shared_ptr<Type>& variable, const std::shared_ptr<Type>& value, AstNode* node);
+    static bool occurs(TypeVariable* variable, Type* value);
+    void unify(Type* lhs, Type* rhs, AstNode* node);
+    void bindVariable(Type* variable, Type* value, AstNode* node);
 
-    static std::unique_ptr<TypeScheme> generalize(const std::shared_ptr<Type>& type, const std::vector<Scope*>& scopes);
-    std::shared_ptr<Type> instantiate(const std::shared_ptr<Type>& type, const std::map<TypeVariable*, std::shared_ptr<Type>>& replacements);
-    std::shared_ptr<Type> instantiate(TypeScheme* scheme);
+    static TypeScheme* generalize(Type* type, const std::vector<Scope*>& scopes);
+    Type* instantiate(Type* type, const std::map<TypeVariable*, Type*>& replacements);
+    Type* instantiate(TypeScheme* scheme);
 
     static std::set<TypeVariable*> getFreeVars(Symbol& symbol);
 
@@ -90,10 +90,10 @@ private:
     FunctionSymbol* makeExternal(const std::string& name);
     void injectSymbols();
 
-    std::shared_ptr<TypeConstructor> getTypeConstructor(const TypeName* typeName);
-    void resolveBaseType(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
+    TypeConstructor* getTypeConstructor(const TypeName* typeName);
+    void resolveBaseType(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables=false);
     void resolveTypeName(TypeName* typeName, bool createVariables=false);
-    void resolveTypeName(TypeName* typeName, std::unordered_map<std::string, std::shared_ptr<Type>>& variables, bool createVariables=false);
+    void resolveTypeName(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables=false);
 
     void insertSymbol(Symbol* symbol);
     void releaseSymbol(Symbol* symbol);
@@ -105,6 +105,8 @@ private:
     void exitScope() { _scopes.pop_back(); }
 
     ProgramNode* _root;
+    AstContext* _context;
+    TypeTable* _typeTable;
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;
     std::vector<Scope*> _scopes;

@@ -11,7 +11,6 @@
 // A set of registers
 typedef MachineOperand Reg;
 typedef std::set<Reg*> RegSet;
-std::ostream& operator<<(std::ostream& out, const RegSet& regs);
 RegSet& operator+=(RegSet& lhs, const RegSet& rhs);
 RegSet& operator-=(RegSet& lhs, const RegSet& rhs);
 
@@ -24,8 +23,8 @@ typedef std::unordered_map<Reg*, size_t> Coloring;
 class RegAlloc
 {
 public:
-    void run(MachineFunction* function);
-    void dumpGraph() const;
+    RegAlloc(MachineFunction* function);
+    void run();
 
 private:
     MachineFunction* _function;
@@ -33,9 +32,6 @@ private:
 
     // Never allocate rsp and rbp
     static constexpr size_t AVAILABLE_COLORS = 14;
-
-    // For debugging: show live variables at each machine instruction
-    void dumpLiveness() const;
 
     // For each basic block, the registers which are given a value in that block
     void gatherDefinitions();
@@ -72,6 +68,10 @@ private:
 
     // Rewrite the function to replace virtual registers with hardware registers
     void replaceRegs();
+
+    // Combine live ranges that are related by a move instruction and which
+    // don't interfere
+    void coalesceMoves();
 
     // Assign an explicit location on the stack for each StackLocation and
     // rewrite instructions to use those locations

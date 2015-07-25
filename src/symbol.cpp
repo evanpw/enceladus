@@ -61,13 +61,13 @@ FunctionSymbol::FunctionSymbol(const std::string& name, AstNode* node, FunctionD
 {
 }
 
-TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, std::shared_ptr<Type> type)
+TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)
 : Symbol(name, kType, node, nullptr)
 {
     this->type = type;
 }
 
-TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, const std::shared_ptr<TypeConstructor>& typeConstructor)
+TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
 : Symbol(name, kTypeConstructor, node, nullptr)
 , typeConstructor(typeConstructor)
 {

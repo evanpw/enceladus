@@ -7,28 +7,6 @@
 #include <sstream>
 #include <stack>
 
-std::ostream& operator<<(std::ostream& out, const RegSet& regs)
-{
-    out << "{";
-
-    bool first = true;
-    for (Reg* reg : regs)
-    {
-        if (first)
-        {
-            out << *reg;
-            first = false;
-        }
-        else
-        {
-            out << ", " << *reg;
-        }
-    }
-    out << "}";
-
-    return out;
-}
-
 RegSet& operator+=(RegSet& lhs, const RegSet& rhs)
 {
     std::set_union(
@@ -52,11 +30,13 @@ RegSet& operator-=(RegSet& lhs, const RegSet& rhs)
     return lhs;
 }
 
-void RegAlloc::run(MachineFunction* function)
+RegAlloc::RegAlloc(MachineFunction* function)
+: _function(function), _context(_function->context)
 {
-    _function = function;
-    _context = _function->context;
+}
 
+void RegAlloc::run()
+{
     colorGraph();
     replaceRegs();
     assignStackLocations();
@@ -364,23 +344,6 @@ void RegAlloc::computeLiveness()
         if (!changed)
             break;
     }
-
-    //dumpLiveness();
-}
-
-void RegAlloc::dumpLiveness() const
-{
-    std::cerr << "Liveness:" << std::endl;
-    for (MachineBB* block : _function->blocks)
-    {
-        std::cerr << "label " << *block << ":" << std::endl;
-
-        std::cerr << "\tref: " << _uses.at(block) << std::endl;
-        std::cerr << "\tdef: " << _definitions.at(block) << std::endl;
-        std::cerr << "\tlive: " << _live.at(block) << std::endl;
-    }
-
-    std::cerr << std::endl;
 }
 
 void RegAlloc::computeInterference()
@@ -491,26 +454,6 @@ static std::string palette[16] =
     "#005784",
     "#31A2F2",
     "#B2DCEF",
-};
-
-static bool whiteText[16] =
-{
-    true,
-    false,
-    false,
-    true,
-    false,
-    true,
-    false,
-    false,
-    false,
-    true,
-    true,
-    false,
-    false,
-    true,
-    false,
-    false,
 };
 
 static std::string colorNames[16] =
@@ -650,6 +593,54 @@ void RegAlloc::spillVariable(Reg* reg)
     }
 }
 
+void RegAlloc::coalesceMoves()
+{
+    std::unordered_map<MachineOperand*, MachineOperand*> replacements;
+
+    for (MachineBB* block : _function->blocks)
+    {
+
+        for (auto itr = block->instructions.begin(); itr != block->instructions.end(); ++itr)
+        {
+            MachineInst* inst = *itr;
+
+            if (inst->opcode == Opcode::MOVrd &&
+                inst->inputs[0]->isVreg() &&
+                inst->outputs[0]->isVreg())
+            {
+                if (inst->inputs[0] != inst->outputs[0])
+                {
+                    auto adjacent = _igraph.at(inst->inputs[0]);
+                    if (adjacent.find(inst->outputs[0]) == adjacent.end())
+                    {
+                        replacements[inst->outputs[0]] = inst->inputs[0];
+                    }
+                }
+            }
+        }
+    }
+
+    for (MachineBB* block : _function->blocks)
+    {
+        for (MachineInst* inst : block->instructions)
+        {
+            // Replace inputs
+            for (size_t j = 0; j < inst->inputs.size(); ++j)
+            {
+                if (replacements.find(inst->inputs[j]) != replacements.end())
+                    inst->inputs[j] = replacements[inst->inputs[j]];
+            }
+
+            // Replace outputs
+            for (size_t j = 0; j < inst->outputs.size(); ++j)
+            {
+                if (replacements.find(inst->outputs[j]) != replacements.end())
+                    inst->outputs[j] = replacements[inst->outputs[j]];
+            }
+        }
+    }
+}
+
 void RegAlloc::colorGraph()
 {
     _spilled.clear();
@@ -659,6 +650,14 @@ void RegAlloc::colorGraph()
         gatherDefinitions();
         gatherUses();
         computeLiveness();
+        computeInterference();
+
+        coalesceMoves();
+
+        gatherDefinitions();
+        gatherUses();
+        computeLiveness();
+        computeInterference();
         computeInterference();
 
     } while (!tryColorGraph());
@@ -746,43 +745,4 @@ bool RegAlloc::tryColorGraph()
     }
 
     return true;
-}
-
-void RegAlloc::dumpGraph() const
-{
-    std::string fname = std::string("dots/") + "interference-" + _function->name + ".dot";
-    std::fstream f(fname.c_str(), std::ios::out);
-
-    f << "graph {" << std::endl;
-    f << "node[fontname=\"Inconsolata\"]" << ";" << std::endl;
-
-    std::unordered_set<Reg*> finished;
-
-    for (auto& item : _igraph)
-    {
-        Reg* reg = item.first;
-        auto others = item.second;
-
-        size_t color = _coloring.at(reg);
-
-        f << "\"\\" << *reg << "\" [fillcolor=\"" << palette[color] << "\", style=filled";
-        if (whiteText[color])
-            f << ", fontcolor=white";
-        f << "];" << std::endl;
-
-        for (Reg* other : others)
-        {
-            if (finished.find(other) == finished.end())
-                f << "\"\\" << *reg << "\" -- " << "\"\\" << *other << "\"" << ";" << std::endl;
-        }
-
-        finished.insert(reg);
-    }
-
-    for (auto& item : _spilled)
-    {
-        f << "\"\\" << *(item.first) << " (spilled)\";" << std::endl;
-    }
-
-    f << "}" << std::endl;
 }

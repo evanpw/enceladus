@@ -590,7 +590,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         arguments.push_back(i->value);
     }
 
-    if (unwrap(node->type) != Type::Unit)
+    if (unwrap(node->type) != node->type->table()->Unit)
         node->value = makeTemp();
 
     Value* result = node->value;

@@ -8,16 +8,22 @@
 #include <cassert>
 #include <sstream>
 
-std::shared_ptr<Type> Type::Int = BaseType::create("Int", true);
-std::shared_ptr<Type> Type::Bool = BaseType::create("Bool", true);
-std::shared_ptr<Type> Type::Unit = BaseType::create("Unit", true);
-std::shared_ptr<Type> Type::String = BaseType::create("String", false);
+TypeTable::TypeTable()
+{
+    Int = createBaseType("Int", true);
+    Bool = createBaseType("Bool", true);
+    Unit = createBaseType("Unit", true);
+    String = createBaseType("String", false);
 
-std::shared_ptr<Type> unwrap(const std::shared_ptr<Type>& type)
+    Function = createTypeConstructor("Function", 1);
+    Array = createTypeConstructor("Array", 1);
+}
+
+Type* unwrap(Type* type)
 {
     if (type->isVariable())
     {
-        std::shared_ptr<Type> target = type->get<TypeVariable>()->target();
+        Type* target = type->get<TypeVariable>()->target();
         if (target)
         {
             return unwrap(target);
@@ -45,7 +51,7 @@ std::set<TypeVariable*> Type::freeVars()
         case ttVariable:
         {
             TypeVariable* typeVar = dynamic_cast<TypeVariable*>(this);
-            std::shared_ptr<Type> target = typeVar->deref();
+            Type* target = typeVar->deref();
 
             if (target)
             {
@@ -73,7 +79,7 @@ std::set<TypeVariable*> Type::freeVars()
         case ttConstructed:
         {
             ConstructedType* constructedType = dynamic_cast<ConstructedType*>(this);
-            for (const std::shared_ptr<Type>& parameter : constructedType->typeParameters())
+            for (Type* parameter : constructedType->typeParameters())
             {
                 result += parameter->freeVars();
             }
@@ -103,7 +109,7 @@ std::string TypeScheme::name() const
     return ss.str();
 }
 
-std::set<TypeVariable*> TypeScheme::freeVars() const
+std::set<TypeVariable*> TypeScheme::freeVars()
 {
     std::set<TypeVariable*> allVars = _type->freeVars();
     for (TypeVariable* boundVar : _quantified)
@@ -114,8 +120,7 @@ std::set<TypeVariable*> TypeScheme::freeVars() const
     return allVars;
 }
 
-std::pair<size_t, ValueConstructor*> Type::getValueConstructor(
-        const std::string& name) const
+std::pair<size_t, ValueConstructor*> Type::getValueConstructor(const std::string& name) const
 {
     for (size_t i = 0; i < _valueConstructors.size(); ++i)
     {
@@ -160,12 +165,10 @@ std::string FunctionType::name() const
     return ss.str();
 }
 
-ConstructedType::ConstructedType(
-        const std::shared_ptr<TypeConstructor>& typeConstructor,
-        std::initializer_list<std::shared_ptr<Type>> typeParameters)
-: Type(ttConstructed), _typeConstructor(typeConstructor)
+ConstructedType::ConstructedType(TypeTable* table, TypeConstructor* typeConstructor, std::initializer_list<Type*> typeParameters)
+: Type(table, ttConstructed), _typeConstructor(typeConstructor)
 {
-    for (const std::shared_ptr<Type>& parameter : typeParameters)
+    for (Type* parameter : typeParameters)
     {
         _typeParameters.push_back(parameter);
     }
@@ -176,12 +179,10 @@ ConstructedType::ConstructedType(
     }
 }
 
-ConstructedType::ConstructedType(
-        const std::shared_ptr<TypeConstructor>& typeConstructor,
-        const std::vector<std::shared_ptr<Type>> typeParameters)
-: Type(ttConstructed), _typeConstructor(typeConstructor)
+ConstructedType::ConstructedType(TypeTable* table, TypeConstructor* typeConstructor, const std::vector<Type*>& typeParameters)
+: Type(table, ttConstructed), _typeConstructor(typeConstructor)
 {
-    for (const std::shared_ptr<Type>& parameter : typeParameters)
+    for (Type* parameter : typeParameters)
     {
         _typeParameters.push_back(parameter);
     }
@@ -204,7 +205,7 @@ std::string ConstructedType::name() const
     else
     {
         ss << _typeConstructor->name();
-        for (const std::shared_ptr<Type>& type : _typeParameters)
+        for (const Type* type : _typeParameters)
         {
             ss << " " << type->name();
         }
@@ -215,7 +216,7 @@ std::string ConstructedType::name() const
 
 int TypeVariable::_count;
 
-ValueConstructor::ValueConstructor(Symbol* symbol, const std::vector<std::shared_ptr<Type>>& memberTypes,
+ValueConstructor::ValueConstructor(Symbol* symbol, const std::vector<Type*>& memberTypes,
                                    const std::vector<std::string>& memberNames)
 : _symbol(symbol)
 {
@@ -224,7 +225,7 @@ ValueConstructor::ValueConstructor(Symbol* symbol, const std::vector<std::shared
     for (size_t i = 0; i < memberTypes.size(); ++i)
     {
         std::string memberName = memberNames.empty() ? "" : memberNames[i];
-        std::shared_ptr<Type> type = memberTypes[i];
+        Type* type = memberTypes[i];
         _members.emplace_back(memberName, type, i);
     }
 }
@@ -233,6 +234,3 @@ std::string ValueConstructor::name() const
 {
     return _symbol->name;
 }
-
-std::shared_ptr<TypeConstructor> TypeConstructor::Function = TypeConstructor::create("Function", 1);
-std::shared_ptr<TypeConstructor> TypeConstructor::Array = TypeConstructor::create("Array", 1);
