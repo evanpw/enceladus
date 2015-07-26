@@ -50,19 +50,8 @@ void SemanticAnalyzer::semanticError(const YYLTYPE& location, const std::string&
 {
     std::stringstream ss;
 
-    ss << "Near line " << location.first_line << ", "
-       << "column " << location.first_column << ": "
-       << format(str, args...);
-
-    throw SemanticError(ss.str());
-}
-
-template<typename... Args>
-void SemanticAnalyzer::semanticErrorNoNode(const std::string& str, Args... args)
-{
-    std::stringstream ss;
-
-    ss << "" << format(str, args...);
+    ss << location.filename << ":" << location.first_line << ":" << location.first_column
+       << ": " << format(str, args...);
 
     throw SemanticError(ss.str());
 }
@@ -323,13 +312,12 @@ void SemanticAnalyzer::bindVariable(Type* variable, Type* value, AstNode* node)
 
 void SemanticAnalyzer::inferenceError(AstNode* node, const std::string& msg)
 {
-    //std::cerr << typeid(*node).name() << std::endl;
-
     std::stringstream ss;
 
-    ss << "Near line " << node->location.first_line << ", "
-       << "column " << node->location.first_column << ": "
-       << "error: " << msg;
+    auto location = node->location;
+
+    ss << location.filename << ":" << location.first_line <<  ":" << location.first_column
+       << ": " << msg;
 
     throw TypeInferenceError(ss.str());
 }
@@ -492,12 +480,6 @@ void SemanticAnalyzer::unify(Type* a, Type* b, AstNode* node)
 {
     Type* lhs = unwrap(a);
     Type* rhs = unwrap(b);
-
-    // std::cerr << "unify: "
-    //           << lhs->name() << " " << lhs->isVariable() << ((lhs->isVariable()) ? lhs->get<TypeVariable>()->rigid() : false)
-    //           << " -- "
-    //           << rhs->name() << " " << rhs->isVariable() << ((rhs->isVariable()) ? rhs->get<TypeVariable>()->rigid() : false)
-    //           << std::endl;
 
     assert(lhs && rhs && node);
 
@@ -757,8 +739,6 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	releaseSymbol(symbol);
 	symbol->setTypeScheme(generalize(symbol->typeScheme->type(), _scopes));
 	insertSymbol(symbol);
-
-    //std::cerr << name << " :: " << symbol->typeScheme->name() << std::endl;
 
     unify(node->body->type, functionType->output(), node);
     node->type = _typeTable->Unit;

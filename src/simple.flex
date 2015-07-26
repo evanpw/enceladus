@@ -56,14 +56,78 @@ int char_literal(const char* s)
     }
 }
 
-std::stack<std::pair<int, int>> locationStack;
-
 int unclosedBrackets = 0;
 
 int yycolumn = 1;
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
     yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
-    yycolumn += yyleng;
+    yylloc.filename = currentFilename; yycolumn += yyleng;
+
+
+std::stack<std::pair<int, int>> locationStack;
+std::stack<const char*> filenameStack;
+const char* currentFilename;
+
+void initializeLexer(const std::string& fileName)
+{
+    yyin = fopen(fileName.c_str(), "r");
+    assert(yyin);
+
+    filenameStack.push(NULL);
+    filenameStack.push(StringTable::add(fileName.c_str()));
+
+    yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+
+    yylineno = 1;
+    yycolumn = 1;
+    currentFilename = filenameStack.top();
+
+    BEGIN(0);
+}
+
+void importFile(const std::string& fileName)
+{
+    yyin = fopen(fileName.c_str(), "r");
+    assert(yyin);
+
+    filenameStack.push(StringTable::add(fileName.c_str()));
+
+    yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+    locationStack.push({yylineno, yycolumn});
+
+    yylineno = 1;
+    yycolumn = 1;
+    currentFilename = filenameStack.top();
+
+    BEGIN(0);
+}
+
+extern int yylex_destroy();
+
+void shutdownLexer()
+{
+    while (1)
+    {
+        if (yyin)
+        {
+            fclose(yyin);
+        }
+
+        yypop_buffer_state();
+
+        if (!YY_CURRENT_BUFFER)
+        {
+            yylex_destroy();
+            return;
+        }
+    }
+}
+
+extern "C" int yywrap()
+{
+    return 1;
+}
+
 %}
 
 %option yylineno
@@ -84,9 +148,8 @@ int yycolumn = 1;
     catch (boost::bad_lexical_cast&)
     {
         std::stringstream ss;
-        ss << "Near line " << yylloc.first_line << ", "
-           << "column " << yylloc.first_column << ": "
-           << "error: integer literal out of range: " << yytext;
+        ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
+           << ": error: integer literal out of range: " << yytext;
 
         throw LexerError(ss.str());
      }
@@ -162,19 +225,16 @@ int yycolumn = 1;
  /* Import file name */
 <import>[^ \t\n]+\n {
 
-    FILE* f = fopen((std::string("lib/") + trim_right(yytext) + ".spl").c_str(), "r");
-    assert(f);
-
-    yypush_buffer_state(yy_create_buffer(f, YY_BUF_SIZE));
-    locationStack.push({yylineno, yycolumn});
-
-    yylineno = 1;
-    yycolumn = 1;
-
-    BEGIN(INITIAL);
+    importFile(std::string("lib/") + trim_right(yytext) + ".spl");
 }
 
 <<EOF>> {
+    if (yyin)
+    {
+        fclose(yyin);
+        yyin = NULL;
+    }
+
     yypop_buffer_state();
 
     if (!locationStack.empty())
@@ -184,6 +244,9 @@ int yycolumn = 1;
         yylineno = prevLocation.first;
         yycolumn = prevLocation.second;
     }
+
+    filenameStack.pop();
+    currentFilename = filenameStack.top();
 
     if (!YY_CURRENT_BUFFER)
     {
@@ -204,9 +267,8 @@ int yycolumn = 1;
 
 .                        {
                             std::stringstream ss;
-                            ss << "Near line " << yylloc.first_line << ", "
-                               << "column " << yylloc.first_column << ": "
-                               << "error: stray '" << yytext[0] << "'";
+                            ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
+                               << ": stray '" << yytext[0] << "'";
 
                             throw LexerError(ss.str());
                          }

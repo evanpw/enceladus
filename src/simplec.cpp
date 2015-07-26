@@ -17,34 +17,10 @@
 #include <iostream>
 
 extern ProgramNode* parse();
-extern FILE* yyin;
 
-FILE* mainFile;
-bool lastFile = false;
-
-extern int yylineno;
-extern int yycolumn;
-
-extern "C" int yywrap()
-{
-	if (lastFile)
-	{
-		return 1;
-	}
-	else
-	{
-		fclose(yyin);
-		yyin = mainFile;
-
-		lastFile = true;
-		yylineno = 1;
-		yycolumn = 0;
-
-		return 0;
-	}
-}
-
-extern int yylex_destroy();
+extern void initializeLexer(const std::string& fileName);
+extern void importFile(const std::string& fileName);
+extern void shutdownLexer();
 
 int main(int argc, char* argv[])
 {
@@ -54,39 +30,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	if (strcmp(argv[1], "--noPrelude") == 0)
-	{
-		lastFile = true;
-
-		if (argc < 2)
-		{
-			std::cerr << "Please specify a source file to compile." << std::endl;
-			return 1;
-		}
-
-		yyin = fopen(argv[2], "r");
-		if (yyin == nullptr)
-		{
-			std::cerr << "File " << argv[1] << " not found" << std::endl;
-			return 1;
-		}
-	}
-	else
-	{
-		mainFile = fopen(argv[1], "r");
-		if (mainFile == nullptr)
-		{
-			std::cerr << "File " << argv[1] << " not found" << std::endl;
-			return 1;
-		}
-
-		yyin = fopen("lib/prelude.spl", "r");
-		if (yyin == nullptr)
-		{
-			std::cerr << "cannot find prelude.spl" << std::endl;
-			return 1;
-		}
-	}
+	initializeLexer(argv[1]);
+	importFile("lib/prelude.spl");
 
 	// Translate an input file to an AST (lexer and scanner)
 	AstContext* astContext = new AstContext;
@@ -98,13 +43,13 @@ int main(int argc, char* argv[])
 	catch (LexerError& e)
 	{
 		std::cerr << "Error: " << e.what() << std::endl;
-		fclose(yyin);
-		yylex_destroy();
+		delete astContext;
+		shutdownLexer();
+
 		return 1;
 	}
 
-	fclose(yyin);
-	yylex_destroy();
+	shutdownLexer();
 
 
 	// Process and annotate the AST

@@ -83,8 +83,6 @@ private:
     //// General semantic analysis /////////////////////////////////////////////
     template<typename... Args>
     void semanticError(const YYLTYPE& location, const std::string& str, Args... args);
-    template<typename... Args>
-    void semanticErrorNoNode(const std::string& str, Args... args);
 
     FunctionSymbol* makeBuiltin(const std::string& name);
     FunctionSymbol* makeExternal(const std::string& name);

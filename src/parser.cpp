@@ -62,9 +62,8 @@ Token expect(TokenType t)
 
     std::stringstream ss;
 
-    ss << "Near line " << location.first_line << ", "
-       << "column " << location.first_column << ": "
-       << "expected " << tokenToString(t) << ", but got "
+    ss << location.filename << ":" << location.first_line << ":" << location.first_column
+       << ": expected " << tokenToString(t) << ", but got "
        << tokenToString(nextTokens[0].type);
 
     throw LexerError(ss.str());
@@ -1044,9 +1043,8 @@ ExpressionNode* Parser::unary_expression()
     {
         std::stringstream ss;
 
-        ss << "Near line " << location.first_line << ", "
-           << "column " << location.first_column << ": "
-           << "token " << tokenToString(peekType()) << " cannot start a unary expression.";
+        ss << location.filename << ":" << location.first_line << ":" << location.first_column
+           << ": token " << tokenToString(peekType()) << " cannot start a unary expression.";
 
         throw LexerError(ss.str());
     }

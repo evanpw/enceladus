@@ -137,13 +137,13 @@ class TestAcceptance(object):
         self.run('closure', result='7')
 
     def test_structMembers1(self):
-        self.run('structMembers1', build_error='Error: Near line 3, column 5: symbol "x" is already defined')
+        self.run('structMembers1', build_error='Error: testing/structMembers1.spl:3:5: symbol "x" is already defined')
 
     def test_structMembers2(self):
-        self.run('structMembers2', build_error='Error: Near line 7, column 5: symbol "y" is already defined')
+        self.run('structMembers2', build_error='Error: testing/structMembers2.spl:7:5: symbol "y" is already defined')
 
     def test_structMembers3(self):
-        self.run('structMembers3', build_error='Error: Near line 5, column 1: symbol "x" is already defined in this scope')
+        self.run('structMembers3', build_error='Error: testing/structMembers3.spl:5:1: symbol "x" is already defined in this scope')
 
     def test_structInference(self):
         self.run('structInference', result='7')
@@ -167,25 +167,25 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error='Error: Near line 4, column 1: error: cannot unify types Bool and Int')
+        self.run('importSemantic', build_error='Error: testing/importSemantic.spl:4:1: cannot unify types Bool and Int')
 
     def test_syntaxError(self):
-        self.run('syntaxError', build_error='Error: Near line 1, column 2: expected tEOL, but got =')
+        self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:3: expected tEOL, but got =')
 
     def test_constructorMismatch(self):
-        self.run('constructorMismatch', build_error='Error: Near line 3, column 10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
+        self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
 
     def test_overrideType(self):
-        self.run('overrideType', build_error=Regex('Error: Near line 2, column 16: error: cannot unify types Int and a\d+'))
+        self.run('overrideType', build_error=Regex('Error: testing/overrideType.spl:2:16: cannot unify types Int and a\d+'))
 
     def test_noReturn(self):
         self.run('noReturn', result='1')
 
     def test_noReturn2(self):
-        self.run('noReturn2', build_error='Error: Near line 1, column 0: error: cannot unify types Unit and Int')
+        self.run('noReturn2', build_error='Error: testing/noReturn2.spl:1:1: cannot unify types Unit and Int')
 
     def test_noReturn3(self):
-        self.run('noReturn3', build_error='Error: Near line 1, column 0: error: cannot unify types Unit and Int')
+        self.run('noReturn3', build_error='Error: testing/noReturn3.spl:1:1: cannot unify types Unit and Int')
 
     def test_implicitReturn(self):
         self.run('implicitReturn', result='4')
@@ -203,16 +203,25 @@ class TestAcceptance(object):
         self.run('adt2', result='2')
 
     def test_adt3(self):
-        self.run('adt3', build_error='Error: Near line 6, column 5: cannot repeat constructors in match statement')
+        self.run('adt3', build_error='Error: testing/adt3.spl:6:5: cannot repeat constructors in match statement')
 
     def test_adt4(self):
-        self.run('adt4', build_error='Error: Near line 4, column 1: switch statement is not exhaustive')
+        self.run('adt4', build_error='Error: testing/adt4.spl:4:1: switch statement is not exhaustive')
 
     def test_array1(self):
         self.run('array1', result='12345')
 
     def test_array2(self):
         self.run('array2', result='15')
+
+    def test_intOutOfRange1(self):
+        self.run('intOutOfRange1', build_error='Error: testing/intOutOfRange1.spl:2:6: error: integer literal out of range: 9223372036854775808')
+
+    def test_intOutOfRange2(self):
+        self.run('intOutOfRange2', build_error='Error: testing/intOutOfRange2.spl:2:6: error: integer literal out of range: -9223372036854775809')
+
+    def test_wrongReturnType(self):
+        self.run('wrongReturnType', build_error='Error: testing/wrongReturnType.spl:2:5: cannot unify types String and Int')
 
     # Medium tests (100ms-1s)
 

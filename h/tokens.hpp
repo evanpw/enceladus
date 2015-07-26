@@ -58,6 +58,7 @@ std::string tokenToString(TokenType t);
 
 struct YYLTYPE
 {
+    const char* filename;
     int first_line;
     int first_column;
     int last_line;
