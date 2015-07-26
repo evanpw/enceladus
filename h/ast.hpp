@@ -20,7 +20,7 @@ class AstContext;
 class AstNode
 {
 public:
-	AstNode(AstContext& context, const YYLTYPE& location);
+	AstNode(AstContext* context, const YYLTYPE& location);
 	virtual ~AstNode();
 	virtual void accept(AstVisitor* visitor) = 0;
 
@@ -39,7 +39,7 @@ public:
 class StatementNode : public AstNode
 {
 public:
-	StatementNode(AstContext& context, const YYLTYPE& location)
+	StatementNode(AstContext* context, const YYLTYPE& location)
 	: AstNode(context, location)
 	{}
 };
@@ -47,7 +47,7 @@ public:
 class ExpressionNode : public StatementNode
 {
 public:
-	ExpressionNode(AstContext& context, const YYLTYPE& location)
+	ExpressionNode(AstContext* context, const YYLTYPE& location)
 	: StatementNode(context, location)
 	{}
 };
@@ -55,7 +55,7 @@ public:
 class LoopNode : public StatementNode
 {
 public:
-	LoopNode(AstContext& context, const YYLTYPE& location)
+	LoopNode(AstContext* context, const YYLTYPE& location)
 	: StatementNode(context, location)
 	{}
 };
@@ -65,11 +65,11 @@ public:
 class TypeName : public AstNode
 {
 public:
-    TypeName(AstContext& context, const YYLTYPE& location, const std::string& name)
+    TypeName(AstContext* context, const YYLTYPE& location, const std::string& name)
     : AstNode(context, location), name(name)
     {}
 
-    TypeName(AstContext& context, const YYLTYPE& location, const char* name)
+    TypeName(AstContext* context, const YYLTYPE& location, const char* name)
     : AstNode(context, location), name(name)
     {}
 
@@ -87,7 +87,7 @@ public:
 class ConstructorSpec : public AstNode
 {
 public:
-	ConstructorSpec(AstContext& context, const YYLTYPE& location, const std::string& name)
+	ConstructorSpec(AstContext* context, const YYLTYPE& location, const std::string& name)
 	: AstNode(context, location), name(name)
 	{}
 
@@ -108,7 +108,7 @@ public:
 class ProgramNode : public AstNode
 {
 public:
-	ProgramNode(AstContext& context, const YYLTYPE& location)
+	ProgramNode(AstContext* context, const YYLTYPE& location)
 	: AstNode(context, location)
 	{}
 
@@ -125,7 +125,7 @@ public:
 class BlockNode : public ExpressionNode
 {
 public:
-	BlockNode(AstContext& context, const YYLTYPE& location)
+	BlockNode(AstContext* context, const YYLTYPE& location)
 	: ExpressionNode(context, location)
 	{}
 
@@ -139,7 +139,7 @@ class LogicalNode : public ExpressionNode
 public:
 	enum Operator {kAnd, kOr};
 
-	LogicalNode(AstContext& context, const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	LogicalNode(AstContext* context, const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
 	: ExpressionNode(context, location), lhs(lhs), op(op), rhs(rhs)
 	{}
 
@@ -155,7 +155,7 @@ class ComparisonNode : public ExpressionNode
 public:
 	enum Operator { kGreater, kEqual, kLess, kGreaterOrEqual, kLessOrEqual, kNotEqual };
 
-	ComparisonNode(AstContext& context, const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
+	ComparisonNode(AstContext* context, const YYLTYPE& location, ExpressionNode* lhs, Operator op, ExpressionNode* rhs)
 	: ExpressionNode(context, location), lhs(lhs), op(op), rhs(rhs)
 	{}
 
@@ -169,7 +169,7 @@ public:
 class NullaryNode : public ExpressionNode
 {
 public:
-	NullaryNode(AstContext& context, const YYLTYPE& location, const std::string& name)
+	NullaryNode(AstContext* context, const YYLTYPE& location, const std::string& name)
 	: ExpressionNode(context, location), name(name)
 	{}
 
@@ -186,7 +186,7 @@ public:
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(AstContext& context, const YYLTYPE& location, int64_t intValue)
+	IntNode(AstContext* context, const YYLTYPE& location, int64_t intValue)
 	: ExpressionNode(context, location), intValue(intValue)
 	{}
 
@@ -198,7 +198,7 @@ public:
 class BoolNode : public ExpressionNode
 {
 public:
-	BoolNode(AstContext& context, const YYLTYPE& location, bool boolValue)
+	BoolNode(AstContext* context, const YYLTYPE& location, bool boolValue)
 	: ExpressionNode(context, location), boolValue(boolValue)
 	{}
 
@@ -208,12 +208,12 @@ public:
 };
 
 // Syntactic sugar for list and string literals
-FunctionCallNode* makeList(AstContext& context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements);
+FunctionCallNode* makeList(AstContext* context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements);
 
 class StringLiteralNode : public ExpressionNode
 {
 public:
-	StringLiteralNode(AstContext& context, const YYLTYPE& location, const std::string& content)
+	StringLiteralNode(AstContext* context, const YYLTYPE& location, const std::string& content)
 	: ExpressionNode(context, location), content(content), counter(nextCounter++)
 	{
 	}
@@ -232,11 +232,11 @@ public:
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(AstContext& context, const YYLTYPE& location, const std::string& target, std::vector<ExpressionNode*>&& arguments)
+	FunctionCallNode(AstContext* context, const YYLTYPE& location, const std::string& target, std::vector<ExpressionNode*>&& arguments)
 	: ExpressionNode(context, location), target(target), arguments(std::move(arguments))
 	{}
 
-	FunctionCallNode(AstContext& context, const YYLTYPE& location, const std::string& target, std::initializer_list<ExpressionNode*>&& args)
+	FunctionCallNode(AstContext* context, const YYLTYPE& location, const std::string& target, std::initializer_list<ExpressionNode*>&& args)
     : ExpressionNode(context, location), target(target), arguments(std::move(args))
     {
     }
@@ -253,7 +253,7 @@ public:
 class VariableNode : public ExpressionNode
 {
 public:
-	VariableNode(AstContext& context, const YYLTYPE& location, const std::string& name)
+	VariableNode(AstContext* context, const YYLTYPE& location, const std::string& name)
 	: ExpressionNode(context, location), name(name)
 	{
 	}
@@ -271,7 +271,7 @@ public:
 class IfNode : public StatementNode
 {
 public:
-	IfNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
+	IfNode(AstContext* context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
 	: StatementNode(context, location), condition(condition), body(body)
 	{}
 
@@ -287,7 +287,7 @@ public:
 class IfElseNode : public StatementNode
 {
 public:
-	IfElseNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* elseBody)
+	IfElseNode(AstContext* context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* elseBody)
 	: StatementNode(context, location), condition(condition), body(body), elseBody(elseBody)
 	{}
 
@@ -305,7 +305,7 @@ public:
 class WhileNode : public LoopNode
 {
 public:
-	WhileNode(AstContext& context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
+	WhileNode(AstContext* context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
 	: LoopNode(context, location), condition(condition), body(body)
 	{}
 
@@ -321,7 +321,7 @@ public:
 class ForeverNode : public LoopNode
 {
 public:
-	ForeverNode(AstContext& context, const YYLTYPE& location, StatementNode* body)
+	ForeverNode(AstContext* context, const YYLTYPE& location, StatementNode* body)
 	: LoopNode(context, location), body(body)
 	{}
 
@@ -336,7 +336,7 @@ public:
 class BreakNode : public StatementNode
 {
 public:
-	BreakNode(AstContext& context, const YYLTYPE& location)
+	BreakNode(AstContext* context, const YYLTYPE& location)
 	: StatementNode(context, location)
 	{}
 
@@ -344,12 +344,12 @@ public:
 };
 
 // For loops are implemented as pure syntactic sugar
-BlockNode* makeForNode(AstContext& context, const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body);
+BlockNode* makeForNode(AstContext* context, const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body);
 
 class AssignNode : public StatementNode
 {
 public:
-	AssignNode(AstContext& context, const YYLTYPE& location, const std::string& target, ExpressionNode* rhs)
+	AssignNode(AstContext* context, const YYLTYPE& location, const std::string& target, ExpressionNode* rhs)
 	: StatementNode(context, location), target(target), rhs(rhs)
 	{
 	}
@@ -366,7 +366,7 @@ public:
 class LetNode : public StatementNode
 {
 public:
-	LetNode(AstContext& context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* rhs)
+	LetNode(AstContext* context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* rhs)
 	: StatementNode(context, location), target(target), typeName(typeName), rhs(rhs)
 	{}
 
@@ -383,7 +383,7 @@ public:
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(AstContext& context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& params, TypeName* typeName)
+	FunctionDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& params, TypeName* typeName)
 	: StatementNode(context, location), name(name), body(body), params(params), typeName(typeName)
 	{}
 
@@ -404,7 +404,7 @@ public:
 class MatchNode : public StatementNode
 {
 public:
-	MatchNode(AstContext& context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, ExpressionNode* body)
+	MatchNode(AstContext* context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, ExpressionNode* body)
 	: StatementNode(context, location), constructor(constructor), params(params), body(body)
 	{}
 
@@ -422,7 +422,7 @@ public:
 class MatchArm : public AstNode
 {
 public:
-	MatchArm(AstContext& context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, StatementNode* body)
+	MatchArm(AstContext* context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, StatementNode* body)
 	: AstNode(context, location), constructor(constructor), params(params), body(body)
 	{}
 
@@ -443,7 +443,7 @@ public:
 class SwitchNode : public StatementNode
 {
 public:
-	SwitchNode(AstContext& context, const YYLTYPE& location, ExpressionNode* expr, std::vector<MatchArm*>&& arms)
+	SwitchNode(AstContext* context, const YYLTYPE& location, ExpressionNode* expr, std::vector<MatchArm*>&& arms)
 	: StatementNode(context, location), expr(expr), arms(std::move(arms))
 	{}
 
@@ -456,7 +456,7 @@ public:
 class DataDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(AstContext& context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, const std::vector<ConstructorSpec*>& specs)
+	DataDeclaration(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, const std::vector<ConstructorSpec*>& specs)
 	: StatementNode(context, location), name(name), typeParameters(typeParameters)
 	{
 		constructorSpecs = specs;
@@ -475,7 +475,7 @@ public:
 class TypeAliasNode : public StatementNode
 {
 public:
-	TypeAliasNode(AstContext& context, const YYLTYPE& location, const std::string& name, TypeName* underlying)
+	TypeAliasNode(AstContext* context, const YYLTYPE& location, const std::string& name, TypeName* underlying)
 	: StatementNode(context, location), name(name), underlying(underlying)
 	{}
 
@@ -488,7 +488,7 @@ public:
 class ForeignDeclNode : public StatementNode
 {
 public:
-	ForeignDeclNode(AstContext& context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
+	ForeignDeclNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
 	: StatementNode(context, location), name(name), params(params), typeName(typeName)
 	{}
 
@@ -505,7 +505,7 @@ public:
 class ReturnNode : public StatementNode
 {
 public:
-	ReturnNode(AstContext& context, const YYLTYPE& location, ExpressionNode* expression)
+	ReturnNode(AstContext* context, const YYLTYPE& location, ExpressionNode* expression)
 	: StatementNode(context, location), expression(expression)
 	{}
 
@@ -519,7 +519,7 @@ public:
 class MemberDefNode : public AstNode
 {
 public:
-	MemberDefNode(AstContext& context, const YYLTYPE& location, const std::string& name, TypeName* typeName)
+	MemberDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, TypeName* typeName)
 	: AstNode(context, location), name(name), typeName(typeName)
 	{}
 
@@ -535,7 +535,7 @@ public:
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(AstContext& context, const YYLTYPE& location, const std::string& name, const std::vector<MemberDefNode*>& members)
+	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<MemberDefNode*>& members)
 	: StatementNode(context, location), name(name), members(members)
 	{}
 
@@ -553,7 +553,7 @@ public:
 class MemberAccessNode : public ExpressionNode
 {
 public:
-	MemberAccessNode(AstContext& context, const YYLTYPE& location, const std::string& varName, const std::string& memberName)
+	MemberAccessNode(AstContext* context, const YYLTYPE& location, const std::string& varName, const std::string& memberName)
 	: ExpressionNode(context, location), varName(varName), memberName(memberName)
 	{}
 

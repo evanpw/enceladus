@@ -103,7 +103,7 @@ ProgramNode* Parser::program()
         node->children.push_back(statement());
     }
 
-    _context.setRoot(node);
+    _context->setRoot(node);
 
     return node;
 }

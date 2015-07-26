@@ -89,8 +89,8 @@ Symbol* SemanticAnalyzer::resolveTypeSymbol(const std::string& name)
     return nullptr;
 }
 
-SemanticAnalyzer::SemanticAnalyzer(ProgramNode* root, AstContext* context)
-: _root(root)
+SemanticAnalyzer::SemanticAnalyzer(AstContext* context)
+: _root(context->root())
 , _context(context)
 , _typeTable(context->typeTable())
 , _enclosingFunction(nullptr)

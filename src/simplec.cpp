@@ -19,8 +19,6 @@
 extern ProgramNode* parse();
 extern FILE* yyin;
 
-ProgramNode* root;
-
 FILE* mainFile;
 bool lastFile = false;
 
@@ -90,9 +88,8 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	int return_value = 1;
-
-	AstContext astContext;
+	// Translate an input file to an AST (lexer and scanner)
+	AstContext* astContext = new AstContext;
 	Parser parser(astContext);
 	try
 	{
@@ -102,66 +99,85 @@ int main(int argc, char* argv[])
 	{
 		std::cerr << "Error: " << e.what() << std::endl;
 		fclose(yyin);
+		yylex_destroy();
 		return 1;
-	}
-
-	ProgramNode* root = astContext.root();
-	SemanticAnalyzer semant(root, &astContext);
-	bool semantic_success = semant.analyze();
-	if (semantic_success)
-	{
-		TACContext* tacContext = new TACContext;
-		TACCodeGen tacGen(tacContext);
-		root->accept(&tacGen);
-
-		return_value = 0;
-
-		TACValidator validator(tacContext);
-		assert(validator.isValid());
-
-		MachineContext machineContext;
-
-		for (Function* function : tacContext->functions)
-		{
-			ToSSA toSSA(function);
-			toSSA.run();
-
-			FromSSA fromSSA(function);
-			fromSSA.run();
-
-			// MachineCodeGen codeGen(&machineContext, function);
-			// MachineFunction* mf = codeGen.getResult();
-
-			// RegAlloc regAlloc(mf);
-			// regAlloc.run();
-
-			// RedundantMoves redundantMoves(mf);
-			// redundantMoves.run();
-		}
-
-		// for (Value* externFunction : tacContext->externs)
-		// {
-		// 	machineContext.externs.push_back(externFunction->name);
-		// }
-		// machineContext.externs.push_back("ccall");
-
-		// for (auto& item : tacContext->staticStrings)
-		// {
-		// 	machineContext.staticStrings.emplace_back(item.first->name, item.second);
-		// }
-
-		// for (Value* global : tacContext->globals)
-		// {
-		// 	machineContext.globals.push_back(global->name);
-		// }
-
-		delete tacContext;
-
-		// AsmPrinter asmPrinter(std::cout);
-		// asmPrinter.printProgram(&machineContext);
 	}
 
 	fclose(yyin);
 	yylex_destroy();
-	return return_value;
+
+
+	// Process and annotate the AST
+	SemanticAnalyzer semant(astContext);
+	if (!semant.analyze())
+		return 1;
+
+
+	// Convert the AST to IR code
+	TACContext* tacContext = new TACContext;
+	TACCodeGen tacGen(tacContext);
+	tacGen.codeGen(astContext);
+
+	delete astContext;
+
+
+	// Process the IR code
+	TACValidator validator(tacContext);
+	assert(validator.isValid());
+
+	for (Function* function : tacContext->functions)
+	{
+		ToSSA toSSA(function);
+		toSSA.run();
+
+		FromSSA fromSSA(function);
+		fromSSA.run();
+	}
+
+
+	// Convert the IR code to abstract machine code
+	MachineContext* machineContext = new MachineContext;
+
+	for (Function* function : tacContext->functions)
+	{
+		MachineCodeGen codeGen(machineContext, function);
+	}
+
+	for (Value* externFunction : tacContext->externs)
+	{
+		machineContext->externs.push_back(externFunction->name);
+	}
+	machineContext->externs.push_back("ccall");
+
+	for (auto& item : tacContext->staticStrings)
+	{
+		machineContext->staticStrings.emplace_back(item.first->name, item.second);
+	}
+
+	for (Value* global : tacContext->globals)
+	{
+		machineContext->globals.push_back(global->name);
+	}
+
+	delete tacContext;
+
+
+	// Process the abstract machine code and make it concrete
+	for (MachineFunction* mf : machineContext->functions)
+	{
+		RegAlloc regAlloc(mf);
+		regAlloc.run();
+
+		RedundantMoves redundantMoves(mf);
+		redundantMoves.run();
+	}
+
+
+	// Convert the machine code to text output
+	AsmPrinter asmPrinter(std::cout);
+	asmPrinter.printProgram(machineContext);
+
+	delete machineContext;
+
+	return 0;
 }

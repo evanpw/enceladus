@@ -26,7 +26,7 @@ private:
 class SemanticAnalyzer : public AstVisitor
 {
 public:
-    SemanticAnalyzer(ProgramNode* root, AstContext* context);
+    SemanticAnalyzer(AstContext* context);
     bool analyze();
 
     // Declarations

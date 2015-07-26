@@ -8,10 +8,10 @@
 
 using namespace std;
 
-AstNode::AstNode(AstContext& context, const YYLTYPE& location)
+AstNode::AstNode(AstContext* context, const YYLTYPE& location)
 : location(location)
 {
-    context.addToContext(this);
+    context->addToContext(this);
 }
 
 AstNode::~AstNode()
@@ -31,7 +31,7 @@ std::string TypeName::str() const
     return ss.str();
 }
 
-BlockNode* makeForNode(AstContext& context, const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body)
+BlockNode* makeForNode(AstContext* context, const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body)
 {
     // We need a unique variable name for the variable which holds the list
     // we are iterating over
@@ -72,7 +72,7 @@ BlockNode* makeForNode(AstContext& context, const YYLTYPE& location, const std::
     return forNode;
 }
 
-FunctionCallNode* makeList(AstContext& context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements)
+FunctionCallNode* makeList(AstContext* context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements)
 {
     FunctionCallNode* result = new FunctionCallNode(context, location, "Nil", {});
 

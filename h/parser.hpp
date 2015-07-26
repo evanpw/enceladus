@@ -7,13 +7,15 @@
 class Parser
 {
 public:
-    Parser(AstContext& context) : _context(context) {}
+    Parser(AstContext* context)
+    : _context(context)
+    {}
 
     void parse();
-    AstContext& context() { return _context; }
+    AstContext* context() { return _context; }
 
 private:
-    AstContext& _context;
+    AstContext* _context;
 
 private:
     // Individual grammar constructions

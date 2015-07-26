@@ -88,6 +88,8 @@ class TACCodeGen : public AstVisitor
 public:
     TACCodeGen(TACContext* context);
 
+    void codeGen(AstContext* astContext);
+
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(BreakNode* node);

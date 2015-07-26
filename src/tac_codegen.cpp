@@ -1,13 +1,20 @@
-#include "platform.hpp"
 #include "tac_codegen.hpp"
-#include "types.hpp"
+
+#include "ast_context.hpp"
 #include "lib/library.h"
+#include "platform.hpp"
+#include "types.hpp"
 
 #include <iostream>
 
 TACCodeGen::TACCodeGen(TACContext* context)
 : _context(context), _conditionalCodeGen(this)
 {
+}
+
+void TACCodeGen::codeGen(AstContext* astContext)
+{
+    astContext->root()->accept(this);
 }
 
 TACConditionalCodeGen::TACConditionalCodeGen(TACCodeGen* mainCodeGen)
