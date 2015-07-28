@@ -24,6 +24,7 @@
 
 * Separate scope containing for-loop induction variable
 
-* Add a module system
+* Add a real module system
 
-* Print the filename in error messages
+* Fix garbage collector by generating a stack map with an entry for each call
+  site

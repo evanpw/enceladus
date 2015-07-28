@@ -17,14 +17,13 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
     for (size_t i = 0; i < function->params.size(); ++i)
     {
         Argument* arg = dynamic_cast<Argument*>(function->params[i]);
-        _params[arg] = new StackParameter(arg->name, i);
+        _params[arg] = _function->makeStackParameter(arg->name, i);
     }
 
     bool entry = true;
     for (BasicBlock* irBlock : function->blocks)
     {
         _currentBlock = getBlock(irBlock);
-        _function->blocks.push_back(_currentBlock);
 
         if (entry)
         {
@@ -44,12 +43,11 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
 {
     if (ConstantInt* constInt = dynamic_cast<ConstantInt*>(value))
     {
-        // TODO: Intern this
-        return new Immediate(constInt->value);
+        return _context->makeImmediate(constInt->value);
     }
     else if (GlobalValue* global = dynamic_cast<GlobalValue*>(value))
     {
-        return new Address(global->name);
+        return _context->makeGlobal(global->name);
     }
     else if (dynamic_cast<LocalValue*>(value))
     {
@@ -87,7 +85,7 @@ MachineBB* MachineCodeGen::getBlock(BasicBlock* block)
         return i->second;
     }
 
-    MachineBB* mbb = new MachineBB(block->seqNumber);
+    MachineBB* mbb = _function->makeBlock(block->seqNumber);
     _blocks[block] = mbb;
 
     return mbb;
@@ -201,7 +199,7 @@ void MachineCodeGen::visit(CallInst* inst)
         {
             // Indirect call so that we can switch to the C stack
             emit(Opcode::MOVrd, {rax}, {target});
-            uses[0] = new Address("ccall");
+            uses[0] = _context->makeGlobal("ccall");
             emit(Opcode::CALL, {rax}, std::move(uses));
         }
         else
@@ -222,7 +220,7 @@ void MachineCodeGen::visit(CallInst* inst)
         // Keep 16-byte alignment
         if (paramsOnStack % 2)
         {
-            emit(Opcode::PUSH, {}, {new Immediate(0)});
+            emit(Opcode::PUSH, {}, {_context->makeImmediate(0)});
             ++paramsOnStack;
         }
 
@@ -259,7 +257,7 @@ void MachineCodeGen::visit(CallInst* inst)
         // Remove the function parameters from the stack
         if (paramsOnStack > 0)
         {
-            emit(Opcode::ADD, {rsp}, {rsp, new Immediate(8 * paramsOnStack)});
+            emit(Opcode::ADD, {rsp}, {rsp, _context->makeImmediate(8 * paramsOnStack)});
         }
     }
 }
@@ -337,7 +335,7 @@ void MachineCodeGen::visit(IndexedLoadInst* inst)
 {
     MachineOperand* dest = getOperand(inst->lhs);
     MachineOperand* base = getOperand(inst->rhs);
-    MachineOperand* offset = new Immediate(inst->offset);
+    MachineOperand* offset = _context->makeImmediate(inst->offset);
 
     assert(dest->isRegister());
     assert(base->isAddress() || base->isRegister());
@@ -358,7 +356,7 @@ void MachineCodeGen::visit(LoadInst* inst)
 void MachineCodeGen::visit(IndexedStoreInst* inst)
 {
     MachineOperand* base = getOperand(inst->lhs);
-    MachineOperand* offset = new Immediate(inst->offset);
+    MachineOperand* offset = _context->makeImmediate(inst->offset);
     MachineOperand* src = getOperand(inst->rhs);
     assert(base->isAddress() || base->isRegister());
 
@@ -422,7 +420,7 @@ void MachineCodeGen::visit(JumpIfInst* inst)
     }
     else
     {
-        emit(Opcode::CMP, {}, {condition, new Immediate(3)});
+        emit(Opcode::CMP, {}, {condition, _context->makeImmediate(3)});
         emit(Opcode::JE, {}, {ifTrue});
         emit(Opcode::JMP, {}, {ifFalse});
     }
@@ -469,7 +467,7 @@ void MachineCodeGen::visit(TagInst* inst)
     assert(src->isRegister() || src->isImmediate());
 
     emit(Opcode::MOVrd, {dest}, {src});
-    emit(Opcode::SAL, {dest}, {dest, new Immediate(1)});
+    emit(Opcode::SAL, {dest}, {dest, _context->makeImmediate(1)});
     emit(Opcode::INC, {dest}, {dest});
 }
 
@@ -481,7 +479,7 @@ void MachineCodeGen::visit(UntagInst* inst)
     assert(src->isRegister() || src->isImmediate());
 
     emit(Opcode::MOVrd, {dest}, {src});
-    emit(Opcode::SAR, {dest}, {dest, new Immediate(1)});
+    emit(Opcode::SAR, {dest}, {dest, _context->makeImmediate(1)});
 }
 
 void MachineCodeGen::visit(UnreachableInst* inst)

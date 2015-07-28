@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <list>
+#include <memory>
 #include <string>
 #include <unordered_set>
 
@@ -65,10 +66,6 @@ std::ostream& operator<<(std::ostream& out, const MachineOperand& operand);
 
 struct VirtualRegister : public MachineOperand
 {
-    VirtualRegister(int64_t id)
-    : id(id)
-    {}
-
     virtual bool isVreg() const { return true; }
 
     virtual void print(std::ostream& out) const
@@ -77,14 +74,17 @@ struct VirtualRegister : public MachineOperand
     }
 
     int64_t id;
+
+private:
+    friend class MachineFunction;
+
+    VirtualRegister(int64_t id)
+    : id(id)
+    {}
 };
 
 struct HardwareRegister : public MachineOperand
 {
-    HardwareRegister(const std::string& name)
-    : name(name)
-    {}
-
     virtual bool isHreg() const { return true; }
 
     virtual void print(std::ostream& out) const
@@ -93,14 +93,17 @@ struct HardwareRegister : public MachineOperand
     }
 
     std::string name;
+
+private:
+    friend class MachineContext;
+
+    HardwareRegister(const std::string& name)
+    : name(name)
+    {}
 };
 
 struct Address : public MachineOperand
 {
-    Address(const std::string& name)
-    : name(name)
-    {}
-
     virtual bool isAddress() const { return true; }
 
     virtual void print(std::ostream& out) const
@@ -109,14 +112,17 @@ struct Address : public MachineOperand
     }
 
     std::string name;
+
+private:
+    friend class MachineContext;
+
+    Address(const std::string& name)
+    : name(name)
+    {}
 };
 
 struct StackLocation : public MachineOperand
 {
-    StackLocation(const std::string& name)
-    : name(name)
-    {}
-
     virtual bool isStackLocation() const { return true; }
 
     virtual void print(std::ostream& out) const
@@ -125,25 +131,31 @@ struct StackLocation : public MachineOperand
     }
 
     std::string name;
+
+protected:
+    friend class MachineFunction;
+
+    StackLocation(const std::string& name)
+    : name(name)
+    {}
 };
 
 struct StackParameter : public StackLocation
 {
-    StackParameter(const std::string& name, size_t index)
-    : StackLocation(name), index(index)
-    {}
-
     virtual bool isStackParameter() const { return true; }
 
     size_t index;
+
+private:
+    friend class MachineFunction;
+
+    StackParameter(const std::string& name, size_t index)
+    : StackLocation(name), index(index)
+    {}
 };
 
 struct Immediate : public MachineOperand
 {
-    Immediate(int64_t value)
-    : value(value)
-    {}
-
     virtual bool isImmediate() const { return true; }
 
     virtual void print(std::ostream& out) const
@@ -152,14 +164,19 @@ struct Immediate : public MachineOperand
     }
 
     int64_t value;
+
+private:
+    friend class MachineContext;
+
+    Immediate(int64_t value)
+    : value(value)
+    {}
 };
 
 struct MachineInst;
 struct MachineBB : public MachineOperand
 {
-    MachineBB(int64_t id)
-    : id(id)
-    {}
+    ~MachineBB();
 
     virtual bool isLabel() const { return true; }
 
@@ -172,6 +189,13 @@ struct MachineBB : public MachineOperand
 
     int64_t id;
     std::list<MachineInst*> instructions;
+
+private:
+    friend class MachineFunction;
+
+    MachineBB(int64_t id)
+    : id(id)
+    {}
 };
 
 struct MachineInst
@@ -205,15 +229,28 @@ struct MachineFunction
     : name(name), context(context)
     {}
 
+    ~MachineFunction()
+    {
+        for (MachineBB* block : blocks)
+            delete block;
+    }
+
     std::string name;
     std::vector<MachineBB*> blocks;
 
     MachineContext* context;
 
-    VirtualRegister* makeVreg() { return new VirtualRegister(_nextVregNumber++); }
+    VirtualRegister* makeVreg();
+    MachineBB* makeBlock(int64_t seqNumber);
+    StackParameter* makeStackParameter(const std::string& name, size_t index);
+    StackLocation* makeStackLocation(const std::string& name);
 
 private:
     int64_t _nextVregNumber = 1;
+
+    std::vector<std::unique_ptr<VirtualRegister>> _vregs;
+    std::vector<std::unique_ptr<StackParameter>> _stackParameters;
+    std::vector<std::unique_ptr<StackLocation>> _stackLocations;
 };
 
 std::ostream& operator<<(std::ostream& out, const std::vector<MachineOperand*>& operands);

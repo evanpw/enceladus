@@ -114,10 +114,10 @@ void RegAlloc::spillAroundCalls()
                     offset -= 8;
                     _currentOffset = std::min(_currentOffset, offset);
 
-                    MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {_context->rbp, liveReg, new Immediate(offset)});
+                    MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {_context->rbp, liveReg, _context->makeImmediate(offset)});
                     saves.push_back(saveInst);
 
-                    MachineInst* restoreInst = new MachineInst(Opcode::MOVrm, {liveReg}, {_context->rbp, new Immediate(offset)});
+                    MachineInst* restoreInst = new MachineInst(Opcode::MOVrm, {liveReg}, {_context->rbp, _context->makeImmediate(offset)});
                     restores.push_back(restoreInst);
                 }
 
@@ -147,7 +147,7 @@ Immediate* RegAlloc::getStackOffset(MachineOperand* operand)
 {
     if (StackParameter* param = dynamic_cast<StackParameter*>(operand))
     {
-        return new Immediate(16 + 8 * param->index);
+        return _context->makeImmediate(16 + 8 * param->index);
     }
     else
     {
@@ -161,7 +161,7 @@ Immediate* RegAlloc::getStackOffset(MachineOperand* operand)
         }
         else
         {
-            _stackOffsets[stackLocation] = new Immediate(_currentOffset - 8);
+            _stackOffsets[stackLocation] = _context->makeImmediate(_currentOffset - 8);
             _currentOffset -= 8;
 
             return _stackOffsets[stackLocation];
@@ -234,7 +234,7 @@ void RegAlloc::allocateStack()
         ++itr;
         ++itr;
 
-        MachineInst* allocInst = new MachineInst(Opcode::ADD, {_context->rsp}, {_context->rsp, new Immediate(_currentOffset)});
+        MachineInst* allocInst = new MachineInst(Opcode::ADD, {_context->rsp}, {_context->rsp, _context->makeImmediate(_currentOffset)});
         entryBlock->instructions.insert(itr, allocInst);
     }
 }
@@ -542,7 +542,7 @@ void RegAlloc::spillVariable(Reg* reg)
 
     std::stringstream ss;
     ss << "vreg" << vreg->id;
-    StackLocation* spillLocation = new StackLocation(ss.str());
+    StackLocation* spillLocation = _function->makeStackLocation(ss.str());
 
     _spilled[reg] = spillLocation;
 

@@ -1,4 +1,5 @@
 #include "machine_instruction.hpp"
+#include "machine_context.hpp"
 
 const char* opcodeNames[] = {
     "ADD",
@@ -44,6 +45,12 @@ bool MachineInst::isJump() const
         default:
             return false;
     }
+}
+
+MachineBB::~MachineBB()
+{
+    for (MachineInst* inst : instructions)
+        delete inst;
 }
 
 std::vector<MachineBB*> MachineBB::successors() const
@@ -100,4 +107,32 @@ std::ostream& operator<<(std::ostream& out, const MachineInst& inst)
         << inst.inputs;
 
     return out;
+}
+
+MachineBB* MachineFunction::makeBlock(int64_t seqNumber)
+{
+    MachineBB* block = new MachineBB(seqNumber);
+    blocks.push_back(block);
+    return block;
+}
+
+StackParameter* MachineFunction::makeStackParameter(const std::string& name, size_t index)
+{
+    StackParameter* param = new StackParameter(name, index);
+    _stackParameters.emplace_back(param);
+    return param;
+}
+
+VirtualRegister* MachineFunction::makeVreg()
+{
+    VirtualRegister* vreg = new VirtualRegister(_nextVregNumber++);
+    _vregs.emplace_back(vreg);
+    return vreg;
+}
+
+StackLocation* MachineFunction::makeStackLocation(const std::string& name)
+{
+    StackLocation* location = new StackLocation(name);
+    _stackLocations.emplace_back(location);
+    return location;
 }

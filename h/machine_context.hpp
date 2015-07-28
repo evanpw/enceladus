@@ -2,6 +2,9 @@
 #define MACHINE_CONTEXT_HPP
 
 #include "machine_instruction.hpp"
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 class MachineContext
 {
@@ -34,6 +37,13 @@ public:
         rax, rbx, rcx, rdx, rsi, rdi, r8, r9,
         r10, r11, r12, r13, r14, r15, rbp, rsp
     };
+
+    Immediate* makeImmediate(int64_t value);
+    Address* makeGlobal(const std::string& name);
+
+private:
+    std::unordered_map<int64_t, std::unique_ptr<Immediate>> _immediates;
+    std::unordered_map<std::string, std::unique_ptr<Address>> _globals;
 };
 
 #endif
