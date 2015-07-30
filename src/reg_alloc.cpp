@@ -658,7 +658,6 @@ void RegAlloc::colorGraph()
         gatherUses();
         computeLiveness();
         computeInterference();
-        computeInterference();
 
     } while (!tryColorGraph());
 }
