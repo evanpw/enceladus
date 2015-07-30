@@ -33,11 +33,34 @@ void AsmPrinter::printProgram(MachineContext* context)
         _out << "\tdq " << STRING_TAG << ", 0" << std::endl;
         _out << "\tdb \"" << content << "\", 0" << std::endl;
     }
+
+    // Stack map
+    _out << "__stackMap:" << std::endl;
+    _out << "\tdq " << _stackMap.size() << std::endl;
+    for (size_t i = 0; i < _stackMap.size(); ++i)
+    {
+        MachineFunction* function = _stackMap[i].function;
+        size_t counter = _stackMap[i].counter;
+        std::set<int64_t>& variables = _stackMap[i].variables;
+
+        _out << "\t" << "dq "
+             << function->name << ".CS" << counter
+             << ", " << variables.size();
+
+        for (int64_t offset : variables)
+        {
+            _out << ", " << offset;
+        }
+
+        _out << std::endl;
+    }
 }
 
 void AsmPrinter::printFunction(MachineFunction* function)
 {
+    _function = function;
     _context = function->context;
+    _callSiteCounter = 0;
 
     _out << "global " << "$" << function->name << std::endl;
     _out << "$" << function->name << ":" << std::endl;
@@ -317,6 +340,7 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             break;
 
         case Opcode::CALL:
+        {
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() >= 1);
             assert(inst->outputs[0] == _context->rax);
@@ -326,7 +350,17 @@ void AsmPrinter::printInstruction(MachineInst* inst)
                 assert(inst->inputs[i]->isHreg());
 
             printSimpleInstruction("call", {inst->inputs[0]});
+
+            // Insert a label for the call site, and record the stack map entry
+            // for this call site
+            size_t counter = _callSiteCounter++;
+            _out << ".CS" << counter << ":" << std::endl;
+
+            std::set<int64_t>& liveVariables = _function->stackMap.at(inst);
+            _stackMap.emplace_back(_function, counter, liveVariables);
+
             break;
+        }
 
         case Opcode::CMP:
             assert(inst->outputs.size() == 0);

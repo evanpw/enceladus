@@ -41,7 +41,6 @@ void RegAlloc::run()
     replaceRegs();
     assignStackLocations();
     spillAroundCalls();
-
     allocateStack();
 }
 
@@ -49,8 +48,7 @@ void RegAlloc::spillAroundCalls()
 {
     // Recompute liveness information now that we've replace virtual registers
     // and done some other rewriting
-    gatherDefinitions();
-    gatherUses();
+    gatherUseDef();
     computeLiveness();
     computeInterference();
 
@@ -262,34 +260,14 @@ void RegAlloc::replaceRegs()
     }
 }
 
-void RegAlloc::gatherDefinitions()
+void RegAlloc::gatherUseDef()
 {
+    _uses.clear();
     _definitions.clear();
 
     for (MachineBB* block : _function->blocks)
     {
-        RegSet result;
-
-        for (MachineInst* inst : block->instructions)
-        {
-            for (Reg* output : inst->outputs)
-            {
-                if (output->isRegister())
-                    result.insert(output);
-            }
-        }
-
-        _definitions[block] = result;
-    }
-}
-
-void RegAlloc::gatherUses()
-{
-    _uses.clear();
-
-    for (MachineBB* block : _function->blocks)
-    {
-        RegSet result;
+        RegSet used;
         RegSet defined;
 
         for (MachineInst* inst : block->instructions)
@@ -297,7 +275,7 @@ void RegAlloc::gatherUses()
             for (Reg* input : inst->inputs)
             {
                 if (input->isRegister() && (defined.find(input) == defined.end()))
-                    result.insert(input);
+                    used.insert(input);
             }
 
             for (Reg* output : inst->outputs)
@@ -307,7 +285,8 @@ void RegAlloc::gatherUses()
             }
         }
 
-        _uses[block] = result;
+        _uses[block] = used;
+        _definitions[block] = defined;
     }
 }
 
@@ -647,15 +626,13 @@ void RegAlloc::colorGraph()
 
     do
     {
-        gatherDefinitions();
-        gatherUses();
+        gatherUseDef();
         computeLiveness();
         computeInterference();
 
         coalesceMoves();
 
-        gatherDefinitions();
-        gatherUses();
+        gatherUseDef();
         computeLiveness();
         computeInterference();
 

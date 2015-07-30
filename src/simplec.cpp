@@ -3,14 +3,15 @@
 #include "ast_context.hpp"
 #include "context.hpp"
 #include "exceptions.hpp"
+#include "from_ssa.hpp"
 #include "machine_codegen.hpp"
 #include "parser.hpp"
+#include "redundant_moves.hpp"
 #include "reg_alloc.hpp"
 #include "semantic.hpp"
-#include "redundant_moves.hpp"
+#include "stack_map.hpp"
 #include "tac_codegen.hpp"
 #include "tac_validator.hpp"
-#include "from_ssa.hpp"
 #include "to_ssa.hpp"
 
 #include <cstdio>
@@ -112,6 +113,9 @@ int main(int argc, char* argv[])
 	{
 		RegAlloc regAlloc(mf);
 		regAlloc.run();
+
+		StackMap stackMap(mf);
+		stackMap.run();
 
 		RedundantMoves redundantMoves(mf);
 		redundantMoves.run();

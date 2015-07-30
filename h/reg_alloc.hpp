@@ -33,13 +33,12 @@ private:
     // Never allocate rsp and rbp
     static constexpr size_t AVAILABLE_COLORS = 14;
 
-    // For each basic block, the registers which are given a value in that block
-    void gatherDefinitions();
-    std::unordered_map<MachineBB*, RegSet> _definitions;
-
-    // For each basic block, the registers which are used before they are defined
-    void gatherUses();
-    std::unordered_map<MachineBB*, RegSet> _uses;
+    // For each basic block, determine the registers that are:
+    // 1) given a value in that block
+    // 2) used before they are defined
+    void gatherUseDef();
+    std::unordered_map<MachineBB*, RegSet> _definitions;    // (1)
+    std::unordered_map<MachineBB*, RegSet> _uses;           // (2)
 
     // For each basic block, the registers which are live upon entry
     void computeLiveness();

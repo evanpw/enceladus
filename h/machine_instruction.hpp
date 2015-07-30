@@ -7,7 +7,9 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <set>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 // Postfix codes:
@@ -226,7 +228,7 @@ class MachineContext;
 struct MachineFunction
 {
     MachineFunction(MachineContext* context, const std::string& name)
-    : name(name), context(context)
+    : context(context), name(name)
     {}
 
     ~MachineFunction()
@@ -235,10 +237,15 @@ struct MachineFunction
             delete block;
     }
 
+    MachineContext* context;
+
     std::string name;
     std::vector<MachineBB*> blocks;
 
-    MachineContext* context;
+    std::unordered_map<MachineInst*, std::set<int64_t>> stackMap;
+
+    size_t parameterCount() const { return _stackParameters.size(); }
+    StackParameter* getParameter(size_t i) { return _stackParameters.at(i).get(); }
 
     VirtualRegister* makeVreg();
     MachineBB* makeBlock(int64_t seqNumber);

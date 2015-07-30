@@ -31,7 +31,25 @@ private:
     void printSimpleOperand(MachineOperand* operand);
 
     MachineContext* _context = nullptr;
+    MachineFunction* _function = nullptr;
+
     std::ostream& _out;
+
+    // For generating the stack map
+    size_t _callSiteCounter = 0;
+
+    struct StackMapEntry
+    {
+        StackMapEntry(MachineFunction* function, size_t counter, std::set<int64_t> variables)
+        : function(function), counter(counter), variables(variables)
+        {}
+
+        MachineFunction* function;
+        size_t counter;
+        std::set<int64_t> variables;
+    };
+
+    std::vector<StackMapEntry> _stackMap;
 };
 
 #endif
