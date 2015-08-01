@@ -443,7 +443,7 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
     rbp = (uint64_t*)*rsp++;
     void* callSite = (void*)*rsp++;
 
-    while (rbp != stackBottom)
+    while (1)
     {
         // printf("Stack frame:\n");
         // printf("\trbp=%p, rsp=%p\n", rbp, rsp);
@@ -473,6 +473,9 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
             }
         }
 
+        if (rbp == stackBottom)
+            break;
+
         // mov rsp, rbp
         // pop rbp
         // ret
@@ -480,6 +483,8 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
         rbp = (uint64_t*)*rsp++;
         callSite = (void*)*rsp++;
     }
+
+    //printf("\n");
 
     //printf("Finished with stack roots\n");
 

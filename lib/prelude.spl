@@ -177,7 +177,8 @@ def map(f: a -> b, xs: [a]) -> [b]
 def filter(f: a -> Bool, xs: [a]) -> [a]
     ys := []
     for x in xs
-        if f x: ys = x :: ys
+        if f x
+            ys = x :: ys
 
     return reverse ys
 

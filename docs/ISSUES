@@ -28,3 +28,7 @@
 
 * Create a stronger guarantee that untagged immediates will never end up in
   a stack root
+
+* Use a better representation for the in-memory stack map
+
+* Add syntax for return with no argument

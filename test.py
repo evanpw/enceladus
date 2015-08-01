@@ -223,6 +223,9 @@ class TestAcceptance(object):
     def test_wrongReturnType(self):
         self.run('wrongReturnType', build_error='Error: testing/wrongReturnType.spl:2:5: cannot unify types String and Int')
 
+    def test_mainStackRoots(self):
+        self.run('mainStackRoots', result='1')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
