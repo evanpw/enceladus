@@ -34,7 +34,7 @@ void AsmPrinter::printProgram(MachineContext* context)
         _out << "\tdb \"" << content << "\", 0" << std::endl;
     }
 
-    // Stack map
+    // Stack map (for the GC)
     _out << "global __stackMap" << std::endl;
     _out << "__stackMap:" << std::endl;
     _out << "\tdq " << _stackMap.size() << std::endl;
@@ -55,6 +55,17 @@ void AsmPrinter::printProgram(MachineContext* context)
 
         _out << std::endl;
     }
+
+    // Global variable table (for the GC)
+    _out << "global __globalVarTable" << std::endl;
+    _out << "__globalVarTable:" << std::endl;
+    _out << "\tdq " << context->globals.size() << std::endl;
+    for (const std::string& globalName : context->globals)
+    {
+        _out << "\tdq $" << globalName << std::endl;
+    }
+    _out << "\tdq 0" << std::endl;
+
 }
 
 void AsmPrinter::printFunction(MachineFunction* function)

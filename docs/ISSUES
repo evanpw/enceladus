@@ -26,5 +26,5 @@
 
 * Add a real module system
 
-* Fix garbage collector by generating a stack map with an entry for each call
-  site
+* Create a stronger guarantee that untagged immediates will never end up in
+  a stack root

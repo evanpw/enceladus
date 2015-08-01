@@ -441,22 +441,31 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
     // ret
     uint64_t* rsp = rbp;
     rbp = (uint64_t*)*rsp++;
-    ++rsp;
+    void* callSite = (void*)*rsp++;
 
     while (rbp != stackBottom)
     {
-        void* returnAddress = (void*)*(rbp + 1);
+        // printf("Stack frame:\n");
+        // printf("\trbp=%p, rsp=%p\n", rbp, rsp);
+        // printf("\tcallSite=%p\n", callSite);
 
-        uint64_t* stackMapEntry = findInStackMap(returnAddress);
+        uint64_t* stackMapEntry = findInStackMap(callSite);
         assert(stackMapEntry);
 
+        //printf("\tstackMapEntry=%p\n", stackMapEntry);
+
         uint64_t n = *stackMapEntry;
+
+        //printf("\tn=%ld\n", n);
         for (size_t i = 0; i < n; ++i)
         {
             int64_t offset = (int64_t)stackMapEntry[i + 1];
             uint64_t* p = rbp + offset / 8;
 
+            //printf("\toffset=%ld, p=%p\n", offset, p);
+
             SplObject* object = (SplObject*)*p;
+            //printf("\tobject=%p\n", object);
             if (object && IS_REFERENCE(object))
             {
                 void* newLocation = gcCopy(object);
@@ -469,8 +478,10 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
         // ret
         rsp = rbp;
         rbp = (uint64_t*)*rsp++;
-        ++rsp;
+        callSite = (void*)*rsp++;
     }
+
+    //printf("Finished with stack roots\n");
 
     while (additionalRoots)
     {
@@ -490,6 +501,8 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
 
         additionalRoots = *p;
     }
+
+    //printf("Finished with additional roots\n");
 }
 
 void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
@@ -499,6 +512,8 @@ void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRo
 
     gcCopyRoots(stackTop, stackBottom, additionalRoots);
     gcScan();
+
+    //printf("Finished scanning\n");
 
     // Swap the heaps
     uint64_t* tmpStart = heapStart;
@@ -523,6 +538,8 @@ void* gcCollectAndAllocate(size_t sizeInBytes, uint64_t* stackTop, uint64_t* sta
 
     gcCollect(stackTop, stackBottom, additionalRoots);
 
+    //printf("Finished collection\n");
+
     // If there's not much free space even after collection, increase the size
     // of the heap
     size_t totalSize = heapEnd - heapStart;
@@ -539,7 +556,11 @@ void* gcCollectAndAllocate(size_t sizeInBytes, uint64_t* stackTop, uint64_t* sta
         equalizeHeaps();
     }
 
+    //printf("Finished equalizing heaps\n");
+
     void* result = try_mymalloc(sizeInBytes);
+
+    //printf("result: %p\n", result);
     if (!result)
     {
         // In the unhappy case where the current heap doesn't have enough space

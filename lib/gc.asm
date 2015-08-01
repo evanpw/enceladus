@@ -388,7 +388,7 @@ gcAllocateFromC:
 
 section .data
 stackBottom:        dq 0
-additionalRoots:    dq 0 ;__globalVarTable
+additionalRoots:    dq __globalVarTable
 cstack              dq 0
 splstack            dq 0
 
