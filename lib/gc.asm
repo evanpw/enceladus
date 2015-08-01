@@ -26,7 +26,8 @@ _main:
     call initializeHeap
 
     ; Initialize the GC
-    mov qword [rel stackBottom], rbp
+    lea rax, [rbp - 16]
+    mov qword [rel stackBottom], rax
 
     ; The actual program
     call splmain

@@ -328,8 +328,6 @@ void* try_mymalloc(size_t) asm("try_mymalloc");
 // Try to allocate memory from the current heap
 void* try_mymalloc(size_t sizeInBytes)
 {
-     return malloc(sizeInBytes);
-
     // Allocate in units of 8 bytes
     size_t sizeInWords = (sizeInBytes + 7) / 8;
 
@@ -380,52 +378,6 @@ void* gcCopy(void* object)
     return newLocation;
 }
 
-void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
-{
-    uint64_t* top = stackTop;
-    uint64_t* bottom = stackTop;
-
-    while (1)
-    {
-        for (uint64_t* p = top; p < bottom; ++p)
-        {
-            SplObject* object = (SplObject*)*p;
-            if (object && IS_REFERENCE(object))
-            {
-                void* newLocation = gcCopy(object);
-                *p = (uint64_t)newLocation;
-            }
-        }
-
-        if (bottom == stackBottom)
-        {
-            break;
-        }
-
-        top = bottom + 2;
-        bottom = (uint64_t*)*bottom;
-    }
-
-    while (additionalRoots)
-    {
-        uint64_t numGlobals = *additionalRoots;
-        uint64_t** p = (uint64_t**)(additionalRoots + 1);
-        for (size_t i = 0; i < numGlobals; ++i)
-        {
-            SplObject* object = (SplObject*)**p;
-            if (object && IS_REFERENCE(object))
-            {
-                void* newLocation = gcCopy(object);
-                **p = (uint64_t)newLocation;
-            }
-
-            ++p;
-        }
-
-        additionalRoots = *p;
-    }
-}
-
 void gcScan()
 {
     while (scanPtr < allocPtr)
@@ -449,6 +401,94 @@ void gcScan()
 
         size_t sizeInWords = *scanPtr >> 1;
         scanPtr += (sizeInWords + 1);
+    }
+}
+
+extern uint64_t __stackMap;
+
+uint64_t* findInStackMap(void* returnAddress)
+{
+    uint64_t* p = &__stackMap;
+
+    // First word gives number of entries
+    size_t entries = *p++;
+
+    for (size_t i = 0; i < entries; ++i)
+    {
+        // Format: return address, count, (offset)*
+        if (returnAddress == (void*)*p++)
+        {
+            return p;
+        }
+        else
+        {
+            uint64_t elements = *p++;
+            p += elements;
+        }
+    }
+
+    return NULL;
+}
+
+void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)
+{
+    uint64_t* rbp = stackTop;
+
+    // Skip the gcAllocate stack frame
+
+    // mov rsp, rbp
+    // pop rbp
+    // ret
+    uint64_t* rsp = rbp;
+    rbp = (uint64_t*)*rsp++;
+    ++rsp;
+
+    while (rbp != stackBottom)
+    {
+        void* returnAddress = (void*)*(rbp + 1);
+
+        uint64_t* stackMapEntry = findInStackMap(returnAddress);
+        assert(stackMapEntry);
+
+        uint64_t n = *stackMapEntry;
+        for (size_t i = 0; i < n; ++i)
+        {
+            int64_t offset = (int64_t)stackMapEntry[i + 1];
+            uint64_t* p = rbp + offset / 8;
+
+            SplObject* object = (SplObject*)*p;
+            if (object && IS_REFERENCE(object))
+            {
+                void* newLocation = gcCopy(object);
+                *p = (uint64_t)newLocation;
+            }
+        }
+
+        // mov rsp, rbp
+        // pop rbp
+        // ret
+        rsp = rbp;
+        rbp = (uint64_t*)*rsp++;
+        ++rsp;
+    }
+
+    while (additionalRoots)
+    {
+        uint64_t numGlobals = *additionalRoots;
+        uint64_t** p = (uint64_t**)(additionalRoots + 1);
+        for (size_t i = 0; i < numGlobals; ++i)
+        {
+            SplObject* object = (SplObject*)**p;
+            if (object && IS_REFERENCE(object))
+            {
+                void* newLocation = gcCopy(object);
+                **p = (uint64_t)newLocation;
+            }
+
+            ++p;
+        }
+
+        additionalRoots = *p;
     }
 }
 

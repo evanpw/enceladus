@@ -35,6 +35,7 @@ void AsmPrinter::printProgram(MachineContext* context)
     }
 
     // Stack map
+    _out << "global __stackMap" << std::endl;
     _out << "__stackMap:" << std::endl;
     _out << "\tdq " << _stackMap.size() << std::endl;
     for (size_t i = 0; i < _stackMap.size(); ++i)

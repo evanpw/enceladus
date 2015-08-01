@@ -78,6 +78,16 @@ int main(int argc, char* argv[])
 
 		FromSSA fromSSA(function);
 		fromSSA.run();
+
+		// std::cerr << function->name << ":" << std::endl;
+		// for (BasicBlock* block : function->blocks)
+		// {
+		// 	std::cerr << block->str() << std::endl;
+		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+		//     {
+		//     	std::cerr << "\t" << inst->str() << std::endl;
+		//     }
+		// }
 	}
 
 
@@ -113,6 +123,16 @@ int main(int argc, char* argv[])
 	{
 		RegAlloc regAlloc(mf);
 		regAlloc.run();
+
+		// std::cerr << mf->name << ":" << std::endl;
+		// for (MachineBB* block : mf->blocks)
+		// {
+		// 	std::cerr << *block << ":" << std::endl;
+		// 	for (MachineInst* inst : block->instructions)
+		// 	{
+		// 		std::cerr << "\t" << *inst << std::endl;
+		// 	}
+		// }
 
 		StackMap stackMap(mf);
 		stackMap.run();

@@ -6,7 +6,6 @@
 typedef std::set<int64_t> StackSet;
 StackSet& operator+=(StackSet& lhs, const StackSet& rhs);
 StackSet& operator-=(StackSet& lhs, const StackSet& rhs);
-static std::ostream& operator<<(std::ostream& out, const StackSet& stackSet);
 
 // Create a table listing which stack variables are live at each call site
 class StackMap

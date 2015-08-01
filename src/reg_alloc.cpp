@@ -30,6 +30,30 @@ RegSet& operator-=(RegSet& lhs, const RegSet& rhs)
     return lhs;
 }
 
+static std::ostream& operator<<(std::ostream& out, const RegSet& regSet)
+{
+    out << "{";
+
+    bool first = true;
+    for (Reg* reg : regSet)
+    {
+        if (!first)
+        {
+            out << ", ";
+        }
+        else
+        {
+            first = false;
+        }
+
+        out << *reg;
+    }
+
+    out << "}";
+
+    return out;
+}
+
 RegAlloc::RegAlloc(MachineFunction* function)
 : _function(function), _context(_function->context)
 {
@@ -40,6 +64,18 @@ void RegAlloc::run()
     colorGraph();
     replaceRegs();
     assignStackLocations();
+
+    // std::cerr << _function->name << ":" << std::endl;
+    // for (MachineBB* block : _function->blocks)
+    // {
+    //     std::cerr << *block << ":" << std::endl;
+    //     for (MachineInst* inst : block->instructions)
+    //     {
+    //         std::cerr << "\t" << *inst << std::endl;
+    //     }
+    // }
+    // std::cerr << std::endl;
+
     spillAroundCalls();
     allocateStack();
 }
@@ -56,10 +92,14 @@ void RegAlloc::spillAroundCalls()
     // know how much space to allocate
     int64_t startOffset = _currentOffset;
 
+    //std::cerr << _function->name << ":" << std::endl;
+
     // Before each call instruction, spill every live register except rsp and
     // rbp, and restore them all afterwards
     for (MachineBB* block : _function->blocks)
     {
+        //std::cerr << *block << ":" << std::endl;
+
         // Compute live regs at the end of this block
         RegSet regs;
         for (MachineBB* succ : block->successors())
@@ -72,25 +112,7 @@ void RegAlloc::spillAroundCalls()
         {
             MachineInst* inst = *i;
 
-            // Data flow equation:
-            // live[n] = (U_{s in succ[n]}  live[s]) - def[n] + ref[n]
-
-            for (Reg* output : inst->outputs)
-            {
-                if (output->isRegister())
-                {
-                    if (regs.find(output) != regs.end())
-                        regs.erase(output);
-                }
-            }
-
-            for (Reg* input : inst->inputs)
-            {
-                if (input->isRegister())
-                {
-                    regs.insert(input);
-                }
-            }
+            //std::cerr << "\t" << *inst << "\t" << regs << std::endl;
 
             if (inst->opcode == Opcode::CALL)
             {
@@ -135,6 +157,25 @@ void RegAlloc::spillAroundCalls()
                 for (MachineInst* saveInst : saves)
                 {
                     block->instructions.insert(next.base(), saveInst);
+                }
+            }
+
+            // Update liveness after checking for call instructions, because we
+            // want to spill based on live-out variables, not live-in
+            for (Reg* output : inst->outputs)
+            {
+                if (output->isRegister())
+                {
+                    if (regs.find(output) != regs.end())
+                        regs.erase(output);
+                }
+            }
+
+            for (Reg* input : inst->inputs)
+            {
+                if (input->isRegister())
+                {
+                    regs.insert(input);
                 }
             }
         }
