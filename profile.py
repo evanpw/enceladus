@@ -55,6 +55,7 @@ add('euler14')
 add('euler23')
 add('euler24')
 add('euler27')
+add('localopt')
 
 
 def get_time(test):

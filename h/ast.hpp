@@ -318,6 +318,29 @@ public:
 	Scope bodyScope;
 };
 
+class ForeachNode : public LoopNode
+{
+public:
+	ForeachNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* listExpression, StatementNode* body)
+	: LoopNode(context, location), varName(varName), listExpression(listExpression), body(body)
+	{}
+
+	AST_VISITABLE();
+
+	std::string varName;
+	ExpressionNode* listExpression;
+	StatementNode* body;
+
+	// Annotations
+	Symbol* symbol;
+	Scope bodyScope;
+
+	// HACK: give the code generator to these functions
+	Symbol* headSymbol;
+	Symbol* tailSymbol;
+	Symbol* nullSymbol;
+};
+
 class ForeverNode : public LoopNode
 {
 public:
@@ -342,9 +365,6 @@ public:
 
 	AST_VISITABLE();
 };
-
-// For loops are implemented as pure syntactic sugar
-BlockNode* makeForNode(AstContext* context, const YYLTYPE& location, const std::string& loopVar, ExpressionNode* list, StatementNode* body);
 
 class AssignNode : public StatementNode
 {

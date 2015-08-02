@@ -57,6 +57,12 @@ void AstVisitor::visit(WhileNode* node)
 	node->body->accept(this);
 }
 
+void AstVisitor::visit(ForeachNode* node)
+{
+	node->listExpression->accept(this);
+	node->body->accept(this);
+}
+
 void AstVisitor::visit(ForeverNode* node)
 {
 	node->body->accept(this);

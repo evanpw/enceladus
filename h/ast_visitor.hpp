@@ -12,6 +12,7 @@ class ComparisonNode;
 class ConstructorSpec;
 class DataDeclaration;
 class ExternalFunctionCallNode;
+class ForeachNode;
 class ForeignDeclNode;
 class ForeverNode;
 class FunctionCallNode;
@@ -43,6 +44,10 @@ public:
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(ComparisonNode* node);
+	virtual void visit(ConstructorSpec* node);
+	virtual void visit(DataDeclaration* node);
+	virtual void visit(ForeachNode* node);
+	virtual void visit(ForeignDeclNode* node);
 	virtual void visit(ForeverNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(FunctionDefNode* node);
@@ -52,15 +57,12 @@ public:
 	virtual void visit(LogicalNode* node);
 	virtual void visit(MatchArm* node);
 	virtual void visit(MatchNode* node);
+	virtual void visit(MemberDefNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(StructDefNode* node);
 	virtual void visit(SwitchNode* node);
 	virtual void visit(WhileNode* node);
-	virtual void visit(ConstructorSpec* node);
-	virtual void visit(ForeignDeclNode* node);
-	virtual void visit(MemberDefNode* node);
-	virtual void visit(DataDeclaration* node);
 
 	// Leaf nodes
 	virtual void visit(BoolNode* node) {}

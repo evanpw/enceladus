@@ -125,7 +125,7 @@ class TestAcceptance(object):
         self.run('localVar', result='3')
 
     def test_unnamed(self):
-        self.run('unnamed', result='19')
+        self.run('unnamed', result='9')
 
     def test_typeConstructor(self):
         self.run('typeConstructor', result='7')

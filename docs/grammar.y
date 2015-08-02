@@ -54,6 +54,7 @@ foreign_declaration
 
 for_statement
     : FOR LIDENT IN expression suite
+    | FOR LIDENT '=' expression TO expression suite
 
 forever_statement
     : FOREVER suite

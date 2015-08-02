@@ -23,22 +23,23 @@ public:
     UNSUPPORTED(BlockNode);
     UNSUPPORTED(BreakNode);
     UNSUPPORTED(DataDeclaration);
+    UNSUPPORTED(ForeachNode);
     UNSUPPORTED(ForeverNode);
     UNSUPPORTED(FunctionDefNode);
     UNSUPPORTED(IfElseNode);
     UNSUPPORTED(IfNode);
     UNSUPPORTED(IntNode);
     UNSUPPORTED(LetNode);
+    UNSUPPORTED(MatchArm);
     UNSUPPORTED(MatchNode);
+    UNSUPPORTED(MemberDefNode);
     UNSUPPORTED(ProgramNode);
     UNSUPPORTED(ReturnNode);
-    UNSUPPORTED(StructDefNode);
-    UNSUPPORTED(WhileNode);
-    UNSUPPORTED(MemberDefNode);
-    UNSUPPORTED(TypeAliasNode);
     UNSUPPORTED(StringLiteralNode);
+    UNSUPPORTED(StructDefNode);
     UNSUPPORTED(SwitchNode);
-    UNSUPPORTED(MatchArm);
+    UNSUPPORTED(TypeAliasNode);
+    UNSUPPORTED(WhileNode);
 
     virtual void visit(BoolNode* node) { wrapper(node); }
     virtual void visit(MemberAccessNode* node) { wrapper(node); }
@@ -92,10 +93,11 @@ public:
 
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
-    virtual void visit(BreakNode* node);
     virtual void visit(BoolNode* node);
+    virtual void visit(BreakNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(DataDeclaration* node);
+    virtual void visit(ForeachNode* node);
     virtual void visit(ForeverNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(FunctionDefNode* node);
@@ -104,19 +106,19 @@ public:
     virtual void visit(IntNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
+    virtual void visit(MatchArm* node);
     virtual void visit(MatchNode* node);
     virtual void visit(MemberAccessNode* node);
+    virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);
     virtual void visit(ProgramNode* node);
     virtual void visit(ReturnNode* node);
+    virtual void visit(StringLiteralNode* node);
     virtual void visit(StructDefNode* node);
+    virtual void visit(SwitchNode* node);
+    virtual void visit(TypeAliasNode* node);
     virtual void visit(VariableNode* node);
     virtual void visit(WhileNode* node);
-    virtual void visit(MemberDefNode* node);
-    virtual void visit(StringLiteralNode* node);
-    virtual void visit(TypeAliasNode* node);
-    virtual void visit(SwitchNode* node);
-    virtual void visit(MatchArm* node);
 
 private:
     // We cache the Value corresponding to each symbol so that the value

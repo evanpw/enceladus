@@ -496,6 +496,67 @@ void TACCodeGen::visit(WhileNode* node)
     setBlock(loopExit);
 }
 
+void TACCodeGen::visit(ForeachNode* node)
+{
+    // HACK
+    Value* headFunction = getValue(node->headSymbol);
+    Value* tailFunction = getValue(node->tailSymbol);
+    Value* nullFunction = getValue(node->nullSymbol);
+
+
+    BasicBlock* loopInit = makeBlock();
+    BasicBlock* loopBegin = makeBlock();
+    BasicBlock* loopExit = makeBlock();
+    BasicBlock* loopBody = makeBlock();
+
+    // Create an unnamed local variable to hold the list being iterated over
+    Value* listVar = _context->makeLocal("");
+    _currentFunction->locals.push_back(listVar);
+
+    emit(new JumpInst(loopInit));
+    setBlock(loopInit);
+
+    Value* initialList = visitAndGet(node->listExpression);
+    emit(new StoreInst(listVar, initialList));
+
+    emit(new JumpInst(loopBegin));
+    setBlock(loopBegin);
+
+    // Loop while list variable is not null
+    Value* currentList = makeTemp();
+    emit(new LoadInst(currentList, listVar));
+    Value* isNull = makeTemp();
+    emit(new CallInst(isNull, nullFunction, {currentList}));
+    emit(new JumpIfInst(isNull, loopExit, loopBody));
+
+    // Push a new inner loop on the (implicit) stack
+    BasicBlock* prevLoopExit = _currentLoopExit;
+    _currentLoopExit = loopExit;
+
+    setBlock(loopBody);
+
+    // Assign the head of the list to the induction variable
+    currentList = makeTemp();
+    emit(new LoadInst(currentList, listVar));
+    Value* currentHead = makeTemp();
+    emit(new CallInst(currentHead, headFunction, {currentList}));
+    emit(new StoreInst(getValue(node->symbol), currentHead));
+
+    // Pop the head off the current list
+    Value* currentTail = makeTemp();
+    emit(new CallInst(currentTail, tailFunction, {currentList}));
+    emit(new StoreInst(listVar, currentTail));
+
+    node->body->accept(this);
+
+    if (!_currentBlock->isTerminated())
+        emit(new JumpInst(loopBegin));
+
+    _currentLoopExit = prevLoopExit;
+
+    setBlock(loopExit);
+}
+
 void TACCodeGen::visit(ForeverNode* node)
 {
     BasicBlock* loopBody = makeBlock();
@@ -573,14 +634,6 @@ void TACConditionalCodeGen::visit(FunctionCallNode* node)
         {
             assert(node->arguments.size() == 1);
             visitCondition(*node->arguments[0], _falseBranch, _trueBranch);
-            return;
-        }
-        else if (node->target == "null")
-        {
-            assert(node->arguments.size() == 1);
-            Value* arg = visitAndGet(node->arguments[0]);
-
-            emit(new ConditionalJumpInst(arg, "==", _context->Zero, _trueBranch, _falseBranch));
             return;
         }
     }

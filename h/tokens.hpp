@@ -46,6 +46,7 @@ enum TokenType : int
     tSTRING_LIT,
     tSTRUCT,
     tTIMES_EQUAL,
+    tTO,
     tTRUE,
     tTYPE,
     tUIDENT,

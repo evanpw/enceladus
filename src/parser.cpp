@@ -283,7 +283,7 @@ StatementNode* Parser::for_statement()
     ExpressionNode* listExpression = expression();
     StatementNode* body = suite();
 
-    return makeForNode(_context, location, loopVar.value.str, listExpression, body);
+    return new ForeachNode(_context, location, loopVar.value.str, listExpression, body);
 }
 
 StatementNode* Parser::forever_statement()

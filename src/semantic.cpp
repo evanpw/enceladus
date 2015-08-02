@@ -132,6 +132,7 @@ void SemanticAnalyzer::injectSymbols()
     scope.types.insert(new TypeConstructorSymbol("Function", _root, _typeTable->Function));
     scope.types.insert(new TypeConstructorSymbol("Array", _root, _typeTable->Array));
 
+
 	//// Create symbols for built-in functions
     FunctionSymbol* notFn = makeBuiltin("not");
 	notFn->setType(_typeTable->createFunctionType({_typeTable->Bool}, _typeTable->Bool));
@@ -204,11 +205,14 @@ void SemanticAnalyzer::resolveBaseType(TypeName* typeName, std::unordered_map<st
 
 TypeConstructor* SemanticAnalyzer::getTypeConstructor(const TypeName* typeName)
 {
-    const std::string& name = typeName->name;
+    return getTypeConstructor(typeName->location, typeName->name);
+}
 
+TypeConstructor* SemanticAnalyzer::getTypeConstructor(const YYLTYPE& location, const std::string& name)
+{
     Symbol* symbol = resolveTypeSymbol(name);
-    CHECK_AT(typeName->location, symbol, "Type constructor \"{}\" is not defined", name);
-    CHECK_AT(typeName->location, symbol->kind == kTypeConstructor, "Symbol \"{}\" is not a type constructor", name);
+    CHECK_AT(location, symbol, "Type constructor \"{}\" is not defined", name);
+    CHECK_AT(location, symbol->kind == kTypeConstructor, "Symbol \"{}\" is not a type constructor", name);
 
     return symbol->asTypeConstructor()->typeConstructor;
 }
@@ -1096,6 +1100,46 @@ void SemanticAnalyzer::visit(WhileNode* node)
     _enclosingLoop = node;
     enterScope(&node->bodyScope);
 
+    node->body->accept(this);
+
+    exitScope();
+    _enclosingLoop = outerLoop;
+
+    unify(node->body->type, _typeTable->Unit, node);
+}
+
+void SemanticAnalyzer::visit(ForeachNode* node)
+{
+    TypeConstructor* List = getTypeConstructor(node->location, "List");
+    Type* varType = _typeTable->createTypeVariable();
+    Type* listType = _typeTable->createConstructedType(List, {varType});
+
+    node->listExpression->accept(this);
+    unify(node->listExpression->type, listType, node);
+
+    // Save the current inner-most loop so that we can restore it after
+    // visiting the children of this loop.
+    LoopNode* outerLoop = _enclosingLoop;
+
+    node->type = _typeTable->Unit;
+
+    _enclosingLoop = node;
+    enterScope(&node->bodyScope);
+
+    CHECK(node->varName != "_", "for-loop induction variable cannot be unnamed");
+    CHECK_UNDEFINED_IN_SCOPE(node->varName);
+
+    Symbol* symbol = new VariableSymbol(node->varName, node, _enclosingFunction);
+    symbol->setType(varType);
+    insertSymbol(symbol);
+    node->symbol = symbol;
+
+    // HACK: Give the code generator access to these symbols
+    node->headSymbol = resolveSymbol("head");
+    node->tailSymbol = resolveSymbol("tail");
+    node->nullSymbol = resolveSymbol("null");
+
+    node->type = _typeTable->Unit;
     node->body->accept(this);
 
     exitScope();

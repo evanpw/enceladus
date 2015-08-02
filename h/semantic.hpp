@@ -22,7 +22,6 @@ private:
     std::string _description;
 };
 
-// Semantic analysis pass 1 - handle declarations and build the symbol tables
 class SemanticAnalyzer : public AstVisitor
 {
 public:
@@ -31,16 +30,18 @@ public:
 
     // Declarations
     virtual void visit(DataDeclaration* node);
-    virtual void visit(TypeAliasNode* node);
-    virtual void visit(FunctionDefNode* node);
     virtual void visit(ForeignDeclNode* node);
+    virtual void visit(FunctionDefNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(StructDefNode* node);
+    virtual void visit(TypeAliasNode* node);
 
     // Internal nodes
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(ComparisonNode* node);
+    virtual void visit(ConstructorSpec* node);
+    virtual void visit(ForeachNode* node);
     virtual void visit(ForeverNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
@@ -51,7 +52,6 @@ public:
     virtual void visit(ProgramNode* node);
     virtual void visit(SwitchNode* node);
     virtual void visit(WhileNode* node);
-    virtual void visit(ConstructorSpec* node);
 
     // Leaf nodes
     virtual void visit(BoolNode* node);
@@ -89,6 +89,7 @@ private:
     void injectSymbols();
 
     TypeConstructor* getTypeConstructor(const TypeName* typeName);
+    TypeConstructor* getTypeConstructor(const YYLTYPE& location, const std::string& name);
     void resolveBaseType(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables=false);
     void resolveTypeName(TypeName* typeName, bool createVariables=false);
     void resolveTypeName(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables=false);
