@@ -140,6 +140,14 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
     }
     else if (inst->op == BinaryOperation::DIV)
     {
+        // No IDIV imm instruction
+        if (rhs->isImmediate())
+        {
+            VirtualRegister* vreg = _function->makeVreg();
+            emit(Opcode::MOVrd, {vreg}, {rhs});
+            rhs = vreg;
+        }
+
         emit(Opcode::MOVrd, {rax}, {lhs});
         emit(Opcode::CQO, {rdx}, {rax});
         emit(Opcode::IDIV, {rdx, rax}, {rdx, rax, rhs});
@@ -147,10 +155,22 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
     }
     else if (inst->op == BinaryOperation::MOD)
     {
+        // No IDIV imm instruction
+        if (rhs->isImmediate())
+        {
+            VirtualRegister* vreg = _function->makeVreg();
+            emit(Opcode::MOVrd, {vreg}, {rhs});
+            rhs = vreg;
+        }
+
         emit(Opcode::MOVrd, {rax}, {lhs});
         emit(Opcode::CQO, {rdx}, {rax});
         emit(Opcode::IDIV, {rdx, rax}, {rdx, rax, rhs});
         emit(Opcode::MOVrd, {dest}, {rdx});
+    }
+    else
+    {
+        assert(false);
     }
 }
 

@@ -1,6 +1,7 @@
 #include "asm_printer.hpp"
 #include "ast.hpp"
 #include "ast_context.hpp"
+#include "constant_folding.hpp"
 #include "context.hpp"
 #include "exceptions.hpp"
 #include "from_ssa.hpp"
@@ -76,18 +77,21 @@ int main(int argc, char* argv[])
 		ToSSA toSSA(function);
 		toSSA.run();
 
+		ConstantFolding constantFolding(function);
+		constantFolding.run();
+
+		std::cerr << function->name << ":" << std::endl;
+		for (BasicBlock* block : function->blocks)
+		{
+			std::cerr << block->str() << std::endl;
+			for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+		    {
+		    	std::cerr << "\t" << inst->str() << std::endl;
+		    }
+		}
+
 		FromSSA fromSSA(function);
 		fromSSA.run();
-
-		// std::cerr << function->name << ":" << std::endl;
-		// for (BasicBlock* block : function->blocks)
-		// {
-		// 	std::cerr << block->str() << std::endl;
-		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
-		//     {
-		//     	std::cerr << "\t" << inst->str() << std::endl;
-		//     }
-		// }
 	}
 
 
