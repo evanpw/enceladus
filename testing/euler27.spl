@@ -34,8 +34,8 @@ def numberOfPrimes(q: Quadratic) -> Int
 
 best := 0
 bestProduct := 0
-for a in range -1000 1000
-    for b in range -1000 1000
+for a = -1000 to 1000
+    for b = -1000 to 1000
         q := Quadratic a b
         count := numberOfPrimes q
 

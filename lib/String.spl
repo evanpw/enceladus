@@ -60,7 +60,7 @@ def split(s: String) -> [String]
     start := 0
 
     len := strLength s
-    for i in range 0 (strLength s)
+    for i = 0 to strLength s
         if isSpace $ strAt s i
             len := i - start
             result = (strSlice s start len) :: result
@@ -77,7 +77,7 @@ def splitBy(sep: Char, s: String) -> [String]
     start := 0
 
     len := strLength s
-    for i in range 0 (strLength s)
+    for i = 0 to strLength s
         if strAt s i == sep
             len := i - start
             result = (strSlice s start len) :: result
@@ -100,7 +100,7 @@ def join(sep: String, xs: [String]) -> String
 
 def stringToInt(s: String) -> Option Int
     x := 0
-    for i in range 0 (strLength s - 1)
+    for i = 0 to strLength s - 1
         digit := strAt s i
 
         if digit < '0' or digit > '9'

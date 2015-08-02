@@ -4,8 +4,8 @@ import List
 import String
 
 values := []
-for a in range 2 100
-    for b in range 2 100
+for a = 2 to 100
+    for b = 2 to 100
         n := bigPower a b
 
         values = n :: values

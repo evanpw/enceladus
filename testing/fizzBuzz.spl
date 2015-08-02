@@ -1,4 +1,4 @@
-for i in range 1 100
+for i = 1 to 100
     if i mod 15 == 0
         print "FizzBuzz"
     elif i mod 3 == 0

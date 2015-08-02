@@ -246,7 +246,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(and|or|in)\b</string>
+			<string>\b(and|or|in|to)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>

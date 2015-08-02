@@ -16,7 +16,7 @@ def readNames() -> [String]
 
 def score(name: String) -> Int
     total := 0
-    for i in range 0 (strLength name - 1)
+    for i = 0 to strLength name - 1
         c := strAt name i
         total += (c - 'A') + 1
 
@@ -26,7 +26,7 @@ names := readNames
 names = sort cmpString names
 
 total := 0
-for i in range 1 (length names)
+for i = 1 to length names
     name := at (i - 1) names
 
     total += i * score name

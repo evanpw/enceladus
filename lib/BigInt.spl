@@ -61,7 +61,7 @@ def shift(xs: BigInt, n: Int) -> BigInt
 def bigProduct(xs: BigInt, ys: BigInt) -> BigInt
     partialProducts := []
 
-    for n in range 0 $ length ys - 1
+    for n = 0 to length ys - 1
         y := at n ys
         z1 := singleProduct xs y
         z2 := shift z1 n
@@ -90,7 +90,7 @@ def bigPower(a: Int, b: Int) -> BigInt
     bigA := toBigInt a
     result := toBigInt 1
 
-    for i in range 1 b
+    for i = 1 to b
         result = bigProduct result bigA
 
     return result

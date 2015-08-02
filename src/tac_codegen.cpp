@@ -557,6 +557,58 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopExit);
 }
 
+void TACCodeGen::visit(ForNode* node)
+{
+    BasicBlock* loopInit = makeBlock();
+    BasicBlock* loopBegin = makeBlock();
+    BasicBlock* loopExit = makeBlock();
+    BasicBlock* loopBody = makeBlock();
+
+    Value* inductionVar = getValue(node->symbol);
+
+    emit(new JumpInst(loopInit));
+    setBlock(loopInit);
+
+    // Compute the "from" and "to" values, and initialize the induction variable
+    // to "from"
+    Value* from = visitAndGet(node->fromExpression);
+    Value* to = visitAndGet(node->toExpression);
+    emit(new StoreInst(inductionVar, from));
+
+    emit(new JumpInst(loopBegin));
+    setBlock(loopBegin);
+
+    // Loop while current <= to
+    Value* current = makeTemp();
+    emit(new LoadInst(current, inductionVar));
+    emit(new ConditionalJumpInst(current, ">", to, loopExit, loopBody));
+
+    // Push a new inner loop on the (implicit) stack
+    BasicBlock* prevLoopExit = _currentLoopExit;
+    _currentLoopExit = loopExit;
+
+    setBlock(loopBody);
+
+    node->body->accept(this);
+
+    if (!_currentBlock->isTerminated())
+    {
+        // Increment the induction variable
+        Value* current = makeTemp();
+        emit(new LoadInst(current, inductionVar));
+        // Add 2 directly to the tagged integer: equivalent to untagging, adding 1, and re-tagging
+        Value* next = makeTemp();
+        emit(new BinaryOperationInst(next, current, BinaryOperation::ADD, _context->getConstantInt(2)));
+        emit(new StoreInst(inductionVar, next));
+
+        emit(new JumpInst(loopBegin));
+    }
+
+    _currentLoopExit = prevLoopExit;
+
+    setBlock(loopExit);
+}
+
 void TACCodeGen::visit(ForeverNode* node)
 {
     BasicBlock* loopBody = makeBlock();

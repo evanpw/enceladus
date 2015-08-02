@@ -341,6 +341,25 @@ public:
 	Symbol* nullSymbol;
 };
 
+class ForNode : public LoopNode
+{
+public:
+	ForNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* fromExpression, ExpressionNode* toExpression, StatementNode* body)
+	: LoopNode(context, location), varName(varName), fromExpression(fromExpression), toExpression(toExpression), body(body)
+	{}
+
+	AST_VISITABLE();
+
+	std::string varName;
+	ExpressionNode* fromExpression;
+	ExpressionNode* toExpression;
+	StatementNode* body;
+
+	// Annotations
+	Symbol* symbol;
+	Scope bodyScope;
+};
+
 class ForeverNode : public LoopNode
 {
 public:

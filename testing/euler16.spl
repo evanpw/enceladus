@@ -4,7 +4,7 @@ import BigInt
 
 x := toBigInt 1
 
-for i in range 1 1000
+for i = 1 to 1000
     x = bigSum x x
 
 print $ show $ sum x

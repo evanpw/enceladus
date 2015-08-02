@@ -39,7 +39,7 @@ def cmpString(xs: String, ys: String) -> Int
     n1 := strLength xs
     n2 := strLength ys
 
-    for n in range 0 (min n1 n2)
+    for n = 0 to min n1 n2
         if strLength xs <= n
             if strLength ys <= n
                 return 0

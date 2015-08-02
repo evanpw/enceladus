@@ -43,6 +43,7 @@ public:
     virtual void visit(ConstructorSpec* node);
     virtual void visit(ForeachNode* node);
     virtual void visit(ForeverNode* node);
+    virtual void visit(ForNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
