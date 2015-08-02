@@ -48,7 +48,7 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
             {
                 result = _context->makeArgument(symbol->name);
             }
-            else if (symbol->enclosingFunction == nullptr)
+            else if (symbol->global)
             {
                 result = _context->makeGlobal(symbol->name);
             }

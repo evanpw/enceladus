@@ -226,6 +226,27 @@ class TestAcceptance(object):
     def test_mainStackRoots(self):
         self.run('mainStackRoots', result='1')
 
+    def test_scopes1(self):
+        self.run('scopes1', build_error='Error: testing/scopes1.spl:4:14: symbol "x" is not defined in this scope')
+
+    def test_scopes2(self):
+        self.run('scopes2', build_error='Error: testing/scopes2.spl:6:14: symbol "x" is not defined in this scope')
+
+    def test_scopes3(self):
+        self.run('scopes3', build_error='Error: testing/scopes3.spl:4:14: symbol "x" is not defined in this scope')
+
+    def test_scopes4(self):
+        self.run('scopes4', build_error='Error: testing/scopes4.spl:5:14: symbol "x" is not defined in this scope')
+
+    def test_scopes5(self):
+        self.run('scopes5', result='1')
+
+    def test_scopes6(self):
+        self.run('scopes6', result='1\n2\n3\n4')
+
+    def test_scopes7(self):
+        self.run('scopes7', result='success')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

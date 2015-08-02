@@ -19,10 +19,11 @@ enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMembe
 
 struct Symbol
 {
-    Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction)
+    Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
     : name(name)
     , node(node)
     , enclosingFunction(enclosingFunction)
+    , global(global)
     , kind(kind)
     {}
 
@@ -34,8 +35,10 @@ struct Symbol
     // The node at which this symbol is first declared.
     AstNode* node;
 
-    // If a global symbol, then null
+    // May be null
     FunctionDefNode* enclosingFunction;
+
+    bool global;
 
     // Type (possibly polymorphic) of this variable or function
     TypeScheme* typeScheme = nullptr;
@@ -72,7 +75,7 @@ struct Symbol
 
 struct VariableSymbol : public Symbol
 {
-    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction);
+    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global);
 
     // Is this symbol a function parameter?
     bool isParam = false;

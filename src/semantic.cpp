@@ -722,7 +722,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	{
 		const std::string& param = node->params[i];
 
-		Symbol* paramSymbol = new VariableSymbol(param, node, node);
+		Symbol* paramSymbol = new VariableSymbol(param, node, node, false);
 		paramSymbol->asVariable()->isParam = true;
         paramSymbol->asVariable()->offset = i;
 		paramSymbol->setType(paramTypes[i]);
@@ -785,7 +785,8 @@ void SemanticAnalyzer::visit(LetNode* node)
     {
         CHECK_UNDEFINED_IN_SCOPE(target);
 
-    	Symbol* symbol = new VariableSymbol(target, node, _enclosingFunction);
+        bool global = _scopes.size() == 1;
+    	Symbol* symbol = new VariableSymbol(target, node, _enclosingFunction, global);
 
     	if (node->typeName)
     	{
@@ -866,7 +867,7 @@ void SemanticAnalyzer::visit(MatchArm* node)
 
         if (name != "_")
         {
-            Symbol* member = new VariableSymbol(name, node, _enclosingFunction);
+            Symbol* member = new VariableSymbol(name, node, _enclosingFunction, false);
             member->setType(functionType->inputs().at(i));
             insertSymbol(member);
             node->symbols.push_back(member);
@@ -906,6 +907,8 @@ void SemanticAnalyzer::visit(MatchNode* node)
 
     node->valueConstructor = constructedType->valueConstructors()[0];
 
+    bool global = _scopes.size() == 1;
+
 	// And create new variables for each of the members of the constructor
 	for (size_t i = 0; i < node->params.size(); ++i)
 	{
@@ -914,7 +917,7 @@ void SemanticAnalyzer::visit(MatchNode* node)
 
         if (name != "_")
         {
-    		Symbol* member = new VariableSymbol(name, node, _enclosingFunction);
+    		Symbol* member = new VariableSymbol(name, node, _enclosingFunction, global);
     		member->setType(functionType->inputs().at(i));
     		insertSymbol(member);
     		node->symbols.push_back(member);
@@ -1129,7 +1132,7 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     CHECK(node->varName != "_", "for-loop induction variable cannot be unnamed");
     CHECK_UNDEFINED_IN_SCOPE(node->varName);
 
-    Symbol* symbol = new VariableSymbol(node->varName, node, _enclosingFunction);
+    Symbol* symbol = new VariableSymbol(node->varName, node, _enclosingFunction, false);
     symbol->setType(varType);
     insertSymbol(symbol);
     node->symbol = symbol;
@@ -1193,7 +1196,7 @@ void SemanticAnalyzer::visit(StringLiteralNode* node)
     node->type = _typeTable->String;
 
     std::string name = "__staticString" + std::to_string(node->counter);
-    VariableSymbol* symbol = new VariableSymbol(name, node, nullptr);
+    VariableSymbol* symbol = new VariableSymbol(name, node, nullptr, true);
     symbol->isStatic = true;
     symbol->contents = node->content;
     insertSymbol(symbol);

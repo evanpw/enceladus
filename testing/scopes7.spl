@@ -1,0 +1,9 @@
+while True
+    x := 0
+    break
+
+while True
+    x := 1
+    break
+
+print "success"
