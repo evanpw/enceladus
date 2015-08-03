@@ -1,0 +1,24 @@
+# Solves Project Euler 3
+
+def isPrime(x: Int) -> Bool
+    i := 2
+    while i * i <= x
+        if x mod i == 0
+            return False
+
+        i += 1
+
+    return True
+
+
+for n = 1 to 1000000
+    biggest := 0
+
+    # Loop over all possible divisors of n
+    i := 2
+    while i * i <= n
+
+    	if n mod i == 0 and isPrime i
+            biggest = i
+
+    	i += 1

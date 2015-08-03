@@ -27,7 +27,7 @@ struct TACContext
     LocalValue* makeLocal(const std::string& name);
     Value* makeTemp(int64_t number);
     Value* makeTemp(const std::string& name);
-    BasicBlock* makeBlock(int64_t number);
+    BasicBlock* makeBlock(Function* parent, int64_t number);
 
     // Convenience references
     ConstantInt* True;

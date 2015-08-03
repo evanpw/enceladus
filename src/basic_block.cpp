@@ -2,8 +2,8 @@
 #include "tac_instruction.hpp"
 #include <sstream>
 
-BasicBlock::BasicBlock(TACContext* context, int64_t seqNumber)
-: Value(context, seqNumber)
+BasicBlock::BasicBlock(TACContext* context, Function* parent, int64_t seqNumber)
+: Value(context, seqNumber), parent(parent)
 {
 }
 

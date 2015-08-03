@@ -3,6 +3,7 @@
 #include "ast_context.hpp"
 #include "constant_folding.hpp"
 #include "context.hpp"
+#include "demote_globals.hpp"
 #include "exceptions.hpp"
 #include "from_ssa.hpp"
 #include "machine_codegen.hpp"
@@ -72,6 +73,9 @@ int main(int argc, char* argv[])
 	TACValidator validator(tacContext);
 	assert(validator.isValid());
 
+	DemoteGlobals demoteGlobals(tacContext);
+	demoteGlobals.run();
+
 	for (Function* function : tacContext->functions)
 	{
 		ToSSA toSSA(function);
@@ -89,6 +93,7 @@ int main(int argc, char* argv[])
 		    	std::cerr << "\t" << inst->str() << std::endl;
 		    }
 		}
+		std::cerr << std::endl;
 
 		FromSSA fromSSA(function);
 		fromSSA.run();

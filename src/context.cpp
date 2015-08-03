@@ -98,9 +98,9 @@ Value* TACContext::makeTemp(const std::string& name)
     return result;
 }
 
-BasicBlock* TACContext::makeBlock(int64_t number)
+BasicBlock* TACContext::makeBlock(Function* parent, int64_t number)
 {
-    BasicBlock* result = new BasicBlock(this, number);
+    BasicBlock* result = new BasicBlock(this, parent, number);
     _values.push_back(result);
     return result;
 }

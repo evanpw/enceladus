@@ -44,7 +44,6 @@ def add(name, input_file=None):
     tests.append(test)
 
 
-add('euler4')
 add('euler12', )
 add('euler19',)
 add('euler19-2')
@@ -56,6 +55,10 @@ add('euler23')
 add('euler24')
 add('euler27')
 add('localopt')
+add('profile_euler1')
+add('profile_euler3')
+add('profile_euler4')
+add('profile_euler5')
 
 
 def get_time(test):

@@ -19,7 +19,7 @@ Value* Function::makeTemp(const std::string& name)
 
 BasicBlock* Function::makeBlock()
 {
-    BasicBlock* block = _context->makeBlock(_nextSeqNumber++);
+    BasicBlock* block = _context->makeBlock(this, _nextSeqNumber++);
     blocks.push_back(block);
     return block;
 }

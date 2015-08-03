@@ -1,0 +1,21 @@
+# Solve Project Euler 4
+
+def reverseDigits(x: Int) -> Int
+    y := 0
+
+    while x != 0
+        y = y * 10 + (x mod 10)
+        x /= 10
+
+    return y
+
+biggest := 0
+
+for i = 100 to 2000
+    for j = 1 to 9999
+        x := i * j
+
+        if x == reverseDigits x and x > biggest
+            biggest = x
+
+print $ show biggest

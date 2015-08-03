@@ -6,6 +6,7 @@
 #include <vector>
 #include "value.hpp"
 
+struct Function;
 struct Instruction;
 
 struct BasicBlock : public Value
@@ -31,6 +32,8 @@ struct BasicBlock : public Value
         return _successors;
     }
 
+    Function* parent;
+
     // Does this basic block end in a terminator instruction?
     bool isTerminated();
 
@@ -40,7 +43,7 @@ struct BasicBlock : public Value
 
 private:
     friend struct TACContext;
-    BasicBlock(TACContext* context, int64_t seqNumber);
+    BasicBlock(TACContext* context, Function* parent, int64_t seqNumber);
 
     static bool getTargets(Instruction* inst, std::vector<BasicBlock*>& targets);
 

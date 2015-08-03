@@ -297,6 +297,17 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
         lhs = newLhs;
     }
 
+    // Immediates are 32-bit
+    if (lhs->isImmediate())
+        std::swap(lhs, rhs);
+
+    if (rhs->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(rhs)->value))
+    {
+        VirtualRegister* newRhs = _function->makeVreg();
+        emit(Opcode::MOVrd, {newRhs}, {rhs});
+        rhs = newRhs;
+    }
+
     emit(Opcode::CMP, {}, {lhs, rhs});
 
     MachineOperand* ifTrue = getOperand(inst->ifTrue);

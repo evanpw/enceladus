@@ -33,7 +33,10 @@
 
 * Add syntax for return with no argument
 
-* Optimization: demote global variables to local variables in main if not used
-  anywhere else
-
 * Force splmain to be explicitly defined?
+
+* Rewrite calculations in terms of untagged variables when possible
+
+* Kill dead definitions
+
+* Combine redundant definitions
