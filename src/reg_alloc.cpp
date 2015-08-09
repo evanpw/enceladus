@@ -63,7 +63,6 @@ void RegAlloc::run()
 {
     colorGraph();
     replaceRegs();
-    assignStackLocations();
 
     // std::cerr << _function->name << ":" << std::endl;
     // for (MachineBB* block : _function->blocks)
@@ -77,7 +76,6 @@ void RegAlloc::run()
     // std::cerr << std::endl;
 
     spillAroundCalls();
-    allocateStack();
 }
 
 void RegAlloc::spillAroundCalls()
@@ -87,10 +85,6 @@ void RegAlloc::spillAroundCalls()
     gatherUseDef();
     computeLiveness();
     computeInterference();
-
-    // Keep track of the furthest stack offset that we ever need, so that we
-    // know how much space to allocate
-    int64_t startOffset = _currentOffset;
 
     //std::cerr << _function->name << ":" << std::endl;
 
@@ -116,8 +110,6 @@ void RegAlloc::spillAroundCalls()
 
             if (inst->opcode == Opcode::CALL)
             {
-                int64_t offset = startOffset;
-
                 std::vector<MachineInst*> saves;
                 std::vector<MachineInst*> restores;
                 for (Reg* liveReg : regs)
@@ -131,13 +123,12 @@ void RegAlloc::spillAroundCalls()
                     if (!inst->outputs.empty() && liveReg == _context->rax)
                         continue;
 
-                    offset -= 8;
-                    _currentOffset = std::min(_currentOffset, offset);
+                    StackLocation* stackVar = _function->makeStackVariable();
 
-                    MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {_context->rbp, liveReg, _context->makeImmediate(offset)});
+                    MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {stackVar, liveReg});
                     saves.push_back(saveInst);
 
-                    MachineInst* restoreInst = new MachineInst(Opcode::MOVrm, {liveReg}, {_context->rbp, _context->makeImmediate(offset)});
+                    MachineInst* restoreInst = new MachineInst(Opcode::MOVrm, {liveReg}, {stackVar});
                     restores.push_back(restoreInst);
                 }
 
@@ -179,102 +170,6 @@ void RegAlloc::spillAroundCalls()
                 }
             }
         }
-    }
-}
-
-Immediate* RegAlloc::getStackOffset(MachineOperand* operand)
-{
-    if (StackParameter* param = dynamic_cast<StackParameter*>(operand))
-    {
-        return _context->makeImmediate(16 + 8 * param->index);
-    }
-    else
-    {
-        StackLocation* stackLocation = dynamic_cast<StackLocation*>(operand);
-        assert(stackLocation);
-
-        auto itr = _stackOffsets.find(stackLocation);
-        if (itr != _stackOffsets.end())
-        {
-            return itr->second;
-        }
-        else
-        {
-            _stackOffsets[stackLocation] = _context->makeImmediate(_currentOffset - 8);
-            _currentOffset -= 8;
-
-            return _stackOffsets[stackLocation];
-        }
-    }
-}
-
-void RegAlloc::assignStackLocations()
-{
-    _stackOffsets.clear();
-    _currentOffset = 0;
-
-    for (MachineBB* block : _function->blocks)
-    {
-        for (MachineInst* inst : block->instructions)
-        {
-            // Replace inputs
-            for (size_t j = 0; j < inst->inputs.size(); ++j)
-            {
-                if (inst->inputs[j]->isStackLocation())
-                {
-                    if (inst->opcode == Opcode::MOVrm)
-                    {
-                        assert(inst->inputs.size() == 1);
-
-                        MachineOperand* operand = inst->inputs[0];
-                        inst->inputs[0] = _context->rbp;
-                        inst->inputs.push_back(getStackOffset(operand));
-                        break;
-                    }
-                    else if (inst->opcode == Opcode::MOVmd)
-                    {
-                        assert(inst->inputs.size() == 2);
-
-                        MachineOperand* operand = inst->inputs[0];
-                        inst->inputs[0] = _context->rbp;
-                        inst->inputs.push_back(getStackOffset(operand));
-                        break;
-                    }
-                    else
-                    {
-                        assert(false);
-                    }
-                }
-            }
-
-            // Replace outputs
-            for (size_t j = 0; j < inst->outputs.size(); ++j)
-            {
-                assert(!inst->outputs[j]->isStackLocation());
-            }
-        }
-    }
-}
-
-void RegAlloc::allocateStack()
-{
-    // In the entry block, allocate room for the stack variables
-    if (_currentOffset != 0)
-    {
-        // Round up to mantain 16-byte alignment
-        if (_currentOffset % 16)
-            _currentOffset -= 8;
-
-        MachineBB* entryBlock = *(_function->blocks.begin());
-
-        auto itr = entryBlock->instructions.begin();
-
-        // HACK: First two instructions will always be push rbp; mov rbp, rsp
-        ++itr;
-        ++itr;
-
-        MachineInst* allocInst = new MachineInst(Opcode::ADD, {_context->rsp}, {_context->rsp, _context->makeImmediate(_currentOffset)});
-        entryBlock->instructions.insert(itr, allocInst);
     }
 }
 
@@ -562,7 +457,7 @@ void RegAlloc::spillVariable(Reg* reg)
 
     std::stringstream ss;
     ss << "vreg" << vreg->id;
-    StackLocation* spillLocation = _function->makeStackLocation(ss.str());
+    StackLocation* spillLocation = _function->makeStackVariable(ss.str());
 
     _spilled[reg] = spillLocation;
 
@@ -577,7 +472,7 @@ void RegAlloc::spillVariable(Reg* reg)
             if (std::find(inst->inputs.begin(), inst->inputs.end(), reg) != inst->inputs.end())
             {
                 // Load from the stack into a fresh register
-                MachineOperand* newReg = _function->makeVreg();
+                MachineOperand* newReg = _function->makeVreg(vreg->type);
                 MachineInst* loadInst = new MachineInst(Opcode::MOVrm, {newReg}, {spillLocation});
                 block->instructions.insert(i, loadInst);
 
@@ -593,7 +488,7 @@ void RegAlloc::spillVariable(Reg* reg)
             if (std::find(inst->outputs.begin(), inst->outputs.end(), reg) != inst->outputs.end())
             {
                 // Create a fresh register to store the result
-                MachineOperand* newReg = _function->makeVreg();
+                MachineOperand* newReg = _function->makeVreg(vreg->type);
 
                 // Replace all uses of the spilled register with the new one
                 for (size_t j = 0; j < inst->outputs.size(); ++j)

@@ -3,7 +3,7 @@
 #include <sstream>
 
 BasicBlock::BasicBlock(TACContext* context, Function* parent, int64_t seqNumber)
-: Value(context, seqNumber), parent(parent)
+: Value(context, ValueType::CodeAddress, seqNumber), parent(parent)
 {
 }
 

@@ -154,9 +154,9 @@ private:
     friend class TACConditionalCodeGen;
 
     int64_t _nextSeqNumber = 0;
-    Value* makeTemp()
+    Value* makeTemp(ValueType type)
     {
-        return _currentFunction->makeTemp();
+        return _currentFunction->makeTemp(type);
     }
 
     BasicBlock* makeBlock()

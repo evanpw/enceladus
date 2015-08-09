@@ -72,17 +72,6 @@ private:
     // don't interfere
     void coalesceMoves();
 
-    // Assign an explicit location on the stack for each StackLocation and
-    // rewrite instructions to use those locations
-    std::unordered_map<StackLocation*, Immediate*> _stackOffsets;
-    int64_t _currentOffset = 0;
-    void assignStackLocations();
-    Immediate* getStackOffset(MachineOperand* operand);
-
-    // In the entry block, adjust rsp to allocate enough memory for all spilled
-    // variables
-    void allocateStack();
-
     // Spill all callee-save registers at call sites
     void spillAroundCalls();
 };

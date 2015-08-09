@@ -12,6 +12,7 @@
 #include "redundant_moves.hpp"
 #include "reg_alloc.hpp"
 #include "semantic.hpp"
+#include "stack_alloc.hpp"
 #include "stack_map.hpp"
 #include "tac_codegen.hpp"
 #include "tac_validator.hpp"
@@ -151,6 +152,9 @@ int main(int argc, char* argv[])
 	{
 		RegAlloc regAlloc(mf);
 		regAlloc.run();
+
+		StackAlloc stackAlloc(mf);
+		stackAlloc.run();
 
 		// std::cerr << mf->name << ":" << std::endl;
 		// for (MachineBB* block : mf->blocks)

@@ -25,13 +25,15 @@ void FromSSA::run()
         {
             if (PhiInst* phi = dynamic_cast<PhiInst*>(inst))
             {
+                ValueType type = phi->dest->type;
+
                 // Each predecessor will copy into this variable, and then the
                 // phi node will be replaced with a copy from this variable to
                 // the phi destination. This is usually overkill (compared to
                 // just a single copy in each predecessor), but it helps avoid
                 // problems in some corner cases, and the extra copies will
                 // hopefully be coalesced during register allocation.
-                Value* temp = _function->makeTemp();
+                Value* temp = _function->makeTemp(type);
 
                 for (auto& source : phi->sources())
                 {

@@ -48,6 +48,8 @@ enum class Opcode {
 
 extern const char* opcodeNames[];
 
+enum OperandType {MaybeReference, NotReference};
+
 struct MachineOperand
 {
     virtual ~MachineOperand() {}
@@ -75,12 +77,13 @@ struct VirtualRegister : public MachineOperand
         out << "%vreg" << id;
     }
 
+    OperandType type;
     int64_t id;
 
 private:
     friend class MachineFunction;
 
-    VirtualRegister(int64_t id)
+    VirtualRegister(OperandType type, int64_t id)
     : id(id)
     {}
 };
@@ -129,16 +132,27 @@ struct StackLocation : public MachineOperand
 
     virtual void print(std::ostream& out) const
     {
-        out << "$" << name;
+        if (id == -1)
+            out << "$" << name;
+        else
+            out << "$" << id;
     }
 
     std::string name;
+    int64_t id = -1;
+
+    // Filled in by stack allocator
+    int64_t offset = 0;
 
 protected:
     friend class MachineFunction;
 
     StackLocation(const std::string& name)
     : name(name)
+    {}
+
+    StackLocation(int64_t id)
+    : id(id)
     {}
 };
 
@@ -153,7 +167,9 @@ private:
 
     StackParameter(const std::string& name, size_t index)
     : StackLocation(name), index(index)
-    {}
+    {
+        offset = 16 + 8 * index;
+    }
 };
 
 struct Immediate : public MachineOperand
@@ -246,18 +262,24 @@ struct MachineFunction
 
     size_t parameterCount() const { return _stackParameters.size(); }
     StackParameter* getParameter(size_t i) { return _stackParameters.at(i).get(); }
-
-    VirtualRegister* makeVreg();
-    MachineBB* makeBlock(int64_t seqNumber);
     StackParameter* makeStackParameter(const std::string& name, size_t index);
-    StackLocation* makeStackLocation(const std::string& name);
+
+    VirtualRegister* makeVreg(OperandType type);
+    MachineBB* makeBlock(int64_t seqNumber);
+
+    StackLocation* makeStackVariable();
+    StackLocation* makeStackVariable(const std::string& name);
+    size_t stackVariableCount() const { return _stackVariables.size(); }
+    StackLocation* getStackVariable(size_t i) { return _stackVariables.at(i).get(); }
 
 private:
     int64_t _nextVregNumber = 1;
-
     std::vector<std::unique_ptr<VirtualRegister>> _vregs;
+
     std::vector<std::unique_ptr<StackParameter>> _stackParameters;
-    std::vector<std::unique_ptr<StackLocation>> _stackLocations;
+
+    int64_t _nextStackVar = 1;
+    std::vector<std::unique_ptr<StackLocation>> _stackVariables;
 };
 
 std::ostream& operator<<(std::ostream& out, const std::vector<MachineOperand*>& operands);

@@ -23,6 +23,18 @@ TACConditionalCodeGen::TACConditionalCodeGen(TACCodeGen* mainCodeGen)
     _context = _mainCodeGen->_context;
 }
 
+static ValueType getValueType(Type* type)
+{
+    if (unwrap(type)->isBoxed())
+    {
+        return ValueType::BoxOrInt;
+    }
+    else
+    {
+        return ValueType::Integer;
+    }
+}
+
 Value* TACCodeGen::getValue(const Symbol* symbol)
 {
     if (!symbol)
@@ -46,15 +58,18 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
             }
             else if (symbol->asVariable()->isParam)
             {
-                result = _context->makeArgument(symbol->name);
+                ValueType type = getValueType(symbol->type);
+                result = _context->makeArgument(type, symbol->name);
             }
             else if (symbol->global)
             {
-                result = _context->makeGlobal(symbol->name);
+                ValueType type = getValueType(symbol->type);
+                result = _context->makeGlobal(type, symbol->name);
             }
             else
             {
-                result = _context->makeLocal(symbol->name);
+                ValueType type = getValueType(symbol->type);
+                result = _context->makeLocal(type, symbol->name);
                 _currentFunction->locals.push_back(result);
             }
         }
@@ -259,7 +274,7 @@ void TACCodeGen::visit(ComparisonNode* node)
     emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
-    node->value = makeTemp();
+    node->value = makeTemp(ValueType::Integer);
     PhiInst* phi = new PhiInst(node->value);
     phi->addSource(falseBranch, _context->False);
     phi->addSource(trueBranch, _context->True);
@@ -327,7 +342,7 @@ void TACCodeGen::visit(LogicalNode* node)
     emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
-    node->value = makeTemp();
+    node->value = makeTemp(ValueType::Integer);
     PhiInst* phi = new PhiInst(node->value);
     phi->addSource(falseBranch, _context->False);
     phi->addSource(trueBranch, _context->True);
@@ -339,12 +354,14 @@ void TACCodeGen::visit(NullaryNode* node)
 {
     if (node->kind == NullaryNode::VARIABLE)
     {
-        node->value = makeTemp();
-        emit(new LoadInst(node->value, getValue(node->symbol)));
+        Value* rhs = getValue(node->symbol);
+        node->value = makeTemp(rhs->type);
+        emit(new LoadInst(node->value, rhs));
     }
     else
     {
-        Value* dest = node->value = makeTemp();
+        ValueType type = getValueType(node->type);
+        Value* dest = node->value = makeTemp(type);
 
         if (node->kind == NullaryNode::FOREIGN_CALL)
         {
@@ -461,7 +478,7 @@ void TACCodeGen::visit(IfElseNode* node)
         {
             assert(elseValue);
 
-            node->value = makeTemp();
+            node->value = makeTemp(bodyValue->type);
             PhiInst* phi = new PhiInst(node->value);
             phi->addSource(trueBranch, bodyValue);
             phi->addSource(falseBranch, elseValue);
@@ -510,7 +527,7 @@ void TACCodeGen::visit(ForeachNode* node)
     BasicBlock* loopBody = makeBlock();
 
     // Create an unnamed local variable to hold the list being iterated over
-    Value* listVar = _context->makeLocal("");
+    Value* listVar = _context->makeLocal(ValueType::BoxOrInt, "");
     _currentFunction->locals.push_back(listVar);
 
     emit(new JumpInst(loopInit));
@@ -523,9 +540,9 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopBegin);
 
     // Loop while list variable is not null
-    Value* currentList = makeTemp();
+    Value* currentList = makeTemp(ValueType::BoxOrInt);
     emit(new LoadInst(currentList, listVar));
-    Value* isNull = makeTemp();
+    Value* isNull = makeTemp(ValueType::Integer);
     emit(new CallInst(isNull, nullFunction, {currentList}));
     emit(new JumpIfInst(isNull, loopExit, loopBody));
 
@@ -536,14 +553,14 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopBody);
 
     // Assign the head of the list to the induction variable
-    currentList = makeTemp();
+    currentList = makeTemp(ValueType::BoxOrInt);
     emit(new LoadInst(currentList, listVar));
-    Value* currentHead = makeTemp();
+    Value* currentHead = makeTemp(ValueType::BoxOrInt); // TODO: Check for list of value types
     emit(new CallInst(currentHead, headFunction, {currentList}));
     emit(new StoreInst(getValue(node->symbol), currentHead));
 
     // Pop the head off the current list
-    Value* currentTail = makeTemp();
+    Value* currentTail = makeTemp(ValueType::BoxOrInt);
     emit(new CallInst(currentTail, tailFunction, {currentList}));
     emit(new StoreInst(listVar, currentTail));
 
@@ -579,7 +596,7 @@ void TACCodeGen::visit(ForNode* node)
     setBlock(loopBegin);
 
     // Loop while current <= to
-    Value* current = makeTemp();
+    Value* current = makeTemp(ValueType::Integer);
     emit(new LoadInst(current, inductionVar));
     emit(new ConditionalJumpInst(current, ">", to, loopExit, loopBody));
 
@@ -594,10 +611,10 @@ void TACCodeGen::visit(ForNode* node)
     if (!_currentBlock->isTerminated())
     {
         // Increment the induction variable
-        Value* current = makeTemp();
+        Value* current = makeTemp(ValueType::Integer);
         emit(new LoadInst(current, inductionVar));
         // Add 2 directly to the tagged integer: equivalent to untagging, adding 1, and re-tagging
-        Value* next = makeTemp();
+        Value* next = makeTemp(ValueType::Integer);
         emit(new BinaryOperationInst(next, current, BinaryOperation::ADD, _context->getConstantInt(2)));
         emit(new StoreInst(inductionVar, next));
 
@@ -670,8 +687,10 @@ void TACCodeGen::visit(MatchNode* node)
         const Symbol* member = node->symbols.at(i);
         if (member)
         {
+            ValueType type = getValueType(member->type);
+
             size_t location = constructor->members().at(i).location;
-            Value* tmp = makeTemp();
+            Value* tmp = makeTemp(type);
             emit(new IndexedLoadInst(tmp, body, sizeof(SplObject) + 8 * location));
             emit(new StoreInst(getValue(member), tmp));
         }
@@ -703,7 +722,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
 
     if (unwrap(node->type) != node->type->table()->Unit)
-        node->value = makeTemp();
+        node->value = makeTemp(getValueType(node->type));
 
     Value* result = node->value;
 
@@ -735,9 +754,9 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "+")
         {
             assert(arguments.size() == 2);
-            Value* lhs = makeTemp();
-            Value* rhs = makeTemp();
-            Value* tempResult = makeTemp();
+            Value* lhs = makeTemp(ValueType::Integer);
+            Value* rhs = makeTemp(ValueType::Integer);
+            Value* tempResult = makeTemp(ValueType::Integer);
             emit(new UntagInst(lhs, arguments[0]));
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::ADD, rhs));
@@ -747,9 +766,9 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "-")
         {
             assert(arguments.size() == 2);
-            Value* lhs = makeTemp();
-            Value* rhs = makeTemp();
-            Value* tempResult = makeTemp();
+            Value* lhs = makeTemp(ValueType::Integer);
+            Value* rhs = makeTemp(ValueType::Integer);
+            Value* tempResult = makeTemp(ValueType::Integer);
             emit(new UntagInst(lhs, arguments[0]));
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::SUB, rhs));
@@ -758,9 +777,9 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "*")
         {
             assert(arguments.size() == 2);
-            Value* lhs = makeTemp();
-            Value* rhs = makeTemp();
-            Value* tempResult = makeTemp();
+            Value* lhs = makeTemp(ValueType::Integer);
+            Value* rhs = makeTemp(ValueType::Integer);
+            Value* tempResult = makeTemp(ValueType::Integer);
             emit(new UntagInst(lhs, arguments[0]));
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MUL, rhs));
@@ -769,9 +788,9 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "/")
         {
             assert(arguments.size() == 2);
-            Value* lhs = makeTemp();
-            Value* rhs = makeTemp();
-            Value* tempResult = makeTemp();
+            Value* lhs = makeTemp(ValueType::Integer);
+            Value* rhs = makeTemp(ValueType::Integer);
+            Value* tempResult = makeTemp(ValueType::Integer);
             emit(new UntagInst(lhs, arguments[0]));
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::DIV, rhs));
@@ -780,9 +799,9 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "%")
         {
             assert(arguments.size() == 2);
-            Value* lhs = makeTemp();
-            Value* rhs = makeTemp();
-            Value* tempResult = makeTemp();
+            Value* lhs = makeTemp(ValueType::Integer);
+            Value* rhs = makeTemp(ValueType::Integer);
+            Value* tempResult = makeTemp(ValueType::Integer);
             emit(new UntagInst(lhs, arguments[0]));
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MOD, rhs));
@@ -805,8 +824,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
     {
         // The variable represents a closure, so extract the actual function
         // address
-        Value* functionAddress = makeTemp();
-        Value* closure = makeTemp();
+        Value* functionAddress = makeTemp(ValueType::CodeAddress);
+        Value* closure = makeTemp(ValueType::BoxOrInt);
         emit(new LoadInst(closure, getValue(node->symbol)));
         emit(new IndexedLoadInst(functionAddress, closure, sizeof(SplObject)));
 
@@ -824,15 +843,15 @@ void TACCodeGen::visit(ReturnNode* node)
 void TACCodeGen::visit(VariableNode* node)
 {
     assert(node->symbol->kind == kVariable);
-    node->value = makeTemp();
+    node->value = makeTemp(getValueType(node->symbol->type));
     emit(new LoadInst(node->value, getValue(node->symbol)));
 }
 
 void TACCodeGen::visit(MemberAccessNode* node)
 {
-    node->value = makeTemp();
+    node->value = makeTemp(getValueType(node->memberSymbol->type));
 
-    Value* structure = makeTemp();
+    Value* structure = makeTemp(getValueType(node->varSymbol->type));
     emit(new LoadInst(structure, getValue(node->varSymbol)));
     emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * node->memberLocation));
 }
@@ -879,24 +898,26 @@ void TACCodeGen::visit(SwitchNode* node)
     BasicBlock* isImmediate = makeBlock();
     BasicBlock* isObject = makeBlock();
 
+    // TODO: Handle case where all constructors are parameter-less
+
     // Check for immediate, and remove tag bit
-    Value* checked = makeTemp();
+    Value* checked = makeTemp(ValueType::Integer);
     emit(new BinaryOperationInst(checked, expr, BinaryOperation::AND, _context->One));
     emit(new ConditionalJumpInst(checked, "==", _context->Zero, isObject, isImmediate));
 
     setBlock(isImmediate);
-    Value* tag1 = makeTemp();
+    Value* tag1 = makeTemp(ValueType::Integer);
     emit(new BinaryOperationInst(tag1, expr, BinaryOperation::SHR, _context->One));
     emit(new JumpInst(gotTag));
 
     // Otherwise, extract tag from object header
     setBlock(isObject);
-    Value* tag2 = makeTemp();
+    Value* tag2 = makeTemp(ValueType::Integer);
     emit(new IndexedLoadInst(tag2, expr, offsetof(SplObject, constructorTag)));
     emit(new JumpInst(gotTag));
 
     setBlock(gotTag);
-    Value* tag = makeTemp();
+    Value* tag = makeTemp(ValueType::Integer);
     PhiInst* phi = new PhiInst(tag);
     phi->addSource(isImmediate, tag1);
     phi->addSource(isObject, tag2);
@@ -957,7 +978,7 @@ void TACCodeGen::visit(MatchArm* node)
         {
             size_t location = constructor->members().at(i).location;
 
-            Value* tmp = makeTemp();
+            Value* tmp = makeTemp(getValueType(member->type));
             emit(new IndexedLoadInst(tmp, _currentSwitchExpr, sizeof(SplObject) + 8 * location));
             emit(new StoreInst(getValue(member), tmp));
         }
@@ -982,7 +1003,7 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         return;
     }
 
-    Value* result = makeTemp();
+    Value* result = makeTemp(ValueType::BoxOrInt);
 
     // For now, every member takes up exactly 8 bytes (either directly or as a pointer).
     size_t size = sizeof(SplObject) + 8 * members.size();
@@ -1011,10 +1032,10 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
         std::string name = member.name;
         if (name.empty()) name = std::to_string(i);
 
-        Value* param = _context->makeArgument(name);
+        Value* param = _context->makeArgument(getValueType(member.type), name);
         _currentFunction->params.push_back(param);
 
-        Value* temp = makeTemp();
+        Value* temp = makeTemp(getValueType(member.type));
         emit(new LoadInst(temp, param));
         emit(new IndexedStoreInst(result, sizeof(SplObject) + 8 * location, temp));
     }

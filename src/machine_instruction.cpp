@@ -123,16 +123,23 @@ StackParameter* MachineFunction::makeStackParameter(const std::string& name, siz
     return param;
 }
 
-VirtualRegister* MachineFunction::makeVreg()
+VirtualRegister* MachineFunction::makeVreg(OperandType type)
 {
-    VirtualRegister* vreg = new VirtualRegister(_nextVregNumber++);
+    VirtualRegister* vreg = new VirtualRegister(type, _nextVregNumber++);
     _vregs.emplace_back(vreg);
     return vreg;
 }
 
-StackLocation* MachineFunction::makeStackLocation(const std::string& name)
+StackLocation* MachineFunction::makeStackVariable()
+{
+    StackLocation* location = new StackLocation(_nextStackVar++);
+    _stackVariables.emplace_back(location);
+    return location;
+}
+
+StackLocation* MachineFunction::makeStackVariable(const std::string& name)
 {
     StackLocation* location = new StackLocation(name);
-    _stackLocations.emplace_back(location);
+    _stackVariables.emplace_back(location);
     return location;
 }

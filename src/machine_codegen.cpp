@@ -39,6 +39,18 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
     }
 }
 
+static OperandType getOperandType(Value* value)
+{
+    if (!value || value->type != ValueType::BoxOrInt)
+    {
+        return NotReference;
+    }
+    else
+    {
+        return MaybeReference;
+    }
+}
+
 MachineOperand* MachineCodeGen::getOperand(Value* value)
 {
     if (ConstantInt* constInt = dynamic_cast<ConstantInt*>(value))
@@ -70,7 +82,7 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
             return i->second;
         }
 
-        VirtualRegister* vreg = _function->makeVreg();
+        VirtualRegister* vreg = _function->makeVreg(getOperandType(value));
         _vregs[value] = vreg;
 
         return vreg;
@@ -143,7 +155,7 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
         // No IDIV imm instruction
         if (rhs->isImmediate())
         {
-            VirtualRegister* vreg = _function->makeVreg();
+            VirtualRegister* vreg = _function->makeVreg(NotReference);
             emit(Opcode::MOVrd, {vreg}, {rhs});
             rhs = vreg;
         }
@@ -158,7 +170,7 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
         // No IDIV imm instruction
         if (rhs->isImmediate())
         {
-            VirtualRegister* vreg = _function->makeVreg();
+            VirtualRegister* vreg = _function->makeVreg(NotReference);
             emit(Opcode::MOVrd, {vreg}, {rhs});
             rhs = vreg;
         }
@@ -252,7 +264,7 @@ void MachineCodeGen::visit(CallInst* inst)
             if (param->isAddress() ||
                 (param->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(param)->value)))
             {
-                VirtualRegister* vreg = _function->makeVreg();
+                VirtualRegister* vreg = _function->makeVreg(getOperandType(*i));
                 emit(Opcode::MOVrd, {vreg}, {param});
                 emit(Opcode::PUSH, {}, {vreg});
             }
@@ -292,7 +304,7 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     // cmp imm, imm is illegal (this should really be optimized away)
     if (lhs->isImmediate() && rhs->isImmediate())
     {
-        VirtualRegister* newLhs = _function->makeVreg();
+        VirtualRegister* newLhs = _function->makeVreg(NotReference);
         emit(Opcode::MOVrd, {newLhs}, {lhs});
         lhs = newLhs;
     }
@@ -303,7 +315,7 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
 
     if (rhs->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(rhs)->value))
     {
-        VirtualRegister* newRhs = _function->makeVreg();
+        VirtualRegister* newRhs = _function->makeVreg(NotReference);
         emit(Opcode::MOVrd, {newRhs}, {rhs});
         rhs = newRhs;
     }
@@ -412,7 +424,7 @@ void MachineCodeGen::visit(StoreInst* inst)
         // MOV [mem], imm64 is illegal
         if (src->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(src)->value))
         {
-            VirtualRegister* vreg = _function->makeVreg();
+            VirtualRegister* vreg = _function->makeVreg(NotReference);
             emit(Opcode::MOVrd, {vreg}, {src});
             emit(Opcode::MOVmd, {}, {base, vreg});
         }

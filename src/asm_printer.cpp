@@ -168,7 +168,18 @@ void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base)
     _out << "\tmov ";
     printSimpleOperand(dest);
     _out << ", qword [";
-    printSimpleOperand(base);
+
+    if (base->isStackLocation())
+    {
+        StackLocation* stackLocation = dynamic_cast<StackLocation*>(base);
+        assert(stackLocation->offset != 0);
+
+        _out << "rbp + " << stackLocation->offset;
+    }
+    else
+    {
+        printSimpleOperand(base);
+    }
     _out << "]" << std::endl;
 }
 
@@ -187,11 +198,23 @@ void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base, MachineO
 
 void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* src)
 {
-    _out << "\tmov qword [";
-    printSimpleOperand(base);
-    _out << "], ";
-    printSimpleOperand(src);
-    _out << std::endl;
+    if (base->isStackLocation())
+    {
+        StackLocation* stackLocation = dynamic_cast<StackLocation*>(base);
+        assert(stackLocation->offset != 0);
+
+        _out << "\tmov qword [rbp + " << stackLocation->offset << "], ";
+        printSimpleOperand(src);
+        _out << std::endl;
+    }
+    else
+    {
+        _out << "\tmov qword [";
+        printSimpleOperand(base);
+        _out << "], ";
+        printSimpleOperand(src);
+        _out << std::endl;
+    }
 }
 
 void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* offset, MachineOperand* src)
@@ -314,7 +337,8 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             assert(inst->inputs.size() == 1 || inst->inputs.size() == 2);
             assert(inst->outputs.size() == 1);
             assert(inst->outputs[0]->isHreg());
-            assert(inst->inputs[0]->isAddress() || inst->inputs[0]->isHreg());
+            assert(inst->inputs[0]->isStackLocation() || inst->inputs[0]->isAddress() || inst->inputs[0]->isHreg());
+            assert(!inst->inputs[0]->isStackLocation() || inst->inputs.size() == 1);
 
             if (inst->inputs.size() == 1)
             {
@@ -330,7 +354,8 @@ void AsmPrinter::printInstruction(MachineInst* inst)
         case Opcode::MOVmd:
             assert(inst->inputs.size() == 2 || inst->inputs.size() == 3);
             assert(inst->outputs.size() == 0);
-            assert(inst->inputs[0]->isAddress() || inst->inputs[0]->isHreg());
+            assert(inst->inputs[0]->isStackLocation() || inst->inputs[0]->isAddress() || inst->inputs[0]->isHreg());
+            assert(!inst->inputs[0]->isStackLocation() || inst->inputs.size() == 2);
 
             if (inst->inputs.size() == 2)
             {

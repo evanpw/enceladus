@@ -16,9 +16,9 @@ TACContext::~TACContext()
     }
 }
 
-Argument* TACContext::makeArgument(const std::string& name)
+Argument* TACContext::makeArgument(ValueType type, const std::string& name)
 {
-    Argument* result = new Argument(this, name);
+    Argument* result = new Argument(this, type, name);
     _values.push_back(result);
     return result;
 }
@@ -61,9 +61,9 @@ Function* TACContext::makeFunction(const std::string& name)
     return result;
 }
 
-GlobalValue* TACContext::makeGlobal(const std::string& name)
+GlobalValue* TACContext::makeGlobal(ValueType type, const std::string& name)
 {
-    GlobalValue* result = new GlobalValue(this, name, GlobalTag::Variable);
+    GlobalValue* result = new GlobalValue(this, type, name, GlobalTag::Variable);
     _values.push_back(result);
     globals.push_back(result);
     return result;
@@ -71,29 +71,29 @@ GlobalValue* TACContext::makeGlobal(const std::string& name)
 
 GlobalValue* TACContext::makeStaticString(const std::string& name, const std::string& contents)
 {
-    GlobalValue* result = new GlobalValue(this, name, GlobalTag::Static);
+    GlobalValue* result = new GlobalValue(this, ValueType::BoxOrInt, name, GlobalTag::Static);
     _values.push_back(result);
     staticStrings.emplace_back(result, contents);
     return result;
 }
 
-LocalValue* TACContext::makeLocal(const std::string& name)
+LocalValue* TACContext::makeLocal(ValueType type, const std::string& name)
 {
-    LocalValue* result = new LocalValue(this, name);
+    LocalValue* result = new LocalValue(this, type, name);
     _values.push_back(result);
     return result;
 }
 
-Value* TACContext::makeTemp(int64_t number)
+Value* TACContext::makeTemp(ValueType type, int64_t number)
 {
-    Value* result = new Value(this, number);
+    Value* result = new Value(this, type, number);
     _values.push_back(result);
     return result;
 }
 
-Value* TACContext::makeTemp(const std::string& name)
+Value* TACContext::makeTemp(ValueType type, const std::string& name)
 {
-    Value* result = new Value(this, name);
+    Value* result = new Value(this, type, name);
     _values.push_back(result);
     return result;
 }

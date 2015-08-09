@@ -3,16 +3,16 @@
 #include <algorithm>
 #include <sstream>
 
-Value* Function::makeTemp()
+Value* Function::makeTemp(ValueType type)
 {
-    Value* tmp = _context->makeTemp(_nextSeqNumber++);
+    Value* tmp = _context->makeTemp(type, _nextSeqNumber++);
     temps.push_back(tmp);
     return tmp;
 }
 
-Value* Function::makeTemp(const std::string& name)
+Value* Function::makeTemp(ValueType type, const std::string& name)
 {
-    Value* tmp = _context->makeTemp(name);
+    Value* tmp = _context->makeTemp(type, name);
     temps.push_back(tmp);
     return tmp;
 }
