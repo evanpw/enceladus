@@ -20,6 +20,7 @@ typedef std::unordered_map<Reg*, std::unordered_set<Reg*>> IntGraph;
 // An assignment of a color to each register
 typedef std::unordered_map<Reg*, size_t> Coloring;
 
+// Postcondition: All VirtualRegister operands are assigned
 class RegAlloc
 {
 public:
@@ -44,10 +45,13 @@ private:
     void computeLiveness();
     std::unordered_map<MachineBB*, RegSet> _live;
 
+    void getPrecolored();
+    size_t colorOfHreg(HardwareRegister* hreg);
+    Coloring _precolored;
+
     // For each register, which registers are simultaneously live?
     void computeInterference();
     IntGraph _igraph;
-    Coloring _precolored;
 
     // An assignment to each register of a color (< AVAILABLE_COLORS) such that
     // no two registers which interfere are assigned the same color
@@ -66,7 +70,8 @@ private:
     void colorGraph();
 
     // Rewrite the function to replace virtual registers with hardware registers
-    void replaceRegs();
+    void assignRegs();
+    //void replaceRegs();
 
     // Combine live ranges that are related by a move instruction and which
     // don't interfere

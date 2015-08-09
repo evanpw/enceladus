@@ -73,24 +73,32 @@ void StackMap::run()
         {
             if (inst->opcode == Opcode::MOVmd)
             {
-                if (inst->inputs[0] == _context->rbp)
+                if (inst->inputs[0]->isStackLocation())
                 {
-                    assert(inst->inputs.size() == 3);
+                    StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
+                    if (stackLocation->type == NotReference)
+                        continue;
 
-                    int64_t offset = dynamic_cast<Immediate*>(inst->inputs[2])->value;
-                    currentDefined.insert(offset);
+                    assert(inst->inputs.size() == 2);
+                    assert(stackLocation->offset);
+
+                    currentDefined.insert(stackLocation->offset);
                 }
             }
             else if (inst->opcode == Opcode::MOVrm)
             {
-                if (inst->inputs[0] == _context->rbp)
+                if (inst->inputs[0]->isStackLocation())
                 {
-                    assert(inst->inputs.size() == 2);
+                    StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
+                    if (stackLocation->type == NotReference)
+                        continue;
 
-                    int64_t offset = dynamic_cast<Immediate*>(inst->inputs[1])->value;
-                    if (currentDefined.find(offset) == currentDefined.end())
+                    assert(inst->inputs.size() == 1);
+                    assert(stackLocation->offset);
+
+                    if (currentDefined.find(stackLocation->offset) == currentDefined.end())
                     {
-                        currentUsed.insert(offset);
+                        currentUsed.insert(stackLocation->offset);
                     }
                 }
             }
@@ -157,22 +165,30 @@ void StackMap::run()
 
             if (inst->opcode == Opcode::MOVmd)
             {
-                if (inst->inputs[0] == _context->rbp)
+                if (inst->inputs[0]->isStackLocation())
                 {
-                    assert(inst->inputs.size() == 3);
+                    StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
+                    if (stackLocation->type == NotReference)
+                        continue;
 
-                    int64_t offset = dynamic_cast<Immediate*>(inst->inputs[2])->value;
-                    liveOut.erase(offset);
+                    assert(inst->inputs.size() == 2);
+                    assert(stackLocation->offset);
+
+                    liveOut.erase(stackLocation->offset);
                 }
             }
             else if (inst->opcode == Opcode::MOVrm)
             {
-                if (inst->inputs[0] == _context->rbp)
+                if (inst->inputs[0]->isStackLocation())
                 {
-                    assert(inst->inputs.size() == 2);
+                    StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
+                    if (stackLocation->type == NotReference)
+                        continue;
 
-                    int64_t offset = dynamic_cast<Immediate*>(inst->inputs[1])->value;
-                    liveOut.insert(offset);
+                    assert(inst->inputs.size() == 1);
+                    assert(stackLocation->offset);
+
+                    liveOut.insert(stackLocation->offset);
                 }
             }
             else if (inst->opcode == Opcode::CALL)

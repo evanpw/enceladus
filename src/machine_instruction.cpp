@@ -123,6 +123,14 @@ StackParameter* MachineFunction::makeStackParameter(OperandType type, const std:
     return param;
 }
 
+VirtualRegister* MachineFunction::makePrecoloredReg(HardwareRegister* hreg, OperandType type)
+{
+    VirtualRegister* vreg = new VirtualRegister(type, _nextVregNumber++);
+    vreg->assignment = hreg;
+    _vregs.emplace_back(vreg);
+    return vreg;
+}
+
 VirtualRegister* MachineFunction::makeVreg(OperandType type)
 {
     VirtualRegister* vreg = new VirtualRegister(type, _nextVregNumber++);

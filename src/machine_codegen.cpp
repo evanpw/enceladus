@@ -20,10 +20,10 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
     _function = new MachineFunction(_context, function->name);
     _context->functions.push_back(_function);
 
-    rax = _context->rax;
-    rdx = _context->rdx;
-    rsp = _context->rsp;
-    rbp = _context->rbp;
+    vrsp = _function->makePrecoloredReg(_context->rsp, NotReference);
+    vrbp = _function->makePrecoloredReg(_context->rbp, NotReference);
+    hrax = _context->rax;
+    hrdx = _context->rdx;
 
     // Convert parameters from IR format to machine format
     for (size_t i = 0; i < function->params.size(); ++i)
@@ -41,8 +41,8 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
 
         if (entry)
         {
-            emit(Opcode::PUSH, {}, {rbp});
-            emit(Opcode::MOVrd, {rbp}, {rsp});
+            emit(Opcode::PUSH, {}, {vrbp});
+            emit(Opcode::MOVrd, {vrbp}, {vrsp});
             entry = false;
         }
 
@@ -162,10 +162,13 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
             rhs = vreg;
         }
 
-        emit(Opcode::MOVrd, {rax}, {lhs});
-        emit(Opcode::CQO, {rdx}, {rax});
-        emit(Opcode::IDIV, {rdx, rax}, {rdx, rax, rhs});
-        emit(Opcode::MOVrd, {dest}, {rax});
+        VirtualRegister* vrax = _function->makePrecoloredReg(hrax, NotReference);
+        VirtualRegister* vrdx = _function->makePrecoloredReg(hrdx, NotReference);
+
+        emit(Opcode::MOVrd, {vrax}, {lhs});
+        emit(Opcode::CQO, {vrdx}, {vrax});
+        emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        emit(Opcode::MOVrd, {dest}, {vrax});
     }
     else if (inst->op == BinaryOperation::MOD)
     {
@@ -177,10 +180,13 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
             rhs = vreg;
         }
 
-        emit(Opcode::MOVrd, {rax}, {lhs});
-        emit(Opcode::CQO, {rdx}, {rax});
-        emit(Opcode::IDIV, {rdx, rax}, {rdx, rax, rhs});
-        emit(Opcode::MOVrd, {dest}, {rdx});
+        VirtualRegister* vrax = _function->makePrecoloredReg(hrax, NotReference);
+        VirtualRegister* vrdx = _function->makePrecoloredReg(hrdx, NotReference);
+
+        emit(Opcode::MOVrd, {vrax}, {lhs});
+        emit(Opcode::CQO, {vrdx}, {vrax});
+        emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        emit(Opcode::MOVrd, {dest}, {vrdx});
     }
     else
     {
@@ -199,8 +205,11 @@ static bool is32Bit(int64_t x)
 void MachineCodeGen::visit(CallInst* inst)
 {
     MachineOperand* dest = getOperand(inst->dest);
+    OperandType destType = getOperandType(inst->dest);
     MachineOperand* target = getOperand(inst->function);
     assert(dest->isRegister());
+
+    VirtualRegister* vrax = _function->makePrecoloredReg(hrax, destType);
 
     // ccall: pass arguments in registers, indirectly through ccall
     if (inst->regpass)
@@ -208,7 +217,7 @@ void MachineCodeGen::visit(CallInst* inst)
         assert(target->isAddress());
 
         // x86_64 calling convention for C puts the first 6 arguments in registers
-        MachineOperand* registerArgs[] = {
+        HardwareRegister* registerArgs[] = {
             _context->rdi,
             _context->rsi,
             _context->rdx,
@@ -225,24 +234,27 @@ void MachineCodeGen::visit(CallInst* inst)
             MachineOperand* param = getOperand(inst->params[i]);
             assert(param->isAddress() || param->isImmediate() || param->isRegister());
 
-            emit(Opcode::MOVrd, {registerArgs[i]}, {param});
-            uses.push_back(registerArgs[i]);
+            VirtualRegister* arg = _function->makePrecoloredReg(registerArgs[i], getOperandType(inst->params[i]));
+            emit(Opcode::MOVrd, {arg}, {param});
+            uses.push_back(arg);
         }
 
         if (inst->ccall)
         {
+            VirtualRegister* vrax2 = _function->makePrecoloredReg(hrax, NotReference);
+
             // Indirect call so that we can switch to the C stack
-            emit(Opcode::MOVrd, {rax}, {target});
+            emit(Opcode::MOVrd, {vrax2}, {target});
             uses[0] = _context->makeGlobal("ccall");
-            emit(Opcode::CALL, {rax}, std::move(uses));
+            emit(Opcode::CALL, {vrax}, std::move(uses));
         }
         else
         {
             uses[0] = target;
-            emit(Opcode::CALL, {rax}, std::move(uses));
+            emit(Opcode::CALL, {vrax}, std::move(uses));
         }
 
-        emit(Opcode::MOVrd, {dest}, {rax});
+        emit(Opcode::MOVrd, {dest}, {vrax});
     }
     else // native call convention: all arguments on the stack
     {
@@ -285,13 +297,13 @@ void MachineCodeGen::visit(CallInst* inst)
             }
         }
 
-        emit(Opcode::CALL, {rax}, {target});
-        emit(Opcode::MOVrd, {dest}, {rax});
+        emit(Opcode::CALL, {vrax}, {target});
+        emit(Opcode::MOVrd, {dest}, {vrax});
 
         // Remove the function parameters from the stack
         if (paramsOnStack > 0)
         {
-            emit(Opcode::ADD, {rsp}, {rsp, _context->makeImmediate(8 * paramsOnStack)});
+            emit(Opcode::ADD, {vrsp}, {vrsp, _context->makeImmediate(8 * paramsOnStack)});
         }
     }
 }
@@ -488,20 +500,23 @@ void MachineCodeGen::visit(ReturnInst* inst)
 {
     if (inst->value)
     {
-        MachineOperand* value = getOperand(inst->value);
-        if (value->isRegister() || value->isImmediate() || value->isAddress())
-        {
-            emit(Opcode::MOVrd, {rax}, {value});
-        }
-        else
-        {
-            assert(false);
-        }
-    }
+        OperandType destType = getOperandType(inst->value);
+        VirtualRegister* vrax = _function->makePrecoloredReg(hrax, destType);
 
-    emit(Opcode::MOVrd, {rsp}, {rbp});
-    emit(Opcode::POP, {rbp}, {});
-    emit(Opcode::RET, {}, {rax});
+        MachineOperand* value = getOperand(inst->value);
+        assert(value->isRegister() || value->isImmediate() || value->isAddress());
+
+        emit(Opcode::MOVrd, {vrax}, {value});
+        emit(Opcode::MOVrd, {vrsp}, {vrbp});
+        emit(Opcode::POP, {vrbp}, {});
+        emit(Opcode::RET, {}, {vrax});
+    }
+    else
+    {
+        emit(Opcode::MOVrd, {vrsp}, {vrbp});
+        emit(Opcode::POP, {vrbp}, {});
+        emit(Opcode::RET, {}, {});
+    }
 }
 
 void MachineCodeGen::visit(TagInst* inst)

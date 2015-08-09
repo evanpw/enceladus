@@ -62,7 +62,7 @@ RegAlloc::RegAlloc(MachineFunction* function)
 void RegAlloc::run()
 {
     colorGraph();
-    replaceRegs();
+    assignRegs();
 
     // std::cerr << _function->name << ":" << std::endl;
     // for (MachineBB* block : _function->blocks)
@@ -76,6 +76,7 @@ void RegAlloc::run()
     // std::cerr << std::endl;
 
     spillAroundCalls();
+    //replaceRegs();
 }
 
 void RegAlloc::spillAroundCalls()
@@ -84,6 +85,7 @@ void RegAlloc::spillAroundCalls()
     // and done some other rewriting
     gatherUseDef();
     computeLiveness();
+    getPrecolored();
     computeInterference();
 
     //std::cerr << _function->name << ":" << std::endl;
@@ -115,17 +117,21 @@ void RegAlloc::spillAroundCalls()
                 for (Reg* liveReg : regs)
                 {
                     // rbp and rsp are caller-save
-                    if (liveReg == _context->rbp || liveReg == _context->rsp)
+                    if (dynamic_cast<VirtualRegister*>(liveReg)->assignment == _context->rbp ||
+                        dynamic_cast<VirtualRegister*>(liveReg)->assignment == _context->rsp)
+                    {
                         continue;
+                    }
 
                     // If the function has a return value, then rax is redefined by this instruction, so
                     // we don't need to save it
-                    if (!inst->outputs.empty() && liveReg == _context->rax)
+                    if (!inst->outputs.empty() && dynamic_cast<VirtualRegister*>(liveReg)->assignment == _context->rax)
                         continue;
 
-                    // TODO: Handle hardware registers as well
                     OperandType type = dynamic_cast<VirtualRegister*>(liveReg)->type;
                     StackLocation* stackVar = _function->makeStackVariable(type);
+
+                    std::cerr << *stackVar << ": " << operandTypeString(type) << std::endl;
 
                     MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {stackVar, liveReg});
                     saves.push_back(saveInst);
@@ -175,6 +181,34 @@ void RegAlloc::spillAroundCalls()
     }
 }
 
+void RegAlloc::assignRegs()
+{
+    for (MachineBB* block : _function->blocks)
+    {
+        for (MachineInst* inst : block->instructions)
+        {
+            // Replace inputs
+            for (size_t j = 0; j < inst->inputs.size(); ++j)
+            {
+                if (inst->inputs[j]->isVreg())
+                {
+                    dynamic_cast<VirtualRegister*>(inst->inputs[j])->assignment = _context->hregs[_coloring[inst->inputs[j]]];
+                }
+            }
+
+            // Replace outputs
+            for (size_t j = 0; j < inst->outputs.size(); ++j)
+            {
+                if (inst->outputs[j]->isVreg())
+                {
+                    dynamic_cast<VirtualRegister*>(inst->outputs[j])->assignment = _context->hregs[_coloring[inst->outputs[j]]];
+                }
+            }
+        }
+    }
+}
+
+/*
 void RegAlloc::replaceRegs()
 {
     for (MachineBB* block : _function->blocks)
@@ -185,18 +219,29 @@ void RegAlloc::replaceRegs()
             for (size_t j = 0; j < inst->inputs.size(); ++j)
             {
                 if (inst->inputs[j]->isVreg())
-                    inst->inputs[j] = _context->hregs[_coloring[inst->inputs[j]]];
+                {
+                    HardwareRegister* assignment = dynamic_cast<VirtualRegister*>(inst->inputs[j])->assignment;
+                    assert(assignment);
+
+                    inst->inputs[j] = assignment;
+                }
             }
 
             // Replace outputs
             for (size_t j = 0; j < inst->outputs.size(); ++j)
             {
                 if (inst->outputs[j]->isVreg())
-                    inst->outputs[j] = _context->hregs[_coloring[inst->outputs[j]]];
+                {
+                    HardwareRegister* assignment = dynamic_cast<VirtualRegister*>(inst->outputs[j])->assignment;
+                    assert(assignment);
+
+                    inst->outputs[j] = assignment;
+                }
             }
         }
     }
 }
+*/
 
 void RegAlloc::gatherUseDef()
 {
@@ -261,15 +306,72 @@ void RegAlloc::computeLiveness()
         if (!changed)
             break;
     }
+
+    // for (MachineBB* block : _function->blocks)
+    // {
+    //     std::cerr << *block << ": " << _live.at(block) << std::endl;
+    // }
+}
+
+// All hardware registers are pre-colored
+size_t RegAlloc::colorOfHreg(HardwareRegister* hreg)
+{
+    for (size_t i = 0; i < 16; ++i)
+    {
+        if (hreg == _context->hregs[i])
+            return i;
+    }
+
+    assert(false);
+}
+
+void RegAlloc::getPrecolored()
+{
+    _precolored.clear();
+
+    for (MachineBB* block : _function->blocks)
+    {
+        RegSet used;
+        RegSet defined;
+
+        for (MachineInst* inst : block->instructions)
+        {
+            for (Reg* input : inst->inputs)
+            {
+                if (input->isRegister())
+                {
+                    HardwareRegister* hreg = dynamic_cast<VirtualRegister*>(input)->assignment;
+                    if (hreg)
+                    {
+                        _precolored.emplace(input, colorOfHreg(hreg));
+                    }
+                }
+            }
+
+            for (Reg* output : inst->outputs)
+            {
+                if (output->isRegister())
+                {
+                    HardwareRegister* hreg = dynamic_cast<VirtualRegister*>(output)->assignment;
+                    if (hreg)
+                    {
+                        _precolored.emplace(output, colorOfHreg(hreg));
+                    }
+                }
+            }
+        }
+    }
 }
 
 void RegAlloc::computeInterference()
 {
     _igraph.clear();
-    _precolored.clear();
 
+    //std::cerr << _function->name << ":" << std::endl;
     for (MachineBB* block : _function->blocks)
     {
+        //std::cerr << *block << ":" << std::endl;
+
         // Compute live regs at the end of this block
         RegSet liveOut;
         for (MachineBB* succ : block->successors())
@@ -281,6 +383,8 @@ void RegAlloc::computeInterference()
         for (auto i = block->instructions.rbegin(); i != block->instructions.rend(); ++i)
         {
             MachineInst* inst = *i;
+
+            //std::cerr << "\t" << *inst << "\t\t" << liveOut << std::endl;
 
             // Data flow equation:
             // live[n] = (U_{s in succ[n]}  live[s]) - def[n] + ref[n]
@@ -326,28 +430,19 @@ void RegAlloc::computeInterference()
         }
     }
 
-    // All hardware registers are pre-colored
-    for (size_t i = 0; i < 16; ++i)
-    {
-        Reg* hreg = _context->hregs[i];
-        if (_igraph.find(hreg) != _igraph.end())
-        {
-            _precolored[hreg] = i;
-        }
-    }
-
-    // Add an inteference edge between every pair of precolored vertices
-    // (Not necessary for correct coloring, but it makes the igraph look right)
+    // Add an inteference edge between every pair of precolored vertices with
+    // different colors
     for (auto& i : _precolored)
     {
         for (auto& j : _precolored)
         {
-            if (i.first != j.first)
+            if (i.second != j.second && i.first != j.first)
             {
+                //std::cerr << *i.first << " " << i.second << " <-> " << *j.first << " " << j.second << std::endl;
+
                 _igraph[i.first].insert(j.first);
                 _igraph[j.first].insert(i.first);
             }
-
         }
     }
 }
@@ -414,6 +509,13 @@ void RegAlloc::addVertexBack(IntGraph& graph, Reg* reg)
 
 bool RegAlloc::findColorFor(const IntGraph& graph, Reg* reg)
 {
+    // std::cerr << *reg;
+    // if (dynamic_cast<VirtualRegister*>(reg)->assignment)
+    // {
+    //     std::cerr << " " << colorOfHreg(dynamic_cast<VirtualRegister*>(reg)->assignment);
+    // }
+    // std::cerr << std::endl;
+
     std::set<size_t> used;
     for (Reg* other : graph.at(reg))
     {
@@ -421,6 +523,7 @@ bool RegAlloc::findColorFor(const IntGraph& graph, Reg* reg)
         if (i != _coloring.end())
         {
             used.insert(i->second);
+            //std::cerr << "\t" << *i->first << " " << i->second << std::endl;
         }
     }
 
@@ -523,7 +626,9 @@ void RegAlloc::coalesceMoves()
 
             if (inst->opcode == Opcode::MOVrd &&
                 inst->inputs[0]->isVreg() &&
-                inst->outputs[0]->isVreg())
+                inst->outputs[0]->isVreg() &&
+                !dynamic_cast<VirtualRegister*>(inst->inputs[0])->assignment &&
+                !dynamic_cast<VirtualRegister*>(inst->outputs[0])->assignment)
             {
                 if (inst->inputs[0] != inst->outputs[0])
                 {
@@ -566,12 +671,14 @@ void RegAlloc::colorGraph()
     {
         gatherUseDef();
         computeLiveness();
+        getPrecolored();
         computeInterference();
 
         coalesceMoves();
 
         gatherUseDef();
         computeLiveness();
+        getPrecolored();
         computeInterference();
 
     } while (!tryColorGraph());

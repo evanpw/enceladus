@@ -50,6 +50,20 @@ extern const char* opcodeNames[];
 
 enum OperandType {MaybeReference, NotReference};
 
+static inline const char* operandTypeString(OperandType type)
+{
+    switch(type)
+    {
+        case MaybeReference:
+            return "MaybeReference";
+
+        case NotReference:
+            return "NotReference";
+    }
+
+    assert(false);
+}
+
 struct MachineOperand
 {
     virtual ~MachineOperand() {}
@@ -68,31 +82,9 @@ struct MachineOperand
 
 std::ostream& operator<<(std::ostream& out, const MachineOperand& operand);
 
-struct VirtualRegister : public MachineOperand
+struct HardwareRegister
 {
-    virtual bool isVreg() const { return true; }
-
-    virtual void print(std::ostream& out) const
-    {
-        out << "%vreg" << id;
-    }
-
-    OperandType type;
-    int64_t id;
-
-private:
-    friend class MachineFunction;
-
-    VirtualRegister(OperandType type, int64_t id)
-    : id(id)
-    {}
-};
-
-struct HardwareRegister : public MachineOperand
-{
-    virtual bool isHreg() const { return true; }
-
-    virtual void print(std::ostream& out) const
+    void print(std::ostream& out) const
     {
         out << "%" << name;
     }
@@ -106,6 +98,35 @@ private:
     : name(name)
     {}
 };
+
+struct VirtualRegister : public MachineOperand
+{
+    virtual bool isVreg() const { return true; }
+
+    virtual void print(std::ostream& out) const
+    {
+        out << "%vreg" << id;
+    }
+
+    const OperandType type;
+    const int64_t id;
+
+    // Filled in by the register allocator
+    HardwareRegister* assignment = nullptr;
+
+private:
+    friend class MachineFunction;
+
+    VirtualRegister(OperandType type, int64_t id)
+    : type(type), id(id)
+    {}
+};
+
+static inline HardwareRegister* getAssignment(MachineOperand* operand)
+{
+    assert(operand->isVreg());
+    return dynamic_cast<VirtualRegister*>(operand)->assignment;
+}
 
 struct Address : public MachineOperand
 {
@@ -138,7 +159,7 @@ struct StackLocation : public MachineOperand
             out << "$" << id;
     }
 
-    OperandType type;
+    const OperandType type;
 
     std::string name;
     int64_t id = -1;
@@ -266,6 +287,7 @@ struct MachineFunction
     StackParameter* getParameter(size_t i) { return _stackParameters.at(i).get(); }
     StackParameter* makeStackParameter(OperandType type, const std::string& name, size_t index);
 
+    VirtualRegister* makePrecoloredReg(HardwareRegister* hreg, OperandType type);
     VirtualRegister* makeVreg(OperandType type);
     MachineBB* makeBlock(int64_t seqNumber);
 

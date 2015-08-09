@@ -68,10 +68,10 @@ private:
     std::unordered_map<Argument*, StackParameter*> _params;
 
     // For convenient access
-    HardwareRegister* rax;
-    HardwareRegister* rdx;
-    HardwareRegister* rsp;
-    HardwareRegister* rbp;
+    VirtualRegister* vrsp;
+    VirtualRegister* vrbp;
+    HardwareRegister* hrax;
+    HardwareRegister* hrdx;
 };
 
 #endif

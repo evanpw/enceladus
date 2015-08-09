@@ -40,3 +40,7 @@
 * Kill dead definitions
 
 * Combine redundant definitions
+
+* Turn stack locations into outputs of instructions instead of inputs
+
+* In tag elision, determine loop depth and incorporate into heuristic cost

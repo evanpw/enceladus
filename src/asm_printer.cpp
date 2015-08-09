@@ -97,9 +97,12 @@ void AsmPrinter::printBlock(MachineBB* block)
 
 void AsmPrinter::printSimpleOperand(MachineOperand* operand)
 {
-    if (operand->isHreg())
+    if (operand->isVreg())
     {
-        _out << dynamic_cast<HardwareRegister*>(operand)->name;
+        HardwareRegister* hreg = getAssignment(operand);
+        assert(hreg);
+
+        _out << hreg->name;
     }
     else if (operand->isImmediate())
     {
@@ -141,7 +144,7 @@ void AsmPrinter::printSimpleInstruction(const std::string& opcode, std::initiali
 
 void AsmPrinter::printBinary(const std::string& opcode, MachineOperand* dest, MachineOperand* src)
 {
-    assert(dest->isHreg());
+    assert(dest->isVreg());
 
     _out << "\t" << opcode << " ";
     printSimpleOperand(dest);
@@ -185,7 +188,7 @@ void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base)
 
 void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base, MachineOperand* offset)
 {
-    assert(offset->isImmediate() || offset->isHreg());
+    assert(offset->isImmediate() || offset->isVreg());
 
     _out << "\tmov ";
     printSimpleOperand(dest);
@@ -219,7 +222,7 @@ void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* src)
 
 void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* offset, MachineOperand* src)
 {
-    assert(offset->isImmediate() || offset->isHreg());
+    assert(offset->isImmediate() || offset->isVreg());
 
     _out << "\tmov qword [";
     printSimpleOperand(base);
@@ -283,7 +286,7 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 1);
             assert(inst->outputs[0] == inst->inputs[0]);
-            assert(inst->outputs[0]->isHreg());
+            assert(inst->outputs[0]->isVreg());
             printSimpleInstruction("inc", {inst->outputs[0]});
             break;
 
@@ -336,8 +339,8 @@ void AsmPrinter::printInstruction(MachineInst* inst)
         case Opcode::MOVrm:
             assert(inst->inputs.size() == 1 || inst->inputs.size() == 2);
             assert(inst->outputs.size() == 1);
-            assert(inst->outputs[0]->isHreg());
-            assert(inst->inputs[0]->isStackLocation() || inst->inputs[0]->isAddress() || inst->inputs[0]->isHreg());
+            assert(inst->outputs[0]->isVreg());
+            assert(inst->inputs[0]->isStackLocation() || inst->inputs[0]->isAddress() || inst->inputs[0]->isVreg());
             assert(!inst->inputs[0]->isStackLocation() || inst->inputs.size() == 1);
 
             if (inst->inputs.size() == 1)
@@ -354,7 +357,7 @@ void AsmPrinter::printInstruction(MachineInst* inst)
         case Opcode::MOVmd:
             assert(inst->inputs.size() == 2 || inst->inputs.size() == 3);
             assert(inst->outputs.size() == 0);
-            assert(inst->inputs[0]->isStackLocation() || inst->inputs[0]->isAddress() || inst->inputs[0]->isHreg());
+            assert(inst->inputs[0]->isStackLocation() || inst->inputs[0]->isAddress() || inst->inputs[0]->isVreg());
             assert(!inst->inputs[0]->isStackLocation() || inst->inputs.size() == 2);
 
             if (inst->inputs.size() == 2)
@@ -380,11 +383,11 @@ void AsmPrinter::printInstruction(MachineInst* inst)
         {
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() >= 1);
-            assert(inst->outputs[0] == _context->rax);
+            assert(getAssignment(inst->outputs[0]) == _context->rax);
 
             // Register arguments
             for (size_t i = 1; i < inst->inputs.size(); ++i)
-                assert(inst->inputs[i]->isHreg());
+                assert(inst->inputs[i]->isVreg());
 
             printSimpleInstruction("call", {inst->inputs[0]});
 
@@ -414,25 +417,25 @@ void AsmPrinter::printInstruction(MachineInst* inst)
         case Opcode::CQO:
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 1);
-            assert(inst->outputs[0] == _context->rdx);
-            assert(inst->inputs[0] == _context->rax);
+            assert(getAssignment(inst->outputs[0]) == _context->rdx);
+            assert(getAssignment(inst->inputs[0]) == _context->rax);
             printSimpleInstruction("cqo", {});
             break;
 
         case Opcode::IDIV:
             assert(inst->outputs.size() == 2);
             assert(inst->inputs.size() == 3);
-            assert(inst->outputs[0] == _context->rdx);
-            assert(inst->outputs[1] == _context->rax);
-            assert(inst->inputs[0] == _context->rdx);
-            assert(inst->inputs[1] == _context->rax);
+            assert(getAssignment(inst->outputs[0]) == _context->rdx);
+            assert(getAssignment(inst->outputs[1]) == _context->rax);
+            assert(getAssignment(inst->inputs[0]) == _context->rdx);
+            assert(getAssignment(inst->inputs[1]) == _context->rax);
             printSimpleInstruction("idiv", {inst->inputs[2]});
             break;
 
         case Opcode::POP:
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 0);
-            assert(inst->outputs[0]->isHreg());
+            assert(inst->outputs[0]->isVreg());
             printSimpleInstruction("pop", {inst->outputs[0]});
             break;
 
@@ -444,8 +447,8 @@ void AsmPrinter::printInstruction(MachineInst* inst)
 
         case Opcode::RET:
             assert(inst->outputs.size() == 0);
-            assert(inst->inputs.size() == 1);
-            assert(inst->inputs[0] == _context->rax);
+            assert(inst->inputs.size() <= 1);
+            assert(inst->inputs.empty() || getAssignment(inst->inputs[0]) == _context->rax);
             printSimpleInstruction("ret", {});
             break;
 

@@ -87,16 +87,16 @@ int main(int argc, char* argv[])
 		ConstantFolding constantFolding(function);
 		constantFolding.run();
 
-		std::cerr << function->name << ":" << std::endl;
-		for (BasicBlock* block : function->blocks)
-		{
-			std::cerr << block->str() << std::endl;
-			for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
-		    {
-		    	std::cerr << "\t" << inst->str() << std::endl;
-		    }
-		}
-		std::cerr << std::endl;
+		// std::cerr << function->name << ":" << std::endl;
+		// for (BasicBlock* block : function->blocks)
+		// {
+		// 	std::cerr << block->str() << std::endl;
+		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+		//     {
+		//     	std::cerr << "\t" << inst->str() << std::endl;
+		//     }
+		// }
+		// std::cerr << std::endl;
 
 		TagElision tagElision(function);
 		tagElision.run();
@@ -104,16 +104,16 @@ int main(int argc, char* argv[])
 		KillDeadValues killDeadValues(function);
 		killDeadValues.run();
 
-		std::cerr << function->name << ":" << std::endl;
-		for (BasicBlock* block : function->blocks)
-		{
-			std::cerr << block->str() << std::endl;
-			for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
-		    {
-		    	std::cerr << "\t" << inst->str() << std::endl;
-		    }
-		}
-		std::cerr << std::endl;
+		// std::cerr << function->name << ":" << std::endl;
+		// for (BasicBlock* block : function->blocks)
+		// {
+		// 	std::cerr << block->str() << std::endl;
+		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+		//     {
+		//     	std::cerr << "\t" << inst->str() << std::endl;
+		//     }
+		// }
+		// std::cerr << std::endl;
 
 		FromSSA fromSSA(function);
 		fromSSA.run();
@@ -150,12 +150,6 @@ int main(int argc, char* argv[])
 	// Process the abstract machine code and make it concrete
 	for (MachineFunction* mf : machineContext->functions)
 	{
-		RegAlloc regAlloc(mf);
-		regAlloc.run();
-
-		StackAlloc stackAlloc(mf);
-		stackAlloc.run();
-
 		// std::cerr << mf->name << ":" << std::endl;
 		// for (MachineBB* block : mf->blocks)
 		// {
@@ -165,6 +159,12 @@ int main(int argc, char* argv[])
 		// 		std::cerr << "\t" << *inst << std::endl;
 		// 	}
 		// }
+
+		RegAlloc regAlloc(mf);
+		regAlloc.run();
+
+		StackAlloc stackAlloc(mf);
+		stackAlloc.run();
 
 		StackMap stackMap(mf);
 		stackMap.run();

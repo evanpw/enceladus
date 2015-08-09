@@ -13,7 +13,10 @@ void RedundantMoves::run()
         {
             MachineInst* inst = *itr;
 
-            if (inst->opcode == Opcode::MOVrd && inst->inputs[0] == inst->outputs[0])
+            if (inst->opcode == Opcode::MOVrd &&
+                inst->inputs[0]->isVreg() &&
+                inst->outputs[0]->isVreg() &&
+                getAssignment(inst->inputs[0]) == getAssignment(inst->outputs[0]))
             {
                 itr = mbb->instructions.erase(itr);
                 delete inst;

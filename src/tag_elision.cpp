@@ -311,17 +311,17 @@ void TagElision::run()
     }
     //std::cerr << std::endl;
 
-    std::cerr << "Locals:" << std::endl;
-    for (Value* local : _function->locals)
-    {
-        std::cerr << "\t" << local->str() << " : " << valueTypeString(local->type) << std::endl;
-    }
+    // std::cerr << "Locals:" << std::endl;
+    // for (Value* local : _function->locals)
+    // {
+    //     std::cerr << "\t" << local->str() << " : " << valueTypeString(local->type) << std::endl;
+    // }
 
-    std::cerr << "Temps:" << std::endl;
-    for (Value* temp : _function->temps)
-    {
-        std::cerr << "\t" << temp->str() << " : " << valueTypeString(temp->type) << std::endl;
-    }
+    // std::cerr << "Temps:" << std::endl;
+    // for (Value* temp : _function->temps)
+    // {
+    //     std::cerr << "\t" << temp->str() << " : " << valueTypeString(temp->type) << std::endl;
+    // }
 }
 
 // Get the untagged version of the given value if it is created by an explicit
