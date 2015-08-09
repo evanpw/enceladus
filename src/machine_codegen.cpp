@@ -2,6 +2,18 @@
 #include "tac_instruction.hpp"
 #include "value.hpp"
 
+static OperandType getOperandType(Value* value)
+{
+    if (!value || value->type != ValueType::BoxOrInt)
+    {
+        return NotReference;
+    }
+    else
+    {
+        return MaybeReference;
+    }
+}
+
 MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
 {
     _context = context;
@@ -17,7 +29,9 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
     for (size_t i = 0; i < function->params.size(); ++i)
     {
         Argument* arg = dynamic_cast<Argument*>(function->params[i]);
-        _params[arg] = _function->makeStackParameter(arg->name, i);
+        OperandType argType = getOperandType(function->params[i]);
+
+        _params[arg] = _function->makeStackParameter(argType, arg->name, i);
     }
 
     bool entry = true;
@@ -36,18 +50,6 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
         {
             inst->accept(this);
         }
-    }
-}
-
-static OperandType getOperandType(Value* value)
-{
-    if (!value || value->type != ValueType::BoxOrInt)
-    {
-        return NotReference;
-    }
-    else
-    {
-        return MaybeReference;
     }
 }
 

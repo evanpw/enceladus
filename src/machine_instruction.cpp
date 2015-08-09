@@ -116,9 +116,9 @@ MachineBB* MachineFunction::makeBlock(int64_t seqNumber)
     return block;
 }
 
-StackParameter* MachineFunction::makeStackParameter(const std::string& name, size_t index)
+StackParameter* MachineFunction::makeStackParameter(OperandType type, const std::string& name, size_t index)
 {
-    StackParameter* param = new StackParameter(name, index);
+    StackParameter* param = new StackParameter(type, name, index);
     _stackParameters.emplace_back(param);
     return param;
 }
@@ -130,16 +130,16 @@ VirtualRegister* MachineFunction::makeVreg(OperandType type)
     return vreg;
 }
 
-StackLocation* MachineFunction::makeStackVariable()
+StackLocation* MachineFunction::makeStackVariable(OperandType type)
 {
-    StackLocation* location = new StackLocation(_nextStackVar++);
+    StackLocation* location = new StackLocation(type, _nextStackVar++);
     _stackVariables.emplace_back(location);
     return location;
 }
 
-StackLocation* MachineFunction::makeStackVariable(const std::string& name)
+StackLocation* MachineFunction::makeStackVariable(OperandType type, const std::string& name)
 {
-    StackLocation* location = new StackLocation(name);
+    StackLocation* location = new StackLocation(type, name);
     _stackVariables.emplace_back(location);
     return location;
 }

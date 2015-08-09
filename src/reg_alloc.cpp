@@ -123,7 +123,9 @@ void RegAlloc::spillAroundCalls()
                     if (!inst->outputs.empty() && liveReg == _context->rax)
                         continue;
 
-                    StackLocation* stackVar = _function->makeStackVariable();
+                    // TODO: Handle hardware registers as well
+                    OperandType type = dynamic_cast<VirtualRegister*>(liveReg)->type;
+                    StackLocation* stackVar = _function->makeStackVariable(type);
 
                     MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {stackVar, liveReg});
                     saves.push_back(saveInst);
@@ -457,7 +459,7 @@ void RegAlloc::spillVariable(Reg* reg)
 
     std::stringstream ss;
     ss << "vreg" << vreg->id;
-    StackLocation* spillLocation = _function->makeStackVariable(ss.str());
+    StackLocation* spillLocation = _function->makeStackVariable(vreg->type, ss.str());
 
     _spilled[reg] = spillLocation;
 

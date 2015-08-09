@@ -138,6 +138,8 @@ struct StackLocation : public MachineOperand
             out << "$" << id;
     }
 
+    OperandType type;
+
     std::string name;
     int64_t id = -1;
 
@@ -147,12 +149,12 @@ struct StackLocation : public MachineOperand
 protected:
     friend class MachineFunction;
 
-    StackLocation(const std::string& name)
-    : name(name)
+    StackLocation(OperandType type, const std::string& name)
+    : type(type), name(name)
     {}
 
-    StackLocation(int64_t id)
-    : id(id)
+    StackLocation(OperandType type, int64_t id)
+    : type(type), id(id)
     {}
 };
 
@@ -165,8 +167,8 @@ struct StackParameter : public StackLocation
 private:
     friend class MachineFunction;
 
-    StackParameter(const std::string& name, size_t index)
-    : StackLocation(name), index(index)
+    StackParameter(OperandType type, const std::string& name, size_t index)
+    : StackLocation(type, name), index(index)
     {
         offset = 16 + 8 * index;
     }
@@ -262,13 +264,13 @@ struct MachineFunction
 
     size_t parameterCount() const { return _stackParameters.size(); }
     StackParameter* getParameter(size_t i) { return _stackParameters.at(i).get(); }
-    StackParameter* makeStackParameter(const std::string& name, size_t index);
+    StackParameter* makeStackParameter(OperandType type, const std::string& name, size_t index);
 
     VirtualRegister* makeVreg(OperandType type);
     MachineBB* makeBlock(int64_t seqNumber);
 
-    StackLocation* makeStackVariable();
-    StackLocation* makeStackVariable(const std::string& name);
+    StackLocation* makeStackVariable(OperandType type);
+    StackLocation* makeStackVariable(OperandType type, const std::string& name);
     size_t stackVariableCount() const { return _stackVariables.size(); }
     StackLocation* getStackVariable(size_t i) { return _stackVariables.at(i).get(); }
 
