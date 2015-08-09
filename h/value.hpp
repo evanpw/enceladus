@@ -10,6 +10,31 @@
 struct Instruction;
 struct TACContext;
 
+enum class ValueType { Unknown, BoxOrInt, TaggedInt, UntaggedInt, CodeAddress };
+
+static inline const char* valueTypeString(ValueType type)
+{
+    switch (type)
+    {
+        case ValueType::Unknown:
+            return "Unknown";
+
+        case ValueType::BoxOrInt:
+            return "BoxOrInt";
+
+        case ValueType::TaggedInt:
+            return "TaggedInt";
+
+        case ValueType::UntaggedInt:
+            return "UntaggedInt";
+
+        case ValueType::CodeAddress:
+            return "CodeAddress";
+    }
+
+    assert(false);
+}
+
 struct Value
 {
     virtual ~Value() {}
@@ -17,6 +42,8 @@ struct Value
     virtual std::string str() const;
 
     std::unordered_set<Instruction*> uses;
+
+    ValueType type = ValueType::Unknown;
 
     // Optional
     std::string name;

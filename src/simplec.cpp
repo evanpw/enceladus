@@ -6,6 +6,7 @@
 #include "demote_globals.hpp"
 #include "exceptions.hpp"
 #include "from_ssa.hpp"
+#include "kill_dead_values.hpp"
 #include "machine_codegen.hpp"
 #include "parser.hpp"
 #include "redundant_moves.hpp"
@@ -14,6 +15,7 @@
 #include "stack_map.hpp"
 #include "tac_codegen.hpp"
 #include "tac_validator.hpp"
+#include "tag_elision.hpp"
 #include "to_ssa.hpp"
 
 #include <cstdio>
@@ -83,6 +85,23 @@ int main(int argc, char* argv[])
 
 		ConstantFolding constantFolding(function);
 		constantFolding.run();
+
+		std::cerr << function->name << ":" << std::endl;
+		for (BasicBlock* block : function->blocks)
+		{
+			std::cerr << block->str() << std::endl;
+			for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+		    {
+		    	std::cerr << "\t" << inst->str() << std::endl;
+		    }
+		}
+		std::cerr << std::endl;
+
+		TagElision tagElision(function);
+		tagElision.run();
+
+		KillDeadValues killDeadValues(function);
+		killDeadValues.run();
 
 		std::cerr << function->name << ":" << std::endl;
 		for (BasicBlock* block : function->blocks)

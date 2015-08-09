@@ -22,21 +22,21 @@ struct TACVisitor
 {
     virtual ~TACVisitor() {}
 
-    virtual void visit(BinaryOperationInst* inst) = 0;
-    virtual void visit(CallInst* inst) = 0;
-    virtual void visit(ConditionalJumpInst* inst) = 0;
-    virtual void visit(CopyInst* inst) = 0;
-    virtual void visit(IndexedLoadInst* inst) = 0;
-    virtual void visit(IndexedStoreInst* inst) = 0;
-    virtual void visit(JumpIfInst* inst) = 0;
-    virtual void visit(JumpInst* inst) = 0;
-    virtual void visit(LoadInst* inst) = 0;
-    virtual void visit(PhiInst* inst) = 0;
-    virtual void visit(ReturnInst* inst) = 0;
-    virtual void visit(StoreInst* inst) = 0;
-    virtual void visit(TagInst* inst) = 0;
-    virtual void visit(UnreachableInst* inst) = 0;
-    virtual void visit(UntagInst* inst) = 0;
+    virtual void visit(BinaryOperationInst* inst) {}
+    virtual void visit(CallInst* inst) {}
+    virtual void visit(ConditionalJumpInst* inst) {}
+    virtual void visit(CopyInst* inst) {}
+    virtual void visit(IndexedLoadInst* inst) {}
+    virtual void visit(IndexedStoreInst* inst) {}
+    virtual void visit(JumpIfInst* inst) {}
+    virtual void visit(JumpInst* inst) {}
+    virtual void visit(LoadInst* inst) {}
+    virtual void visit(PhiInst* inst) {}
+    virtual void visit(ReturnInst* inst) {}
+    virtual void visit(StoreInst* inst) {}
+    virtual void visit(TagInst* inst) {}
+    virtual void visit(UnreachableInst* inst) {}
+    virtual void visit(UntagInst* inst) {}
 };
 
 #endif
