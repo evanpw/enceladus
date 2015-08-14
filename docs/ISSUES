@@ -26,18 +26,9 @@
 
 * Add a real module system
 
-* Create a stronger guarantee that untagged immediates will never end up in
-  a stack root
-
 * Use a better representation for the in-memory stack map
 
 * Add syntax for return with no argument
-
-* Force splmain to be explicitly defined?
-
-* Rewrite calculations in terms of untagged variables when possible
-
-* Kill dead definitions
 
 * Combine redundant definitions
 

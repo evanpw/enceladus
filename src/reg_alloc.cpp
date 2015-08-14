@@ -131,7 +131,7 @@ void RegAlloc::spillAroundCalls()
                     OperandType type = dynamic_cast<VirtualRegister*>(liveReg)->type;
                     StackLocation* stackVar = _function->makeStackVariable(type);
 
-                    std::cerr << *stackVar << ": " << operandTypeString(type) << std::endl;
+                    // std::cerr << *stackVar << ": " << operandTypeString(type) << std::endl;
 
                     MachineInst* saveInst = new MachineInst(Opcode::MOVmd, {}, {stackVar, liveReg});
                     saves.push_back(saveInst);
