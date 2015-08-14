@@ -5,14 +5,6 @@ import time
 import subprocess
 
 
-if sys.platform == 'darwin':
-    platform = 'osx'
-elif sys.platform.startswith('linux'):
-    platform = 'linux'
-else:
-    assert False
-
-
 class TestCase(object):
     def __init__(self, name, input_file=None):
         self.name = name
@@ -20,7 +12,7 @@ class TestCase(object):
 
 
     def build(self):
-        build_cmd = '{}/build.sh {}'.format(platform, self.name)
+        build_cmd = './sbuild {}'.format(self.name)
         build_proc = subprocess.Popen(build_cmd, shell=True, stderr=subprocess.PIPE)
 
         assert build_proc.wait() == 0

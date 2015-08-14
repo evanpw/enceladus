@@ -20,16 +20,8 @@ def assert_matches(result, expected):
 
 
 class TestAcceptance(object):
-    def __init__(self):
-        if sys.platform == 'darwin':
-            self.platform = 'osx'
-        elif sys.platform.startswith('linux'):
-            self.platform = 'linux'
-        else:
-            assert False
-
     def run(self, name, result=None, build_error=None, runtime_error=None, input_file=None):
-        build_cmd = '{}/build.sh {}'.format(self.platform, name)
+        build_cmd = './sbuild {}'.format(name)
         build_proc = subprocess.Popen(build_cmd, shell=True, stderr=subprocess.PIPE)
 
         if build_error:
