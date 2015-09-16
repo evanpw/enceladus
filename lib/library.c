@@ -144,16 +144,16 @@ int64_t strAt(String* s, int64_t n)
     return TO_INT(strContent(s)[idx]);
 }
 
-#define IS_EMPTY(xs) ((xs)->constructorTag == 1)
+#define IS_EMPTY(xs) ((int64_t)(xs) == 3)
 
 String* strFromList(List* list)
 {
     // Get length
     List* p = list;
     size_t length = 0;
-    while (!IS_EMPTY(list))
+    while (!IS_EMPTY(p))
     {
-        list = list->next;
+        p = p->next;
         ++length;
     }
 

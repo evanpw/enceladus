@@ -378,12 +378,13 @@ void MachineCodeGen::visit(CopyInst* inst)
     MachineOperand* src = getOperand(inst->src);
     assert(dest->isRegister());
 
-    if (src->isRegister() || src->isImmediate())
+    if (src->isRegister() || src->isImmediate() || src->isAddress())
     {
         emit(Opcode::MOVrd, {dest}, {src});
     }
     else
     {
+        std::cerr << inst->str() << std::endl;
         assert(false);
     }
 }
