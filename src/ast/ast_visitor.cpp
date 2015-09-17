@@ -81,7 +81,7 @@ void AstVisitor::visit(AssignNode* node)
 	node->rhs->accept(this);
 }
 
-void AstVisitor::visit(LetNode* node)
+void AstVisitor::visit(VariableDefNode* node)
 {
 	node->rhs->accept(this);
 	if (node->typeName)
@@ -99,7 +99,7 @@ void AstVisitor::visit(ReturnNode* node)
 	node->expression->accept(this);
 }
 
-void AstVisitor::visit(MatchNode* node)
+void AstVisitor::visit(LetNode* node)
 {
 	node->body->accept(this);
 }
@@ -112,7 +112,7 @@ void AstVisitor::visit(StructDefNode* node)
 	}
 }
 
-void AstVisitor::visit(SwitchNode* node)
+void AstVisitor::visit(MatchNode* node)
 {
 	node->expr->accept(this);
 	for (auto& arm : node->arms)

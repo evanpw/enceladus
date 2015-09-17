@@ -33,7 +33,7 @@ public:
     virtual void visit(DataDeclaration* node);
     virtual void visit(ForeignDeclNode* node);
     virtual void visit(FunctionDefNode* node);
-    virtual void visit(LetNode* node);
+    virtual void visit(VariableDefNode* node);
     virtual void visit(StructDefNode* node);
     virtual void visit(TypeAliasNode* node);
 
@@ -50,9 +50,9 @@ public:
     virtual void visit(IfNode* node);
     virtual void visit(LogicalNode* node);
     virtual void visit(MatchArm* node);
-    virtual void visit(MatchNode* node);
+    virtual void visit(LetNode* node);
     virtual void visit(ProgramNode* node);
-    virtual void visit(SwitchNode* node);
+    virtual void visit(MatchNode* node);
     virtual void visit(WhileNode* node);
 
     // Leaf nodes

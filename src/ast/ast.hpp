@@ -402,10 +402,10 @@ public:
 	Symbol* symbol = nullptr;
 };
 
-class LetNode : public StatementNode
+class VariableDefNode : public StatementNode
 {
 public:
-	LetNode(AstContext* context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* rhs)
+	VariableDefNode(AstContext* context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* rhs)
 	: StatementNode(context, location), target(target), typeName(typeName), rhs(rhs)
 	{}
 
@@ -440,10 +440,10 @@ public:
 	FunctionType* functionType;
 };
 
-class MatchNode : public StatementNode
+class LetNode : public StatementNode
 {
 public:
-	MatchNode(AstContext* context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, ExpressionNode* body)
+	LetNode(AstContext* context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, ExpressionNode* body)
 	: StatementNode(context, location), constructor(constructor), params(params), body(body)
 	{}
 
@@ -479,10 +479,10 @@ public:
 	Scope bodyScope;
 };
 
-class SwitchNode : public StatementNode
+class MatchNode : public StatementNode
 {
 public:
-	SwitchNode(AstContext* context, const YYLTYPE& location, ExpressionNode* expr, std::vector<MatchArm*>&& arms)
+	MatchNode(AstContext* context, const YYLTYPE& location, ExpressionNode* expr, std::vector<MatchArm*>&& arms)
 	: StatementNode(context, location), expr(expr), arms(std::move(arms))
 	{}
 

@@ -60,7 +60,7 @@ forever_statement
     : FOREVER suite
 
 let_statement
-    : LET UIDENT parameters '=' expression EOL
+    : LET UIDENT parameters COLON_EQUAL expression EOL
 
 match_statement
     : MATCH expression EOL match_body

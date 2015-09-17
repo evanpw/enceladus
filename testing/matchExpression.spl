@@ -4,20 +4,20 @@ import String
 
 data Date = Date Int Int Int Int
 
-def year(date: Date) -> Int 
-    let Date y m d w = date in y
+def year(date: Date) -> Int
+    let Date y m d w := date in y
 
-def month(date: Date) -> Int 
-    let Date y m d w = date in m
+def month(date: Date) -> Int
+    let Date y m d w := date in m
 
-def day(date: Date) -> Int 
-    let Date y m d w = date in d
+def day(date: Date) -> Int
+    let Date y m d w := date in d
 
-def dayOfWeek(date: Date) -> Int 
-    let Date y m d w = date in w
+def dayOfWeek(date: Date) -> Int
+    let Date y m d w := date in w
 
-def isLeapYear(date: Date) -> Bool 
-    let Date y m d w = date
+def isLeapYear(date: Date) -> Bool
+    let Date y m d w := date
 
     if y mod 4 == 0
         if y mod 100 == 0
@@ -30,8 +30,8 @@ def isLeapYear(date: Date) -> Bool
     else
         return False
 
-def daysInMonth(date: Date) -> Int 
-    let Date y m d w = date
+def daysInMonth(date: Date) -> Int
+    let Date y m d w := date
 
     nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -41,8 +41,8 @@ def daysInMonth(date: Date) -> Int
     else
         return at m nonLeap
 
-def incrementDate(date: Date) -> Date 
-    let Date y m d w = date
+def incrementDate(date: Date) -> Date
+    let Date y m d w := date
 
     y' := y
     m' := m
@@ -61,8 +61,8 @@ def incrementDate(date: Date) -> Date
 
     return Date y' m' d' w'
 
-def printDate(date: Date) -> String 
-    let Date y m d w = date
+def printDate(date: Date) -> String
+    let Date y m d w := date
 
     monthNames := ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]

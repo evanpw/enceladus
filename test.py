@@ -239,6 +239,9 @@ class TestAcceptance(object):
     def test_scopes7(self):
         self.run('scopes7', result='success')
 
+    def test_let_repeated_var(self):
+        self.run('let_repeated_var', result='0')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

@@ -660,7 +660,7 @@ void TACCodeGen::visit(AssignNode* node)
     emit(new StoreInst(dest, value));
 }
 
-void TACCodeGen::visit(LetNode* node)
+void TACCodeGen::visit(VariableDefNode* node)
 {
     Value* dest = getValue(node->symbol);
 
@@ -675,7 +675,7 @@ void TACCodeGen::visit(LetNode* node)
     }
 }
 
-void TACCodeGen::visit(MatchNode* node)
+void TACCodeGen::visit(LetNode* node)
 {
     Value* body = visitAndGet(node->body);
     ValueConstructor* constructor = node->valueConstructor;
@@ -880,7 +880,7 @@ void TACCodeGen::visit(DataDeclaration* node)
     _dataDeclarations.push_back(node);
 }
 
-void TACCodeGen::visit(SwitchNode* node)
+void TACCodeGen::visit(MatchNode* node)
 {
     std::vector<BasicBlock*> caseLabels;
     for (size_t i = 0; i < node->arms.size(); ++i)

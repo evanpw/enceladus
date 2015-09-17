@@ -7,11 +7,11 @@ struct Location =
     country: String
 
 def getAge(person: Person) -> Int 
-    let Person _ age = person
+    let Person _ age := person
     return age
 
 def getCountry(location: Location) -> String 
-    let Location _ country = location
+    let Location _ country := location
     return country
 
 print $ show $ getAge (Person "Evan" 29)

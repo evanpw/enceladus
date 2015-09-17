@@ -82,7 +82,7 @@ def sort(cmp: |a, a| -> Int, xs: [a]) -> [a]
         return xs
 
     pivot := head xs
-    let Pair lhs rhs = splitList cmp (tail xs) pivot
+    let Pair lhs rhs := splitList cmp (tail xs) pivot
 
     return (sort cmp lhs) ++ [pivot] ++ (sort cmp rhs)
 

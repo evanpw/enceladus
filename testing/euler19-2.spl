@@ -32,7 +32,7 @@ def daysInMonth(date: Date) -> Int
         return at date{month} nonLeap
 
 def incrementDate(date: Date) -> Date
-    let Date y m d w = date
+    let Date y m d w := date
 
     d += 1
     w = (w + 1) mod 7

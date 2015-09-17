@@ -316,11 +316,11 @@ StatementNode* Parser::let_statement()
     expect(tLET);
     Token constructor = expect(tUIDENT);
     std::vector<std::string> params = parameters();
-    expect('=');
+    expect(tCOLON_EQUAL);
     ExpressionNode* body = expression();
     expect(tEOL);
 
-    return new MatchNode(_context, location, constructor.value.str, params, body);
+    return new LetNode(_context, location, constructor.value.str, params, body);
 }
 
 /// match_statement: MATCH expression EOL match_body
@@ -340,7 +340,7 @@ StatementNode* Parser::match_statement()
         arms.push_back(match_arm());
     }
 
-    return new SwitchNode(_context, location, expr, std::move(arms));
+    return new MatchNode(_context, location, expr, std::move(arms));
 }
 
 MatchArm* Parser::match_arm()
@@ -473,7 +473,7 @@ StatementNode* Parser::variable_declaration()
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(_context, location, varName.value.str, varType, value);
+        return new VariableDefNode(_context, location, varName.value.str, varType, value);
     }
     else
     {
@@ -484,7 +484,7 @@ StatementNode* Parser::variable_declaration()
         ExpressionNode* value = expression();
         expect(tEOL);
 
-        return new LetNode(_context, location, varName.value.str, varType, value);
+        return new VariableDefNode(_context, location, varName.value.str, varType, value);
     }
 }
 

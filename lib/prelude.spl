@@ -150,6 +150,13 @@ def maximum(xs: [Int]) -> Int
         return max (head xs) (maximum $ tail xs)
 
 
+def minimum(xs: [Int]) -> Int
+    if length xs == 1
+        return head xs
+    else
+        return min (head xs) (minimum $ tail xs)
+
+
 def at(n: Int, xs: [a]) -> a
     while n > 0
         xs = tail xs
@@ -206,7 +213,7 @@ def pow(a: Int, b: Int) -> Int
 
 # Non stack-destroying version
 #def concat xs ys :: [Int] -> [Int] -> [Int]
-#    let zs :: [Int] = ys
+#    let zs :: [Int] := ys
 
 #    for x in reverse xs
 #        zs = x :: zs
@@ -220,12 +227,12 @@ data Pair a = Pair a a
 
 
 def fst(pair: Pair a) -> a
-    let Pair x _ = pair
+    let Pair x _ := pair
     return x
 
 
 def snd(pair: Pair a) -> a
-    let Pair _ x = pair
+    let Pair _ x := pair
     return x
 
 

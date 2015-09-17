@@ -774,7 +774,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     node->type = _typeTable->Unit;
 }
 
-void SemanticAnalyzer::visit(LetNode* node)
+void SemanticAnalyzer::visit(VariableDefNode* node)
 {
 	// Visit children. Do this first so that we can't have recursive definitions.
 	AstVisitor::visit(node);
@@ -810,7 +810,7 @@ void SemanticAnalyzer::visit(LetNode* node)
     node->type = _typeTable->Unit;
 }
 
-void SemanticAnalyzer::visit(SwitchNode* node)
+void SemanticAnalyzer::visit(MatchNode* node)
 {
     node->expr->accept(this);
     Type* type = node->expr->type;
@@ -885,7 +885,7 @@ void SemanticAnalyzer::visit(MatchArm* node)
     node->type = node->body->type;
 }
 
-void SemanticAnalyzer::visit(MatchNode* node)
+void SemanticAnalyzer::visit(LetNode* node)
 {
 	AstVisitor::visit(node);
 
