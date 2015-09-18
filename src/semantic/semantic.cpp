@@ -134,7 +134,7 @@ void SemanticAnalyzer::injectSymbols()
 
 	//// Create symbols for built-in functions
     FunctionSymbol* notFn = makeBuiltin("not");
-	notFn->setType(_typeTable->createFunctionType({_typeTable->Bool}, _typeTable->Bool));
+	notFn->type = _typeTable->createFunctionType({_typeTable->Bool}, _typeTable->Bool);
 	scope.symbols.insert(notFn);
 
 	//// Integer arithmetic functions //////////////////////////////////////////
@@ -142,23 +142,23 @@ void SemanticAnalyzer::injectSymbols()
     Type* arithmeticType = _typeTable->createFunctionType({_typeTable->Int, _typeTable->Int}, _typeTable->Int);
 
 	FunctionSymbol* add = makeBuiltin("+");
-	add->setType(arithmeticType);
+	add->type = arithmeticType;
 	scope.symbols.insert(add);
 
 	FunctionSymbol* subtract = makeBuiltin("-");
-	subtract->setType(arithmeticType);
+	subtract->type = arithmeticType;
 	scope.symbols.insert(subtract);
 
 	FunctionSymbol* multiply = makeBuiltin("*");
-	multiply->setType(arithmeticType);
+	multiply->type = arithmeticType;
 	scope.symbols.insert(multiply);
 
 	FunctionSymbol* divide = makeBuiltin("/");
-	divide->setType(arithmeticType);
+	divide->type = arithmeticType;
 	scope.symbols.insert(divide);
 
 	FunctionSymbol* modulus = makeBuiltin("%");
-	modulus->setType(arithmeticType);
+	modulus->type = arithmeticType;
 	scope.symbols.insert(modulus);
 
 
@@ -307,35 +307,13 @@ void SemanticAnalyzer::inferenceError(AstNode* node, const std::string& msg)
     throw TypeInferenceError(ss.str());
 }
 
-std::set<TypeVariable*> SemanticAnalyzer::getFreeVars(Symbol& symbol)
+Type* SemanticAnalyzer::instantiate(Type* type)
 {
-    std::set<TypeVariable*> freeVars;
-
-    // FIXME: Some functions (like die) which cannot be called from in-language
-    // have no type scheme because they don't need it. We should have a better
-    // way of declaring external symbols without introducing fake in-language
-    // functions.
-    if (!symbol.typeScheme) return freeVars;
-
-    freeVars += symbol.typeScheme->freeVars();
-
-    if (symbol.kind == kFunction)
-    {
-        Type* type = unwrap(symbol.typeScheme->type());
-
-        assert(type->tag() == ttFunction);
-        FunctionType* functionType = type->get<FunctionType>();
-        for (auto& type : functionType->inputs())
-        {
-            freeVars += type->freeVars();
-        }
-        freeVars += functionType->output()->freeVars();
-    }
-
-    return freeVars;
+    std::map<TypeVariable*, Type*> replacements;
+    return instantiate(type, replacements);
 }
 
-Type* SemanticAnalyzer::instantiate(Type* type, const std::map<TypeVariable*, Type*>& replacements)
+Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
 {
     Type* realType = unwrap(type);
 
@@ -355,7 +333,17 @@ Type* SemanticAnalyzer::instantiate(Type* type, const std::map<TypeVariable*, Ty
             }
             else
             {
-                return realType;
+                if (typeVariable->quantified())
+                {
+                    Type* replacement = _typeTable->createTypeVariable();
+                    replacements[typeVariable] = replacement;
+
+                    return replacement;
+                }
+                else
+                {
+                    return realType;
+                }
             }
         }
 
@@ -388,17 +376,6 @@ Type* SemanticAnalyzer::instantiate(Type* type, const std::map<TypeVariable*, Ty
 
     assert(false);
     return nullptr;
-}
-
-Type* SemanticAnalyzer::instantiate(TypeScheme* scheme)
-{
-    std::map<TypeVariable*, Type*> replacements;
-    for (TypeVariable* boundVar : scheme->quantified())
-    {
-        replacements[boundVar] = _typeTable->createTypeVariable();
-    }
-
-    return instantiate(scheme->type(), replacements);
 }
 
 bool SemanticAnalyzer::occurs(TypeVariable* variable, Type* value)
@@ -458,26 +435,26 @@ void SemanticAnalyzer::unify(Type* a, Type* b, AstNode* node)
     }
     else if (lhs->tag() == ttVariable)
     {
-        // Non-rigid type variables can always be bound
-        if (!lhs->get<TypeVariable>()->rigid())
+        // Non-quantified type variables can always be bound
+        if (!lhs->get<TypeVariable>()->quantified())
         {
             bindVariable(lhs, rhs, node);
             return;
         }
         else
         {
-            // Trying to unify a rigid type variable with a type that is not a
+            // Trying to unify a quantified type variable with a type that is not a
             // variable is always an error
             if (rhs->tag() == ttVariable)
             {
-                // A rigid type variable unifies with itself
+                // A quantified type variable unifies with itself
                 if (lhs->get<TypeVariable>() == rhs->get<TypeVariable>())
                 {
                     return;
                 }
 
-                // And non-rigid type variables can be bound to rigid ones
-                else if (!rhs->get<TypeVariable>()->rigid())
+                // And non-quantified type variables can be bound to quantified ones
+                else if (!rhs->get<TypeVariable>()->quantified())
                 {
                     bindVariable(rhs, lhs, node);
                     return;
@@ -485,7 +462,7 @@ void SemanticAnalyzer::unify(Type* a, Type* b, AstNode* node)
              }
         }
     }
-    else if (rhs->tag() == ttVariable && !rhs->get<TypeVariable>()->rigid())
+    else if (rhs->tag() == ttVariable && !rhs->get<TypeVariable>()->quantified())
     {
         bindVariable(rhs, lhs, node);
         return;
@@ -566,12 +543,7 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     // Create a symbol for the constructor
     FunctionSymbol* symbol = new FunctionSymbol(node->name, node, nullptr);
     symbol->isForeign = true;
-    std::set<TypeVariable*> variables;
-    for (auto& element : node->typeContext)
-    {
-        variables.insert(element.second->get<TypeVariable>());
-    }
-    symbol->setTypeScheme(_typeTable->createTypeScheme(_typeTable->createFunctionType(node->memberTypes, node->resultType), variables));
+    symbol->type = _typeTable->createFunctionType(node->memberTypes, node->resultType);
     insertSymbol(symbol);
 
     ValueConstructor* valueConstructor = _typeTable->createValueConstructor(symbol, node->memberTypes);
@@ -664,15 +636,12 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
     CHECK_UNDEFINED(name);
 
     // Create type variables for each type parameter
-    std::set<TypeVariable*> variables;
     std::unordered_map<std::string, Type*> typeContext;
     for (auto& typeParameter : node->typeParams)
     {
         CHECK_UNDEFINED(typeParameter);
 
         TypeVariable* var = _typeTable->createTypeVariable(true);
-        variables.insert(var);
-
         typeContext.emplace(typeParameter, var);
     }
 
@@ -686,7 +655,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
     const std::vector<Type*>& paramTypes = functionType->inputs();
 
 	Symbol* symbol = new FunctionSymbol(name, node, node);
-    symbol->setTypeScheme(_typeTable->createTypeScheme(type, variables));
+    symbol->type = type;
 	insertSymbol(symbol);
 	node->symbol = symbol;
 
@@ -701,7 +670,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 		Symbol* paramSymbol = new VariableSymbol(param, node, node, false);
 		paramSymbol->asVariable()->isParam = true;
         paramSymbol->asVariable()->offset = i;
-		paramSymbol->setType(paramTypes[i]);
+		paramSymbol->type = paramTypes[i];
 		insertSymbol(paramSymbol);
 
         node->parameterSymbols.push_back(paramSymbol);
@@ -732,15 +701,12 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     CHECK(node->params.size() <= 6, "a maximum of 6 arguments is supported for foreign functions");
 
     // Create type variables for each type parameter
-    std::set<TypeVariable*> variables;
     std::unordered_map<std::string, Type*> typeContext;
     for (auto& typeParameter : node->typeParams)
     {
         CHECK_UNDEFINED(typeParameter);
 
         TypeVariable* var = _typeTable->createTypeVariable(true);
-        variables.insert(var);
-
         typeContext.emplace(typeParameter, var);
     }
 
@@ -750,7 +716,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     assert(functionType->get<FunctionType>()->inputs().size() == node->params.size());
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
-    symbol->setTypeScheme(_typeTable->createTypeScheme(functionType, variables));
+    symbol->type = functionType;
 	symbol->isForeign = true;
 	symbol->isExternal = true;
 	insertSymbol(symbol);
@@ -775,11 +741,11 @@ void SemanticAnalyzer::visit(VariableDefNode* node)
     	if (node->typeName)
     	{
     		resolveTypeName(node->typeName);
-    		symbol->setType(node->typeName->type);
+    		symbol->type = node->typeName->type;
     	}
     	else
     	{
-    		symbol->setType(_typeTable->createTypeVariable());
+    		symbol->type = _typeTable->createTypeVariable();
     	}
 
     	insertSymbol(symbol);
@@ -831,9 +797,9 @@ void SemanticAnalyzer::visit(MatchArm* node)
 
     // A symbol with a capital letter should always be a constructor
     assert(constructorSymbol->kind == kFunction);
-    assert(constructorSymbol->typeScheme->tag() == ttFunction);
+    assert(constructorSymbol->type->tag() == ttFunction);
 
-    Type* instantiatedType = instantiate(constructorSymbol->typeScheme);
+    Type* instantiatedType = instantiate(constructorSymbol->type);
     FunctionType* functionType = instantiatedType->get<FunctionType>();
     Type* constructedType = functionType->output();
     unify(constructedType, node->matchType, node);
@@ -852,7 +818,7 @@ void SemanticAnalyzer::visit(MatchArm* node)
         if (name != "_")
         {
             Symbol* member = new VariableSymbol(name, node, _enclosingFunction, false);
-            member->setType(functionType->inputs().at(i));
+            member->type = functionType->inputs().at(i);
             insertSymbol(member);
             node->symbols.push_back(member);
         }
@@ -881,8 +847,8 @@ void SemanticAnalyzer::visit(LetNode* node)
 	// A symbol with a capital letter should always be a constructor
 	assert(constructorSymbol->kind == kFunction);
 
-	assert(constructorSymbol->typeScheme->tag() == ttFunction);
-    Type* instantiatedType = instantiate(constructorSymbol->typeScheme);
+	assert(constructorSymbol->type->tag() == ttFunction);
+    Type* instantiatedType = instantiate(constructorSymbol->type);
 	FunctionType* functionType = instantiatedType->get<FunctionType>();
 	const Type* constructedType = functionType->output();
 
@@ -902,7 +868,7 @@ void SemanticAnalyzer::visit(LetNode* node)
         if (name != "_")
         {
     		Symbol* member = new VariableSymbol(name, node, _enclosingFunction, global);
-    		member->setType(functionType->inputs().at(i));
+    		member->type = functionType->inputs().at(i);
     		insertSymbol(member);
     		node->symbols.push_back(member);
         }
@@ -949,7 +915,7 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 	node->symbol = symbol;
 
     Type* returnType = _typeTable->createTypeVariable();
-    Type* functionType = instantiate(symbol->typeScheme);
+    Type* functionType = instantiate(symbol->type);
 
     unify(functionType, _typeTable->createFunctionType(paramTypes, returnType), node);
 
@@ -973,7 +939,7 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 	else /* symbol->kind == kFunction */
 	{
 		node->symbol = symbol;
-        Type* functionType = instantiate(symbol->typeScheme);
+        Type* functionType = instantiate(symbol->type);
 
         FunctionSymbol* functionSymbol = symbol->asFunction();
         if (functionType->get<FunctionType>()->inputs().empty())
@@ -1117,7 +1083,7 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     CHECK_UNDEFINED_IN_SCOPE(node->varName);
 
     Symbol* symbol = new VariableSymbol(node->varName, node, _enclosingFunction, false);
-    symbol->setType(varType);
+    symbol->type = varType;
     insertSymbol(symbol);
     node->symbol = symbol;
 
@@ -1156,7 +1122,7 @@ void SemanticAnalyzer::visit(ForNode* node)
     CHECK_UNDEFINED_IN_SCOPE(node->varName);
 
     Symbol* symbol = new VariableSymbol(node->varName, node, _enclosingFunction, false);
-    symbol->setType(_typeTable->Int);
+    symbol->type = _typeTable->Int;
     insertSymbol(symbol);
     node->symbol = symbol;
 
@@ -1277,7 +1243,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         memberNames.push_back(member->name);
 
         MemberSymbol* memberSymbol = new MemberSymbol(member->name, node);
-        memberSymbol->setType(_typeTable->createFunctionType({newType}, member->memberType));
+        memberSymbol->type = _typeTable->createFunctionType({newType}, member->memberType);
         insertSymbol(memberSymbol);
         memberSymbols.push_back(memberSymbol);
     }
@@ -1285,7 +1251,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     // Create a symbol for the constructor
     FunctionSymbol* symbol = new FunctionSymbol(typeName, node, nullptr);
     symbol->isForeign = true;
-    symbol->setType(_typeTable->createFunctionType(memberTypes, newType));
+    symbol->type = _typeTable->createFunctionType(memberTypes, newType);
     insertSymbol(symbol);
 
     ValueConstructor* valueConstructor = _typeTable->createValueConstructor(symbol, memberTypes, memberNames);
@@ -1329,7 +1295,7 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     node->memberSymbol = memberSymbol->asMember();
 
     Type* varType = varSymbol->type;
-    Type* memberType = instantiate(memberSymbol->typeScheme);
+    Type* memberType = instantiate(memberSymbol->type);
     Type* returnType = _typeTable->createTypeVariable();
     unify(memberType, _typeTable->createFunctionType({varType}, returnType), node);
 

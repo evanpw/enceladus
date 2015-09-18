@@ -42,20 +42,7 @@ struct Symbol
     bool global;
 
     // Type (possibly polymorphic) of this variable or function
-    TypeScheme* typeScheme = nullptr;
     Type* type = nullptr;
-
-    void setType(Type* newType)
-    {
-        type = newType;
-        typeScheme = newType->table()->createTypeScheme(newType);
-    }
-
-    void setTypeScheme(TypeScheme* newTypeScheme)
-    {
-        type = newTypeScheme->type();
-        typeScheme = newTypeScheme;
-    }
 
     // Variable, function, ...?
     Kind kind;

@@ -91,35 +91,6 @@ std::set<TypeVariable*> Type::freeVars()
     return result;
 }
 
-std::string TypeScheme::name() const
-{
-    std::stringstream ss;
-    if (_quantified.size() > 0)
-    {
-        ss << "forall ";
-        for (auto& typeVar : _quantified)
-        {
-            ss << typeVar->name() << " ";
-        }
-        ss << ". ";
-    }
-
-    ss << _type->name();
-
-    return ss.str();
-}
-
-std::set<TypeVariable*> TypeScheme::freeVars()
-{
-    std::set<TypeVariable*> allVars = _type->freeVars();
-    for (TypeVariable* boundVar : _quantified)
-    {
-        allVars.erase(boundVar);
-    }
-
-    return allVars;
-}
-
 std::pair<size_t, ValueConstructor*> Type::getValueConstructor(const std::string& name) const
 {
     for (size_t i = 0; i < _valueConstructors.size(); ++i)

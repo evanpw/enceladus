@@ -35,5 +35,3 @@
 * Turn stack locations into outputs of instructions instead of inputs
 
 * In tag elision, determine loop depth and incorporate into heuristic cost
-
-* Replace type schemes with types containing type variables that have a "quantified" flag

@@ -15,7 +15,6 @@ class ConstructedType;
 class FunctionType;
 class Type;
 class TypeConstructor;
-class TypeScheme;
 class TypeTable;
 class TypeVariable;
 class ValueConstructor;
@@ -248,7 +247,7 @@ public:
 
     void assign(Type* target)
     {
-        assert(!_rigid);
+        assert(!_quantified);
         _target = target;
     }
 
@@ -257,16 +256,16 @@ public:
         return _index;
     }
 
-    bool rigid() const
+    bool quantified() const
     {
-        return _rigid;
+        return _quantified;
     }
 
 private:
     friend TypeTable;
 
-    TypeVariable(TypeTable* table, bool rigid)
-    : Type(table, ttVariable), _index(_count++), _rigid(rigid)
+    TypeVariable(TypeTable* table, bool quantified)
+    : Type(table, ttVariable), _index(_count++), _quantified(quantified)
     {
     }
 
@@ -282,7 +281,7 @@ private:
     mutable Type* _target = nullptr;
 
     int _index;
-    bool _rigid;
+    bool _quantified;
 
     static int _count;
 };
@@ -322,69 +321,6 @@ private:
 
     Symbol* _symbol;
     std::vector<MemberDesc> _members;
-};
-
-class TypeScheme
-{
-public:
-    TypeTable* table()
-    {
-        return _type->table();
-    }
-
-    std::string name() const;
-
-    // Convenience redirections to the underlying type
-    virtual TypeTag tag() const
-    {
-        return _type->tag();
-    }
-
-    virtual bool isBoxed() const
-    {
-        return _type->isBoxed();
-    }
-
-    const std::vector<ValueConstructor*>& valueConstructors() const
-    {
-        return _type->valueConstructors();
-    }
-
-    Type* type()
-    {
-        return _type;
-    }
-
-    std::set<TypeVariable*> freeVars();
-
-    const std::set<TypeVariable*>& quantified() const
-    {
-        return _quantified;
-    }
-
-private:
-    friend TypeTable;
-
-    TypeScheme(Type* type, const std::set<TypeVariable*>& quantified)
-    : _type(type)
-    {
-        for (auto& elem : quantified)
-        {
-            _quantified.emplace(elem);
-        }
-    }
-
-    TypeScheme(Type* type, std::initializer_list<TypeVariable*> quantified)
-    : _type(type)
-    {
-        for (auto& elem : quantified)
-        {
-            _quantified.emplace(elem);
-        }
-    }
-
-    Type* _type;
-    std::set<TypeVariable*> _quantified;
 };
 
 class TypeConstructor
@@ -466,9 +402,9 @@ public:
         return type;
     }
 
-    TypeVariable* createTypeVariable(bool rigid=false)
+    TypeVariable* createTypeVariable(bool quantified=false)
     {
-        TypeVariable* type = new TypeVariable(this, rigid);
+        TypeVariable* type = new TypeVariable(this, quantified);
         _types.emplace_back(type);
 
         return type;
@@ -480,26 +416,6 @@ public:
         _typeConstructors.emplace_back(typeConstructor);
 
         return typeConstructor;
-    }
-
-    TypeScheme* createTypeScheme(Type* type, std::initializer_list<TypeVariable*> quantified = {})
-    {
-        assert(type->table() == this);
-
-        TypeScheme* typeScheme = new TypeScheme(type, quantified);
-        _typeSchemes.emplace_back(typeScheme);
-
-        return typeScheme;
-    }
-
-    TypeScheme* createTypeScheme(Type* type, const std::set<TypeVariable*>& quantified)
-    {
-        assert(type->table() == this);
-
-        TypeScheme* typeScheme = new TypeScheme(type, quantified);
-        _typeSchemes.emplace_back(typeScheme);
-
-        return typeScheme;
     }
 
     ValueConstructor* createValueConstructor(Symbol* symbol, const std::vector<Type*>& memberTypes, const std::vector<std::string>& memberNames = {})
@@ -522,7 +438,6 @@ public:
 private:
     std::vector<std::unique_ptr<Type>> _types;
     std::vector<std::unique_ptr<TypeConstructor>> _typeConstructors;
-    std::vector<std::unique_ptr<TypeScheme>> _typeSchemes;
     std::vector<std::unique_ptr<ValueConstructor>> _valueConstructors;
 };
 

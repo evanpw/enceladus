@@ -76,10 +76,8 @@ private:
     void unify(Type* lhs, Type* rhs, AstNode* node);
     void bindVariable(Type* variable, Type* value, AstNode* node);
 
-    Type* instantiate(Type* type, const std::map<TypeVariable*, Type*>& replacements);
-    Type* instantiate(TypeScheme* scheme);
-
-    static std::set<TypeVariable*> getFreeVars(Symbol& symbol);
+    Type* instantiate(Type* type);
+    Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements);
 
     //// General semantic analysis /////////////////////////////////////////////
     template<typename... Args>
