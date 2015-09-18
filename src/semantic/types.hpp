@@ -178,7 +178,7 @@ public:
         else
         {
             std::stringstream ss;
-            ss << "a" << _index;
+            ss << "T" << _index;
             return ss.str();
         }
     }
@@ -434,7 +434,7 @@ class TypeTable
 public:
     TypeTable();
 
-    Type* createBaseType(const std::string& name, bool primitive = false)
+    BaseType* createBaseType(const std::string& name, bool primitive = false)
     {
         BaseType* type = new BaseType(this, name, primitive);
         _types.emplace_back(type);
@@ -442,7 +442,7 @@ public:
         return type;
     }
 
-    Type* createFunctionType(const std::vector<Type*>& inputs, Type* output)
+    FunctionType* createFunctionType(const std::vector<Type*>& inputs, Type* output)
     {
         FunctionType* type = new FunctionType(this, inputs, output);
         _types.emplace_back(type);
@@ -450,7 +450,7 @@ public:
         return type;
     }
 
-    Type* createConstructedType(TypeConstructor* typeConstructor, std::initializer_list<Type*> typeParameters)
+    ConstructedType* createConstructedType(TypeConstructor* typeConstructor, std::initializer_list<Type*> typeParameters)
     {
         ConstructedType* type = new ConstructedType(this, typeConstructor, typeParameters);
         _types.emplace_back(type);
@@ -458,7 +458,7 @@ public:
         return type;
     }
 
-    Type* createConstructedType(TypeConstructor* typeConstructor, const std::vector<Type*>& typeParameters)
+    ConstructedType* createConstructedType(TypeConstructor* typeConstructor, const std::vector<Type*>& typeParameters)
     {
         ConstructedType* type = new ConstructedType(this, typeConstructor, typeParameters);
         _types.emplace_back(type);
@@ -466,9 +466,9 @@ public:
         return type;
     }
 
-    Type* createTypeVariable(bool rigid=false)
+    TypeVariable* createTypeVariable(bool rigid=false)
     {
-        Type* type = new TypeVariable(this, rigid);
+        TypeVariable* type = new TypeVariable(this, rigid);
         _types.emplace_back(type);
 
         return type;

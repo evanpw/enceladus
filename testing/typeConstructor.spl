@@ -1,4 +1,4 @@
-data MyPair a = MyPair a a
+data MyPair T = MyPair T T
 
 x := MyPair 1 2
 y := MyPair True False
@@ -9,7 +9,7 @@ let MyPair c d := y
 result := b
 if c: result += 1
 
-def identity(x: a) -> a
+def identity<T>(x: T) -> T
     return x
 
 result += identity 3

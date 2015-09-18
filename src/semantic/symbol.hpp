@@ -53,7 +53,7 @@ struct Symbol
 
     void setTypeScheme(TypeScheme* newTypeScheme)
     {
-        type = nullptr;
+        type = newTypeScheme->type();
         typeScheme = newTypeScheme;
     }
 

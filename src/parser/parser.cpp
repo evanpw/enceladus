@@ -216,9 +216,9 @@ StatementNode* Parser::data_declaration()
     Token name = expect(tUIDENT);
 
     std::vector<std::string> typeParameters;
-    while (peekType() == tLIDENT)
+    while (peekType() == tUIDENT)
     {
-        Token token = expect(tLIDENT);
+        Token token = expect(tUIDENT);
         typeParameters.push_back(token.value.str);
     }
 
@@ -255,10 +255,11 @@ StatementNode* Parser::function_definition()
 
     expect(tDEF);
     std::string name = ident();
+    std::vector<std::string> typeParams = type_params();
     std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
 
     StatementNode* body = suite();
-    return new FunctionDefNode(_context, location, name, body, paramsAndTypes.first, paramsAndTypes.second);
+    return new FunctionDefNode(_context, location, name, body, typeParams, paramsAndTypes.first, paramsAndTypes.second);
 }
 
 StatementNode* Parser::foreign_declaration()
@@ -267,10 +268,11 @@ StatementNode* Parser::foreign_declaration()
 
     expect(tFOREIGN);
     std::string name = ident();
+    std::vector<std::string> typeParams = type_params();
     std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
     expect(tEOL);
 
-    return new ForeignDeclNode(_context, location, name, paramsAndTypes.first, paramsAndTypes.second);
+    return new ForeignDeclNode(_context, location, name, typeParams, paramsAndTypes.first, paramsAndTypes.second);
 }
 
 StatementNode* Parser::for_statement()
@@ -731,7 +733,29 @@ std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types()
     return {params, typeName};
 }
 
- //// Structures ///////////////////////////////////////////////////////////////
+std::vector<std::string> Parser::type_params()
+{
+    if (peekType() != '<')
+        return {};
+
+    std::vector<std::string> result;
+
+    expect('<');
+
+    Token typeVar = expect(tUIDENT);
+    result.push_back(typeVar.value.str);
+    while (accept(','))
+    {
+        Token typeVar = expect(tUIDENT);
+        result.push_back(typeVar.value.str);
+    }
+
+    expect('>');
+
+    return result;
+}
+
+//// Structures ///////////////////////////////////////////////////////////////
 
 std::vector<MemberDefNode*> Parser::members()
 {

@@ -76,7 +76,6 @@ private:
     void unify(Type* lhs, Type* rhs, AstNode* node);
     void bindVariable(Type* variable, Type* value, AstNode* node);
 
-    static TypeScheme* generalize(Type* type, const std::vector<Scope*>& scopes);
     Type* instantiate(Type* type, const std::map<TypeVariable*, Type*>& replacements);
     Type* instantiate(TypeScheme* scheme);
 
@@ -92,9 +91,8 @@ private:
 
     TypeConstructor* getTypeConstructor(const TypeName* typeName);
     TypeConstructor* getTypeConstructor(const YYLTYPE& location, const std::string& name);
-    void resolveBaseType(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables=false);
-    void resolveTypeName(TypeName* typeName, bool createVariables=false);
-    void resolveTypeName(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables=false);
+    void resolveBaseType(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables);
+    void resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables = {});
 
     void insertSymbol(Symbol* symbol);
     void releaseSymbol(Symbol* symbol);

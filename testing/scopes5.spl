@@ -1,4 +1,4 @@
-data Either a b = Left a | Right b
+data Either S T = Left S | Right T
 
 a := Left 1
 

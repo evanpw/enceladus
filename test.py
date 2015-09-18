@@ -168,7 +168,7 @@ class TestAcceptance(object):
         self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
 
     def test_overrideType(self):
-        self.run('overrideType', build_error=Regex('Error: testing/overrideType.spl:2:16: cannot unify types Int and a\d+'))
+        self.run('overrideType', build_error=Regex('Error: testing/overrideType.spl:2:16: cannot unify types Int and T\d+'))
 
     def test_noReturn(self):
         self.run('noReturn', result='1')

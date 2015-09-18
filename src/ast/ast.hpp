@@ -422,14 +422,15 @@ public:
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& params, TypeName* typeName)
-	: StatementNode(context, location), name(name), body(body), params(params), typeName(typeName)
+	FunctionDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& typeParams, const std::vector<std::string>& params, TypeName* typeName)
+	: StatementNode(context, location), name(name), body(body), typeParams(typeParams), params(params), typeName(typeName)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
 	StatementNode* body;
+	std::vector<std::string> typeParams;
 	std::vector<std::string> params;
 	TypeName* typeName;
 
@@ -527,13 +528,14 @@ public:
 class ForeignDeclNode : public StatementNode
 {
 public:
-	ForeignDeclNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
-	: StatementNode(context, location), name(name), params(params), typeName(typeName)
+	ForeignDeclNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParams, const std::vector<std::string>& params, TypeName* typeName)
+	: StatementNode(context, location), name(name), typeParams(typeParams), params(params), typeName(typeName)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
+	std::vector<std::string> typeParams;
 	std::vector<std::string> params;
 	TypeName* typeName;
 

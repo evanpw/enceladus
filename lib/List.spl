@@ -57,14 +57,14 @@ def cmpString(xs: String, ys: String) -> Int
 
 
 # List operations
-def isIn(eq: |a, a| -> Bool, x: a, ys: [a]) -> Bool
+def isIn<T>(eq: |T, T| -> Bool, x: T, ys: [T]) -> Bool
     for y in ys
         if eq x y: return True
 
     return False
 
 
-def splitList(cmp: |a, a| -> Int, xs: [a], pivot: a) -> Pair [a]
+def splitList<T>(cmp: |T, T| -> Int, xs: [T], pivot: T) -> Pair [T]
     lhs := []
     rhs := []
 
@@ -77,7 +77,7 @@ def splitList(cmp: |a, a| -> Int, xs: [a], pivot: a) -> Pair [a]
     return Pair lhs rhs
 
 
-def sort(cmp: |a, a| -> Int, xs: [a]) -> [a]
+def sort<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
     if length xs <= 1
         return xs
 
@@ -87,7 +87,7 @@ def sort(cmp: |a, a| -> Int, xs: [a]) -> [a]
     return (sort cmp lhs) ++ [pivot] ++ (sort cmp rhs)
 
 
-def uniquify(cmp: |a, a| -> Int, xs: [a]) -> [a]
+def uniquify<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
     if null xs: return []
 
     xs = sort cmp xs

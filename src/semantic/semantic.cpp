@@ -172,34 +172,22 @@ void SemanticAnalyzer::injectSymbols()
     scope.symbols.insert(new FunctionSymbol("_main", _root, nullptr));
 }
 
-void SemanticAnalyzer::resolveBaseType(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables)
+void SemanticAnalyzer::resolveBaseType(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables)
 {
     const std::string& name = typeName->name;
 
-    if (!islower(name[0]))
+    auto i = variables.find(name);
+    if (i != variables.end())
     {
-        Symbol* symbol = resolveTypeSymbol(name);
-        CHECK_AT(typeName->location, symbol, "Base type \"{}\" is not defined", name);
-        CHECK_AT(typeName->location, symbol->kind == kType, "Symbol \"{}\" is not a base type", name);
-
-        typeName->type = symbol->type;
+        typeName->type = i->second;
+        return;
     }
-    else
-    {
-        auto i = variables.find(name);
-        CHECK_AT(typeName->location, createVariables || i != variables.end(), "No such type variable \"{}\"", name);
 
-        if (createVariables && i == variables.end())
-        {
-            Type* var = _typeTable->createTypeVariable(true);
-            variables[name] = var;
-            typeName->type = var;
-        }
-        else
-        {
-            typeName->type = i->second;
-        }
-    }
+    Symbol* symbol = resolveTypeSymbol(name);
+    CHECK_AT(typeName->location, symbol, "Base type \"{}\" is not defined", name);
+    CHECK_AT(typeName->location, symbol->kind == kType, "Symbol \"{}\" is not a base type", name);
+
+    typeName->type = symbol->type;
 }
 
 TypeConstructor* SemanticAnalyzer::getTypeConstructor(const TypeName* typeName)
@@ -216,18 +204,18 @@ TypeConstructor* SemanticAnalyzer::getTypeConstructor(const YYLTYPE& location, c
     return symbol->asTypeConstructor()->typeConstructor;
 }
 
-void SemanticAnalyzer::resolveTypeName(TypeName* typeName, std::unordered_map<std::string, Type*>& variables, bool createVariables)
+void SemanticAnalyzer::resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables)
 {
     if (typeName->parameters.empty())
     {
-        resolveBaseType(typeName, variables, createVariables);
+        resolveBaseType(typeName, variables);
     }
     else
     {
         std::vector<Type*> typeParameters;
         for (auto& parameter : typeName->parameters)
         {
-            resolveTypeName(parameter, variables, createVariables);
+            resolveTypeName(parameter, variables);
             typeParameters.push_back(parameter->type);
         }
 
@@ -258,12 +246,6 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, std::unordered_map<st
             typeName->type = _typeTable->createConstructedType(typeConstructor, typeParameters);
         }
     }
-}
-
-void SemanticAnalyzer::resolveTypeName(TypeName* typeName, bool createVariables)
-{
-    std::unordered_map<std::string, Type*> variables;
-    resolveTypeName(typeName, variables, createVariables);
 }
 
 void SemanticAnalyzer::insertSymbol(Symbol* symbol)
@@ -351,24 +333,6 @@ std::set<TypeVariable*> SemanticAnalyzer::getFreeVars(Symbol& symbol)
     }
 
     return freeVars;
-}
-
-TypeScheme* SemanticAnalyzer::generalize(Type* type, const std::vector<Scope*>& scopes)
-{
-    std::set<TypeVariable*> typeFreeVars = type->freeVars();
-
-    std::set<TypeVariable*> envFreeVars;
-    for (auto i = scopes.rbegin(); i != scopes.rend(); ++i)
-    {
-        Scope* scope = *i;
-        for (auto& j : scope->symbols.symbols)
-        {
-            const std::unique_ptr<Symbol>& symbol = j.second;
-            envFreeVars += getFreeVars(*symbol);
-        }
-    }
-
-    return type->table()->createTypeScheme(type, typeFreeVars - envFreeVars);
 }
 
 Type* SemanticAnalyzer::instantiate(Type* type, const std::map<TypeVariable*, Type*>& replacements)
@@ -646,8 +610,11 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         std::unordered_map<std::string, Type*> typeContext;
         for (auto& typeParameter : node->typeParameters)
         {
+            CHECK_UNDEFINED(typeParameter);
+
             Type* var = _typeTable->createTypeVariable(true);
             variables.push_back(var);
+
             typeContext.emplace(typeParameter, var);
         }
 
@@ -696,7 +663,20 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	const std::string& name = node->name;
     CHECK_UNDEFINED(name);
 
-    resolveTypeName(node->typeName, true);
+    // Create type variables for each type parameter
+    std::set<TypeVariable*> variables;
+    std::unordered_map<std::string, Type*> typeContext;
+    for (auto& typeParameter : node->typeParams)
+    {
+        CHECK_UNDEFINED(typeParameter);
+
+        TypeVariable* var = _typeTable->createTypeVariable(true);
+        variables.insert(var);
+
+        typeContext.emplace(typeParameter, var);
+    }
+
+    resolveTypeName(node->typeName, typeContext);
     Type* type = unwrap(node->typeName->type);
     FunctionType* functionType = type->get<FunctionType>();
     node->functionType = functionType;
@@ -705,11 +685,8 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
     const std::vector<Type*>& paramTypes = functionType->inputs();
 
-	// The type scheme of this function is temporarily not generalized. We
-	// want to infer whatever concrete types we can within the body of the
-	// function.
 	Symbol* symbol = new FunctionSymbol(name, node, node);
-	symbol->setType(type);
+    symbol->setTypeScheme(_typeTable->createTypeScheme(type, variables));
 	insertSymbol(symbol);
 	node->symbol = symbol;
 
@@ -737,12 +714,6 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
 	exitScope();
 
-	// Once we've looked through the body of the function and inferred whatever
-	// types we can, any remaining type variables can be generalized.
-	releaseSymbol(symbol);
-	symbol->setTypeScheme(generalize(symbol->typeScheme->type(), _scopes));
-	insertSymbol(symbol);
-
     unify(node->body->type, functionType->output(), node);
     node->type = _typeTable->Unit;
 }
@@ -760,12 +731,26 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 	// (so that we only have to pass arguments in registers)
     CHECK(node->params.size() <= 6, "a maximum of 6 arguments is supported for foreign functions");
 
-    resolveTypeName(node->typeName, true);
+    // Create type variables for each type parameter
+    std::set<TypeVariable*> variables;
+    std::unordered_map<std::string, Type*> typeContext;
+    for (auto& typeParameter : node->typeParams)
+    {
+        CHECK_UNDEFINED(typeParameter);
+
+        TypeVariable* var = _typeTable->createTypeVariable(true);
+        variables.insert(var);
+
+        typeContext.emplace(typeParameter, var);
+    }
+
+    resolveTypeName(node->typeName, typeContext);
+
     Type* functionType = unwrap(node->typeName->type);
     assert(functionType->get<FunctionType>()->inputs().size() == node->params.size());
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
-	symbol->setTypeScheme(generalize(functionType, _scopes));
+    symbol->setTypeScheme(_typeTable->createTypeScheme(functionType, variables));
 	symbol->isForeign = true;
 	symbol->isExternal = true;
 	insertSymbol(symbol);

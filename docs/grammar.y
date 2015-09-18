@@ -41,16 +41,16 @@ assignment_statement
     | LIDENT TIMES_EQUAL expression EOL
 
 data_declaration
-    : DATA UIDENT { LIDENT } '=' constructor_spec { '|' constructor_spec } EOL
+    : DATA UIDENT { UIDENT } '=' constructor_spec { '|' constructor_spec } EOL
 
 type_alias_declaration
     : TYPE UIDENT '=' type EOL
 
 function_definition
-    : DEF ident params_and_types suite
+    : DEF ident type_params params_and_types suite
 
 foreign_declaration
-    : FOREIGN ident params_and_types EOL
+    : FOREIGN ident type_params params_and_types EOL
 
 for_statement
     : FOR LIDENT IN expression suite
@@ -128,6 +128,10 @@ param_and_type
 
 params_and_types
     : '(' [ param_and_type { ',' param_and_type } ] ')' RARROW constructed_type
+
+type_params
+    : '<' UIDENT { ',' UIDENT } '>'
+    | /* empty */
 
  //// Structures ///////////////////////////////////////////////////////////////
 
