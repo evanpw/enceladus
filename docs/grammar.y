@@ -28,6 +28,8 @@ statement
     | variable_declaration
     | while_statement
     | break_statement
+    | trait_definition
+    | trait_implementation
     | expression EOL
 
 if_statement
@@ -86,6 +88,25 @@ while_statement
 
 break_statement
     : BREAK EOL
+
+
+trait_definition
+    : TRAIT UIDENT EOL INDENT decl_list DEDENT
+
+function_declaration
+    : DEF ident params_and_types EOL
+
+decl_list
+    : function_declaration
+    | def_list function_declaration
+
+
+trait_implementation
+    : IMPL UIDENT FOR type INDENT def_list DEDENT
+
+def_list
+    : function_definition
+    | def_list function_definition
 
 
 //// Types /////////////////////////////////////////////////////////////////////

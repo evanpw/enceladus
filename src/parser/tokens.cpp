@@ -50,6 +50,8 @@ std::string tokenToString(TokenType t)
         return "tGE";
     case tIF:
         return "tIF";
+    case tIMPL:
+        return "tIMPL";
     case tIN:
         return "tIN";
     case tINDENT:
@@ -86,6 +88,8 @@ std::string tokenToString(TokenType t)
         return "tTIMES_EQUAL";
     case tTO:
         return "tTO";
+    case tTRAIT:
+        return "tTRAIT";
     case tTRUE:
         return "tTRUE";
     case tTYPE:

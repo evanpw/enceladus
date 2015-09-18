@@ -18,14 +18,15 @@ class ForeignDeclNode;
 class ForeverNode;
 class ForNode;
 class FunctionCallNode;
+class FunctionDeclNode;
 class FunctionDefNode;
 class IfElseNode;
 class IfNode;
 class IntNode;
-class VariableDefNode;
+class LetNode;
 class LogicalNode;
 class MatchArm;
-class LetNode;
+class MatchNode;
 class MemberAccessNode;
 class MemberDefNode;
 class NullaryNode;
@@ -33,9 +34,11 @@ class ProgramNode;
 class ReturnNode;
 class StringLiteralNode;
 class StructDefNode;
-class MatchNode;
+class TraitDefNode;
+class TraitImplNode;
 class TypeAliasNode;
 class TypeName;
+class VariableDefNode;
 class VariableNode;
 class WhileNode;
 
@@ -77,6 +80,11 @@ public:
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(TypeName* node) {}
 	virtual void visit(VariableNode* node) {}
+
+	// Work in progress
+	virtual void visit(FunctionDeclNode* node);
+	virtual void visit(TraitDefNode* node);
+	virtual void visit(TraitImplNode* node);
 };
 
 #endif

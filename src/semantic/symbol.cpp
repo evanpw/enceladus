@@ -25,6 +25,11 @@ MemberSymbol* Symbol::asMember()
     return dynamic_cast<MemberSymbol*>(this);
 }
 
+MethodSymbol* Symbol::asMethod()
+{
+    return dynamic_cast<MethodSymbol*>(this);
+}
+
 const VariableSymbol* Symbol::asVariable() const
 {
     return dynamic_cast<const VariableSymbol*>(this);
@@ -48,6 +53,11 @@ const TypeConstructorSymbol* Symbol::asTypeConstructor() const
 const MemberSymbol* Symbol::asMember() const
 {
     return dynamic_cast<const MemberSymbol*>(this);
+}
+
+const MethodSymbol* Symbol::asMethod() const
+{
+    return dynamic_cast<const MethodSymbol*>(this);
 }
 
 VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
@@ -75,5 +85,12 @@ TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* n
 
 MemberSymbol::MemberSymbol(const std::string& name, AstNode* node)
 : Symbol(name, kMember, node, nullptr, true)
+{
+}
+
+MethodSymbol::MethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode)
+: Symbol(name, kMethod, node, nullptr, true)
+, declaration(declaration)
+, traitNode(traitNode)
 {
 }

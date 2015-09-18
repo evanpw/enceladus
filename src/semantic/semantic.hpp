@@ -66,6 +66,11 @@ public:
     virtual void visit(StringLiteralNode* node);
     virtual void visit(VariableNode* node);
 
+    // Work in progress
+    virtual void visit(FunctionDeclNode* node);
+    virtual void visit(TraitDefNode* node);
+    virtual void visit(TraitImplNode* node);
+
 private:
     //// Type Inference ////////////////////////////////////////////////////////
     Type* newVariable();
@@ -106,6 +111,7 @@ private:
     TypeTable* _typeTable;
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;
+    TraitDefNode* _enclosingTrait;
     std::vector<Scope*> _scopes;
 };
 

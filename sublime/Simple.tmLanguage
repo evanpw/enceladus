@@ -240,7 +240,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(import|let|var|type|data|struct|match)\b</string>
+			<string>\b(import|let|var|type|data|struct|match|trait|impl)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>
@@ -476,7 +476,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>^(def)\s*([a-z][a-zA-Z0-9.']*)</string>
+			<string>^\s*(def)\s*([a-z][a-zA-Z0-9.']*)</string>
 			<key>captures</key>
 			<dict>
 				<key>1</key>

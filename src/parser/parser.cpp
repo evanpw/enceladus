@@ -153,6 +153,12 @@ StatementNode* Parser::statement()
     case tBREAK:
         return break_statement();
 
+    case tTRAIT:
+        return trait_definition();
+
+    case tIMPL:
+        return trait_implementation();
+
     case tLIDENT:
         if (peek2ndType() == '{' ||
             peek2ndType() == '=' ||
@@ -499,6 +505,76 @@ StatementNode* Parser::break_statement()
 
     return new BreakNode(_context, location);
 }
+
+
+/// trait_definition
+///     : TRAIT UIDENT EOL INDENT decl_list DEDENT
+///
+/// function_declaration
+///     : DEF ident params_and_types EOL
+///
+/// decl_list
+///     : function_declaration
+///     | def_list function_declaration
+StatementNode* Parser::trait_definition()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tTRAIT);
+    Token traitName = expect(tUIDENT);
+    expect(tEOL);
+    expect(tINDENT);
+
+    std::vector<FunctionDeclNode*> methods;
+    while (peekType() == tDEF)
+    {
+        YYLTYPE methodLocation = getLocation();
+
+        expect(tDEF);
+        Token methodName = expect(tLIDENT);
+        auto paramList = params_and_types();
+        expect(tEOL);
+
+        methods.push_back(new FunctionDeclNode(_context, methodLocation, methodName.value.str, paramList.first, paramList.second));
+    }
+
+    expect(tDEDENT);
+
+    return new TraitDefNode(_context, location, traitName.value.str, std::move(methods));
+}
+
+
+/// trait_implementation
+///     : IMPL UIDENT FOR type INDENT def_list DEDENT
+///
+/// def_list
+///     : function_definition
+///     | def_list function_definition
+StatementNode* Parser::trait_implementation()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tIMPL);
+    Token traitName = expect(tUIDENT);
+    expect(tFOR);
+    TypeName* typeName = type();
+    expect(tEOL);
+    expect(tINDENT);
+
+    std::vector<FunctionDefNode*> methods;
+    while (peekType() == tDEF)
+    {
+        FunctionDefNode* method = dynamic_cast<FunctionDefNode*>(function_definition());
+        assert(method);
+
+        methods.push_back(method);
+    }
+
+    expect(tDEDENT);
+
+    return new TraitImplNode(_context, location, traitName.value.str, typeName, std::move(methods));
+}
+
 
 //// Miscellaneous /////////////////////////////////////////////////////////////
 

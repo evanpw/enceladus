@@ -83,6 +83,7 @@ SemanticAnalyzer::SemanticAnalyzer(AstContext* context)
 , _typeTable(context->typeTable())
 , _enclosingFunction(nullptr)
 , _enclosingLoop(nullptr)
+, _enclosingTrait(nullptr)
 {
 }
 
@@ -1299,4 +1300,53 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
 
     node->type = returnType;
     node->memberLocation = memberSymbol->asMember()->location;
+}
+
+
+
+void SemanticAnalyzer::visit(FunctionDeclNode* node)
+{
+    // Functions cannot be declared inside of another function
+    CHECK(_enclosingTrait, "method declarations can appear only inside trait definitions");
+
+    // The function name cannot have already been used as something else
+    const std::string& name = node->name;
+    CHECK_UNDEFINED(name);
+
+    resolveTypeName(node->typeName, true);
+    Type* type = unwrap(node->typeName->type);
+    FunctionType* functionType = type->get<FunctionType>();
+    node->functionType = functionType;
+
+    assert(functionType->inputs().size() == node->params.size());
+
+    const std::vector<Type*>& paramTypes = functionType->inputs();
+
+    Symbol* symbol = new MethodSymbol(name, node, node, _enclosingTrait);
+    symbol->setType(type);
+    insertSymbol(symbol);
+    node->symbol = symbol;
+
+    node->type = _typeTable->Unit;
+}
+
+void SemanticAnalyzer::visit(TraitDefNode* node)
+{
+    assert(!_enclosingTrait);
+    _enclosingTrait = node;
+
+    node->traitType = _typeTable->createTypeVariable(true);
+
+    AstVisitor::visit(node);
+
+    _enclosingTrait = nullptr;
+
+    node->type = _typeTable->Unit;
+}
+
+void SemanticAnalyzer::visit(TraitImplNode* node)
+{
+    AstVisitor::visit(node);
+
+    node->type = _typeTable->Unit;
 }

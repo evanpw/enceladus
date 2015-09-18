@@ -8,15 +8,18 @@
 
 class AstNode;
 class FunctionDefNode;
+class FunctionDeclNode;
+class TraitDefNode;
 
 struct VariableSymbol;
 struct FunctionSymbol;
 struct TypeSymbol;
 struct TypeConstructorSymbol;
 struct MemberSymbol;
+struct MethodSymbol;
 
 
-enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMember = 4};
+enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMember = 4, kMethod = 5};
 
 struct Symbol
 {
@@ -52,12 +55,14 @@ struct Symbol
     TypeSymbol* asType();
     TypeConstructorSymbol* asTypeConstructor();
     MemberSymbol* asMember();
+    MethodSymbol* asMethod();
 
     const VariableSymbol* asVariable() const;
     const FunctionSymbol* asFunction() const;
     const TypeSymbol* asType() const;
     const TypeConstructorSymbol* asTypeConstructor() const;
     const MemberSymbol* asMember() const;
+    const MethodSymbol* asMethod() const;
 };
 
 
@@ -87,6 +92,14 @@ struct FunctionSymbol : public Symbol
     bool isBuiltin = false;
 
     FunctionDefNode* definition;
+};
+
+struct MethodSymbol : public Symbol
+{
+    MethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode);
+
+    FunctionDeclNode* declaration;
+    TraitDefNode* traitNode;
 };
 
 struct TypeSymbol : public Symbol

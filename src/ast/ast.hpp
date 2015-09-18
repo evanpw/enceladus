@@ -441,6 +441,56 @@ public:
 	FunctionType* functionType;
 };
 
+class FunctionDeclNode : public StatementNode
+{
+public:
+	FunctionDeclNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
+	: StatementNode(context, location), name(name), params(params), typeName(typeName)
+	{}
+
+	AST_VISITABLE();
+
+	std::string name;
+	std::vector<std::string> params;
+	TypeName* typeName;
+
+	// Annotations
+	Symbol* symbol = nullptr;
+	std::vector<Symbol*> parameterSymbols;
+	Scope scope;
+	FunctionType* functionType;
+};
+
+class TraitDefNode : public StatementNode
+{
+public:
+	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<FunctionDeclNode*>&& methods)
+	: StatementNode(context, location), name(name), methods(methods)
+	{}
+
+	AST_VISITABLE();
+
+	std::string name;
+	std::vector<FunctionDeclNode*> methods;
+
+	// Annotations
+	Type* traitType = nullptr;
+};
+
+class TraitImplNode : public StatementNode
+{
+public:
+	TraitImplNode(AstContext* context, const YYLTYPE& location, const std::string& traitName, TypeName* typeName, std::vector<FunctionDefNode*>&& methods)
+	: StatementNode(context, location), traitName(traitName), typeName(typeName), methods(methods)
+	{}
+
+	AST_VISITABLE();
+
+	std::string traitName;
+	TypeName* typeName;
+	std::vector<FunctionDefNode*> methods;
+};
+
 class LetNode : public StatementNode
 {
 public:

@@ -151,3 +151,28 @@ void AstVisitor::visit(DataDeclaration* node)
 		spec->accept(this);
 	}
 }
+
+
+
+void AstVisitor::visit(FunctionDeclNode* node)
+{
+	node->typeName->accept(this);
+}
+
+void AstVisitor::visit(TraitDefNode* node)
+{
+	for (auto& method : node->methods)
+	{
+		method->accept(this);
+	}
+}
+
+void AstVisitor::visit(TraitImplNode* node)
+{
+	for (auto& method : node->methods)
+	{
+		method->accept(this);
+	}
+
+	node->typeName->accept(this);
+}

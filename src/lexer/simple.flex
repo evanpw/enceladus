@@ -210,12 +210,14 @@ extern "C" int yywrap()
 "foreign"   { return tFOREIGN; }
 "forever"   { return tFOREVER; }
 "if"        { return tIF; }
+"impl"      { return tIMPL; }
 "in"        { return tIN; }
 "let"       { return tLET; }
 "match"     { return tMATCH; }
 "return"    { return tRETURN; }
 "struct"    { return tSTRUCT; }
 "to"        { return tTO; }
+"trait"     { return tTRAIT; }
 "True"      { return tTRUE; }
 "type"      { return tTYPE; }
 "var"       { return tVAR; }
