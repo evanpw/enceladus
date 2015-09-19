@@ -49,20 +49,6 @@ struct Symbol
 
     // Variable, function, ...?
     Kind kind;
-
-    VariableSymbol* asVariable();
-    FunctionSymbol* asFunction();
-    TypeSymbol* asType();
-    TypeConstructorSymbol* asTypeConstructor();
-    MemberSymbol* asMember();
-    MethodSymbol* asMethod();
-
-    const VariableSymbol* asVariable() const;
-    const FunctionSymbol* asFunction() const;
-    const TypeSymbol* asType() const;
-    const TypeConstructorSymbol* asTypeConstructor() const;
-    const MemberSymbol* asMember() const;
-    const MethodSymbol* asMethod() const;
 };
 
 

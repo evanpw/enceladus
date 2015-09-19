@@ -29,6 +29,7 @@ public:
     UNSUPPORTED(FunctionDefNode);
     UNSUPPORTED(IfElseNode);
     UNSUPPORTED(IfNode);
+    UNSUPPORTED(ImplNode);
     UNSUPPORTED(IntNode);
     UNSUPPORTED(LetNode);
     UNSUPPORTED(MatchArm);
@@ -108,10 +109,10 @@ public:
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
     virtual void visit(IntNode* node);
-    virtual void visit(VariableDefNode* node);
+    virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
     virtual void visit(MatchArm* node);
-    virtual void visit(LetNode* node);
+    virtual void visit(MatchNode* node);
     virtual void visit(MemberAccessNode* node);
     virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);
@@ -119,12 +120,13 @@ public:
     virtual void visit(ReturnNode* node);
     virtual void visit(StringLiteralNode* node);
     virtual void visit(StructDefNode* node);
-    virtual void visit(MatchNode* node);
     virtual void visit(TypeAliasNode* node);
+    virtual void visit(VariableDefNode* node);
     virtual void visit(VariableNode* node);
     virtual void visit(WhileNode* node);
 
     // Work in progress
+    virtual void visit(ImplNode* node) {}
     virtual void visit(TraitDefNode*) {}
     virtual void visit(FunctionDeclNode*) {}
     virtual void visit(TraitImplNode*) {}

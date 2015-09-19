@@ -1,8 +1,6 @@
 #ifndef AST_VISITOR_HPP
 #define AST_VISITOR_HPP
 
-#include "semantic/scope.hpp"
-
 #include <vector>
 
 class AssignNode;
@@ -22,6 +20,7 @@ class FunctionDeclNode;
 class FunctionDefNode;
 class IfElseNode;
 class IfNode;
+class ImplNode;
 class IntNode;
 class LetNode;
 class LogicalNode;
@@ -59,15 +58,16 @@ public:
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
-	virtual void visit(VariableDefNode* node);
+	virtual void visit(ImplNode* node);
+	virtual void visit(LetNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(MatchArm* node);
-	virtual void visit(LetNode* node);
+	virtual void visit(MatchNode* node);
 	virtual void visit(MemberDefNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(StructDefNode* node);
-	virtual void visit(MatchNode* node);
+	virtual void visit(VariableDefNode* node);
 	virtual void visit(WhileNode* node);
 
 	// Leaf nodes

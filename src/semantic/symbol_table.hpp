@@ -9,15 +9,35 @@
 class SymbolTable
 {
 public:
+    void pushScope();
+    void popScope();
+
+    enum WhichTable {TYPE = 0, OTHER = 1};
+
     // Returns nullptr if the symbol is not found in the symbol table
-    Symbol* find(const std::string& name);
+    Symbol* find(const std::string& name, WhichTable whichTable = OTHER);
+    Symbol* findTopScope(const std::string& name, WhichTable whichTable = OTHER);
+    void insert(Symbol* symbol, WhichTable = OTHER);
 
-    bool contains(const Symbol* symbol) const;
+    bool isTopScope() const { return _scopes.size() == 1; }
 
-    void insert(Symbol* symbol);
-    Symbol* release(const std::string& name);
+private:
+    // Owning references
+    std::vector<std::unique_ptr<Symbol>> _symbols;
 
-    std::unordered_map<std::string, std::unique_ptr<Symbol>> symbols;
+    using KeyType = std::pair<std::string, WhichTable>;
+
+    struct PairHash
+    {
+        size_t operator()(const KeyType& key) const
+        {
+            return std::hash<std::string>()(key.first) + static_cast<size_t>(key.second);
+        }
+    };
+
+    // Scoped lookup table
+    using Scope = std::unordered_map<KeyType, Symbol*, PairHash>;
+    std::vector<Scope> _scopes;
 };
 
 #endif

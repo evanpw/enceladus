@@ -4,6 +4,7 @@
 class AstNode;
 class ProgramNode;
 
+#include "semantic/symbol_table.hpp"
 #include "semantic/types.hpp"
 
 #include <memory>
@@ -20,11 +21,13 @@ public:
     void addToContext(AstNode* node);
 
     TypeTable* typeTable() { return &_typeTable; }
+    SymbolTable* symbolTable() { return &_symbolTable; }
 
 private:
     ProgramNode* _root = nullptr;
     std::vector<std::unique_ptr<AstNode>> _nodes;
     TypeTable _typeTable;
+    SymbolTable _symbolTable;
 };
 
 #endif

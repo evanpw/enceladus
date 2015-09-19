@@ -29,7 +29,7 @@ statement
     | while_statement
     | break_statement
     | trait_definition
-    | trait_implementation
+    | implementation_block
     | expression EOL
 
 if_statement
@@ -89,7 +89,6 @@ while_statement
 break_statement
     : BREAK EOL
 
-
 trait_definition
     : TRAIT UIDENT EOL INDENT decl_list DEDENT
 
@@ -100,13 +99,9 @@ decl_list
     : function_declaration
     | def_list function_declaration
 
-
-trait_implementation
-    : IMPL UIDENT FOR type INDENT def_list DEDENT
-
-def_list
-    : function_definition
-    | def_list function_definition
+implementation_block
+    : IMPL UIDENT FOR type EOL INDENT function_definition { function_definition } DEDENT
+    | IMPL type EOL INDENT function_definition { function_definition } DEDENT
 
 
 //// Types /////////////////////////////////////////////////////////////////////

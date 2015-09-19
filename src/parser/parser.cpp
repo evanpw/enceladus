@@ -157,7 +157,7 @@ StatementNode* Parser::statement()
         return trait_definition();
 
     case tIMPL:
-        return trait_implementation();
+        return implementation_block();
 
     case tLIDENT:
         if (peek2ndType() == '{' ||
@@ -544,20 +544,24 @@ StatementNode* Parser::trait_definition()
 }
 
 
-/// trait_implementation
-///     : IMPL UIDENT FOR type INDENT def_list DEDENT
-///
-/// def_list
-///     : function_definition
-///     | def_list function_definition
-StatementNode* Parser::trait_implementation()
+
+/// implementation_block
+///     : IMPL UIDENT FOR type EOL INDENT function_definition { function_definition } DEDENT
+///     | IMPL type EOL INDENT function_definition { function_definition } DEDENT
+StatementNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
 
     expect(tIMPL);
-    Token traitName = expect(tUIDENT);
-    expect(tFOR);
+
+    std::string traitName;
     TypeName* typeName = type();
+    if (typeName->parameters.empty() && accept(tFOR))
+    {
+        traitName = typeName->name;
+        typeName = type();
+    }
+
     expect(tEOL);
     expect(tINDENT);
 
@@ -572,7 +576,14 @@ StatementNode* Parser::trait_implementation()
 
     expect(tDEDENT);
 
-    return new TraitImplNode(_context, location, traitName.value.str, typeName, std::move(methods));
+    if (traitName.empty())
+    {
+        return new ImplNode(_context, location, typeName, std::move(methods));
+    }
+    else
+    {
+        return new TraitImplNode(_context, location, traitName, typeName, std::move(methods));
+    }
 }
 
 

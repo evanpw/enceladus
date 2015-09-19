@@ -51,11 +51,12 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
         Value* result;
         if (symbol->kind == kVariable)
         {
-            if (symbol->asVariable()->isStatic)
+            const VariableSymbol* varSymbol = dynamic_cast<const VariableSymbol*>(symbol);
+            if (varSymbol->isStatic)
             {
-                result = _context->makeStaticString(symbol->name, symbol->asVariable()->contents);
+                result = _context->makeStaticString(symbol->name, varSymbol->contents);
             }
-            else if (symbol->asVariable()->isParam)
+            else if (varSymbol->isParam)
             {
                 ValueType type = getValueType(symbol->type);
                 result = _context->makeArgument(type, symbol->name);
@@ -74,7 +75,7 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
         }
         else if (symbol->kind == kFunction)
         {
-            const FunctionSymbol* functionSymbol = symbol->asFunction();
+            const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol);
             if (functionSymbol->isExternal)
             {
                 result = _context->makeExternFunction(symbol->name);
@@ -146,7 +147,7 @@ void TACCodeGen::visit(ProgramNode* node)
         // Collect all function parameters
         for (Symbol* param : funcDefNode->parameterSymbols)
         {
-            assert(param->asVariable()->isParam);
+            assert(dynamic_cast<VariableSymbol*>(param)->isParam);
             _currentFunction->params.push_back(getValue(param));
         }
 
@@ -366,7 +367,7 @@ void TACCodeGen::visit(NullaryNode* node)
         {
             CallInst* inst = new CallInst(dest, getValue(node->symbol), {});
             inst->foreign = true;
-            inst->ccall = node->symbol->asFunction()->isExternal;
+            inst->ccall = dynamic_cast<FunctionSymbol*>(node->symbol)->isExternal;
             inst->regpass = inst->ccall;
             emit(inst);
         }
@@ -698,7 +699,7 @@ void TACCodeGen::visit(LetNode* node)
 
 void TACConditionalCodeGen::visit(FunctionCallNode* node)
 {
-    if (node->symbol->kind == kFunction && node->symbol->asFunction()->isBuiltin)
+    if (node->symbol->kind == kFunction && dynamic_cast<FunctionSymbol*>(node->symbol)->isBuiltin)
     {
         if (node->target == "not")
         {
@@ -725,7 +726,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
 
     Value* result = node->value;
 
-    if (node->symbol->kind == kFunction && node->symbol->asFunction()->isBuiltin)
+    if (node->symbol->kind == kFunction && dynamic_cast<FunctionSymbol*>(node->symbol)->isBuiltin)
     {
         if (node->target == "not")
         {
@@ -814,8 +815,10 @@ void TACCodeGen::visit(FunctionCallNode* node)
     else if (node->symbol->kind == kFunction)
     {
         CallInst* inst = new CallInst(result, getValue(node->symbol), arguments);
-        inst->foreign = node->symbol->asFunction()->isForeign;
-        inst->ccall = node->symbol->asFunction()->isExternal;
+
+        FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
+        inst->foreign = functionSymbol->isForeign;
+        inst->ccall = functionSymbol->isExternal;
         inst->regpass = inst->ccall;
         emit(inst);
     }

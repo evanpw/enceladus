@@ -4,7 +4,7 @@
 #include "ast/ast_visitor.hpp"
 #include "ir/value.hpp"
 #include "parser/tokens.hpp"
-#include "semantic/scope.hpp"
+#include "semantic/symbol.hpp"
 #include "semantic/types.hpp"
 
 #include <cassert>
@@ -115,9 +115,6 @@ public:
 	AST_VISITABLE();
 
 	std::vector<AstNode*> children;
-
-	// Annotations
-	Scope scope;
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
@@ -279,9 +276,6 @@ public:
 
 	ExpressionNode* condition;
 	StatementNode* body;
-
-	// Annotations
-	Scope bodyScope;
 };
 
 class IfElseNode : public StatementNode
@@ -296,10 +290,6 @@ public:
 	ExpressionNode* condition;
 	StatementNode* body;
 	StatementNode* elseBody;
-
-	// Annotations
-	Scope bodyScope;
-	Scope elseScope;
 };
 
 class WhileNode : public LoopNode
@@ -313,9 +303,6 @@ public:
 
 	ExpressionNode* condition;
 	StatementNode* body;
-
-	// Annotations
-	Scope bodyScope;
 };
 
 class ForeachNode : public LoopNode
@@ -333,7 +320,6 @@ public:
 
 	// Annotations
 	Symbol* symbol;
-	Scope bodyScope;
 
 	// HACK: give the code generator to these functions
 	Symbol* headSymbol;
@@ -357,7 +343,6 @@ public:
 
 	// Annotations
 	Symbol* symbol;
-	Scope bodyScope;
 };
 
 class ForeverNode : public LoopNode
@@ -370,9 +355,6 @@ public:
 	AST_VISITABLE();
 
 	StatementNode* body;
-
-	// Annotations
-	Scope bodyScope;
 };
 
 class BreakNode : public StatementNode
@@ -437,7 +419,6 @@ public:
 	// Annotations
 	Symbol* symbol = nullptr;
 	std::vector<Symbol*> parameterSymbols;
-	Scope scope;
 	FunctionType* functionType;
 };
 
@@ -457,7 +438,6 @@ public:
 	// Annotations
 	Symbol* symbol = nullptr;
 	std::vector<Symbol*> parameterSymbols;
-	Scope scope;
 	FunctionType* functionType;
 };
 
@@ -475,6 +455,19 @@ public:
 
 	// Annotations
 	Type* traitType = nullptr;
+};
+
+class ImplNode : public StatementNode
+{
+public:
+	ImplNode(AstContext* context, const YYLTYPE& location, TypeName* typeName, std::vector<FunctionDefNode*>&& methods)
+	: StatementNode(context, location), typeName(typeName), methods(methods)
+	{}
+
+	AST_VISITABLE();
+
+	TypeName* typeName;
+	std::vector<FunctionDefNode*> methods;
 };
 
 class TraitImplNode : public StatementNode
@@ -527,7 +520,6 @@ public:
 	std::vector<Symbol*> symbols;
 	size_t constructorTag;
 	ValueConstructor* valueConstructor;
-	Scope bodyScope;
 };
 
 class MatchNode : public StatementNode

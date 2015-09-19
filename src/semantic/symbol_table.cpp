@@ -3,43 +3,53 @@
 
 #include <cassert>
 
-Symbol* SymbolTable::find(const std::string& name)
+void SymbolTable::pushScope()
 {
-    auto i = symbols.find(name);
+    _scopes.push_back({});
+}
 
-    if (i == symbols.end())
+void SymbolTable::popScope()
+{
+    _scopes.pop_back();
+}
+
+Symbol* SymbolTable::find(const std::string& name, WhichTable whichTable)
+{
+    auto key = std::make_pair(name, whichTable);
+
+    for (auto scope = _scopes.rbegin(); scope != _scopes.rend(); ++scope)
+    {
+        auto i = scope->find(key);
+        if (i != scope->end())
+            return i->second;
+    }
+
+    return nullptr;
+}
+
+Symbol* SymbolTable::findTopScope(const std::string& name, WhichTable whichTable)
+{
+    auto key = std::make_pair(name, whichTable);
+    auto& scope = _scopes.back();
+
+    auto i = scope.find(key);
+    if (i == scope.end())
     {
         return nullptr;
     }
     else
     {
-        return i->second.get();
+        return i->second;
     }
 }
 
-bool SymbolTable::contains(const Symbol* symbol) const
+void SymbolTable::insert(Symbol* symbol, WhichTable whichTable)
 {
-    for (auto& i : symbols)
-    {
-        if (i.second.get() == symbol) return true;
-    }
+    auto key = std::make_pair(symbol->name, whichTable);
+    auto& scope = _scopes.back();
 
-    return false;
-}
+    assert(scope.find(key) == scope.end());
 
-void SymbolTable::insert(Symbol* symbol)
-{
-    if (symbols.find(symbol->name) != symbols.end()) std::cerr << symbol->name << std::endl;
-    assert(symbols.find(symbol->name) == symbols.end());
-
-    symbols[symbol->name].reset(symbol);
-}
-
-Symbol* SymbolTable::release(const std::string& name)
-{
-    Symbol* symbol = symbols[name].release();
-
-    symbols.erase(name);
-
-    return symbol;
+    _symbols.emplace_back(symbol);
+    scope.emplace(key, symbol);
 }

@@ -242,9 +242,16 @@ class TypeVariable : public TypeImpl
 public:
     virtual std::string name() const
     {
-        std::stringstream ss;
-        ss << "T" << _index;
-        return ss.str();
+        if (!_name.empty())
+        {
+            return _name;
+        }
+        else
+        {
+            std::stringstream ss;
+            ss << "T" << _index;
+            return ss.str();
+        }
     }
 
     virtual bool isBoxed() const
@@ -270,11 +277,12 @@ public:
 private:
     friend TypeTable;
 
-    TypeVariable(TypeTable* table, bool quantified)
-    : TypeImpl(table, ttVariable), _index(_count++), _quantified(quantified)
+    TypeVariable(TypeTable* table, const std::string name, bool quantified)
+    : TypeImpl(table, ttVariable), _name(name), _index(_count++), _quantified(quantified)
     {
     }
 
+    std::string _name;
     int _index;
     bool _quantified;
 
@@ -404,9 +412,9 @@ public:
         return type;
     }
 
-    Type* createTypeVariable(bool quantified=false)
+    Type* createTypeVariable(const std::string& name = "", bool quantified=false)
     {
-        std::shared_ptr<TypeVariable> typeImpl(new TypeVariable(this, quantified));
+        std::shared_ptr<TypeVariable> typeImpl(new TypeVariable(this, name, quantified));
         Type* type = new Type(typeImpl);
         _types.emplace_back(type);
 

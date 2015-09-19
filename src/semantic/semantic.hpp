@@ -2,6 +2,7 @@
 #define SEMANTIC_HPP
 
 #include "ast/ast.hpp"
+#include "semantic/symbol_table.hpp"
 
 #include <map>
 #include <vector>
@@ -70,6 +71,7 @@ public:
     virtual void visit(FunctionDeclNode* node);
     virtual void visit(TraitDefNode* node);
     virtual void visit(TraitImplNode* node);
+    virtual void visit(ImplNode* node);
 
 private:
     //// Type Inference ////////////////////////////////////////////////////////
@@ -98,21 +100,17 @@ private:
     void resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables = {});
 
     void insertSymbol(Symbol* symbol);
-    void releaseSymbol(Symbol* symbol);
-
-    Scope* topScope() { return _scopes.back(); }
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);
-    void enterScope(Scope* scope) { _scopes.push_back(scope); }
-    void exitScope() { _scopes.pop_back(); }
 
     ProgramNode* _root;
     AstContext* _context;
     TypeTable* _typeTable;
+    SymbolTable* _symbolTable;
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;
     TraitDefNode* _enclosingTrait;
-    std::vector<Scope*> _scopes;
+    ImplNode* _enclosingImplNode;
 };
 
 class TypeInferenceError : public std::exception

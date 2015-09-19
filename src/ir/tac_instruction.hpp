@@ -4,8 +4,8 @@
 #include "ir/basic_block.hpp"
 #include "ir/tac_visitor.hpp"
 #include "ir/value.hpp"
-#include "semantic/scope.hpp"
 
+#include <sstream>
 #include <string>
 
 struct Instruction

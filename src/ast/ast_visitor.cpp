@@ -176,3 +176,13 @@ void AstVisitor::visit(TraitImplNode* node)
 
 	node->typeName->accept(this);
 }
+
+void AstVisitor::visit(ImplNode* node)
+{
+	for (auto& method : node->methods)
+	{
+		method->accept(this);
+	}
+
+	node->typeName->accept(this);
+}

@@ -40,7 +40,7 @@ private:
     StatementNode* break_statement();
     StatementNode* suite();
     StatementNode* trait_definition();
-    StatementNode* trait_implementation();
+    StatementNode* implementation_block();
     std::vector<std::string> parameters();
     std::pair<std::string, TypeName*> param_and_type();
     std::pair<std::vector<std::string>, TypeName*> params_and_types();
