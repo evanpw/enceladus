@@ -6,102 +6,102 @@ def isSpace(c: Char) -> Bool
 
 
 def trimLeft(s: String) -> String
-    len := strLength s
+    len := strLength(s)
 
     n := 0
-    while n < len and isSpace $ strAt s n
+    while n < len and isSpace $ strAt(s, n)
         n += 1
 
-    return strSlice s n (len - n)
+    return strSlice(s, n, len - n)
 
 
 def trim(s: String) -> String
-    len := strLength s
+    len := strLength(s)
 
     if len == 0
         return s
 
     n1 := 0
-    while n1 < len and isSpace $ strAt s n1
+    while n1 < len and isSpace $ strAt(s, n1)
         n1 += 1
 
     n2 := len - 1
-    while n2 >= 0 and isSpace $ strAt s n2
+    while n2 >= 0 and isSpace $ strAt(s, n2)
         n2 -= 1
 
     pos := 1
-    n := max 0 (n2 - n1 + 1)
+    n := max(0, n2 - n1 + 1)
 
-    return strSlice s pos n
+    return strSlice(s, pos, n)
 
 
 def trimChar(c: Char, s: String) -> String
-    len := strLength s
+    len := strLength(s)
 
     if len == 0
         return s
 
     n1 := 0
-    while n1 < len and strAt s n1 == c
+    while n1 < len and strAt(s, n1) == c
         n1 += 1
 
     n2 := len - 1
-    while n2 >= 0 and strAt s n2 == c
+    while n2 >= 0 and strAt(s, n2) == c
         n2 -= 1
 
     pos := 1
-    n := max 0 (n2 - n1 + 1)
+    n := max(0, n2 - n1 + 1)
 
-    return strSlice s pos n
+    return strSlice(s, pos, n)
 
 
 def split(s: String) -> [String]
     result := []
     start := 0
 
-    len := strLength s
-    for i = 0 to strLength s
-        if isSpace $ strAt s i
+    len := strLength(s)
+    for i = 0 to strLength(s)
+        if isSpace $ strAt(s, i)
             len := i - start
-            result = (strSlice s start len) :: result
+            result = strSlice(s, start, len) :: result
             start = i + 1
 
-    if start < strLength s
-        result = (strSlice s start len) :: result
+    if start < strLength(s)
+        result = strSlice(s, start, len) :: result
 
-    return reverse result
+    return reverse(result)
 
 
 def splitBy(sep: Char, s: String) -> [String]
     result := []
     start := 0
 
-    len := strLength s
-    for i = 0 to strLength s
-        if strAt s i == sep
+    len := strLength(s)
+    for i = 0 to strLength(s)
+        if strAt(s, i) == sep
             len := i - start
-            result = (strSlice s start len) :: result
+            result = strSlice(s, start, len) :: result
             start = i + 1
 
-    if start < strLength s
-        result = (strSlice s start len) :: result
+    if start < strLength(s)
+        result = strSlice(s, start, len) :: result
 
-    return reverse result
+    return reverse(result)
 
 
 def join(sep: String, xs: [String]) -> String
-    if null xs
+    if null(xs)
         return ""
-    elif length xs == 1
-        return head xs
+    elif length(xs) == 1
+        return head(xs)
     else
-        return head xs ^ sep ^ join sep $ tail xs
+        return head(xs) ^ sep ^ join(sep, tail(xs))
 
 
 def stringToInt(s: String) -> Option Int
     x := 0
-    for i = 0 to strLength s - 1
-        digit := strAt s i
+    for i = 0 to strLength(s) - 1
+        digit := strAt(s, i)
 
         if digit < '0' or digit > '9'
             return None
@@ -109,4 +109,4 @@ def stringToInt(s: String) -> Option Int
         x *= 10
         x += (digit - '0')
 
-    return Some x
+    return Some(x)

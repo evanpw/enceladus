@@ -17,7 +17,7 @@ def divisors(n: Int) -> [Int]
     return result
 
 def isAbundant(n: Int) -> Bool
-    (sum $ divisors n) > n
+    return sum(divisors(n)) > n
 
 def isSumOfTwo(y: Int, xs: Array Int, n: Int) -> Bool
     i := 0
@@ -38,25 +38,25 @@ def isSumOfTwo(y: Int, xs: Array Int, n: Int) -> Bool
 # Find all abundant numbers less than the limit
 reversedList := []
 for i = 1 to 28123
-    if isAbundant i
+    if isAbundant(i)
         reversedList = i :: reversedList
 
 
 # Convert the list into an array
-n := length $ reversedList
-abundants := makeArray n 0
+n := length(reversedList)
+abundants := makeArray(n, 0)
 
 for j = 0 to n - 1
-    x := head reversedList
-    reversedList = tail reversedList
+    x := head(reversedList)
+    reversedList = tail(reversedList)
 
-    arraySet abundants (n - j - 1) x
+    arraySet(abundants, n - j - 1, x)
 
 # Find all numbers in the range which are the sum of two abundants
 total := 0
 for k = 1 to 28123
-    if not $ isSumOfTwo k abundants n
+    if not $ isSumOfTwo(k, abundants, n)
         total += k
 
-print $ show total
+print $ show(total)
 

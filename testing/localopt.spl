@@ -18,6 +18,6 @@ def computeValue() -> Int
 
 result := 0
 for i = 1 to 10000000
-    result = computeValue
+    result = computeValue()
 
-print $ show result
+print $ show(result)

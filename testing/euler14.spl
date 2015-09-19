@@ -4,7 +4,7 @@ def collatzLength(n: Int) -> Int
     count := 1
 
     while n != 1
-        if even n
+        if even(n)
             n /= 2
         else
             n = 3 * n + 1
@@ -17,10 +17,10 @@ best := 1
 longest := 0
 
 for n = 2 to 1000000
-    newLength := collatzLength n
+    newLength := collatzLength(n)
 
     if newLength > longest
         best = n
         longest = newLength
 
-print $ show best
+print $ show(best)

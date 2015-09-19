@@ -7,8 +7,8 @@ def isGood<T>(a: MyOption T) -> Int
 
     return 0
 
-x := MySome 1
+x := MySome(1)
 y := MyNone
-z := MySome "Hello"
+z := MySome("Hello")
 
-print $ show $ isGood x + isGood y + isGood z
+print $ show(isGood(x) + isGood(y) + isGood(z))

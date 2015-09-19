@@ -17,9 +17,9 @@ biggest := 0
 i := 2
 while i * i <= n
 
-	if n mod i == 0 and isPrime i
+	if n mod i == 0 and isPrime(i)
         biggest = i
 
 	i += 1
 
-print $ show biggest
+print $ show(biggest)

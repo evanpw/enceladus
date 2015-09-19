@@ -23,13 +23,13 @@ grid := [8, 2, 22, 97, 38, 15, 0, 40, 0, 75, 4, 5, 7, 78, 52, 12, 50, 77, 91,
     54, 71, 83, 51, 54, 69, 16, 92, 33, 48, 61, 43, 52, 1, 89, 19, 67, 48]
 
 def get(x: Int, y: Int) -> Int
-    at (y * 20 + x) grid
+    return at(y * 20 + x, grid)
 
 def makeRun(x: Int, y: Int, dx: Int, dy: Int) -> Int
-    x1 := get x y
-    x2 := get (x + dx) (y + dy)
-    x3 := get (x + 2 * dx) (y + 2 * dy)
-    x4 := get (x + 3 * dx) (y + 3 * dy)
+    x1 := get(x, y)
+    x2 := get(x + dx, y + dy)
+    x3 := get(x + 2 * dx, y + 2 * dy)
+    x4 := get(x + 3 * dx, y + 3 * dy)
 
     return x1 * x2 * x3 * x4
 
@@ -38,13 +38,13 @@ def allRuns(xrange: [Int], yrange: [Int], dx: Int, dy: Int) -> [Int]
 
     for x in xrange
         for y in yrange
-            xs = makeRun x y dx dy :: xs
+            xs = makeRun(x, y, dx, dy) :: xs
 
     return xs
 
-horizontal := allRuns (range 0 16) (range 0 19) 1 0
-vertical := allRuns (range 0 19) (range 0 16) 0 1
-diagonal1 := allRuns (range 0 16) (range 0 16) 1 1
-diagonal2 := allRuns (range 0 16) (range 3 19) 1 -1
+horizontal := allRuns(range(0, 16), range(0, 19), 1, 0)
+vertical := allRuns(range(0, 19), range(0, 16), 0, 1)
+diagonal1 := allRuns(range(0, 16), range(0, 16), 1, 1)
+diagonal2 := allRuns(range(0, 16), range(3, 19), 1, -1)
 
 print $ show $ maximum $ horizontal ++ vertical ++ diagonal1 ++ diagonal2

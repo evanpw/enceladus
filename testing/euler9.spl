@@ -5,4 +5,4 @@ for a = 1 to 1000
         c := 1000 - (a + b)
 
         if c > b and a * a + b * b == c * c
-            print $ show $ a * b * c
+            print $ show(a * b * c)

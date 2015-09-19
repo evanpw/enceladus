@@ -1,25 +1,25 @@
 # Solves Project Euler 12
 
 def countGroups(xs: [Int]) -> [Int]
-    if null xs
+    if null(xs)
         return []
 
     result := []
-    last := head xs
+    last := head(xs)
     count := 1
-    xs = tail xs
+    xs = tail(xs)
 
-    while not $ null xs
-        if head xs == last
+    while not $ null(xs)
+        if head(xs) == last
             count += 1
         else
             result = count :: result
-            last = head xs
+            last = head(xs)
             count = 1
 
-        xs = tail xs
+        xs = tail(xs)
 
-    return reverse $ count :: result
+    return reverse(count :: result)
 
 def factor(n: Int) -> [Int]
     if n == 1
@@ -35,13 +35,13 @@ def factor(n: Int) -> [Int]
 
         i += 1
 
-    return reverse factors
+    return reverse(factors)
 
 def countDivisors(x: Int) -> Int
     if x == 1
         return 1
 
-    primeCounts := countGroups $ factor x
+    primeCounts := countGroups $ factor(x)
     count := 1
 
     for n in primeCounts
@@ -55,9 +55,9 @@ def firstNumber(m: Int) -> Int
     forever
         n += i
 
-        if countDivisors n > m
+        if countDivisors(n) > m
             return n
 
         i += 1
 
-print $ show $ firstNumber 500
+print $ show $ firstNumber(500)

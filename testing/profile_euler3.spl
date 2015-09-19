@@ -18,7 +18,7 @@ for n = 1 to 1000000
     i := 2
     while i * i <= n
 
-    	if n mod i == 0 and isPrime i
+    	if n mod i == 0 and isPrime(i)
             biggest = i
 
     	i += 1

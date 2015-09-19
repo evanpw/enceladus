@@ -1,9 +1,9 @@
 for i = 1 to 100
     if i mod 15 == 0
-        print "FizzBuzz"
+        print $ "FizzBuzz"
     elif i mod 3 == 0
-        print "Fizz"
+        print $ "Fizz"
     elif i mod 5 == 0
-        print "Buzz"
+        print $ "Buzz"
     else
-        print $ show i
+        print $ show(i)

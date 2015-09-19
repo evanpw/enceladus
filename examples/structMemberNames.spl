@@ -2,15 +2,15 @@ struct Person =
     name: String
     age: Int
 
-struct Location = 
+struct Location =
     name: String
     country: String
 
-def getAge(person: Person) -> Int 
+def getAge(person: Person) -> Int
     let Person _ age := person
     return age
 
-def getCountry(location: Location) -> String 
+def getCountry(location: Location) -> String
     let Location _ country := location
     return country
 

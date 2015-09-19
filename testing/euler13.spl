@@ -10,12 +10,12 @@ def readNumber() -> [Int]
 
     return ys
 
-xs := toBigInt 0
+xs := toBigInt(0)
 for i = 1 to 100
-    xs = bigSum xs readNumber
+    xs = bigSum(xs, readNumber)
 
 n := 0
-for x in take 10 $ reverse xs
+for x in take(10, reverse(xs))
     n = (n * 10) + x
 
-print $ show n
+print $ show(n)

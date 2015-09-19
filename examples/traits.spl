@@ -1,0 +1,21 @@
+trait Eq
+    def eq(self: Self, other: Self) -> Bool
+
+impl Eq for Int
+    def eq(self: Int, other: Int) -> Bool
+        return self == other
+
+x := 1
+y := 2
+
+if eq x y
+    print "Same"
+else
+    print "Different"
+
+#impl Eq for [Int]
+#    def eq(self: [Int], other: [Int]) -> Bool
+#        if null self: return null self
+#        if null other: return null other
+
+#        return (head self == head other) and eq (tail self) (tail other)

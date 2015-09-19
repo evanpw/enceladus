@@ -4,10 +4,13 @@ def eqInt(x: Int, y: Int) -> Bool
 
 
 def eqList(xs: [Int], ys: [Int]) -> Bool
-    if null xs: return null ys
-    if null ys: return null xs
+    if null(xs)
+        return null(ys)
 
-    return (head xs == head ys) and (eqList (tail xs) (tail ys))
+    if null(ys)
+        return null(xs)
+
+    return head(xs) == head(ys) and eqList(tail(xs), tail(ys))
 
 
 # Comparisons
@@ -19,47 +22,47 @@ def cmpInt(x: Int, y: Int) -> Int
 
 
 def cmpList(xs: [Int], ys: [Int]) -> Int
-    if null xs
-        if null ys
+    if null(xs)
+        if null(ys)
             return 0
         else
             return -1
-    elif null ys
+    elif null(ys)
         return 1
     else
-        if (head xs) < (head ys)
+        if head(xs) < head(ys)
             return -1
-        elif (head xs) > (head ys)
+        elif head(xs) > head(ys)
             return 1
         else
-            return cmpList (tail xs) (tail ys)
+            return cmpList(tail(xs), tail(ys))
 
 
 def cmpString(xs: String, ys: String) -> Int
-    n1 := strLength xs
-    n2 := strLength ys
+    n1 := strLength(xs)
+    n2 := strLength(ys)
 
-    for n = 0 to min n1 n2
-        if strLength xs <= n
-            if strLength ys <= n
+    for n = 0 to min(n1, n2)
+        if strLength(xs) <= n
+            if strLength(ys) <= n
                 return 0
             else
                 return -1
-        elif strLength ys <= n
+        elif strLength(ys) <= n
             return 1
         else
-            if strAt xs n < strAt ys n
+            if strAt(xs, n) < strAt(ys, n)
                 return -1
-            elif strAt xs n > strAt ys n
+            elif strAt(xs, n) > strAt(ys, n)
                 return 1
 
-    die "Unreachable"
+    die("Unreachable")
 
 
 # List operations
 def isIn<T>(eq: |T, T| -> Bool, x: T, ys: [T]) -> Bool
     for y in ys
-        if eq x y: return True
+        if eq(x, y): return True
 
     return False
 
@@ -69,34 +72,35 @@ def splitList<T>(cmp: |T, T| -> Int, xs: [T], pivot: T) -> Pair [T]
     rhs := []
 
     for x in xs
-        if cmp x pivot < 0
+        if cmp(x, pivot) < 0
             lhs = x :: lhs
         else
             rhs = x :: rhs
 
-    return Pair lhs rhs
+    return Pair(lhs, rhs)
 
 
 def sort<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
-    if length xs <= 1
+    if length(xs) <= 1
         return xs
 
-    pivot := head xs
-    let Pair lhs rhs := splitList cmp (tail xs) pivot
+    pivot := head(xs)
+    let Pair lhs rhs := splitList(cmp, tail(xs), pivot)
 
-    return (sort cmp lhs) ++ [pivot] ++ (sort cmp rhs)
+    return sort(cmp, lhs) ++ [pivot] ++ sort(cmp, rhs)
 
 
 def uniquify<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
-    if null xs: return []
+    if null(xs)
+        return []
 
-    xs = sort cmp xs
+    xs = sort(cmp, xs)
 
-    result := [head xs]
-    last := head xs
+    result := [head(xs)]
+    last := head(xs)
 
-    for x in tail xs
-        if cmp last x != 0
+    for x in tail(xs)
+        if cmp(last, x) != 0
             result = x :: result
 
         last = x

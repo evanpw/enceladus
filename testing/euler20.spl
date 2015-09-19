@@ -4,6 +4,6 @@ import BigInt
 
 x := [1]
 for i = 2 to 100
-    x = bigProduct x $ toBigInt i
+    x = bigProduct(x, toBigInt(i))
 
-print $ show $ sum x
+print $ show $ sum(x)

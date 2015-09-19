@@ -3,7 +3,8 @@
 def isPrime(x: Int) -> Bool
     i := 2
     while i * i <= x
-        if x mod i == 0: return False
+        if x mod i == 0
+            return False
         i += 1
 
     return True
@@ -11,7 +12,7 @@ def isPrime(x: Int) -> Bool
 x := 2
 n := 0
 forever
-    if isPrime x
+    if isPrime(x)
         n += 1
 
     if n == 10001
@@ -19,4 +20,4 @@ forever
 
     x += 1
 
-print $ show x
+print $ show(x)

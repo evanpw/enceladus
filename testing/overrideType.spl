@@ -1,4 +1,4 @@
 def f<T>(x: T) -> T
     return x + 4
 
-print $ show $ f 8
+print $ show $ f(8)

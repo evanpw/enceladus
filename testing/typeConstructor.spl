@@ -1,20 +1,21 @@
 data MyPair T = MyPair T T
 
-x := MyPair 1 2
-y := MyPair True False
+x := MyPair(1, 2)
+y := MyPair(True, False)
 
 let MyPair a b := x
 let MyPair c d := y
 
 result := b
-if c: result += 1
+if c
+    result += 1
 
 def identity<T>(x: T) -> T
     return x
 
-result += identity 3
+result += identity(3)
 
-if not $ identity False
+if not $ identity(False)
     result += 1
 
-print $ show result
+print $ show(result)

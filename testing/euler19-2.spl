@@ -26,10 +26,10 @@ def daysInMonth(date: Date) -> Int
     nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-    if isLeapYear date
-        return at date{month} leapYear
+    if isLeapYear(date)
+        return at(date{month}, leapYear)
     else
-        return at date{month} nonLeap
+        return at(date{month}, nonLeap)
 
 def incrementDate(date: Date) -> Date
     let Date y m d w := date
@@ -37,7 +37,7 @@ def incrementDate(date: Date) -> Date
     d += 1
     w = (w + 1) mod 7
 
-    if d > daysInMonth date
+    if d > daysInMonth(date)
         d = 1
         m += 1
 
@@ -45,7 +45,7 @@ def incrementDate(date: Date) -> Date
             y += 1
             m = 1
 
-    return Date y m d w
+    return Date(y, m, d, w)
 
 def printDate(date: Date) -> String
     monthNames := ["", "January", "February", "March", "April", "May", "June",
@@ -54,18 +54,18 @@ def printDate(date: Date) -> String
     dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
         "Friday", "Saturday"]
 
-    return join "" [at date{month} monthNames, " ", show date{day}, ", ", show date{year}, " (", at date{dayOfWeek} dayNames, ")"]
+    return join("", [at(date{month}, monthNames), " ", show(date{day}), ", ", show(date{year}), " (", at(date{dayOfWeek}, dayNames), ")"])
 
-current := Date 1900 1 1 1
+current := Date(1900, 1, 1, 1)
 
 dayCount := 0
 while current{year} <= 2000
-    if (current{year} >= 1901) and (current{day} == 1) and (current{dayOfWeek} == 0)
+    if current{year} >= 1901 and current{day} == 1 and current{dayOfWeek} == 0
         dayCount += 1
 
-    current = incrementDate current
+    current = incrementDate(current)
 
-print $ show dayCount
+print $ show(dayCount)
 
 
 

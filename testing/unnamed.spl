@@ -5,15 +5,15 @@ struct Just =
 def f<S, T>(x: S, _: T) -> S
     return x
 
-x := f 3 4
+x := f(3, 4)
 
 _ := 4
 
 data MyPair = MyPair Int Int
-y := MyPair 5 6
+y := MyPair(5, 6)
 
 let MyPair _ b := y
 
 x += b
 
-print $ show x
+print $ show(x)

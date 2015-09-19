@@ -15,7 +15,7 @@ for i = 100 to 2000
     for j = 1 to 9999
         x := i * j
 
-        if x == reverseDigits x and x > biggest
+        if x == reverseDigits(x) and x > biggest
             biggest = x
 
-print $ show biggest
+print $ show(biggest)

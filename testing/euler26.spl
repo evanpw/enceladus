@@ -1,6 +1,6 @@
 # Solves Project Euler #26
 
-def reciprocal(d: Int) -> [Int] 
+def reciprocal(d: Int) -> [Int]
     result := []
     numerator := 1
 
@@ -8,40 +8,40 @@ def reciprocal(d: Int) -> [Int]
         quotient := numerator / d
         remainder := numerator mod d
 
-        assert $ quotient < 10
+        assert(quotient < 10)
 
         result = quotient :: result
         numerator = remainder * 10
 
-    return reverse $ result
+    return reverse(result)
 
-def next(n: Int, d: Int) -> Int 
+def next(n: Int, d: Int) -> Int
     quotient := n / d
     remainder := n mod d
 
-    assert $ quotient < 10
+    assert(quotient < 10)
 
     return remainder * 10
 
-def findIn(x: Int, xs: [Int]) -> Int 
+def findIn(x: Int, xs: [Int]) -> Int
     i := 0
-    while not $ null xs
-        if x == head xs
+    while not $ null(xs)
+        if x == head(xs)
             return i
         else
-            xs = tail xs
+            xs = tail(xs)
             i += 1
 
     return -1
 
-def periodLength(d: Int) -> Int 
+def periodLength(d: Int) -> Int
     n := 1
 
     numerators := []
     while n != 0
-        n = next n d
+        n = next(n, d)
 
-        index := findIn n numerators
+        index := findIn(n, numerators)
 
         if index >= 0
             return index + 1
@@ -53,10 +53,10 @@ def periodLength(d: Int) -> Int
 longest := 0
 longestIndex := 1
 for d = 2 to 999
-    period := periodLength d
+    period := periodLength(d)
 
     if period > longest
         longest = period
         longestIndex = d
 
-print $ show longestIndex
+print $ show(longestIndex)

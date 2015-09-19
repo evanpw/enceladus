@@ -39,3 +39,23 @@
 * Types where every value constructor is parameter-less should have isBoxed() == true
 
 * Make the type annotation on the first parameter of a method optional
+
+* Allow the lhs of a function call to be something other than LIDENT
+
+* Make print a statement, so that print show(4) works
+
+* Add syntactic sugar for ranges
+
+* Make not a unary operator rather than a function
+
+* Make let statements, data declarations, and match statements look more like other function calls
+
+* Change "length" to "len"
+
+* Remove readLine from the list of special keywords for syntax highlighting
+
+* Fix NullaryNode: if capitalized, then must be a variable, and if uppercase, must be a nullary value constructor
+
+* Remove single-line for, if, etc?
+
+* Allow for-loop induction variable to be unnamed

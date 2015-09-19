@@ -1057,36 +1057,37 @@ ExpressionNode* Parser::negation_expression()
     }
 }
 
-static bool canStartUnaryExpression(TokenType t)
-{
-    return (t == '(' ||
-            t == tTRUE ||
-            t == tFALSE ||
-            t == '[' ||
-            t == tINT_LIT ||
-            t == tSTRING_LIT ||
-            t == tLIDENT ||
-            t == tUIDENT);
-}
-
+/// func_call_expression
+///     : ident '$' expression
+///     | ident '(' [ expression ] { ',' expression } ] ')'
 ExpressionNode* Parser::func_call_expression()
 {
-    if ((peekType() == tLIDENT || peekType() == tUIDENT) && (canStartUnaryExpression(peek2ndType()) || peek2ndType() == '$'))
+    if ((peekType() == tLIDENT || peekType() == tUIDENT) && (peek2ndType() == '(' || peek2ndType() == '$'))
     {
         YYLTYPE location = getLocation();
 
         std::string functionName = ident();
 
         std::vector<ExpressionNode*> argList;
-        while (canStartUnaryExpression(peekType()))
+        if (accept('$'))
         {
-            argList.push_back(unary_expression());
-        }
-
-        if (peekType() == '$')
-        {
-            expect('$');
             argList.push_back(expression());
+        }
+        else
+        {
+            expect('(');
+
+            if (!accept(')'))
+            {
+                argList.push_back(expression());
+
+                while (accept(','))
+                {
+                    argList.push_back(expression());
+                }
+
+                expect(')');
+            }
         }
 
         return new FunctionCallNode(_context, location, functionName, std::move(argList));

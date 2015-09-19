@@ -2,15 +2,15 @@
 
 import BigInt
 
-last := toBigInt 1
-current := toBigInt 1
+last := toBigInt(1)
+current := toBigInt(1)
 index := 2
 
-while length current < 1000
-    next := bigSum last current
+while length(current) < 1000
+    next := bigSum(last, current)
     last = current
     current = next
 
     index += 1
 
-print $ show index
+print $ show(index)

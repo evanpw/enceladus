@@ -6,4 +6,4 @@ while True
     x := 1
     break
 
-print "success"
+print $ "success"

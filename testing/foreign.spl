@@ -1,4 +1,0 @@
-foreign test (x: Int) -> Int
-
-x := test 4
-print $ show x

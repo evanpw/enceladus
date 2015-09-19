@@ -2,9 +2,9 @@
 
 import BigInt
 
-x := toBigInt 1
+x := toBigInt(1)
 
 for i = 1 to 1000
-    x = bigSum x x
+    x = bigSum(x, x)
 
-print $ show $ sum x
+print $ show $ sum(x)

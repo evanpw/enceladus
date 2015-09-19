@@ -2,13 +2,13 @@ def addOne(x: Int) -> Int
     return x + 1
 
 def applyToOne<T>(f: Int -> T) -> T
-    return f 1
+    return f(1)
 
 result := 0
 
 f := addOne
-result += f 2
-result += applyToOne addOne
-result += applyToOne f
+result += f(2)
+result += applyToOne(addOne)
+result += applyToOne(f)
 
-print $ show result
+print $ show(result)

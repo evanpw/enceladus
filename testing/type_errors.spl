@@ -1,6 +1,0 @@
-# Has some type errors
-if not 4: print $ show 1
-if 4 > (3 > 2): print $ show 2
-if 5: print $ show 3
-x <- (3 > 4)
-

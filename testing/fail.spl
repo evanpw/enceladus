@@ -1,2 +1,2 @@
 xs := 1 :: 2 :: 3 :: 4 :: []
-ys := take 5 xs
+ys := take(5, xs)

@@ -33,7 +33,7 @@ def isNone<T>(x: Option T) -> Bool
 def unwrap<T>(x: Option T) -> T
     match x
         Some y => return y
-        None   => die "*** Exception: Cannot unwrap None"
+        None   => die("*** Exception: Cannot unwrap None")
 
 def unwrapOr<T>(x: Option T, other: T) -> T
     match x
@@ -49,12 +49,12 @@ foreign print(msg: String) -> Unit
 def head<T>(xs: [T]) -> T
     match xs
         Cons x _ => return x
-        Nil      => die "*** Exception: Called head on empty list"
+        Nil      => die("*** Exception: Called head on empty list")
 
 def tail<T>(xs: [T]) -> [T]
     match xs
         Cons _ rest => return rest
-        Nil         => die "*** Exception: Called tail on empty list"
+        Nil         => die("*** Exception: Called tail on empty list")
 
 def null<T>(xs: [T]) -> Bool
     match xs
@@ -64,18 +64,20 @@ def null<T>(xs: [T]) -> Bool
 ## Native-language standard library
 
 def concat<T>(xs: [T], ys: [T]) -> [T]
-    if null xs
+    if null(xs)
         return ys
     else
-        return head xs :: concat (tail xs) ys
+        return head(xs) :: concat(tail(xs), ys)
 
 
 def assert(b: Bool) -> Unit
-    if not b: die "*** Exception: Assertion failed"
+    if not(b)
+        die("*** Exception: Assertion failed")
 
 
 def assertMessage(b: Bool, err: String) -> Unit
-    if not b: die $ "*** Exception: Assertion failed: " ^ err
+    if not(b)
+        die("*** Exception: Assertion failed: " ^ err)
 
 
 # Miscellanous functions
@@ -93,8 +95,8 @@ def range(a: Int, b: Int) -> [Int]
 def length<T>(xs: [T]) -> Int
     result := 0
 
-    while not $ null xs
-        xs = tail xs
+    while not(null(xs))
+        xs = tail(xs)
         result += 1
 
     return result
@@ -109,24 +111,24 @@ def sum(xs: [Int]) -> Int
 
 
 def product(xs: [Int]) -> Int
-    if null xs
+    if null(xs)
         return 1
     else
-        return head xs * product $ tail xs
+        return head(xs) * product(tail(xs))
 
 
 def take<T>(n: Int, xs: [T]) -> [T]
     if n == 0
         return []
     else
-        return head xs :: take (n - 1) (tail xs)
+        return head(xs) :: take(n - 1, tail(xs))
 
 
 def drop<T>(n: Int, xs: [T]) -> [T]
     if n == 0
         return xs
     else
-        return drop (n - 1) (tail xs)
+        return drop(n - 1, tail(xs))
 
 
 def max(a: Int, b: Int) -> Int
@@ -144,25 +146,25 @@ def min(a: Int, b: Int) -> Int
 
 
 def maximum(xs: [Int]) -> Int
-    if length xs == 1
-        return head xs
+    if length(xs) == 1
+        return head(xs)
     else
-        return max (head xs) (maximum $ tail xs)
+        return max(head(xs), maximum(tail(xs)))
 
 
 def minimum(xs: [Int]) -> Int
-    if length xs == 1
-        return head xs
+    if length(xs) == 1
+        return head(xs)
     else
-        return min (head xs) (minimum $ tail xs)
+        return min(head(xs), minimum(tail(xs)))
 
 
 def at<T>(n: Int, xs: [T]) -> T
     while n > 0
-        xs = tail xs
+        xs = tail(xs)
         n -= 1
 
-    return head xs
+    return head(xs)
 
 
 def reverse<T>(xs: [T]) -> [T]
@@ -176,36 +178,45 @@ def reverse<T>(xs: [T]) -> [T]
 def map<S, T>(f: S -> T, xs: [S]) -> [T]
     result := []
     for x in xs
-        result = f x :: result
+        result = f(x) :: result
 
-    return reverse result
+    return reverse(result)
 
 
 def filter<T>(f: T -> Bool, xs: [T]) -> [T]
     ys := []
     for x in xs
-        if f x
+        if f(x)
             ys = x :: ys
 
-    return reverse ys
+    return reverse(ys)
 
 
 def even(x: Int) -> Bool
-    if x mod 2 == 0: return True
-    else: return False
+    if x mod 2 == 0
+        return True
+    else
+        return False
 
 
 def odd(x: Int) -> Bool
-    if x mod 2 == 0: return False
-    else: return True
+    if x mod 2 == 0
+        return False
+    else
+        return True
 
 
 def pow(a: Int, b: Int) -> Int
     r := 1
-    while True
-        if b mod 2 == 1: r *= a
+    forever
+        if b mod 2 == 1
+            r *= a
+
         b /= 2
-        if b == 0: break
+
+        if b == 0
+            break
+
         a *= a
 
     return r
@@ -237,4 +248,4 @@ def snd<T>(pair: Pair T) -> T
 
 
 def splitAt<T>(n: Int, xs: [T]) -> Pair [T]
-    return Pair (take n xs) (drop n xs)
+    return Pair(take(n, xs), drop(n, xs))

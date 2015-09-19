@@ -1,7 +1,7 @@
 def shouldFail() -> Int
     forever
-        print "Hello"
+        print $ "Hello"
         break
 
-x := shouldFail
-print $ show x
+x := shouldFail()
+print $ show(x)

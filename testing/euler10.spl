@@ -2,7 +2,7 @@
 primeSum := 0
 n := 2000000
 
-maybePrime := makeArray n True
+maybePrime := makeArray(n, True)
 
 primes := []
 for i = 2 to n - 1
@@ -14,7 +14,7 @@ for i = 2 to n - 1
         # below has already been eliminated)
         j := i * i
         while j < n
-            arraySet maybePrime j False
+            arraySet(maybePrime, j, False)
             j += i
 
-print $ show primeSum
+print $ show(primeSum)

@@ -1,2 +1,0 @@
-x = read
-print $ show x + 1

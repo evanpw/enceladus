@@ -198,11 +198,8 @@ negation_expression
     : [ '-' ] func_call_expression
 
 func_call_expression
-    : ident { dot_expression } [ '$' expression ]
-    | dot_expression
-
-dot_expression
-    : unary_expression { unary_expression }
+    : ident '$' expression
+    | ident '(' [ expression ] { ',' expression } ] ')'
 
 unary_expression
     | '(' expression ')'

@@ -1,0 +1,146 @@
+# TopCoder SRM 667, Round 1, Problem 1
+
+# Ideas:
+# LANG: Make assert statements print out the location of failure
+# LANG: Add a python-style list to the language (maybe replace current list type)
+# LANG: Add bit operations to the language
+# LIB: Create a string that consists of a repeated character
+# LIB: Replace a specific slice of a string
+# LANG: Iterator that generalizes String and List and can be looped over
+# TST: Add tests for library functions
+# LANG: Syntactic sugar for strAt
+# LANG: Make destructuring look more like a normal variable definition
+# LIB: Deque data structure
+# LANG: Set array elements using the same array.[offset] syntax as getting
+# LANG: Add continue keyword
+# LIB: String comparison
+
+import List
+
+data InstResult = InstResult String Int
+
+def simulateInstruction(cache: String, inst: String) -> InstResult
+    newCache := []
+    k := 0
+
+    for i = 0 to strLength(cache) - 1
+        c := strAt(cache, i)
+        x := strAt(inst, i)
+
+        if c == '0' and x == '1'
+            c = '1'
+            k += 1
+
+        newCache = c :: newCache
+
+    return InstResult(strFromList(reverse(newCache)), k * k)
+
+def zeroCache(m: Int) -> String
+    result := ""
+    for i = 1 to m
+        result = result ^ "0"
+
+    return result
+
+def fullCache(instructions: [String]) -> String
+    m := strLength(head(instructions))
+    cache := zeroCache(m)
+
+    for inst in instructions
+        let InstResult newCache _ := simulateInstruction(cache, inst)
+        cache = newCache
+
+    return cache
+
+def cacheToOffset(cache: String) -> Int
+    offset := 0
+    for i = 0 to strLength(cache) - 1
+        c := strAt(cache, i)
+
+        offset *= 2
+        if c == '1'
+            offset += 1
+
+    return offset
+
+def hasValue(memo: Array Int, cache: String) -> Bool
+    offset := cacheToOffset(cache)
+    value := memo.[offset]
+
+    return value != -1
+
+def getValue(memo: Array Int, cache: String) -> Int
+    offset := cacheToOffset(cache)
+    value := memo.[offset]
+
+    assert(value != -1)
+
+    return value
+
+def setValue(memo: Array Int, cache: String, value: Int) -> Unit
+    offset := cacheToOffset(cache)
+    assert(memo.[offset] == -1)
+    arraySet(memo, offset, value)
+
+# Return a string that differs from the given one by setting location n to
+# the character '0'
+def zeroBit(cache: String, n: Int) -> String
+    len := strLength(cache)
+
+    if n == 0
+        return "0" ^ strSlice(cache, 1, len - 1)
+    else
+        return strSlice(cache, 0, n - 1) ^ "0" ^ strSlice(cache, n + 1, len - n - 1)
+
+# Determine all cache strings that can be obtained from the given one by
+# removing a single bit
+def predecessors(cache: String) -> [String]
+    result := []
+
+    for i = 0 to strLength(cache) - 1
+        if strAt(cache, i) == '1'
+            result = zeroBit(cache, i) :: result
+
+    return result
+
+def costAt(memo: Array Int, instructions: [String], cache: String) -> Int
+    if hasValue(memo, cache)
+        return getValue(memo, cache)
+
+    # Examine each successor of this cache value
+    costs := []
+    for inst in instructions
+        let InstResult nextCache instCost := simulateInstruction(cache, inst)
+
+        if cmpString(cache, nextCache) != 0
+            # The min cost starting at this point is at most the cost of this
+            # instruction, plus the cost starting at the successor cache value
+            cost := instCost + costAt(memo, instructions, nextCache)
+            costs = cost :: costs
+
+    assert(length(costs) > 0)
+
+    bestCost := minimum(costs)
+    setValue(memo, cache, bestCost)
+
+    return bestCost
+
+def minTime(instructions: [String]) -> Int
+    n := length(instructions)
+    m := strLength(head(instructions))
+
+    empty := zeroCache(m)
+    full := fullCache(instructions)
+    memo := makeArray(pow(2, m), -1)
+
+    # From a full cache, we're finished -> zero time
+    setValue(memo, full, 0)
+
+    return costAt(memo, instructions, empty)
+
+
+assert(minTime(["111", "001", "010"]) == 3)
+assert(minTime(["11101", "00111", "10101", "00000", "11000"]) == 9)
+assert(minTime(["11111111111111111111"]) == 400)
+assert(minTime(["1000", "1100", "1110"]) == 3)
+assert(minTime(["111", "111", "110", "100"]) == 3)

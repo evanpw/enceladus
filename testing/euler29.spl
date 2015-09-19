@@ -6,9 +6,9 @@ import String
 values := []
 for a = 2 to 100
     for b = 2 to 100
-        n := bigPower a b
+        n := bigPower(a, b)
 
         values = n :: values
 
-values = uniquify cmpList values
-print $ show $ length values
+values = uniquify(cmpList, values)
+print $ show $ length(values)

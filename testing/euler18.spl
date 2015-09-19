@@ -6,31 +6,31 @@ def readInput() -> [[Int]]
     pyramid := []
 
     forever
-        line := readLine
+        line := readLine()
 
-        if isSome line
+        if isSome(line)
             xs := []
-            for s in split $ unwrap line
-                xs = (unwrap $ stringToInt s) :: xs
+            for s in split(unwrap(line))
+                xs = unwrap(stringToInt(s)) :: xs
 
-            row := reverse xs
+            row := reverse(xs)
 
             pyramid = row :: pyramid
         else
             break
 
-    return reverse pyramid
+    return reverse(pyramid)
 
 def bestRouteFrom(x: Int, y: Int, pyramid: [[Int]]) -> Int
-    row := at y pyramid
-    here := at x row
+    row := at(y, pyramid)
+    here := at(x, row)
 
-    if y == (length pyramid - 1)
+    if y == length(pyramid) - 1
         return here
     else
-        left := bestRouteFrom x (y + 1) pyramid
-        right := bestRouteFrom (x + 1) (y + 1) pyramid
+        left := bestRouteFrom(x, y + 1, pyramid)
+        right := bestRouteFrom(x + 1, y + 1, pyramid)
 
-        return (max left right) + here
+        return max(left, right) + here
 
-print $ show $ bestRouteFrom 0 0 readInput
+print $ show $ bestRouteFrom(0, 0, readInput())

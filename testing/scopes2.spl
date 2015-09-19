@@ -3,4 +3,4 @@ if False
 else
     x := 5
 
-print $ show x
+print $ show(x)

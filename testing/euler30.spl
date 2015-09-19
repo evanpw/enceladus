@@ -4,7 +4,7 @@ def digitPowerSum(n: Int) -> Int
     result := 0
     while n > 0
         digit := n mod 10
-        result += pow digit 5
+        result += pow(digit, 5)
         n /= 10
 
     return result
@@ -12,11 +12,11 @@ def digitPowerSum(n: Int) -> Int
 
 # Can't have any solutions above this value, because
 # n * 9^5 < 10^n for all n >= 7
-top := 6 * pow 9 6
+top := 6 * pow(9, 6)
 
 total := 0
 for i = 2 to top
-    if i == digitPowerSum i
+    if i == digitPowerSum(i)
         total += i
 
-print $ show total
+print $ show(total)

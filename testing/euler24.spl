@@ -11,13 +11,13 @@ def delete(x: Int, xs: [Int]) -> [Int]
     initial := []
     xs' := xs
 
-    while not $ null xs'
-        if head xs' == x
-            return (reverse initial) ++ (tail xs')
+    while not $ null(xs')
+        if head(xs') == x
+            return reverse(initial) ++ tail(xs')
         else
-            initial = (head xs') :: initial
+            initial = head(xs') :: initial
 
-        xs' = tail xs'
+        xs' = tail(xs')
 
     return xs
 
@@ -30,19 +30,19 @@ def factorial(n: Int) -> Int
     return result
 
 def permutationAt(n: Int, digits: [Int]) -> [Int]
-    if length digits == 1
-        assert $ n == 0
-        return [head digits]
+    if length(digits) == 1
+        assert(n == 0)
+        return [head(digits)]
 
-    subCount := factorial $ (length digits) - 1
+    subCount := factorial(length(digits) - 1)
 
     for digit in digits
         if subCount <= n
             n -= subCount
         else
-            subDigits := delete digit digits
-            return digit :: permutationAt n subDigits
+            subDigits := delete(digit, digits)
+            return digit :: permutationAt(n, subDigits)
 
-    die "Unreachable"
+    die("Unreachable")
 
-print $ show $ toInt $ permutationAt 999999 (range 0 9)
+print $ show $ toInt $ permutationAt(999999, range(0, 9))

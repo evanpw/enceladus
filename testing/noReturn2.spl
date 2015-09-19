@@ -1,5 +1,5 @@
-def shouldFail() -> Int 
-    print "Hello"
+def shouldFail() -> Int
+    print $ "Hello"
 
-x := shouldFail
-print $ show x
+x := shouldFail()
+print $ show(x)

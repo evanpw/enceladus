@@ -15,7 +15,7 @@ def searchMemo(p: MyPair) -> Int
     return -1
 
 def insertMemo(p: MyPair, count: Int) -> Unit
-    memo = (Memo p count) :: memo
+    memo = Memo(p, count) :: memo
 
 def countPaths(p: MyPair) -> Int
     let MyPair x y := p
@@ -26,17 +26,15 @@ def countPaths(p: MyPair) -> Int
     if x > 20 or y > 20
         return 0
 
-    memoCount := searchMemo p
+    memoCount := searchMemo(p)
     if memoCount >= 0
         return memoCount
 
     count := 0
-    count += countPaths $ MyPair (x + 1) y
-    count += countPaths $ MyPair x (y + 1)
+    count += countPaths $ MyPair(x + 1, y)
+    count += countPaths $ MyPair(x, y + 1)
 
-    # print $ (show x) ++ " " ++ (show y) ++ " -> " ++ (show count)
-
-    insertMemo p count
+    insertMemo(p, count)
     return count
 
-print $ show $ countPaths $ MyPair 0 0
+print $ show $ countPaths $ MyPair(0, 0)

@@ -1,18 +1,18 @@
 # Solves Project Euler 6
 
-def sumOfSquares(n: Int) -> Int 
+def sumOfSquares(n: Int) -> Int
 	sum := 0
 	for i = 1 to n
 		sum += i * i
 
 	return sum
 
-def squareOfSum(n: Int) -> Int 
+def squareOfSum(n: Int) -> Int
 	sum := 0
 	for i = 1 to n
 		sum += i
 
 	return sum * sum
 
-print $ show $ squareOfSum 100 - sumOfSquares 100
+print $ show(squareOfSum(100) - sumOfSquares(100))
 

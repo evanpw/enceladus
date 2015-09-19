@@ -1,3 +1,0 @@
-def four() -> Int  = return 4
-
-print $ show four
