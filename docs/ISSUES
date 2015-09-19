@@ -35,3 +35,5 @@
 * Turn stack locations into outputs of instructions instead of inputs
 
 * In tag elision, determine loop depth and incorporate into heuristic cost
+
+* Types where every value constructor is parameter-less should have isBoxed() == true

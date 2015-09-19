@@ -24,7 +24,7 @@ TACConditionalCodeGen::TACConditionalCodeGen(TACCodeGen* mainCodeGen)
 
 static ValueType getValueType(Type* type)
 {
-    if (unwrap(type)->isBoxed())
+    if (type->isBoxed())
     {
         return ValueType::BoxOrInt;
     }
@@ -720,7 +720,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         arguments.push_back(i->value);
     }
 
-    if (unwrap(node->type) != node->type->table()->Unit)
+    if (!node->type->equals(node->type->table()->Unit))
         node->value = makeTemp(getValueType(node->type));
 
     Value* result = node->value;

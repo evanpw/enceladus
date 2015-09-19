@@ -275,7 +275,7 @@ void SemanticAnalyzer::bindVariable(Type* variable, Type* value, AstNode* node)
 {
     assert(variable->tag() == ttVariable);
 
-    Type* rhs = unwrap(value);
+    Type* rhs = value;
 
     // Check to see if the value is actually the same type variable, and don't
     // rebind
@@ -292,7 +292,7 @@ void SemanticAnalyzer::bindVariable(Type* variable, Type* value, AstNode* node)
         inferenceError(node, ss.str());
     }
 
-    variable->get<TypeVariable>()->assign(rhs);
+    variable->assign(rhs);
 }
 
 void SemanticAnalyzer::inferenceError(AstNode* node, const std::string& msg)
@@ -315,7 +315,7 @@ Type* SemanticAnalyzer::instantiate(Type* type)
 
 Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
 {
-    Type* realType = unwrap(type);
+    Type* realType = type;
 
     switch (realType->tag())
     {
@@ -380,7 +380,7 @@ Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& 
 
 bool SemanticAnalyzer::occurs(TypeVariable* variable, Type* value)
 {
-    Type* rhs = unwrap(value);
+    Type* rhs = value;
 
     switch (rhs->tag())
     {
@@ -420,16 +420,14 @@ bool SemanticAnalyzer::occurs(TypeVariable* variable, Type* value)
     assert(false);
 }
 
-void SemanticAnalyzer::unify(Type* a, Type* b, AstNode* node)
+void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
 {
-    Type* lhs = unwrap(a);
-    Type* rhs = unwrap(b);
-
     assert(lhs && rhs && node);
 
     if (lhs->tag() == ttBase && rhs->tag() == ttBase)
     {
         // Two base types can be unified only if equal (we don't have inheritance)
+        // TODO: Is this really the right way to compare?
         if (lhs->name() == rhs->name())
             return;
     }
@@ -448,7 +446,7 @@ void SemanticAnalyzer::unify(Type* a, Type* b, AstNode* node)
             if (rhs->tag() == ttVariable)
             {
                 // A quantified type variable unifies with itself
-                if (lhs->get<TypeVariable>() == rhs->get<TypeVariable>())
+                if (lhs->equals(rhs))
                 {
                     return;
                 }
@@ -641,12 +639,12 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
     {
         CHECK_UNDEFINED(typeParameter);
 
-        TypeVariable* var = _typeTable->createTypeVariable(true);
+        Type* var = _typeTable->createTypeVariable(true);
         typeContext.emplace(typeParameter, var);
     }
 
     resolveTypeName(node->typeName, typeContext);
-    Type* type = unwrap(node->typeName->type);
+    Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();
     node->functionType = functionType;
 
@@ -706,13 +704,13 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     {
         CHECK_UNDEFINED(typeParameter);
 
-        TypeVariable* var = _typeTable->createTypeVariable(true);
+        Type* var = _typeTable->createTypeVariable(true);
         typeContext.emplace(typeParameter, var);
     }
 
     resolveTypeName(node->typeName, typeContext);
 
-    Type* functionType = unwrap(node->typeName->type);
+    Type* functionType = node->typeName->type;
     assert(functionType->get<FunctionType>()->inputs().size() == node->params.size());
 
 	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
@@ -1193,7 +1191,7 @@ void SemanticAnalyzer::visit(ReturnNode* node)
 
     node->expression->accept(this);
 
-    Type* type = unwrap(_enclosingFunction->symbol->type);
+    Type* type = _enclosingFunction->symbol->type;
     assert(type->tag() == ttFunction);
 
     // Value of expression must equal the return type of the enclosing function.
