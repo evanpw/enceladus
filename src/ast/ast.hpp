@@ -422,6 +422,16 @@ public:
 	FunctionType* functionType;
 };
 
+class MethodDefNode : public FunctionDefNode
+{
+public:
+	MethodDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& typeParams, const std::vector<std::string>& params, TypeName* typeName)
+	: FunctionDefNode(context, location, name, body, typeParams, params, typeName)
+	{}
+
+	AST_VISITABLE();
+};
+
 class FunctionDeclNode : public StatementNode
 {
 public:
@@ -460,20 +470,20 @@ public:
 class ImplNode : public StatementNode
 {
 public:
-	ImplNode(AstContext* context, const YYLTYPE& location, TypeName* typeName, std::vector<FunctionDefNode*>&& methods)
+	ImplNode(AstContext* context, const YYLTYPE& location, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
 	: StatementNode(context, location), typeName(typeName), methods(methods)
 	{}
 
 	AST_VISITABLE();
 
 	TypeName* typeName;
-	std::vector<FunctionDefNode*> methods;
+	std::vector<MethodDefNode*> methods;
 };
 
 class TraitImplNode : public StatementNode
 {
 public:
-	TraitImplNode(AstContext* context, const YYLTYPE& location, const std::string& traitName, TypeName* typeName, std::vector<FunctionDefNode*>&& methods)
+	TraitImplNode(AstContext* context, const YYLTYPE& location, const std::string& traitName, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
 	: StatementNode(context, location), traitName(traitName), typeName(typeName), methods(methods)
 	{}
 
@@ -481,7 +491,7 @@ public:
 
 	std::string traitName;
 	TypeName* typeName;
-	std::vector<FunctionDefNode*> methods;
+	std::vector<MethodDefNode*> methods;
 };
 
 class LetNode : public StatementNode

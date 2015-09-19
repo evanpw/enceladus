@@ -64,6 +64,28 @@ Symbol* SemanticAnalyzer::resolveTypeSymbol(const std::string& name)
     return _symbolTable->find(name, SymbolTable::TYPE);
 }
 
+struct NotCompatible
+{
+    NotCompatible(Type* self)
+    : self(self)
+    {}
+
+    bool operator()(MethodSymbol* symbol)
+    {
+        return !isCompatible(self, symbol->parentType);
+    }
+
+    Type* self;
+};
+
+void SemanticAnalyzer::resolveMethodSymbol(const std::string& name, Type* parentType, std::vector<MethodSymbol*>& symbols)
+{
+    _symbolTable->findMethods(name, symbols);
+
+    // Filter out types that can't be unifed with parentType
+    symbols.erase(std::remove_if(symbols.begin(), symbols.end(), NotCompatible(parentType)), symbols.end());
+}
+
 SemanticAnalyzer::SemanticAnalyzer(AstContext* context)
 : _root(context->root())
 , _context(context)
@@ -72,6 +94,7 @@ SemanticAnalyzer::SemanticAnalyzer(AstContext* context)
 , _enclosingFunction(nullptr)
 , _enclosingLoop(nullptr)
 , _enclosingTrait(nullptr)
+, _enclosingImplNode(nullptr)
 {
 }
 
@@ -386,8 +409,7 @@ void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
     if (lhs->tag() == ttBase && rhs->tag() == ttBase)
     {
         // Two base types can be unified only if equal (we don't have inheritance)
-        // TODO: Is this really the right way to compare?
-        if (lhs->name() == rhs->name())
+        if (lhs->equals(rhs))
             return;
     }
     else if (lhs->tag() == ttVariable)
@@ -1249,6 +1271,7 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
 
 void SemanticAnalyzer::visit(FunctionDeclNode* node)
 {
+    /*
     // Functions cannot be declared inside of another function
     CHECK(_enclosingTrait, "method declarations can appear only inside trait definitions");
 
@@ -1274,12 +1297,15 @@ void SemanticAnalyzer::visit(FunctionDeclNode* node)
     MethodSymbol* symbol = _symbolTable->createMethodSymbol(name, node, node, _enclosingTrait);
     symbol->type = type;
     node->symbol = symbol;
+    */
 
+    AstVisitor::visit(node);
     node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(TraitDefNode* node)
 {
+    /*
     assert(!_enclosingTrait);
     _enclosingTrait = node;
 
@@ -1288,14 +1314,15 @@ void SemanticAnalyzer::visit(TraitDefNode* node)
     AstVisitor::visit(node);
 
     _enclosingTrait = nullptr;
+    */
 
+    AstVisitor::visit(node);
     node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(TraitImplNode* node)
 {
     AstVisitor::visit(node);
-
     node->type = _typeTable->Unit;
 }
 
@@ -1304,6 +1331,8 @@ void SemanticAnalyzer::visit(ImplNode* node)
     assert(!_enclosingImplNode);
     _enclosingImplNode = node;
 
+    resolveTypeName(node->typeName);
+
     AstVisitor::visit(node);
 
     _enclosingImplNode = nullptr;
@@ -1311,22 +1340,16 @@ void SemanticAnalyzer::visit(ImplNode* node)
     node->type = _typeTable->Unit;
 }
 
-/*
 void SemanticAnalyzer::visit(MethodDefNode* node)
 {
     // Functions cannot be declared inside of another function
     CHECK(!_enclosingFunction, "methods cannot be nested");
     CHECK(_enclosingImplNode, "methods can only appear inside impl blocks");
 
-
-    // TODO: Check that no method with this name has already been defined for
-    // this type
-
-    // TODO: Verify that the first parameter has type Self
-
-    // TODO: Create a Symbol for this method, and insert it into the appropriate
-    // (type-specific) symbol table
-
+    std::vector<MethodSymbol*> symbols;
+    Type* parentType = _enclosingImplNode->typeName->type;
+    resolveMethodSymbol(node->name, parentType, symbols);
+    CHECK(symbols.empty(), "an implementation of method \"{}\" already exists for type \"{}\"", node->name, node->typeName->str());
 
     // Create type variables for each type parameter
     std::unordered_map<std::string, Type*> typeContext;
@@ -1339,6 +1362,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     }
 
     resolveTypeName(node->typeName, typeContext);
+
     Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();
     node->functionType = functionType;
@@ -1347,7 +1371,10 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
 
     const std::vector<Type*>& paramTypes = functionType->inputs();
 
-    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, node, node);
+    CHECK(!paramTypes.empty(), "methods must take at least one argument");
+    unify(paramTypes[0], parentType, node);
+
+    MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, node, parentType);
     symbol->type = type;
     node->symbol = symbol;
 
@@ -1377,4 +1404,3 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     unify(node->body->type, functionType->output(), node);
     node->type = _typeTable->Unit;
 }
-*/

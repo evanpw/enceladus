@@ -186,3 +186,9 @@ void AstVisitor::visit(ImplNode* node)
 
 	node->typeName->accept(this);
 }
+
+void AstVisitor::visit(MethodDefNode* node)
+{
+	node->body->accept(this);
+	node->typeName->accept(this);
+}

@@ -146,6 +146,10 @@ private:
     std::shared_ptr<TypeImpl> _impl;
 };
 
+// Two (possibly polymorphic) types are compatible iff there is at least one
+// monomorphic type which unifies with both
+bool isCompatible(Type* lhs, Type* rhs);
+bool isCompatible(Type* lhs, Type* rhs, std::unordered_map<TypeVariable*, Type*>& context);
 
 // Represents a bottom-level basic types (Int, Bool, ...)
 class BaseType : public TypeImpl

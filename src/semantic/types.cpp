@@ -133,3 +133,81 @@ std::string ValueConstructor::name() const
 {
     return _symbol->name;
 }
+
+// Two (possibly polymorphic) types are compatible iff there is at least one
+// monomorphic type which unifies with both
+bool isCompatible(Type* lhs, Type* rhs)
+{
+    std::unordered_map<TypeVariable*, Type*> context;
+    return isCompatible(lhs, rhs, context);
+}
+
+bool isCompatible(Type* lhs, Type* rhs, std::unordered_map<TypeVariable*, Type*>& context)
+{
+    if (lhs->tag() == ttBase && rhs->tag() == ttBase)
+    {
+        // Two base types can be unified only if equal (we don't have inheritance)
+        return lhs->equals(rhs);
+    }
+    else if (lhs->tag() == ttVariable)
+    {
+        if (rhs->tag() != ttVariable || !lhs->equals(rhs))
+        {
+            context[lhs->get<TypeVariable>()] = rhs;
+        }
+
+        return true;
+    }
+    else if (rhs->tag() == ttVariable)
+    {
+        context[rhs->get<TypeVariable>()] = lhs;
+        return true;
+    }
+    else if (lhs->tag() == ttFunction && rhs->tag() == ttFunction)
+    {
+        FunctionType* lhsFunction = lhs->get<FunctionType>();
+        FunctionType* rhsFunction = rhs->get<FunctionType>();
+
+        if (lhsFunction->inputs().size() != rhsFunction->inputs().size())
+            return false;
+
+        for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
+        {
+            Type* leftParam = lhsFunction->inputs().at(i);
+            Type* rightParam = rhsFunction->inputs().at(i);
+
+            if (!isCompatible(leftParam, rightParam, context))
+                return false;
+        }
+
+        if (!isCompatible(lhsFunction->output(), rhsFunction->output(), context))
+            return false;
+
+        return true;
+    }
+    else if (lhs->tag() == ttConstructed && rhs->tag() == ttConstructed)
+    {
+        ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
+        ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
+
+        if (lhsConstructed->typeConstructor() != rhsConstructed->typeConstructor())
+            return false;
+
+        assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
+
+        for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
+        {
+            Type* leftParam = lhsConstructed->typeParameters().at(i);
+            Type* rightParam = rhsConstructed->typeParameters().at(i);
+
+            if (!isCompatible(leftParam, rightParam, context))
+                return false;
+        }
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}

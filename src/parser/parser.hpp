@@ -41,6 +41,7 @@ private:
     StatementNode* suite();
     StatementNode* trait_definition();
     StatementNode* implementation_block();
+    StatementNode* method_definition();
     std::vector<std::string> parameters();
     std::pair<std::string, TypeName*> param_and_type();
     std::pair<std::vector<std::string>, TypeName*> params_and_types();

@@ -171,6 +171,7 @@ extern "C" int yywrap()
 ")"     { return ')'; }
 ","     { return ','; }
 "="     { return '='; }
+"."     { return '.'; }
 ":="    { return tCOLON_EQUAL; }
 "$"     { return '$'; }
 "["     { ++unclosedBrackets; return '['; }

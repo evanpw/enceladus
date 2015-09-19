@@ -69,9 +69,10 @@ public:
 
     // Work in progress
     virtual void visit(FunctionDeclNode* node);
+    virtual void visit(ImplNode* node);
+    virtual void visit(MethodDefNode* node);
     virtual void visit(TraitDefNode* node);
     virtual void visit(TraitImplNode* node);
-    virtual void visit(ImplNode* node);
 
 private:
     //// Type Inference ////////////////////////////////////////////////////////
@@ -101,6 +102,7 @@ private:
 
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);
+    void resolveMethodSymbol(const std::string& name, Type* parentType, std::vector<MethodSymbol*>& symbols);
 
     ProgramNode* _root;
     AstContext* _context;

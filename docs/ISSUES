@@ -37,3 +37,5 @@
 * In tag elision, determine loop depth and incorporate into heuristic cost
 
 * Types where every value constructor is parameter-less should have isBoxed() == true
+
+* Make the type annotation on the first parameter of a method optional

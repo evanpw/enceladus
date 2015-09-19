@@ -546,8 +546,8 @@ StatementNode* Parser::trait_definition()
 
 
 /// implementation_block
-///     : IMPL UIDENT FOR type EOL INDENT function_definition { function_definition } DEDENT
-///     | IMPL type EOL INDENT function_definition { function_definition } DEDENT
+///     : IMPL UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+///     | IMPL type EOL INDENT method_definition { method_definition } DEDENT
 StatementNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
@@ -565,10 +565,10 @@ StatementNode* Parser::implementation_block()
     expect(tEOL);
     expect(tINDENT);
 
-    std::vector<FunctionDefNode*> methods;
+    std::vector<MethodDefNode*> methods;
     while (peekType() == tDEF)
     {
-        FunctionDefNode* method = dynamic_cast<FunctionDefNode*>(function_definition());
+        MethodDefNode* method = dynamic_cast<MethodDefNode*>(method_definition());
         assert(method);
 
         methods.push_back(method);
@@ -584,6 +584,19 @@ StatementNode* Parser::implementation_block()
     {
         return new TraitImplNode(_context, location, traitName, typeName, std::move(methods));
     }
+}
+
+StatementNode* Parser::method_definition()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tDEF);
+    std::string name = ident();
+    std::vector<std::string> typeParams = type_params();
+    std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
+
+    StatementNode* body = suite();
+    return new MethodDefNode(_context, location, name, body, typeParams, paramsAndTypes.first, paramsAndTypes.second);
 }
 
 
@@ -788,6 +801,9 @@ std::pair<std::string, TypeName*> Parser::param_and_type()
 
 /// type_declaration
 ///     : '(' [ LIDENT ':' type { ',' LIDENT ':' type } ] ')' RARROW constructed_type
+///
+/// param_and_type
+///     : LIDENT ':' type
 std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types()
 {
     YYLTYPE location = getLocation();

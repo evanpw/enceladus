@@ -100,8 +100,11 @@ decl_list
     | def_list function_declaration
 
 implementation_block
-    : IMPL UIDENT FOR type EOL INDENT function_definition { function_definition } DEDENT
-    | IMPL type EOL INDENT function_definition { function_definition } DEDENT
+    : IMPL UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+    | IMPL type EOL INDENT method_definition { method_definition } DEDENT
+
+method_definition
+    : DEF ident type_params params_and_types suite
 
 
 //// Types /////////////////////////////////////////////////////////////////////
@@ -195,8 +198,11 @@ negation_expression
     : [ '-' ] func_call_expression
 
 func_call_expression
-    : ident { unary_expression } [ '$' expression ]
-    | unary_expression
+    : ident { dot_expression } [ '$' expression ]
+    | dot_expression
+
+dot_expression
+    : unary_expression { unary_expression }
 
 unary_expression
     | '(' expression ')'
@@ -219,4 +225,3 @@ list_interior
 ident
     : LIDENT
     | UIDENT
-

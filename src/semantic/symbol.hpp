@@ -82,17 +82,6 @@ private:
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
 };
 
-class MethodSymbol : public Symbol
-{
-public:
-    FunctionDeclNode* declaration;
-    TraitDefNode* traitNode;
-
-private:
-    friend class SymbolTable;
-    MethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode);
-};
-
 class TypeSymbol : public Symbol
 {
 private:
@@ -120,5 +109,16 @@ private:
     MemberSymbol(const std::string& name, AstNode* node);
 };
 
+
+class MethodSymbol : public Symbol
+{
+public:
+    FunctionDefNode* definition;
+    Type* parentType;
+
+private:
+    friend class SymbolTable;
+    MethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType);
+};
 
 #endif

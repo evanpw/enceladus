@@ -28,6 +28,7 @@ class MatchArm;
 class MatchNode;
 class MemberAccessNode;
 class MemberDefNode;
+class MethodDefNode;
 class NullaryNode;
 class ProgramNode;
 class ReturnNode;
@@ -58,7 +59,6 @@ public:
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
-	virtual void visit(ImplNode* node);
 	virtual void visit(LetNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(MatchArm* node);
@@ -83,6 +83,8 @@ public:
 
 	// Work in progress
 	virtual void visit(FunctionDeclNode* node);
+	virtual void visit(ImplNode* node);
+	virtual void visit(MethodDefNode* node);
 	virtual void visit(TraitDefNode* node);
 	virtual void visit(TraitImplNode* node);
 };

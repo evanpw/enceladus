@@ -24,10 +24,10 @@ MemberSymbol* SymbolTable::createMemberSymbol(const std::string& name, AstNode* 
     return symbol;
 }
 
-MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode)
+MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType)
 {
-    MethodSymbol* symbol = new MethodSymbol(name, node, declaration, traitNode);
-    insert(symbol);
+    MethodSymbol* symbol = new MethodSymbol(name, node, definition, parentType);
+    insertMethod(symbol);
     return symbol;
 }
 
@@ -86,6 +86,17 @@ Symbol* SymbolTable::findTopScope(const std::string& name, WhichTable whichTable
     }
 }
 
+void SymbolTable::findMethods(const std::string& name, std::vector<MethodSymbol*>& result)
+{
+    result.clear();
+
+    auto i = _methods.find(name);
+    if (i != _methods.end())
+    {
+        result = i->second;
+    }
+}
+
 void SymbolTable::insert(Symbol* symbol, WhichTable whichTable)
 {
     auto key = std::make_pair(symbol->name, whichTable);
@@ -97,4 +108,10 @@ void SymbolTable::insert(Symbol* symbol, WhichTable whichTable)
 
     if (symbol->name != "_")
         scope.emplace(key, symbol);
+}
+
+void SymbolTable::insertMethod(MethodSymbol* symbol)
+{
+    if (symbol->name != "_")
+        _methods[symbol->name].push_back(symbol);
 }

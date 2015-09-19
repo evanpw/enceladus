@@ -35,6 +35,7 @@ public:
     UNSUPPORTED(MatchArm);
     UNSUPPORTED(MatchNode);
     UNSUPPORTED(MemberDefNode);
+    UNSUPPORTED(MethodDefNode);
     UNSUPPORTED(ProgramNode);
     UNSUPPORTED(ReturnNode);
     UNSUPPORTED(StringLiteralNode);
@@ -126,9 +127,10 @@ public:
     virtual void visit(WhileNode* node);
 
     // Work in progress
-    virtual void visit(ImplNode* node) {}
-    virtual void visit(TraitDefNode*) {}
     virtual void visit(FunctionDeclNode*) {}
+    virtual void visit(ImplNode* node) {}
+    virtual void visit(MethodDefNode*) {}
+    virtual void visit(TraitDefNode*) {}
     virtual void visit(TraitImplNode*) {}
 
 private:
