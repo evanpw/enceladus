@@ -1313,7 +1313,10 @@ void SemanticAnalyzer::visit(FunctionDeclNode* node)
     const std::string& name = node->name;
     CHECK_UNDEFINED(name);
 
-    resolveTypeName(node->typeName, true);
+    std::unordered_map<std::string, Type*> typeContext;
+    typeContext["Self"] = _enclosingTrait->traitType;
+
+    resolveTypeName(node->typeName, typeContext);
     Type* type = unwrap(node->typeName->type);
     FunctionType* functionType = type->get<FunctionType>();
     node->functionType = functionType;
@@ -1323,7 +1326,7 @@ void SemanticAnalyzer::visit(FunctionDeclNode* node)
     const std::vector<Type*>& paramTypes = functionType->inputs();
 
     Symbol* symbol = new MethodSymbol(name, node, node, _enclosingTrait);
-    symbol->setType(type);
+    symbol->type = type;
     insertSymbol(symbol);
     node->symbol = symbol;
 
