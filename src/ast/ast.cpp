@@ -30,7 +30,7 @@ std::string TypeName::str() const
     return ss.str();
 }
 
-FunctionCallNode* makeList(AstContext* context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements)
+FunctionCallNode* createList(AstContext* context, const YYLTYPE& location, std::vector<ExpressionNode*>& elements)
 {
     FunctionCallNode* result = new FunctionCallNode(context, location, "Nil", {});
 

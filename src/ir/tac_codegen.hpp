@@ -79,7 +79,7 @@ private:
 
     void emit(Instruction* inst);
     Value* visitAndGet(AstNode* node);
-    BasicBlock* makeBlock();
+    BasicBlock* createBlock();
 
     BasicBlock* _trueBranch;
     BasicBlock* _falseBranch;
@@ -163,14 +163,14 @@ private:
     friend class TACConditionalCodeGen;
 
     int64_t _nextSeqNumber = 0;
-    Value* makeTemp(ValueType type)
+    Value* createTemp(ValueType type)
     {
-        return _currentFunction->makeTemp(type);
+        return _currentFunction->createTemp(type);
     }
 
-    BasicBlock* makeBlock()
+    BasicBlock* createBlock()
     {
-        return _currentFunction->makeBlock();
+        return _currentFunction->createBlock();
     }
 
     void setBlock(BasicBlock* block) { _currentBlock = block; }

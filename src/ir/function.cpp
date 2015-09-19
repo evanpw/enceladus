@@ -4,23 +4,23 @@
 #include <algorithm>
 #include <sstream>
 
-Value* Function::makeTemp(ValueType type)
+Value* Function::createTemp(ValueType type)
 {
-    Value* tmp = _context->makeTemp(type, _nextSeqNumber++);
+    Value* tmp = _context->createTemp(type, _nextSeqNumber++);
     temps.push_back(tmp);
     return tmp;
 }
 
-Value* Function::makeTemp(ValueType type, const std::string& name)
+Value* Function::createTemp(ValueType type, const std::string& name)
 {
-    Value* tmp = _context->makeTemp(type, name);
+    Value* tmp = _context->createTemp(type, name);
     temps.push_back(tmp);
     return tmp;
 }
 
-BasicBlock* Function::makeBlock()
+BasicBlock* Function::createBlock()
 {
-    BasicBlock* block = _context->makeBlock(this, _nextSeqNumber++);
+    BasicBlock* block = _context->createBlock(this, _nextSeqNumber++);
     blocks.push_back(block);
     return block;
 }

@@ -32,7 +32,7 @@ void FromSSA::run()
                 // just a single copy in each predecessor), but it helps avoid
                 // problems in some corner cases, and the extra copies will
                 // hopefully be coalesced during register allocation.
-                Value* temp = _function->makeTemp(type);
+                Value* temp = _function->createTemp(type);
 
                 for (auto& source : phi->sources())
                 {

@@ -286,14 +286,14 @@ struct MachineFunction
 
     size_t parameterCount() const { return _stackParameters.size(); }
     StackParameter* getParameter(size_t i) { return _stackParameters.at(i).get(); }
-    StackParameter* makeStackParameter(OperandType type, const std::string& name, size_t index);
+    StackParameter* createStackParameter(OperandType type, const std::string& name, size_t index);
 
-    VirtualRegister* makePrecoloredReg(HardwareRegister* hreg, OperandType type);
-    VirtualRegister* makeVreg(OperandType type);
-    MachineBB* makeBlock(int64_t seqNumber);
+    VirtualRegister* createPrecoloredReg(HardwareRegister* hreg, OperandType type);
+    VirtualRegister* createVreg(OperandType type);
+    MachineBB* createBlock(int64_t seqNumber);
 
-    StackLocation* makeStackVariable(OperandType type);
-    StackLocation* makeStackVariable(OperandType type, const std::string& name);
+    StackLocation* createStackVariable(OperandType type);
+    StackLocation* createStackVariable(OperandType type, const std::string& name);
     size_t stackVariableCount() const { return _stackVariables.size(); }
     StackLocation* getStackVariable(size_t i) { return _stackVariables.at(i).get(); }
 

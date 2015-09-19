@@ -111,21 +111,21 @@ std::ostream& operator<<(std::ostream& out, const MachineInst& inst)
     return out;
 }
 
-MachineBB* MachineFunction::makeBlock(int64_t seqNumber)
+MachineBB* MachineFunction::createBlock(int64_t seqNumber)
 {
     MachineBB* block = new MachineBB(seqNumber);
     blocks.push_back(block);
     return block;
 }
 
-StackParameter* MachineFunction::makeStackParameter(OperandType type, const std::string& name, size_t index)
+StackParameter* MachineFunction::createStackParameter(OperandType type, const std::string& name, size_t index)
 {
     StackParameter* param = new StackParameter(type, name, index);
     _stackParameters.emplace_back(param);
     return param;
 }
 
-VirtualRegister* MachineFunction::makePrecoloredReg(HardwareRegister* hreg, OperandType type)
+VirtualRegister* MachineFunction::createPrecoloredReg(HardwareRegister* hreg, OperandType type)
 {
     VirtualRegister* vreg = new VirtualRegister(type, _nextVregNumber++);
     vreg->assignment = hreg;
@@ -133,21 +133,21 @@ VirtualRegister* MachineFunction::makePrecoloredReg(HardwareRegister* hreg, Oper
     return vreg;
 }
 
-VirtualRegister* MachineFunction::makeVreg(OperandType type)
+VirtualRegister* MachineFunction::createVreg(OperandType type)
 {
     VirtualRegister* vreg = new VirtualRegister(type, _nextVregNumber++);
     _vregs.emplace_back(vreg);
     return vreg;
 }
 
-StackLocation* MachineFunction::makeStackVariable(OperandType type)
+StackLocation* MachineFunction::createStackVariable(OperandType type)
 {
     StackLocation* location = new StackLocation(type, _nextStackVar++);
     _stackVariables.emplace_back(location);
     return location;
 }
 
-StackLocation* MachineFunction::makeStackVariable(OperandType type, const std::string& name)
+StackLocation* MachineFunction::createStackVariable(OperandType type, const std::string& name)
 {
     StackLocation* location = new StackLocation(type, name);
     _stackVariables.emplace_back(location);

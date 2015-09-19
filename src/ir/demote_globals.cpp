@@ -38,7 +38,7 @@ void DemoteGlobals::run()
         if (!isUsedOutside(global, splmain))
         {
             // Replace the global with a local of the same name
-            Value* local = _context->makeLocal(global->type, global->name);
+            Value* local = _context->createLocal(global->type, global->name);
             splmain->locals.push_back(local);
             splmain->replaceReferences(global, local);
         }

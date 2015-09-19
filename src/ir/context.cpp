@@ -16,7 +16,7 @@ TACContext::~TACContext()
     }
 }
 
-Argument* TACContext::makeArgument(ValueType type, const std::string& name)
+Argument* TACContext::createArgument(ValueType type, const std::string& name)
 {
     Argument* result = new Argument(this, type, name);
     _values.push_back(result);
@@ -32,20 +32,20 @@ ConstantInt* TACContext::getConstantInt(int64_t value)
     }
     else
     {
-        ConstantInt* result = makeConstantInt(value);
+        ConstantInt* result = createConstantInt(value);
         _constants[value] = result;
         return result;
     }
 }
 
-ConstantInt* TACContext::makeConstantInt(int64_t value)
+ConstantInt* TACContext::createConstantInt(int64_t value)
 {
     ConstantInt* result = new ConstantInt(this, value);
     _values.push_back(result);
     return result;
 }
 
-Function* TACContext::makeExternFunction(const std::string& name)
+Function* TACContext::createExternFunction(const std::string& name)
 {
     Function* result = new Function(this, name);
     _values.push_back(result);
@@ -53,7 +53,7 @@ Function* TACContext::makeExternFunction(const std::string& name)
     return result;
 }
 
-Function* TACContext::makeFunction(const std::string& name)
+Function* TACContext::createFunction(const std::string& name)
 {
     Function* result = new Function(this, name);
     _values.push_back(result);
@@ -61,7 +61,7 @@ Function* TACContext::makeFunction(const std::string& name)
     return result;
 }
 
-GlobalValue* TACContext::makeGlobal(ValueType type, const std::string& name)
+GlobalValue* TACContext::createGlobal(ValueType type, const std::string& name)
 {
     GlobalValue* result = new GlobalValue(this, type, name, GlobalTag::Variable);
     _values.push_back(result);
@@ -69,7 +69,7 @@ GlobalValue* TACContext::makeGlobal(ValueType type, const std::string& name)
     return result;
 }
 
-GlobalValue* TACContext::makeStaticString(const std::string& name, const std::string& contents)
+GlobalValue* TACContext::createStaticString(const std::string& name, const std::string& contents)
 {
     GlobalValue* result = new GlobalValue(this, ValueType::BoxOrInt, name, GlobalTag::Static);
     _values.push_back(result);
@@ -77,28 +77,28 @@ GlobalValue* TACContext::makeStaticString(const std::string& name, const std::st
     return result;
 }
 
-LocalValue* TACContext::makeLocal(ValueType type, const std::string& name)
+LocalValue* TACContext::createLocal(ValueType type, const std::string& name)
 {
     LocalValue* result = new LocalValue(this, type, name);
     _values.push_back(result);
     return result;
 }
 
-Value* TACContext::makeTemp(ValueType type, int64_t number)
+Value* TACContext::createTemp(ValueType type, int64_t number)
 {
     Value* result = new Value(this, type, number);
     _values.push_back(result);
     return result;
 }
 
-Value* TACContext::makeTemp(ValueType type, const std::string& name)
+Value* TACContext::createTemp(ValueType type, const std::string& name)
 {
     Value* result = new Value(this, type, name);
     _values.push_back(result);
     return result;
 }
 
-BasicBlock* TACContext::makeBlock(Function* parent, int64_t number)
+BasicBlock* TACContext::createBlock(Function* parent, int64_t number)
 {
     BasicBlock* result = new BasicBlock(this, parent, number);
     _values.push_back(result);

@@ -1122,7 +1122,7 @@ ExpressionNode* Parser::unary_expression()
 
             expect(']');
 
-            return makeList(_context, location, argList);
+            return createList(_context, location, argList);
         }
 
     case tINT_LIT:

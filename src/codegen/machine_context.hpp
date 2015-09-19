@@ -39,8 +39,8 @@ public:
         r10, r11, r12, r13, r14, r15, rbp, rsp
     };
 
-    Immediate* makeImmediate(int64_t value);
-    Address* makeGlobal(const std::string& name);
+    Immediate* createImmediate(int64_t value);
+    Address* createGlobal(const std::string& name);
 
 private:
     std::unordered_map<int64_t, std::unique_ptr<Immediate>> _immediates;

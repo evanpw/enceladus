@@ -262,7 +262,7 @@ Value* ToSSA::generateName(Value* variable)
     std::stringstream ss;
     ss << variable->name << "." << i;
 
-    Value* newName = _function->makeTemp(variable->type, ss.str());
+    Value* newName = _function->createTemp(variable->type, ss.str());
     _phiStack[variable].push(newName);
 
     return newName;

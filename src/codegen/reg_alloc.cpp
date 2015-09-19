@@ -130,7 +130,7 @@ void RegAlloc::spillAroundCalls()
                         continue;
 
                     OperandType type = dynamic_cast<VirtualRegister*>(liveReg)->type;
-                    StackLocation* stackVar = _function->makeStackVariable(type);
+                    StackLocation* stackVar = _function->createStackVariable(type);
 
                     // std::cerr << *stackVar << ": " << operandTypeString(type) << std::endl;
 
@@ -563,7 +563,7 @@ void RegAlloc::spillVariable(Reg* reg)
 
     std::stringstream ss;
     ss << "vreg" << vreg->id;
-    StackLocation* spillLocation = _function->makeStackVariable(vreg->type, ss.str());
+    StackLocation* spillLocation = _function->createStackVariable(vreg->type, ss.str());
 
     _spilled[reg] = spillLocation;
 
@@ -578,7 +578,7 @@ void RegAlloc::spillVariable(Reg* reg)
             if (std::find(inst->inputs.begin(), inst->inputs.end(), reg) != inst->inputs.end())
             {
                 // Load from the stack into a fresh register
-                MachineOperand* newReg = _function->makeVreg(vreg->type);
+                MachineOperand* newReg = _function->createVreg(vreg->type);
                 MachineInst* loadInst = new MachineInst(Opcode::MOVrm, {newReg}, {spillLocation});
                 block->instructions.insert(i, loadInst);
 
@@ -594,7 +594,7 @@ void RegAlloc::spillVariable(Reg* reg)
             if (std::find(inst->outputs.begin(), inst->outputs.end(), reg) != inst->outputs.end())
             {
                 // Create a fresh register to store the result
-                MachineOperand* newReg = _function->makeVreg(vreg->type);
+                MachineOperand* newReg = _function->createVreg(vreg->type);
 
                 // Replace all uses of the spilled register with the new one
                 for (size_t j = 0; j < inst->outputs.size(); ++j)

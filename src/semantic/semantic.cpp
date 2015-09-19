@@ -90,7 +90,7 @@ bool SemanticAnalyzer::analyze()
 	return true;
 }
 
-FunctionSymbol* SemanticAnalyzer::makeBuiltin(const std::string& name)
+FunctionSymbol* SemanticAnalyzer::createBuiltin(const std::string& name)
 {
     FunctionSymbol* symbol = new FunctionSymbol(name, _root, nullptr);
     symbol->isBuiltin = true;
@@ -98,7 +98,7 @@ FunctionSymbol* SemanticAnalyzer::makeBuiltin(const std::string& name)
     return symbol;
 }
 
-FunctionSymbol* SemanticAnalyzer::makeExternal(const std::string& name)
+FunctionSymbol* SemanticAnalyzer::createExternal(const std::string& name)
 {
     FunctionSymbol* symbol = new FunctionSymbol(name, _root, nullptr);
     symbol->isExternal = true;
@@ -120,7 +120,7 @@ void SemanticAnalyzer::injectSymbols()
 
 
 	//// Create symbols for built-in functions
-    FunctionSymbol* notFn = makeBuiltin("not");
+    FunctionSymbol* notFn = createBuiltin("not");
 	notFn->type = _typeTable->createFunctionType({_typeTable->Bool}, _typeTable->Bool);
 	_symbolTable->insert(notFn);
 
@@ -128,23 +128,23 @@ void SemanticAnalyzer::injectSymbols()
 
     Type* arithmeticType = _typeTable->createFunctionType({_typeTable->Int, _typeTable->Int}, _typeTable->Int);
 
-	FunctionSymbol* add = makeBuiltin("+");
+	FunctionSymbol* add = createBuiltin("+");
 	add->type = arithmeticType;
 	_symbolTable->insert(add);
 
-	FunctionSymbol* subtract = makeBuiltin("-");
+	FunctionSymbol* subtract = createBuiltin("-");
 	subtract->type = arithmeticType;
 	_symbolTable->insert(subtract);
 
-	FunctionSymbol* multiply = makeBuiltin("*");
+	FunctionSymbol* multiply = createBuiltin("*");
 	multiply->type = arithmeticType;
 	_symbolTable->insert(multiply);
 
-	FunctionSymbol* divide = makeBuiltin("/");
+	FunctionSymbol* divide = createBuiltin("/");
 	divide->type = arithmeticType;
 	_symbolTable->insert(divide);
 
-	FunctionSymbol* modulus = makeBuiltin("%");
+	FunctionSymbol* modulus = createBuiltin("%");
 	modulus->type = arithmeticType;
 	_symbolTable->insert(modulus);
 

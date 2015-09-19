@@ -90,8 +90,8 @@ private:
     template<typename... Args>
     void semanticError(const YYLTYPE& location, const std::string& str, Args... args);
 
-    FunctionSymbol* makeBuiltin(const std::string& name);
-    FunctionSymbol* makeExternal(const std::string& name);
+    FunctionSymbol* createBuiltin(const std::string& name);
+    FunctionSymbol* createExternal(const std::string& name);
     void injectSymbols();
 
     TypeConstructor* getTypeConstructor(const TypeName* typeName);

@@ -13,7 +13,7 @@ MachineContext::~MachineContext()
     }
 }
 
-Immediate* MachineContext::makeImmediate(int64_t value)
+Immediate* MachineContext::createImmediate(int64_t value)
 {
     auto i = _immediates.find(value);
     if (i != _immediates.end())
@@ -28,7 +28,7 @@ Immediate* MachineContext::makeImmediate(int64_t value)
     }
 }
 
-Address* MachineContext::makeGlobal(const std::string& name)
+Address* MachineContext::createGlobal(const std::string& name)
 {
     auto i = _globals.find(name);
     if (i != _globals.end())

@@ -282,7 +282,7 @@ void TagElision::run()
                     name << value->seqNumber << ".u";
                 }
 
-                _taggedToUntagged[value] = _function->makeTemp(ValueType::Integer, name.str());
+                _taggedToUntagged[value] = _function->createTemp(ValueType::Integer, name.str());
             }
         }
 
