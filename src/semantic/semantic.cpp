@@ -92,7 +92,7 @@ bool SemanticAnalyzer::analyze()
 
 FunctionSymbol* SemanticAnalyzer::createBuiltin(const std::string& name)
 {
-    FunctionSymbol* symbol = new FunctionSymbol(name, _root, nullptr);
+    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, _root, nullptr);
     symbol->isBuiltin = true;
 
     return symbol;
@@ -100,7 +100,7 @@ FunctionSymbol* SemanticAnalyzer::createBuiltin(const std::string& name)
 
 FunctionSymbol* SemanticAnalyzer::createExternal(const std::string& name)
 {
-    FunctionSymbol* symbol = new FunctionSymbol(name, _root, nullptr);
+    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, _root, nullptr);
     symbol->isExternal = true;
     symbol->isForeign = true;
 
@@ -110,19 +110,18 @@ FunctionSymbol* SemanticAnalyzer::createExternal(const std::string& name)
 void SemanticAnalyzer::injectSymbols()
 {
     //// Built-in types ////////////////////////////////////////////////////////
-    _symbolTable->insert(new TypeSymbol("Int", _root, _typeTable->Int), SymbolTable::TYPE);
-    _symbolTable->insert(new TypeSymbol("Bool", _root, _typeTable->Bool), SymbolTable::TYPE);
-    _symbolTable->insert(new TypeSymbol("Unit", _root, _typeTable->Unit), SymbolTable::TYPE);
-    _symbolTable->insert(new TypeSymbol("String", _root, _typeTable->String), SymbolTable::TYPE);
+    _symbolTable->createTypeSymbol("Int", _root, _typeTable->Int);
+    _symbolTable->createTypeSymbol("Bool", _root, _typeTable->Bool);
+    _symbolTable->createTypeSymbol("Unit", _root, _typeTable->Unit);
+    _symbolTable->createTypeSymbol("String", _root, _typeTable->String);
 
-    _symbolTable->insert(new TypeConstructorSymbol("Function", _root, _typeTable->Function), SymbolTable::TYPE);
-    _symbolTable->insert(new TypeConstructorSymbol("Array", _root, _typeTable->Array), SymbolTable::TYPE);
+    _symbolTable->createTypeConstructorSymbol("Function", _root, _typeTable->Function);
+    _symbolTable->createTypeConstructorSymbol("Array", _root, _typeTable->Array);
 
 
 	//// Create symbols for built-in functions
     FunctionSymbol* notFn = createBuiltin("not");
 	notFn->type = _typeTable->createFunctionType({_typeTable->Bool}, _typeTable->Bool);
-	_symbolTable->insert(notFn);
 
 	//// Integer arithmetic functions //////////////////////////////////////////
 
@@ -130,33 +129,27 @@ void SemanticAnalyzer::injectSymbols()
 
 	FunctionSymbol* add = createBuiltin("+");
 	add->type = arithmeticType;
-	_symbolTable->insert(add);
 
 	FunctionSymbol* subtract = createBuiltin("-");
 	subtract->type = arithmeticType;
-	_symbolTable->insert(subtract);
 
 	FunctionSymbol* multiply = createBuiltin("*");
 	multiply->type = arithmeticType;
-	_symbolTable->insert(multiply);
 
 	FunctionSymbol* divide = createBuiltin("/");
 	divide->type = arithmeticType;
-	_symbolTable->insert(divide);
 
 	FunctionSymbol* modulus = createBuiltin("%");
 	modulus->type = arithmeticType;
-	_symbolTable->insert(modulus);
 
 
 	//// These definitions are only needed so that we list them as external
 	//// symbols in the output assembly file. They can't be called from
 	//// language.
-    FunctionSymbol* gcAllocate = new FunctionSymbol("gcAllocate", _root, nullptr);
+    FunctionSymbol* gcAllocate = _symbolTable->createFunctionSymbol("gcAllocate", _root, nullptr);
     gcAllocate->isExternal = true;
-    _symbolTable->insert(gcAllocate);
 
-    _symbolTable->insert(new FunctionSymbol("_main", _root, nullptr));
+    _symbolTable->createFunctionSymbol("_main", _root, nullptr);
 }
 
 void SemanticAnalyzer::resolveBaseType(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables)
@@ -233,21 +226,6 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, const std::unordered_
             typeName->type = _typeTable->createConstructedType(typeConstructor, typeParameters);
         }
     }
-}
-
-void SemanticAnalyzer::insertSymbol(Symbol* symbol)
-{
-    if (!symbol) return;
-
-    static unsigned long count = 0;
-
-    if (symbol->name == "_")
-    {
-        symbol->name = format("_unnamed{}", count++);
-        return;
-    }
-
-    _symbolTable->insert(symbol);
 }
 
 //// Type inference functions //////////////////////////////////////////////////
@@ -520,10 +498,9 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     }
 
     // Create a symbol for the constructor
-    FunctionSymbol* symbol = new FunctionSymbol(node->name, node, nullptr);
+    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(node->name, node, nullptr);
     symbol->isForeign = true;
     symbol->type = _typeTable->createFunctionType(node->memberTypes, node->resultType);
-    insertSymbol(symbol);
 
     ValueConstructor* valueConstructor = _typeTable->createValueConstructor(symbol, node->memberTypes);
     node->valueConstructor = valueConstructor;
@@ -545,7 +522,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
     if (node->typeParameters.empty())
     {
         Type* newType = _typeTable->createBaseType(node->name);
-        _symbolTable->insert(new TypeSymbol(name, node, newType), SymbolTable::TYPE);
+        _symbolTable->createTypeSymbol(name, node, newType);
 
         for (auto& spec : node->constructorSpecs)
         {
@@ -570,8 +547,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         }
 
         TypeConstructor* typeConstructor = _typeTable->createTypeConstructor(name, node->typeParameters.size());
-        TypeConstructorSymbol* symbol = new TypeConstructorSymbol(name, node, typeConstructor);
-        _symbolTable->insert(symbol, SymbolTable::TYPE);
+        TypeConstructorSymbol* symbol = _symbolTable->createTypeConstructorSymbol(name, node, typeConstructor);
 
         Type* newType = _typeTable->createConstructedType(typeConstructor, variables);
 
@@ -600,7 +576,7 @@ void SemanticAnalyzer::visit(TypeAliasNode* node)
     resolveTypeName(node->underlying);
 
     // Insert the alias into the type table
-    _symbolTable->insert(new TypeSymbol(typeName, node, node->underlying->type), SymbolTable::TYPE);
+    _symbolTable->createTypeSymbol(typeName, node, node->underlying->type);
 
     node->type = _typeTable->Unit;
 }
@@ -633,9 +609,8 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
     const std::vector<Type*>& paramTypes = functionType->inputs();
 
-	Symbol* symbol = new FunctionSymbol(name, node, node);
+	FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, node, node);
     symbol->type = type;
-	insertSymbol(symbol);
 	node->symbol = symbol;
 
 	_symbolTable->pushScope();
@@ -646,11 +621,10 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	{
 		const std::string& param = node->params[i];
 
-		VariableSymbol* paramSymbol = new VariableSymbol(param, node, node, false);
+		VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, node, false);
 		paramSymbol->isParam = true;
         paramSymbol->offset = i;
 		paramSymbol->type = paramTypes[i];
-		insertSymbol(paramSymbol);
 
         node->parameterSymbols.push_back(paramSymbol);
 	}
@@ -694,11 +668,10 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     Type* functionType = node->typeName->type;
     assert(functionType->get<FunctionType>()->inputs().size() == node->params.size());
 
-	FunctionSymbol* symbol = new FunctionSymbol(name, node, nullptr);
+	FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, node, nullptr);
     symbol->type = functionType;
 	symbol->isForeign = true;
 	symbol->isExternal = true;
-	insertSymbol(symbol);
 	node->symbol = symbol;
 
     node->type = _typeTable->Unit;
@@ -715,7 +688,7 @@ void SemanticAnalyzer::visit(VariableDefNode* node)
         CHECK_UNDEFINED_IN_SCOPE(target);
 
         bool global = _symbolTable->isTopScope();
-    	Symbol* symbol = new VariableSymbol(target, node, _enclosingFunction, global);
+    	VariableSymbol* symbol = _symbolTable->createVariableSymbol(target, node, _enclosingFunction, global);
 
     	if (node->typeName)
     	{
@@ -727,7 +700,6 @@ void SemanticAnalyzer::visit(VariableDefNode* node)
     		symbol->type = _typeTable->createTypeVariable();
     	}
 
-    	insertSymbol(symbol);
     	node->symbol = symbol;
 
     	unify(node->rhs->type, symbol->type, node);
@@ -796,9 +768,8 @@ void SemanticAnalyzer::visit(MatchArm* node)
 
         if (name != "_")
         {
-            Symbol* member = new VariableSymbol(name, node, _enclosingFunction, false);
+            VariableSymbol* member = _symbolTable->createVariableSymbol(name, node, _enclosingFunction, false);
             member->type = functionType->inputs().at(i);
-            insertSymbol(member);
             node->symbols.push_back(member);
         }
         else
@@ -846,9 +817,8 @@ void SemanticAnalyzer::visit(LetNode* node)
 
         if (name != "_")
         {
-    		Symbol* member = new VariableSymbol(name, node, _enclosingFunction, global);
+    		VariableSymbol* member = _symbolTable->createVariableSymbol(name, node, _enclosingFunction, global);
     		member->type = functionType->inputs().at(i);
-    		insertSymbol(member);
     		node->symbols.push_back(member);
         }
         else
@@ -1061,9 +1031,8 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     CHECK(node->varName != "_", "for-loop induction variable cannot be unnamed");
     CHECK_UNDEFINED_IN_SCOPE(node->varName);
 
-    Symbol* symbol = new VariableSymbol(node->varName, node, _enclosingFunction, false);
+    VariableSymbol* symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
     symbol->type = varType;
-    insertSymbol(symbol);
     node->symbol = symbol;
 
     // HACK: Give the code generator access to these symbols
@@ -1100,9 +1069,8 @@ void SemanticAnalyzer::visit(ForNode* node)
     CHECK(node->varName != "_", "for-loop induction variable cannot be unnamed");
     CHECK_UNDEFINED_IN_SCOPE(node->varName);
 
-    Symbol* symbol = new VariableSymbol(node->varName, node, _enclosingFunction, false);
+    VariableSymbol* symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
     symbol->type = _typeTable->Int;
-    insertSymbol(symbol);
     node->symbol = symbol;
 
     node->type = _typeTable->Unit;
@@ -1159,10 +1127,9 @@ void SemanticAnalyzer::visit(StringLiteralNode* node)
     node->type = _typeTable->String;
 
     std::string name = "__staticString" + std::to_string(node->counter);
-    VariableSymbol* symbol = new VariableSymbol(name, node, nullptr, true);
+    VariableSymbol* symbol = _symbolTable->createVariableSymbol(name, node, nullptr, true);
     symbol->isStatic = true;
     symbol->contents = node->content;
-    insertSymbol(symbol);
     node->symbol = symbol;
 }
 
@@ -1209,7 +1176,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     CHECK(!node->members.empty(), "structs cannot be empty");
 
     Type* newType = _typeTable->createBaseType(node->name);
-    _symbolTable->insert(new TypeSymbol(typeName, node, newType), SymbolTable::TYPE);
+    _symbolTable->createTypeSymbol(typeName, node, newType);
 
     std::vector<std::string> memberNames;
     std::vector<Type*> memberTypes;
@@ -1221,17 +1188,15 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         memberTypes.push_back(member->memberType);
         memberNames.push_back(member->name);
 
-        MemberSymbol* memberSymbol = new MemberSymbol(member->name, node);
+        MemberSymbol* memberSymbol = _symbolTable->createMemberSymbol(member->name, node);
         memberSymbol->type = _typeTable->createFunctionType({newType}, member->memberType);
-        insertSymbol(memberSymbol);
         memberSymbols.push_back(memberSymbol);
     }
 
     // Create a symbol for the constructor
-    FunctionSymbol* symbol = new FunctionSymbol(typeName, node, nullptr);
+    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(typeName, node, nullptr);
     symbol->isForeign = true;
     symbol->type = _typeTable->createFunctionType(memberTypes, newType);
-    insertSymbol(symbol);
 
     ValueConstructor* valueConstructor = _typeTable->createValueConstructor(symbol, memberTypes, memberNames);
     node->valueConstructor = valueConstructor;
@@ -1306,9 +1271,8 @@ void SemanticAnalyzer::visit(FunctionDeclNode* node)
     CHECK(paramTypes.size() >= 1, "methods must take an argument of type Self");
     unify(paramTypes[0], _enclosingTrait->traitType, node);
 
-    Symbol* symbol = new MethodSymbol(name, node, node, _enclosingTrait);
+    MethodSymbol* symbol = _symbolTable->createMethodSymbol(name, node, node, _enclosingTrait);
     symbol->type = type;
-    insertSymbol(symbol);
     node->symbol = symbol;
 
     node->type = _typeTable->Unit;
@@ -1383,9 +1347,8 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
 
     const std::vector<Type*>& paramTypes = functionType->inputs();
 
-    Symbol* symbol = new FunctionSymbol(name, node, node);
+    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, node, node);
     symbol->type = type;
-    insertSymbol(symbol);
     node->symbol = symbol;
 
     _symbolTable->pushScope();
@@ -1396,11 +1359,10 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     {
         const std::string& param = node->params[i];
 
-        VariableSymbol* paramSymbol = new VariableSymbol(param, node, node, false);
+        VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, node, false);
         paramSymbol->isParam = true;
         paramSymbol->offset = i;
         paramSymbol->type = paramTypes[i];
-        insertSymbol(paramSymbol);
 
         node->parameterSymbols.push_back(paramSymbol);
     }

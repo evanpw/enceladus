@@ -10,27 +10,14 @@ class AstNode;
 class FunctionDefNode;
 class FunctionDeclNode;
 class TraitDefNode;
-
-struct VariableSymbol;
-struct FunctionSymbol;
-struct TypeSymbol;
-struct TypeConstructorSymbol;
-struct MemberSymbol;
-struct MethodSymbol;
+class SymbolTable;
 
 
 enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMember = 4, kMethod = 5};
 
-struct Symbol
+class Symbol
 {
-    Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
-    : name(name)
-    , node(node)
-    , enclosingFunction(enclosingFunction)
-    , global(global)
-    , kind(kind)
-    {}
-
+public:
     // This is just so that we can use dynamic_cast
     virtual ~Symbol() {}
 
@@ -49,13 +36,21 @@ struct Symbol
 
     // Variable, function, ...?
     Kind kind;
+
+protected:
+    Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
+    : name(name)
+    , node(node)
+    , enclosingFunction(enclosingFunction)
+    , global(global)
+    , kind(kind)
+    {}
 };
 
 
-struct VariableSymbol : public Symbol
+class VariableSymbol : public Symbol
 {
-    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global);
-
+public:
     // Is this symbol a function parameter?
     bool isParam = false;
 
@@ -67,45 +62,62 @@ struct VariableSymbol : public Symbol
 
     // For static strings
     std::string contents;
+
+private:
+    friend class SymbolTable;
+    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global);
 };
 
-struct FunctionSymbol : public Symbol
+class FunctionSymbol : public Symbol
 {
-    FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
-
+public:
     bool isForeign = false;     // C argument-passing style
     bool isExternal = false;
     bool isBuiltin = false;
 
     FunctionDefNode* definition;
+
+private:
+    friend class SymbolTable;
+    FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
 };
 
-struct MethodSymbol : public Symbol
+class MethodSymbol : public Symbol
 {
-    MethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode);
-
+public:
     FunctionDeclNode* declaration;
     TraitDefNode* traitNode;
+
+private:
+    friend class SymbolTable;
+    MethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode);
 };
 
-struct TypeSymbol : public Symbol
+class TypeSymbol : public Symbol
 {
+private:
+    friend class SymbolTable;
     TypeSymbol(const std::string& name, AstNode* node, Type* type);
 };
 
-struct TypeConstructorSymbol : public Symbol
+class TypeConstructorSymbol : public Symbol
 {
-    // Takes ownership of the pointer
-    TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
-
+public:
     TypeConstructor* typeConstructor;
+
+private:
+    friend class SymbolTable;
+    TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 };
 
 struct MemberSymbol : public Symbol
 {
-    MemberSymbol(const std::string& name, AstNode* node);
-
+public:
     size_t location;
+
+private:
+    friend class SymbolTable;
+    MemberSymbol(const std::string& name, AstNode* node);
 };
 
 

@@ -3,6 +3,49 @@
 
 #include <cassert>
 
+VariableSymbol* SymbolTable::createVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
+{
+    VariableSymbol* symbol = new VariableSymbol(name, node, enclosingFunction, global);
+    insert(symbol);
+    return symbol;
+}
+
+FunctionSymbol* SymbolTable::createFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition)
+{
+    FunctionSymbol* symbol = new FunctionSymbol(name, node, definition);
+    insert(symbol);
+    return symbol;
+}
+
+MemberSymbol* SymbolTable::createMemberSymbol(const std::string& name, AstNode* node)
+{
+    MemberSymbol* symbol = new MemberSymbol(name, node);
+    insert(symbol);
+    return symbol;
+}
+
+MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode)
+{
+    MethodSymbol* symbol = new MethodSymbol(name, node, declaration, traitNode);
+    insert(symbol);
+    return symbol;
+}
+
+TypeSymbol* SymbolTable::createTypeSymbol(const std::string& name, AstNode* node, Type* type)
+{
+    TypeSymbol* symbol = new TypeSymbol(name, node, type);
+    insert(symbol, SymbolTable::TYPE);
+    return symbol;
+}
+
+TypeConstructorSymbol* SymbolTable::createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
+{
+    TypeConstructorSymbol* symbol = new TypeConstructorSymbol(name, node, typeConstructor);
+    insert(symbol, SymbolTable::TYPE);
+    return symbol;
+}
+
+
 void SymbolTable::pushScope()
 {
     _scopes.push_back({});
@@ -51,5 +94,7 @@ void SymbolTable::insert(Symbol* symbol, WhichTable whichTable)
     assert(scope.find(key) == scope.end());
 
     _symbols.emplace_back(symbol);
-    scope.emplace(key, symbol);
+
+    if (symbol->name != "_")
+        scope.emplace(key, symbol);
 }

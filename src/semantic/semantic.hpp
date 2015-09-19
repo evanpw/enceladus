@@ -99,7 +99,6 @@ private:
     void resolveBaseType(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables);
     void resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables = {});
 
-    void insertSymbol(Symbol* symbol);
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);
 

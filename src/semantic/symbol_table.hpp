@@ -9,6 +9,13 @@
 class SymbolTable
 {
 public:
+    VariableSymbol* createVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global);
+    FunctionSymbol* createFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
+    TypeSymbol* createTypeSymbol(const std::string& name, AstNode* node, Type* type);
+    TypeConstructorSymbol* createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
+    MemberSymbol* createMemberSymbol(const std::string& name, AstNode* node);
+    MethodSymbol* createMethodSymbol(const std::string& name, AstNode* node, FunctionDeclNode* declaration, TraitDefNode* traitNode);
+
     void pushScope();
     void popScope();
 
@@ -17,11 +24,12 @@ public:
     // Returns nullptr if the symbol is not found in the symbol table
     Symbol* find(const std::string& name, WhichTable whichTable = OTHER);
     Symbol* findTopScope(const std::string& name, WhichTable whichTable = OTHER);
-    void insert(Symbol* symbol, WhichTable = OTHER);
 
     bool isTopScope() const { return _scopes.size() == 1; }
 
 private:
+    void insert(Symbol* symbol, WhichTable = OTHER);
+
     // Owning references
     std::vector<std::unique_ptr<Symbol>> _symbols;
 
