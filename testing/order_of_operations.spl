@@ -17,7 +17,7 @@
 
 import List
 
-data InstResult = InstResult String Int
+data InstResult = InstResult(String, Int)
 
 def simulateInstruction(cache: String, inst: String) -> InstResult
     newCache := []
@@ -47,7 +47,7 @@ def fullCache(instructions: [String]) -> String
     cache := zeroCache(m)
 
     for inst in instructions
-        let InstResult newCache _ := simulateInstruction(cache, inst)
+        let InstResult(newCache, _) := simulateInstruction(cache, inst)
         cache = newCache
 
     return cache
@@ -110,7 +110,7 @@ def costAt(memo: Array Int, instructions: [String], cache: String) -> Int
     # Examine each successor of this cache value
     costs := []
     for inst in instructions
-        let InstResult nextCache instCost := simulateInstruction(cache, inst)
+        let InstResult(nextCache, instCost) := simulateInstruction(cache, inst)
 
         if cmpString(cache, nextCache) != 0
             # The min cost starting at this point is at most the cost of this

@@ -129,7 +129,7 @@ simple_type
 //// Miscellaneous /////////////////////////////////////////////////////////////
 
 constructor_spec
-    : UIDENT { simple_type }
+    : UIDENT [ '(' type { ',' type } ')' ]
 
 suite
     : ':' statement
@@ -140,7 +140,8 @@ statement_list
     | statement_list statement
 
 parameters
-    : { LIDENT }
+    : '(' LIDENT { ',' LIDENT } ')'
+    | /* empty */
 
 param_and_type
     : LIDENT ':' type

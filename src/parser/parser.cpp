@@ -628,11 +628,19 @@ StatementNode* Parser::suite()
 std::vector<std::string> Parser::parameters()
 {
     std::vector<std::string> result;
-    while (peekType() == tLIDENT)
+
+    if (accept('('))
     {
         Token param = expect(tLIDENT);
-
         result.push_back(param.value.str);
+
+        while (accept(','))
+        {
+            Token param = expect(tLIDENT);
+            result.push_back(param.value.str);
+        }
+
+        expect(')');
     }
 
     return result;
@@ -776,15 +784,23 @@ TypeName* Parser::simple_type()
     }
 }
 
+/// constructor_spec
+///     : UIDENT [ '(' type { ',' type } ')' ]
 ConstructorSpec* Parser::constructor_spec()
 {
     YYLTYPE location = getLocation();
     Token name = expect(tUIDENT);
 
     ConstructorSpec* constructorSpec = new ConstructorSpec(_context, location, name.value.str);
-    while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[' || peekType() == '(')
+    if (accept('('))
     {
-        constructorSpec->members.push_back(simple_type());
+        constructorSpec->members.push_back(type());
+        while (accept(','))
+        {
+            constructorSpec->members.push_back(type());
+        }
+
+        expect(')');
     }
 
     return constructorSpec;

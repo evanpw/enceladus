@@ -1,5 +1,5 @@
-data MyOption = MySome Int | MyNone
+data MyOption = MySome(Int) | MyNone
 x := MySome(4)
 
 match x
-    MySome a => print $ show(a)
+    MySome(a) => print $ show(a)

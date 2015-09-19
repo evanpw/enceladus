@@ -1,10 +1,10 @@
-data MyPair T = MyPair T T
+data MyPair T = MyPair(T, T)
 
 x := MyPair(1, 2)
 y := MyPair(True, False)
 
-let MyPair a b := x
-let MyPair c d := y
+let MyPair(a, b) := x
+let MyPair(c, d) := y
 
 result := b
 if c

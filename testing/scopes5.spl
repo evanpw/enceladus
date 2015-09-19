@@ -1,7 +1,7 @@
-data Either S T = Left S | Right T
+data Either S T = Left(S) | Right(T)
 
 a := Left(1)
 
 match a
-    Left x  => print $ show(x)
-    Right x => print $ show(x)
+    Left(x)  => print $ show(x)
+    Right(x) => print $ show(x)

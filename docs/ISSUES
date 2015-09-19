@@ -59,3 +59,5 @@
 * Remove single-line for, if, etc?
 
 * Allow for-loop induction variable to be unnamed
+
+* Require type paramters to be enclosed in angle brackets <> when naming a type

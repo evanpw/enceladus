@@ -9,10 +9,10 @@ x := f(3, 4)
 
 _ := 4
 
-data MyPair = MyPair Int Int
+data MyPair = MyPair(Int, Int)
 y := MyPair(5, 6)
 
-let MyPair _ b := y
+let MyPair(_, b) := y
 
 x += b
 

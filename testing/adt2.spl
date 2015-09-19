@@ -1,9 +1,9 @@
-data MyOption T = MySome T | MyNone
+data MyOption T = MySome(T) | MyNone
 
 def isGood<T>(a: MyOption T) -> Int
     match a
-        MySome b => return 1
-        MyNone   => return 0
+        MySome(b) => return 1
+        MyNone    => return 0
 
     return 0
 

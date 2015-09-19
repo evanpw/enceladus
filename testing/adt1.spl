@@ -1,11 +1,11 @@
-data MyOption = MySome Int | MyNone
+data MyOption = MySome(Int) | MyNone
 x := MySome(4)
 y := MyNone
 
 def extract(val: MyOption) -> Int
     match val
-        MySome a => return a
-        MyNone   => return 1
+        MySome(a) => return a
+        MyNone    => return 1
 
     return 0
 

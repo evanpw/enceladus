@@ -1,9 +1,9 @@
-data Only = Only Int
+data Only = Only(Int)
 
 x := 0
 forever
     # This defines a new variable named x, doesn't reuse the old one
-    let Only x := Only(x + 1)
+    let Only(x) := Only(x + 1)
     break
 
 print $ show(x)

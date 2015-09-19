@@ -1,4 +1,4 @@
-data List T = Cons T (List T) | Nil
+data List T = Cons(T, List T) | Nil
 
 ## String ##
 type Char = Int
@@ -18,26 +18,26 @@ foreign arraySet<T>(arr: Array T, n: Int, value: T) -> Unit
 foreign die<T>(msg: String) -> T
 
 ## Option ##
-data Option T = Some T | None
+data Option T = Some(T) | None
 
 def isSome<T>(x: Option T) -> Bool
     match x
-        Some _ => return True
+        Some(_) => return True
         None   => return False
 
 def isNone<T>(x: Option T) -> Bool
     match x
-        Some _ => return False
+        Some(_) => return False
         None   => return True
 
 def unwrap<T>(x: Option T) -> T
     match x
-        Some y => return y
+        Some(y) => return y
         None   => die("*** Exception: Cannot unwrap None")
 
 def unwrapOr<T>(x: Option T, other: T) -> T
     match x
-        Some y => return y
+        Some(y) => return y
         None   => return other
 
 # I/O functions
@@ -48,18 +48,18 @@ foreign print(msg: String) -> Unit
 # Basic List operations
 def head<T>(xs: [T]) -> T
     match xs
-        Cons x _ => return x
-        Nil      => die("*** Exception: Called head on empty list")
+        Cons(x, _) => return x
+        Nil        => die("*** Exception: Called head on empty list")
 
 def tail<T>(xs: [T]) -> [T]
     match xs
-        Cons _ rest => return rest
-        Nil         => die("*** Exception: Called tail on empty list")
+        Cons(_, rest) => return rest
+        Nil           => die("*** Exception: Called tail on empty list")
 
 def null<T>(xs: [T]) -> Bool
     match xs
-        Cons _ _ => return False
-        Nil      => return True
+        Cons(_, _) => return False
+        Nil        => return True
 
 ## Native-language standard library
 
@@ -234,16 +234,16 @@ def pow(a: Int, b: Int) -> Int
 
 ## Pairs ##
 
-data Pair T = Pair T T
+data Pair T = Pair(T, T)
 
 
 def fst<T>(pair: Pair T) -> T
-    let Pair x _ := pair
+    let Pair(x, _) := pair
     return x
 
 
 def snd<T>(pair: Pair T) -> T
-    let Pair _ x := pair
+    let Pair(_, x) := pair
     return x
 
 
