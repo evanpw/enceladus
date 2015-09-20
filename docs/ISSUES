@@ -63,5 +63,3 @@
 * Clarify the difference between a type alias and a newtype (which one does type do?)
 
 * Allow methods to be implemented in C (needed for String methods mostly)
-
-* Make double arrow optional or illegal when match arm body is an indented block?

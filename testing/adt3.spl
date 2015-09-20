@@ -2,5 +2,7 @@ data MyOption = MySome(Int) | MyNone
 x := MySome(4)
 
 match x
-    MySome(a) => print $ show(a)
-    MySome(b) => print $ show(b)
+    MySome(a)
+        print $ show(a)
+    MySome(b)
+        print $ show(b)

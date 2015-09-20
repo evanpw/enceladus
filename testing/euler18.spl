@@ -9,7 +9,7 @@ def readInput() -> [[Int]]
         maybeLine := readLine()
 
         match maybeLine
-            Some(line) =>
+            Some(line)
                 xs := []
                 for s in line.split()
                     xs = unwrap(s.toInt()) :: xs
@@ -18,7 +18,7 @@ def readInput() -> [[Int]]
 
                 pyramid = row :: pyramid
 
-            None =>
+            None
                 break
 
     return reverse(pyramid)

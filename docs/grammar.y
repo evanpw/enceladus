@@ -71,7 +71,7 @@ match_body
     : INDENT match_arm { match_arm } DEDENT
 
 match_arm
-    : UIDENT parameters '=>' ( statement | EOL INDENT statement_list DEDENT)
+    : UIDENT parameters ( '=>' statement | EOL INDENT statement_list DEDENT)
 
 return_statement
     : RETURN expression EOL

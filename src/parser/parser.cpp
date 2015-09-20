@@ -358,12 +358,13 @@ StatementNode* Parser::match_statement()
     return new MatchNode(_context, location, expr, std::move(arms));
 }
 
+/// match_arm
+///     : UIDENT parameters ( '=>' statement | EOL INDENT statement_list DEDENT)
 MatchArm* Parser::match_arm()
 {
     YYLTYPE location = getLocation();
     Token constructor = expect(tUIDENT);
     std::vector<std::string> params = parameters();
-    expect(tDARROW);
 
     if (accept(tEOL))
     {
@@ -381,6 +382,7 @@ MatchArm* Parser::match_arm()
     }
     else
     {
+        expect(tDARROW);
         StatementNode* body = statement();
         return new MatchArm(_context, location, constructor.value.str, params, body);
     }

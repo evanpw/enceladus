@@ -195,7 +195,7 @@ class TestAcceptance(object):
         self.run('adt2', result='2')
 
     def test_adt3(self):
-        self.run('adt3', build_error='Error: testing/adt3.spl:6:5: cannot repeat constructors in match statement')
+        self.run('adt3', build_error='Error: testing/adt3.spl:7:5: cannot repeat constructors in match statement')
 
     def test_adt4(self):
         self.run('adt4', build_error='Error: testing/adt4.spl:4:1: switch statement is not exhaustive')
