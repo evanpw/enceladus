@@ -487,25 +487,30 @@ public:
 class ImplNode : public StatementNode
 {
 public:
-	ImplNode(AstContext* context, const YYLTYPE& location, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
-	: StatementNode(context, location), typeName(typeName), methods(methods)
+	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::string>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
+	: StatementNode(context, location), typeParams(typeParams), typeName(typeName), methods(methods)
 	{}
 
 	AST_VISITABLE();
 
+	std::vector<std::string> typeParams;
 	TypeName* typeName;
 	std::vector<MethodDefNode*> methods;
+
+	// Annotations
+	std::unordered_map<std::string, Type*> typeContext;
 };
 
 class TraitImplNode : public StatementNode
 {
 public:
-	TraitImplNode(AstContext* context, const YYLTYPE& location, const std::string& traitName, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
-	: StatementNode(context, location), traitName(traitName), typeName(typeName), methods(methods)
+	TraitImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::string>&& typeParams, const std::string& traitName, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
+	: StatementNode(context, location), typeParams(typeParams), traitName(traitName), typeName(typeName), methods(methods)
 	{}
 
 	AST_VISITABLE();
 
+	std::vector<std::string> typeParams;
 	std::string traitName;
 	TypeName* typeName;
 	std::vector<MethodDefNode*> methods;

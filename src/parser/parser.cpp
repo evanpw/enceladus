@@ -215,7 +215,7 @@ StatementNode* Parser::if_statement()
 }
 
 /// data_declaration
-///     : DATA UIDENT [ '<' UIDENT { ',' UIDENT } '>' ] '=' constructor_spec { '|' constructor_spec } EOL
+///     : DATA UIDENT type_params '=' constructor_spec { '|' constructor_spec } EOL
 StatementNode* Parser::data_declaration()
 {
     YYLTYPE location = getLocation();
@@ -223,17 +223,7 @@ StatementNode* Parser::data_declaration()
     expect(tDATA);
     Token name = expect(tUIDENT);
 
-    std::vector<std::string> typeParameters;
-    if (accept('<'))
-    {
-        typeParameters.push_back(expect(tUIDENT).value.str);
-        while (accept(','))
-        {
-            typeParameters.push_back(expect(tUIDENT).value.str);
-        }
-
-        expect('>');
-    }
+    std::vector<std::string> typeParameters = type_params();
 
     expect('=');
 
@@ -555,13 +545,15 @@ StatementNode* Parser::trait_definition()
 
 
 /// implementation_block
-///     : IMPL UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
-///     | IMPL type EOL INDENT method_definition { method_definition } DEDENT
+///     : IMPL type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+///     | IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
 StatementNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
 
     expect(tIMPL);
+
+    std::vector<std::string> typeParams = type_params();
 
     std::string traitName;
     TypeName* typeName = type();
@@ -587,11 +579,11 @@ StatementNode* Parser::implementation_block()
 
     if (traitName.empty())
     {
-        return new ImplNode(_context, location, typeName, std::move(methods));
+        return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods));
     }
     else
     {
-        return new TraitImplNode(_context, location, traitName, typeName, std::move(methods));
+        return new TraitImplNode(_context, location, std::move(typeParams), traitName, typeName, std::move(methods));
     }
 }
 

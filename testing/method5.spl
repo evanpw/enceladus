@@ -1,0 +1,12 @@
+impl<T> [T]
+    def myAt(self: [T], n: Int) -> T
+        xs := self
+        while n > 0
+            xs = tail(xs)
+            n -= 1
+
+        return head(xs)
+
+impl [Int]
+    def myAt(self: [Int], n: Int) -> Int
+        return 0

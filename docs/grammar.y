@@ -43,7 +43,7 @@ assignment_statement
     | LIDENT TIMES_EQUAL expression EOL
 
 data_declaration
-    : DATA UIDENT [ '<' UIDENT { ',' UIDENT } '>' ] '=' constructor_spec { '|' constructor_spec } EOL
+    : DATA UIDENT type_params '=' constructor_spec { '|' constructor_spec } EOL
 
 type_alias_declaration
     : TYPE UIDENT '=' type EOL
@@ -100,8 +100,8 @@ decl_list
     | def_list function_declaration
 
 implementation_block
-    : IMPL UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
-    | IMPL type EOL INDENT method_definition { method_definition } DEDENT
+    : IMPL type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+    | IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
 
 method_definition
     : DEF ident type_params params_and_types suite

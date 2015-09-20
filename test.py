@@ -257,6 +257,12 @@ class TestAcceptance(object):
     def test_method3(self):
         self.run('method3', 'Different')
 
+    def test_method4(self):
+        self.run('method4', '3')
+
+    def test_method5(self):
+        self.run('method5', build_error='Error: testing/method5.spl:11:5: an implementation of method "myAt" already exists for type "[Int]"')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

@@ -1331,8 +1331,19 @@ void SemanticAnalyzer::visit(ImplNode* node)
     assert(!_enclosingImplNode);
     _enclosingImplNode = node;
 
-    resolveTypeName(node->typeName);
+    // Create type variables for each type parameter
+    std::unordered_map<std::string, Type*> typeContext;
+    for (auto& typeParameter : node->typeParams)
+    {
+        CHECK_UNDEFINED(typeParameter);
 
+        Type* var = _typeTable->createTypeVariable(typeParameter, true);
+        typeContext.emplace(typeParameter, var);
+    }
+
+    resolveTypeName(node->typeName, typeContext);
+
+    node->typeContext = typeContext;
     AstVisitor::visit(node);
 
     _enclosingImplNode = nullptr;
@@ -1351,17 +1362,10 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     resolveMethodSymbol(node->name, parentType, symbols);
     CHECK(symbols.empty(), "an implementation of method \"{}\" already exists for type \"{}\"", node->name, parentType->name());
 
-    // Create type variables for each type parameter
-    std::unordered_map<std::string, Type*> typeContext;
-    for (auto& typeParameter : node->typeParams)
-    {
-        CHECK_UNDEFINED(typeParameter);
+    // TODO: Relax this restriction
+    CHECK(node->typeParams.empty(), "methods cannot be generic functions");
 
-        Type* var = _typeTable->createTypeVariable(typeParameter, true);
-        typeContext.emplace(typeParameter, var);
-    }
-
-    resolveTypeName(node->typeName, typeContext);
+    resolveTypeName(node->typeName, _enclosingImplNode->typeContext);
 
     Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();
