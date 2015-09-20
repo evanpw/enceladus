@@ -196,16 +196,16 @@ concat_expression
     | negation_expression [ '^' concat_expression ]
 
 negation_expression
-    : [ '-' ] func_call_expression
+    : [ '-' ] method_call_expression
+
+method_call_expression
+    : func_call_expression
+    | func_call_expression '.' '(' [ expression ] { ',' expression } ] ')'
 
 func_call_expression
     : ident '$' expression
     | ident '(' [ expression ] { ',' expression } ] ')'
-    | method_call_expression
-
-method_call_expression
-    : unary_expression
-    | unary_expression '.' '(' [ expression ] { ',' expression } ] ')'
+    | unary_expression
 
 unary_expression
     | '(' expression ')'

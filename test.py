@@ -251,6 +251,9 @@ class TestAcceptance(object):
     def test_method(self):
         self.run('method', 'Different')
 
+    def test_method2(self):
+        self.run('method2', 'Same')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

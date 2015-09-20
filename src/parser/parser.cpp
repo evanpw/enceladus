@@ -1082,14 +1082,49 @@ ExpressionNode* Parser::negation_expression()
     }
     else
     {
-        return func_call_expression();
+        return method_call_expression();
+    }
+}
+
+/// method_call_expression
+///     : func_call_expression
+///     | func_call_expression '.' '(' [ expression ] { ',' expression } ] ')'
+ExpressionNode* Parser::method_call_expression()
+{
+    YYLTYPE location = getLocation();
+
+    ExpressionNode* lhs = func_call_expression();
+    if (accept('.'))
+    {
+        Token methodName = expect(tLIDENT);
+
+        expect('(');
+
+        std::vector<ExpressionNode*> argList;
+        if (!accept(')'))
+        {
+            argList.push_back(expression());
+
+            while (accept(','))
+            {
+                argList.push_back(expression());
+            }
+
+            expect(')');
+        }
+
+        return new MethodCallNode(_context, location, lhs, methodName.value.str, std::move(argList));
+    }
+    else
+    {
+        return lhs;
     }
 }
 
 /// func_call_expression
 ///     : ident '$' expression
 ///     | ident '(' [ expression ] { ',' expression } ] ')'
-///     | method_call_expression
+///     | unary_expression
 ExpressionNode* Parser::func_call_expression()
 {
     if ((peekType() == tLIDENT || peekType() == tUIDENT) && (peek2ndType() == '(' || peek2ndType() == '$'))
@@ -1124,42 +1159,7 @@ ExpressionNode* Parser::func_call_expression()
     }
     else
     {
-        return method_call_expression();
-    }
-}
-
-/// method_call_expression
-///     : unary_expression
-///     | unary_expression '.' '(' [ expression ] { ',' expression } ] ')'
-ExpressionNode* Parser::method_call_expression()
-{
-    YYLTYPE location = getLocation();
-
-    ExpressionNode* lhs = unary_expression();
-    if (accept('.'))
-    {
-        Token methodName = expect(tLIDENT);
-
-        expect('(');
-
-        std::vector<ExpressionNode*> argList;
-        if (!accept(')'))
-        {
-            argList.push_back(expression());
-
-            while (accept(','))
-            {
-                argList.push_back(expression());
-            }
-
-            expect(')');
-        }
-
-        return new MethodCallNode(_context, location, lhs, methodName.value.str, std::move(argList));
-    }
-    else
-    {
-        return lhs;
+        return unary_expression();
     }
 }
 
