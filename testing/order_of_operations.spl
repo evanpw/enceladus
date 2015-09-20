@@ -9,7 +9,7 @@
 # LANG: Iterator that generalizes String and List and can be looped over
 # TST: Add tests for library functions
 # LANG: Syntactic sugar for strAt
-# LANG: Make destructuring look more like a normal variable definition
+# LANG: Make destructuring look more like a normal variable definition?
 # LIB: Deque data structure
 # LANG: Set array elements using the same array.[offset] syntax as getting
 # LANG: Add continue keyword
@@ -63,13 +63,13 @@ def cacheToOffset(cache: String) -> Int
 
     return offset
 
-def hasValue(memo: Array Int, cache: String) -> Bool
+def hasValue(memo: Array<Int>, cache: String) -> Bool
     offset := cacheToOffset(cache)
     value := memo.[offset]
 
     return value != -1
 
-def getValue(memo: Array Int, cache: String) -> Int
+def getValue(memo: Array<Int>, cache: String) -> Int
     offset := cacheToOffset(cache)
     value := memo.[offset]
 
@@ -77,7 +77,7 @@ def getValue(memo: Array Int, cache: String) -> Int
 
     return value
 
-def setValue(memo: Array Int, cache: String, value: Int) -> Unit
+def setValue(memo: Array<Int>, cache: String, value: Int) -> Unit
     offset := cacheToOffset(cache)
     assert(memo.[offset] == -1)
     arraySet(memo, offset, value)
@@ -103,7 +103,7 @@ def predecessors(cache: String) -> [String]
 
     return result
 
-def costAt(memo: Array Int, instructions: [String], cache: String) -> Int
+def costAt(memo: Array<Int>, instructions: [String], cache: String) -> Int
     if hasValue(memo, cache)
         return getValue(memo, cache)
 

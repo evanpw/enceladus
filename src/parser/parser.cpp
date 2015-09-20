@@ -214,6 +214,8 @@ StatementNode* Parser::if_statement()
     return if_helper(location);
 }
 
+/// data_declaration
+///     : DATA UIDENT [ '<' UIDENT { ',' UIDENT } '>' ] '=' constructor_spec { '|' constructor_spec } EOL
 StatementNode* Parser::data_declaration()
 {
     YYLTYPE location = getLocation();
@@ -222,10 +224,15 @@ StatementNode* Parser::data_declaration()
     Token name = expect(tUIDENT);
 
     std::vector<std::string> typeParameters;
-    while (peekType() == tUIDENT)
+    if (accept('<'))
     {
-        Token token = expect(tUIDENT);
-        typeParameters.push_back(token.value.str);
+        typeParameters.push_back(expect(tUIDENT).value.str);
+        while (accept(','))
+        {
+            typeParameters.push_back(expect(tUIDENT).value.str);
+        }
+
+        expect('>');
     }
 
     expect('=');
@@ -720,7 +727,7 @@ TypeName* Parser::arrow_type()
 }
 
 /// constructed_type
-///     : UIDENT { simple_type }
+///     : UIDENT [ '<' type { ',' type } '>' ]
 ///     | simple_type
 TypeName* Parser::constructed_type()
 {
@@ -731,9 +738,15 @@ TypeName* Parser::constructed_type()
         Token name = expect(tUIDENT);
         TypeName* typeName = new TypeName(_context, location, name.value.str);
 
-        while (peekType() == tUIDENT || peekType() == tLIDENT || peekType() == '[' || peekType() == '(')
+        if (accept('<'))
         {
-            typeName->parameters.push_back(simple_type());
+            typeName->parameters.push_back(type());
+            while (accept(','))
+            {
+                typeName->parameters.push_back(type());
+            }
+
+            expect('>');
         }
 
         return typeName;

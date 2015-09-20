@@ -1,4 +1,4 @@
-data List T = Cons(T, List T) | Nil
+data List<T> = Cons(T, List<T>) | Nil
 
 ## String ##
 type Char = Int
@@ -10,39 +10,39 @@ foreign strCat(lhs: String, rhs: String) -> String
 foreign show(x: Int) -> String
 
 ## Array ##
-foreign makeArray<T>(n: Int, value: T) -> Array T
-foreign arrayAt<T>(arr: Array T, n: Int) -> T
-foreign arraySet<T>(arr: Array T, n: Int, value: T) -> Unit
+foreign makeArray<T>(n: Int, value: T) -> Array<T>
+foreign arrayAt<T>(arr: Array<T>, n: Int) -> T
+foreign arraySet<T>(arr: Array<T>, n: Int, value: T) -> Unit
 
 
 foreign die<T>(msg: String) -> T
 
 ## Option ##
-data Option T = Some(T) | None
+data Option<T> = Some(T) | None
 
-def isSome<T>(x: Option T) -> Bool
+def isSome<T>(x: Option<T>) -> Bool
     match x
         Some(_) => return True
         None   => return False
 
-def isNone<T>(x: Option T) -> Bool
+def isNone<T>(x: Option<T>) -> Bool
     match x
         Some(_) => return False
         None   => return True
 
-def unwrap<T>(x: Option T) -> T
+def unwrap<T>(x: Option<T>) -> T
     match x
         Some(y) => return y
         None   => die("*** Exception: Cannot unwrap None")
 
-def unwrapOr<T>(x: Option T, other: T) -> T
+def unwrapOr<T>(x: Option<T>, other: T) -> T
     match x
         Some(y) => return y
         None   => return other
 
 # I/O functions
 foreign read() -> Int
-foreign readLine() -> Option String
+foreign readLine() -> Option<String>
 foreign print(msg: String) -> Unit
 
 # Basic List operations
@@ -234,18 +234,18 @@ def pow(a: Int, b: Int) -> Int
 
 ## Pairs ##
 
-data Pair T = Pair(T, T)
+data Pair<T> = Pair(T, T)
 
 
-def fst<T>(pair: Pair T) -> T
+def fst<T>(pair: Pair<T>) -> T
     let Pair(x, _) := pair
     return x
 
 
-def snd<T>(pair: Pair T) -> T
+def snd<T>(pair: Pair<T>) -> T
     let Pair(_, x) := pair
     return x
 
 
-def splitAt<T>(n: Int, xs: [T]) -> Pair [T]
+def splitAt<T>(n: Int, xs: [T]) -> Pair<[T]>
     return Pair(take(n, xs), drop(n, xs))

@@ -43,7 +43,7 @@ assignment_statement
     | LIDENT TIMES_EQUAL expression EOL
 
 data_declaration
-    : DATA UIDENT { UIDENT } '=' constructor_spec { '|' constructor_spec } EOL
+    : DATA UIDENT [ '<' UIDENT { ',' UIDENT } '>' ] '=' constructor_spec { '|' constructor_spec } EOL
 
 type_alias_declaration
     : TYPE UIDENT '=' type EOL
@@ -117,7 +117,7 @@ arrow_type
     : constructed_type [ RARROW constructed_type ]
 
 constructed_type
-    : UIDENT { simple_type }
+    : UIDENT [ '<' type { ',' type } '>' ]
     | simple_type
 
 simple_type

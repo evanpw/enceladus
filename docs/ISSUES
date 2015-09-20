@@ -60,4 +60,4 @@
 
 * Allow for-loop induction variable to be unnamed
 
-* Require type paramters to be enclosed in angle brackets <> when naming a type
+* Clarify the difference between a type alias and a newtype (which one does type do?)

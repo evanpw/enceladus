@@ -1,5 +1,5 @@
-data MyPair T = MyPair(T, T)
+data MyPair<T> = MyPair(T, T)
 
-def f(p: MyPair Int Int) -> Int
+def f(p: MyPair<Int, Int>) -> Int
     let MyPair(x, y)  := p
     return x

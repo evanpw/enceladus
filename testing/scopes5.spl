@@ -1,4 +1,4 @@
-data Either S T = Left(S) | Right(T)
+data Either<S, T> = Left(S) | Right(T)
 
 a := Left(1)
 
