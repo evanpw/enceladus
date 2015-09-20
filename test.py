@@ -248,6 +248,9 @@ class TestAcceptance(object):
     def test_order_of_operations(self):
         self.run('order_of_operations', '')
 
+    def test_method(self):
+        self.run('method', 'Different')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

@@ -28,6 +28,7 @@ class MatchArm;
 class MatchNode;
 class MemberAccessNode;
 class MemberDefNode;
+class MethodCallNode;
 class MethodDefNode;
 class NullaryNode;
 class ProgramNode;
@@ -87,6 +88,7 @@ public:
 	virtual void visit(MethodDefNode* node);
 	virtual void visit(TraitDefNode* node);
 	virtual void visit(TraitImplNode* node);
+	virtual void visit(MethodCallNode* node);
 };
 
 #endif

@@ -116,9 +116,12 @@ public:
     FunctionDefNode* definition;
     Type* parentType;
 
+    // A number which is unique among methods with the same name
+    size_t index;
+
 private:
     friend class SymbolTable;
-    MethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType);
+    MethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index);
 };
 
 #endif

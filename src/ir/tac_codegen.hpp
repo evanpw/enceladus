@@ -50,6 +50,7 @@ public:
     virtual void visit(MemberAccessNode* node) { wrapper(node); }
     virtual void visit(NullaryNode* node) { wrapper(node); }
     virtual void visit(VariableNode* node) { wrapper(node); }
+    virtual void visit(MethodCallNode* node) { wrapper(node); }
 
     virtual void visit(FunctionCallNode* node);
     virtual void visit(ComparisonNode* node);
@@ -127,9 +128,11 @@ public:
     virtual void visit(WhileNode* node);
 
     // Work in progress
+    virtual void visit(ImplNode* node);
+    virtual void visit(MethodDefNode*);
+    virtual void visit(MethodCallNode* node);
+
     virtual void visit(FunctionDeclNode*) {}
-    virtual void visit(ImplNode* node) {}
-    virtual void visit(MethodDefNode*) {}
     virtual void visit(TraitDefNode*) {}
     virtual void visit(TraitImplNode*) {}
 
@@ -152,6 +155,7 @@ private:
     // We accumulate these lists while walking through the top level, and then
     // generate code for each of them after the main function is finished
     std::vector<FunctionDefNode*> _functions;
+    std::vector<MethodDefNode*> _methods;
     std::vector<DataDeclaration*> _dataDeclarations;
     std::vector<StructDefNode*> _structDeclarations;
 

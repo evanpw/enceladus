@@ -85,6 +85,17 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
                 result = _context->createFunction(symbol->name);
             }
         }
+        else if (symbol->kind == kMethod)
+        {
+            const MethodSymbol* methodSymbol = dynamic_cast<const MethodSymbol*>(symbol);
+
+            // We have to append a unique number to method names because several
+            // types can have a method with the same name
+            std::stringstream ss;
+            ss << methodSymbol->name << "$" << methodSymbol->index;
+
+            result = _context->createFunction(ss.str());
+        }
         else
         {
             assert(false);
@@ -135,8 +146,8 @@ void TACCodeGen::visit(ProgramNode* node)
 
     emit(new ReturnInst());
 
-    // The previous loop will have filled in _functions with a list of all
-    // other functions. Now generate code for those
+    // The previous loop will have filled in _functions and _methods with a
+    // list of all other functions. Now generate code for those
     for (FunctionDefNode* funcDefNode : _functions)
     {
         Function* function = (Function*)getValue(funcDefNode->symbol);
@@ -158,6 +169,30 @@ void TACCodeGen::visit(ProgramNode* node)
         if (!_currentBlock->isTerminated())
         {
             emit(new ReturnInst(funcDefNode->body->value));
+        }
+    }
+
+    for (MethodDefNode* methodDefNode : _methods)
+    {
+        Function* function = (Function*)getValue(methodDefNode->symbol);
+        _currentFunction = function;
+        _nextSeqNumber = 0;
+        setBlock(createBlock());
+
+        // Collect all function parameters
+        for (Symbol* param : methodDefNode->parameterSymbols)
+        {
+            assert(dynamic_cast<VariableSymbol*>(param)->isParam);
+            _currentFunction->params.push_back(getValue(param));
+        }
+
+        // Generate code for the function body
+        methodDefNode->body->accept(this);
+
+        // Handle implicit return values
+        if (!_currentBlock->isTerminated())
+        {
+            emit(new ReturnInst(methodDefNode->body->value));
         }
     }
 
@@ -836,6 +871,30 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
 }
 
+void TACCodeGen::visit(MethodCallNode* node)
+{
+    std::vector<Value*> arguments;
+
+    // Target object is implicitly the first argument
+    node->object->accept(this);
+    arguments.push_back(node->object->value);
+
+    for (auto& i : node->arguments)
+    {
+        i->accept(this);
+        arguments.push_back(i->value);
+    }
+
+    if (!node->type->equals(node->type->table()->Unit))
+        node->value = createTemp(getValueType(node->type));
+
+    Value* result = node->value;
+
+    assert(node->symbol->kind == kMethod);
+
+    emit(new CallInst(result, getValue(node->symbol), arguments));
+}
+
 void TACCodeGen::visit(ReturnNode* node)
 {
     Value* result = visitAndGet(node->expression);
@@ -1043,4 +1102,16 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constru
     }
 
     emit(new ReturnInst(result));
+}
+
+void TACCodeGen::visit(ImplNode* node)
+{
+    AstVisitor::visit(node);
+}
+
+void TACCodeGen::visit(MethodDefNode* node)
+{
+    // Do the code generation for this method later, after we've generated
+    // code for the main function
+    _methods.push_back(node);
 }

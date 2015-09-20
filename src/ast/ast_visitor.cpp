@@ -192,3 +192,13 @@ void AstVisitor::visit(MethodDefNode* node)
 	node->body->accept(this);
 	node->typeName->accept(this);
 }
+
+void AstVisitor::visit(MethodCallNode* node)
+{
+	node->object->accept(this);
+
+	for (auto& argument : node->arguments)
+	{
+		argument->accept(this);
+	}
+}

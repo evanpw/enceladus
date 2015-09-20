@@ -201,6 +201,11 @@ negation_expression
 func_call_expression
     : ident '$' expression
     | ident '(' [ expression ] { ',' expression } ] ')'
+    | method_call_expression
+
+method_call_expression
+    : unary_expression
+    | unary_expression '.' '(' [ expression ] { ',' expression } ] ')'
 
 unary_expression
     | '(' expression ')'

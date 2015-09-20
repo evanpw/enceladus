@@ -247,6 +247,23 @@ public:
 	Symbol* symbol = nullptr;
 };
 
+class MethodCallNode : public ExpressionNode
+{
+public:
+	MethodCallNode(AstContext* context, const YYLTYPE& location, ExpressionNode* object, const std::string& methodName, std::vector<ExpressionNode*>&& arguments)
+	: ExpressionNode(context, location), object(object), methodName(methodName), arguments(std::move(arguments))
+	{}
+
+	AST_VISITABLE();
+
+	ExpressionNode* object;
+	std::string methodName;
+	std::vector<ExpressionNode*> arguments;
+
+	// Annotations
+	Symbol* symbol = nullptr;
+};
+
 class VariableNode : public ExpressionNode
 {
 public:

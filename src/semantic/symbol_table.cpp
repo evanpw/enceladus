@@ -26,8 +26,14 @@ MemberSymbol* SymbolTable::createMemberSymbol(const std::string& name, AstNode* 
 
 MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType)
 {
-    MethodSymbol* symbol = new MethodSymbol(name, node, definition, parentType);
-    insertMethod(symbol);
+    auto& bucket = _methods[name];
+    MethodSymbol* symbol = new MethodSymbol(name, node, definition, parentType, bucket.size());
+
+    if (symbol->name != "_")
+    {
+        bucket.push_back(symbol);
+    }
+
     return symbol;
 }
 

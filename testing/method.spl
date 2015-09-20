@@ -1,0 +1,15 @@
+impl Int
+    def eq(self: Int, other: Int) -> Bool
+        return self == other
+
+impl [Int]
+    def eq(self: [Int], other: [Int]) -> Bool
+        return head(self) == head(other)
+
+x := 1
+y := 2
+
+if x.eq(y)
+    print $ "Same"
+else
+    print $ "Different"

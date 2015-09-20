@@ -28,9 +28,10 @@ MemberSymbol::MemberSymbol(const std::string& name, AstNode* node)
 {
 }
 
-MethodSymbol::MethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType)
+MethodSymbol::MethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index)
 : Symbol(name, kMethod, node, nullptr, true)
 , definition(definition)
 , parentType(parentType)
+, index(index)
 {
 }

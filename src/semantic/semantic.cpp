@@ -1349,7 +1349,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     std::vector<MethodSymbol*> symbols;
     Type* parentType = _enclosingImplNode->typeName->type;
     resolveMethodSymbol(node->name, parentType, symbols);
-    CHECK(symbols.empty(), "an implementation of method \"{}\" already exists for type \"{}\"", node->name, node->typeName->str());
+    CHECK(symbols.empty(), "an implementation of method \"{}\" already exists for type \"{}\"", node->name, parentType->name());
 
     // Create type variables for each type parameter
     std::unordered_map<std::string, Type*> typeContext;
@@ -1403,4 +1403,35 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
 
     unify(node->body->type, functionType->output(), node);
     node->type = _typeTable->Unit;
+}
+
+void SemanticAnalyzer::visit(MethodCallNode* node)
+{
+    node->object->accept(this);
+    Type* objectType = node->object->type;
+
+    std::vector<MethodSymbol*> symbols;
+    resolveMethodSymbol(node->methodName, objectType, symbols);
+    CHECK(!symbols.empty(), "no method named \"{}\" found for type \"{}\"", node->methodName, objectType->name());
+    CHECK(symbols.size() < 2, "method call is amiguous");
+
+    Symbol* symbol = symbols.front();
+
+    std::vector<Type*> paramTypes = {objectType};
+    for (size_t i = 0; i < node->arguments.size(); ++i)
+    {
+        AstNode& argument = *node->arguments[i];
+        argument.accept(this);
+
+        paramTypes.push_back(argument.type);
+    }
+
+    node->symbol = symbol;
+
+    Type* returnType = _typeTable->createTypeVariable();
+    Type* functionType = instantiate(symbol->type);
+
+    unify(functionType, _typeTable->createFunctionType(paramTypes, returnType), node);
+
+    node->type = returnType;
 }

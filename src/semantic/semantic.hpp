@@ -73,6 +73,7 @@ public:
     virtual void visit(MethodDefNode* node);
     virtual void visit(TraitDefNode* node);
     virtual void visit(TraitImplNode* node);
+    virtual void visit(MethodCallNode* node);
 
 private:
     //// Type Inference ////////////////////////////////////////////////////////
