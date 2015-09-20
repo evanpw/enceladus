@@ -5,6 +5,6 @@ import BigInt
 x := toBigInt(1)
 
 for i = 1 to 1000
-    x = bigSum(x, x)
+    x = x.plus(x)
 
-print $ show $ sum(x)
+print $ show $ sum(x.digits())

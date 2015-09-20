@@ -6,8 +6,8 @@ last := toBigInt(1)
 current := toBigInt(1)
 index := 2
 
-while length(current) < 1000
-    next := bigSum(last, current)
+while length(current.digits()) < 1000
+    next := last.plus(current)
     last = current
     current = next
 
