@@ -561,6 +561,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         for (auto& typeParameter : node->typeParameters)
         {
             CHECK_UNDEFINED(typeParameter);
+            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
 
             Type* var = _typeTable->createTypeVariable(typeParameter, true);
             variables.push_back(var);
@@ -617,6 +618,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
     for (auto& typeParameter : node->typeParams)
     {
         CHECK_UNDEFINED(typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
 
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
         typeContext.emplace(typeParameter, var);
@@ -680,6 +682,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     for (auto& typeParameter : node->typeParams)
     {
         CHECK_UNDEFINED(typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
 
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
         typeContext.emplace(typeParameter, var);
@@ -1340,6 +1343,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
     for (auto& typeParameter : node->typeParams)
     {
         CHECK_UNDEFINED(typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
 
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
         typeContext.emplace(typeParameter, var);
@@ -1366,10 +1370,18 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     resolveMethodSymbol(node->name, parentType, symbols);
     CHECK(symbols.empty(), "an implementation of method \"{}\" already exists for type \"{}\"", node->name, parentType->name());
 
-    // TODO: Relax this restriction
-    CHECK(node->typeParams.empty(), "methods cannot be generic functions");
+    // Create type variables for each type parameter
+    std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
+    for (auto& typeParameter : node->typeParams)
+    {
+        CHECK_UNDEFINED(typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
 
-    resolveTypeName(node->typeName, _enclosingImplNode->typeContext);
+        Type* var = _typeTable->createTypeVariable(typeParameter, true);
+        typeContext.emplace(typeParameter, var);
+    }
+
+    resolveTypeName(node->typeName, typeContext);
 
     Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();

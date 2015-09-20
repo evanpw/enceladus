@@ -142,6 +142,21 @@ impl<T> List<T>
 
         return result
 
+    def filter(self: [T], f: T -> Bool) -> [T]
+        result := []
+        for x in self
+            if f(x)
+                result = x :: result
+
+        return result.reverse()
+
+    def map<S>(self: [T], f: T -> S) -> [S]
+        result := []
+        for x in self
+            result = f(x) :: result
+
+        return result.reverse()
+
 
 ## Native-language standard library
 def assert(b: Bool) -> Unit
@@ -152,23 +167,6 @@ def assert(b: Bool) -> Unit
 def assertMessage(b: Bool, err: String) -> Unit
     if not(b)
         die("*** Exception: Assertion failed: " ^ err)
-
-
-def map<S, T>(f: S -> T, xs: [S]) -> [T]
-    result := []
-    for x in xs
-        result = f(x) :: result
-
-    return result.reverse()
-
-
-def filter<T>(f: T -> Bool, xs: [T]) -> [T]
-    result := []
-    for x in xs
-        if f(x)
-            result = x :: result
-
-    return result.reverse()
 
 
 def concat<T>(xs: [T], ys: [T]) -> [T]

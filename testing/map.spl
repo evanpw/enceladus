@@ -1,0 +1,9 @@
+xs := [1, 2, 3, 4, 5]
+ys := xs.map(odd)
+
+count := 0
+for y in ys
+    if y
+        count += 1
+
+print $ show(count)

@@ -263,6 +263,28 @@ class TestAcceptance(object):
     def test_method5(self):
         self.run('method5', build_error='Error: testing/method5.spl:11:5: an implementation of method "myAt" already exists for type "[Int]"')
 
+    def test_map(self):
+        self.run('map', result='3')
+
+    def test_repeatedTypeParam(self):
+        self.run('repeatedTypeParam', build_error='Error: testing/repeatedTypeParam.spl:1:1: type parameter "T" is already defined')
+
+    def test_repeatedTypeParam2(self):
+        self.run('repeatedTypeParam2', build_error='Error: testing/repeatedTypeParam2.spl:1:1: type parameter "T" is already defined')
+
+    def test_repeatedTypeParam3(self):
+        self.run('repeatedTypeParam3', build_error='Error: testing/repeatedTypeParam3.spl:1:1: type parameter "T" is already defined')
+
+    def test_repeatedTypeParam4(self):
+        self.run('repeatedTypeParam4', build_error='Error: testing/repeatedTypeParam4.spl:2:5: type parameter "T" is already defined')
+
+    def test_repeatedTypeParam5(self):
+        self.run('repeatedTypeParam5', build_error='Error: testing/repeatedTypeParam5.spl:2:5: type parameter "T" is already defined')
+
+    def test_repeatedTypeParam6(self):
+        self.run('repeatedTypeParam6', build_error='Error: testing/repeatedTypeParam6.spl:1:1: type parameter "T" is already defined')
+
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
