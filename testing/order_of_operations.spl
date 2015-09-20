@@ -33,7 +33,7 @@ def simulateInstruction(cache: String, inst: String) -> InstResult
 
         newCache = c :: newCache
 
-    return InstResult(strFromList(reverse(newCache)), k * k)
+    return InstResult(strFromList(newCache.reverse()), k * k)
 
 def zeroCache(m: Int) -> String
     result := ""
@@ -43,7 +43,7 @@ def zeroCache(m: Int) -> String
     return result
 
 def fullCache(instructions: [String]) -> String
-    m := head(instructions).length()
+    m := instructions.head().length()
     cache := zeroCache(m)
 
     for inst in instructions
@@ -80,7 +80,7 @@ def getValue(memo: Array<Int>, cache: String) -> Int
 def setValue(memo: Array<Int>, cache: String, value: Int) -> Unit
     offset := cacheToOffset(cache)
     assert(memo.[offset] == -1)
-    arraySet(memo, offset, value)
+    memo.set(offset, value)
 
 # Return a string that differs from the given one by setting location n to
 # the character '0'
@@ -118,7 +118,7 @@ def costAt(memo: Array<Int>, instructions: [String], cache: String) -> Int
             cost := instCost + costAt(memo, instructions, nextCache)
             costs = cost :: costs
 
-    assert(length(costs) > 0)
+    assert(costs.length() > 0)
 
     bestCost := minimum(costs)
     setValue(memo, cache, bestCost)
@@ -126,8 +126,8 @@ def costAt(memo: Array<Int>, instructions: [String], cache: String) -> Int
     return bestCost
 
 def minTime(instructions: [String]) -> Int
-    n := length(instructions)
-    m := head(instructions).length()
+    n := instructions.length()
+    m := instructions.head().length()
 
     empty := zeroCache(m)
     full := fullCache(instructions)

@@ -11,13 +11,13 @@ def delete(x: Int, xs: [Int]) -> [Int]
     initial := []
     xs' := xs
 
-    while not $ null(xs')
-        if head(xs') == x
-            return reverse(initial) ++ tail(xs')
+    while not $ xs'.null()
+        if xs'.head() == x
+            return initial.reverse() ++ xs'.tail()
         else
-            initial = head(xs') :: initial
+            initial = xs'.head() :: initial
 
-        xs' = tail(xs')
+        xs' = xs'.tail()
 
     return xs
 
@@ -30,11 +30,11 @@ def factorial(n: Int) -> Int
     return result
 
 def permutationAt(n: Int, digits: [Int]) -> [Int]
-    if length(digits) == 1
+    if digits.length() == 1
         assert(n == 0)
-        return [head(digits)]
+        return [digits.head()]
 
-    subCount := factorial(length(digits) - 1)
+    subCount := factorial(digits.length() - 1)
 
     for digit in digits
         if subCount <= n

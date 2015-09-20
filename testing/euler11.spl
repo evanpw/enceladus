@@ -23,7 +23,7 @@ grid := [8, 2, 22, 97, 38, 15, 0, 40, 0, 75, 4, 5, 7, 78, 52, 12, 50, 77, 91,
     54, 71, 83, 51, 54, 69, 16, 92, 33, 48, 61, 43, 52, 1, 89, 19, 67, 48]
 
 def get(x: Int, y: Int) -> Int
-    return at(y * 20 + x, grid)
+    return grid.at(y * 20 + x)
 
 def makeRun(x: Int, y: Int, dx: Int, dy: Int) -> Int
     x1 := get(x, y)

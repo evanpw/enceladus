@@ -2,10 +2,10 @@ impl<T> [T]
     def myAt(self: [T], n: Int) -> T
         xs := self
         while n > 0
-            xs = tail(xs)
+            xs = xs.tail()
             n -= 1
 
-        return head(xs)
+        return xs.head()
 
 impl [Int]
     def myAt(self: [Int], n: Int) -> Int

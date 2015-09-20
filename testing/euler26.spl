@@ -13,7 +13,7 @@ def reciprocal(d: Int) -> [Int]
         result = quotient :: result
         numerator = remainder * 10
 
-    return reverse(result)
+    return result.reverse()
 
 def next(n: Int, d: Int) -> Int
     quotient := n / d
@@ -25,11 +25,11 @@ def next(n: Int, d: Int) -> Int
 
 def findIn(x: Int, xs: [Int]) -> Int
     i := 0
-    while not $ null(xs)
-        if x == head(xs)
+    while not $ xs.null()
+        if x == xs.head()
             return i
         else
-            xs = tail(xs)
+            xs = xs.tail()
             i += 1
 
     return -1

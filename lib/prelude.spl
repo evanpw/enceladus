@@ -25,76 +25,125 @@ foreign makeArray<T>(n: Int, value: T) -> Array<T>
 foreign arrayAt<T>(arr: Array<T>, n: Int) -> T
 foreign arraySet<T>(arr: Array<T>, n: Int, value: T) -> Unit
 
+# Method wrappers (methods can't be implemented in C)
+impl<T> Array<T>
+    def at(self: Array<T>, n: Int) -> T
+        return arrayAt(self, n)
+
+    def set(self: Array<T>, n: Int, value: T) -> Unit
+        arraySet(self, n, value)
+
 
 foreign die<T>(msg: String) -> T
 
 ## Option ##
 data Option<T> = Some(T) | None
 
-def isSome<T>(x: Option<T>) -> Bool
-    match x
-        Some(_)
-            return True
-        None
-            return False
+impl<T> Option<T>
+    def isSome(self: Option<T>) -> Bool
+        match self
+            Some(_)
+                return True
+            None
+                return False
 
-def isNone<T>(x: Option<T>) -> Bool
-    match x
-        Some(_)
-            return False
-        None
-            return True
+    def isNone(self: Option<T>) -> Bool
+        match self
+            Some(_)
+                return False
+            None
+                return True
 
-def unwrap<T>(x: Option<T>) -> T
-    match x
-        Some(y)
-            return y
-        None
-            die("*** Exception: Cannot unwrap None")
+    def unwrap(self: Option<T>) -> T
+        match self
+            Some(y)
+                return y
+            None
+                die("*** Exception: Cannot unwrap None")
 
-def unwrapOr<T>(x: Option<T>, other: T) -> T
-    match x
-        Some(y)
-            return y
-        None
-            return other
+    def unwrapOr(self: Option<T>, other: T) -> T
+        match self
+            Some(y)
+                return y
+            None
+                return other
 
 # I/O functions
 foreign read() -> Int
 foreign readLine() -> Option<String>
 foreign print(msg: String) -> Unit
 
-# Basic List operations
-def head<T>(xs: [T]) -> T
-    match xs
-        Cons(x, _)
-            return x
-        Nil
-            die("*** Exception: Called head on empty list")
+## List ##
+impl<T> List<T>
+    def head(self: [T]) -> T
+        match self
+            Cons(x, _)
+                return x
+            Nil
+                die("*** Exception: Called head on empty list")
 
-def tail<T>(xs: [T]) -> [T]
-    match xs
-        Cons(_, rest)
-            return rest
-        Nil
-            die("*** Exception: Called tail on empty list")
+    def tail(self: [T]) -> [T]
+        match self
+            Cons(_, rest)
+                return rest
+            Nil
+                die("*** Exception: Called tail on empty list")
 
-def null<T>(xs: [T]) -> Bool
-    match xs
-        Cons(_, _)
-            return False
-        Nil
-            return True
+    def null(self: [T]) -> Bool
+        match self
+            Cons(_, _)
+                return False
+            Nil
+                return True
+
+    def length(self: [T]) -> Int
+        result := 0
+        xs := self
+
+        while not $ xs.null()
+            xs = xs.tail()
+            result += 1
+
+        return result
+
+    def take(self: [T], n: Int) -> [T]
+        if n == 0
+            return []
+        else
+            return self.head() :: self.tail().take(n - 1)
+
+    def drop(self: [T], n: Int) -> [T]
+        if n == 0
+            return self
+        else
+            return self.tail().drop(n - 1)
+
+    def at(self: [T], n: Int) -> T
+        xs := self
+
+        while n > 0
+            xs = xs.tail()
+            n -= 1
+
+        return xs.head()
+
+    def reverse(self: [T]) -> [T]
+        ys := []
+        for x in self
+            ys = x :: ys
+
+        return ys
+
+    def concat(self: [T], other: [T]) -> [T]
+        result := other
+
+        for x in self.reverse()
+            result = x :: result
+
+        return result
+
 
 ## Native-language standard library
-
-def concat<T>(xs: [T], ys: [T]) -> [T]
-    if null(xs)
-        return ys
-    else
-        return head(xs) :: concat(tail(xs), ys)
-
-
 def assert(b: Bool) -> Unit
     if not(b)
         die("*** Exception: Assertion failed")
@@ -105,7 +154,30 @@ def assertMessage(b: Bool, err: String) -> Unit
         die("*** Exception: Assertion failed: " ^ err)
 
 
-# Miscellanous functions
+def map<S, T>(f: S -> T, xs: [S]) -> [T]
+    result := []
+    for x in xs
+        result = f(x) :: result
+
+    return result.reverse()
+
+
+def filter<T>(f: T -> Bool, xs: [T]) -> [T]
+    result := []
+    for x in xs
+        if f(x)
+            result = x :: result
+
+    return result.reverse()
+
+
+def concat<T>(xs: [T], ys: [T]) -> [T]
+    if xs.null()
+        return ys
+    else
+        return xs.head() :: concat(xs.tail(), ys)
+
+
 def range(a: Int, b: Int) -> [Int]
     xs := []
 
@@ -117,16 +189,6 @@ def range(a: Int, b: Int) -> [Int]
     return xs
 
 
-def length<T>(xs: [T]) -> Int
-    result := 0
-
-    while not(null(xs))
-        xs = tail(xs)
-        result += 1
-
-    return result
-
-
 def sum(xs: [Int]) -> Int
     result := 0
     for x in xs
@@ -136,24 +198,10 @@ def sum(xs: [Int]) -> Int
 
 
 def product(xs: [Int]) -> Int
-    if null(xs)
+    if xs.null()
         return 1
     else
-        return head(xs) * product(tail(xs))
-
-
-def take<T>(n: Int, xs: [T]) -> [T]
-    if n == 0
-        return []
-    else
-        return head(xs) :: take(n - 1, tail(xs))
-
-
-def drop<T>(n: Int, xs: [T]) -> [T]
-    if n == 0
-        return xs
-    else
-        return drop(n - 1, tail(xs))
+        return xs.head() * product(xs.tail())
 
 
 def max(a: Int, b: Int) -> Int
@@ -171,50 +219,17 @@ def min(a: Int, b: Int) -> Int
 
 
 def maximum(xs: [Int]) -> Int
-    if length(xs) == 1
-        return head(xs)
+    if xs.length() == 1
+        return xs.head()
     else
-        return max(head(xs), maximum(tail(xs)))
+        return max(xs.head(), maximum(xs.tail()))
 
 
 def minimum(xs: [Int]) -> Int
-    if length(xs) == 1
-        return head(xs)
+    if xs.length() == 1
+        return xs.head()
     else
-        return min(head(xs), minimum(tail(xs)))
-
-
-def at<T>(n: Int, xs: [T]) -> T
-    while n > 0
-        xs = tail(xs)
-        n -= 1
-
-    return head(xs)
-
-
-def reverse<T>(xs: [T]) -> [T]
-    ys := []
-    for x in xs
-        ys = x :: ys
-
-    return ys
-
-
-def map<S, T>(f: S -> T, xs: [S]) -> [T]
-    result := []
-    for x in xs
-        result = f(x) :: result
-
-    return reverse(result)
-
-
-def filter<T>(f: T -> Bool, xs: [T]) -> [T]
-    ys := []
-    for x in xs
-        if f(x)
-            ys = x :: ys
-
-    return reverse(ys)
+        return min(xs.head(), minimum(xs.tail()))
 
 
 def even(x: Int) -> Bool
@@ -247,30 +262,18 @@ def pow(a: Int, b: Int) -> Int
     return r
 
 
-# Non stack-destroying version
-#def concat xs ys :: [Int] -> [Int] -> [Int]
-#    let zs :: [Int] := ys
-
-#    for x in reverse xs
-#        zs = x :: zs
-
-#    return zs
-
-
-## Pairs ##
-
+## Pair ##
 data Pair<T> = Pair(T, T)
 
+impl<T> Pair<T>
+    def first(self: Pair<T>) -> T
+        match self
+            Pair(x, _) => return x
 
-def fst<T>(pair: Pair<T>) -> T
-    let Pair(x, _) := pair
-    return x
-
-
-def snd<T>(pair: Pair<T>) -> T
-    let Pair(_, x) := pair
-    return x
+    def second(self: Pair<T>) -> T
+        match self
+            Pair(_, x) => return x
 
 
 def splitAt<T>(n: Int, xs: [T]) -> Pair<[T]>
-    return Pair(take(n, xs), drop(n, xs))
+    return Pair(xs.take(n), xs.drop(n))

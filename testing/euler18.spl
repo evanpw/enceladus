@@ -12,22 +12,22 @@ def readInput() -> [[Int]]
             Some(line)
                 xs := []
                 for s in line.split()
-                    xs = unwrap(s.toInt()) :: xs
+                    xs = s.toInt().unwrap() :: xs
 
-                row := reverse(xs)
+                row := xs.reverse()
 
                 pyramid = row :: pyramid
 
             None
                 break
 
-    return reverse(pyramid)
+    return pyramid.reverse()
 
 def bestRouteFrom(x: Int, y: Int, pyramid: [[Int]]) -> Int
-    row := at(y, pyramid)
-    here := at(x, row)
+    row := pyramid.at(y)
+    here := row.at(x)
 
-    if y == length(pyramid) - 1
+    if y == pyramid.length() - 1
         return here
     else
         left := bestRouteFrom(x, y + 1, pyramid)

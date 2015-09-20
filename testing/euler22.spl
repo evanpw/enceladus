@@ -6,7 +6,7 @@ import String
 def readNames() -> [String]
     line := readLine()
 
-    pieces := unwrap(line).splitBy(',')
+    pieces := line.unwrap().splitBy(',')
 
     result := []
     for piece in pieces
@@ -26,8 +26,8 @@ names := readNames()
 names = sort(cmpString, names)
 
 total := 0
-for i = 1 to length(names)
-    name := at(i - 1, names)
+for i = 1 to names.length()
+    name := names.at(i - 1)
 
     total += i * score(name)
 

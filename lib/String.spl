@@ -66,7 +66,7 @@ impl String
         if start < len
             result = s.slice(start, len) :: result
 
-        return reverse(result)
+        return result.reverse()
 
     def splitBy(s: String, sep: Char) -> [String]
         result := []
@@ -82,15 +82,15 @@ impl String
         if start < s.length()
             result = s.slice(start, len) :: result
 
-        return reverse(result)
+        return result.reverse()
 
     def join(s: String, xs: [String]) -> String
-        if null(xs)
+        if xs.null()
             return ""
-        elif length(xs) == 1
-            return head(xs)
+        elif xs.length() == 1
+            return xs.head()
         else
-            return head(xs) ^ s ^ s.join(tail(xs))
+            return xs.head() ^ s ^ s.join(xs.tail())
 
     def toInt(s: String) -> Option<Int>
         x := 0

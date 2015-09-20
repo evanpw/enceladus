@@ -2,4 +2,4 @@ def getFirst(xs: [Int], ys: [Int]) -> [Int]
     return xs
 
 result := getFirst([1, 2], range(1, 999999))
-print $ show $ head(result)
+print $ show $ result.head()

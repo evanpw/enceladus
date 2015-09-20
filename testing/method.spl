@@ -4,7 +4,7 @@ impl Int
 
 impl [Int]
     def eq(self: [Int], other: [Int]) -> Bool
-        return head(self) == head(other)
+        return self.head() == other.head()
 
 x := 1
 y := 2

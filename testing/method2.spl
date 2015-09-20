@@ -4,13 +4,14 @@ impl Int
 
 impl [Int]
     def eq(self: [Int], other: [Int]) -> Bool
-        if null(self)
-            return null(other)
+        if self.null()
+            return other.null()
 
-        if null(self)
-            return null(other)
+        elif other.null()
+            return False
 
-        return head(self) == head(other) and tail(self).eq(tail(other))
+        else
+            return self.head() == other.head() and self.tail().eq(other.tail())
 
 x := [1, 2]
 y := [1, 2]

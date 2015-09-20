@@ -27,9 +27,9 @@ def daysInMonth(date: Date) -> Int
     leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
     if isLeapYear(date)
-        return at(date{month}, leapYear)
+        return leapYear.at(date{month})
     else
-        return at(date{month}, nonLeap)
+        return nonLeap.at(date{month})
 
 def incrementDate(date: Date) -> Date
     let Date(y, m, d, w) := date
@@ -54,7 +54,7 @@ def printDate(date: Date) -> String
     dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
         "Friday", "Saturday"]
 
-    return "".join([at(date{month}, monthNames), " ", show(date{day}), ", ", show(date{year}), " (", at(date{dayOfWeek}, dayNames), ")"])
+    return "".join([monthNames.at(date{month}), " ", show(date{day}), ", ", show(date{year}), " (", dayNames.at(date{dayOfWeek}), ")"])
 
 current := Date(1900, 1, 1, 1)
 

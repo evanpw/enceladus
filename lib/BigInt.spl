@@ -7,7 +7,7 @@ def toBigInt(x: Int) -> BigInt
         result = (x mod 10) :: result
         x /= 10
 
-    return BigInt(reverse(result))
+    return BigInt(result.reverse())
 
 impl BigInt
     def digits(self: BigInt) -> [Int]
@@ -23,25 +23,25 @@ impl BigInt
 
         x := 0
         y := 0
-        while not(null(xs) and null(ys) and carry == 0)
-            if null(xs)
+        while not(xs.null() and ys.null() and carry == 0)
+            if xs.null()
                 x = 0
             else
-                x = head(xs)
-                xs = tail(xs)
+                x = xs.head()
+                xs = xs.tail()
 
-            if null(ys)
+            if ys.null()
                 y = 0
             else
-                y = head(ys)
-                ys = tail(ys)
+                y = ys.head()
+                ys = ys.tail()
 
             z := x + y + carry
 
             result = (z mod 10) :: result
             carry = z / 10
 
-        return BigInt(reverse(result))
+        return BigInt(result.reverse())
 
     def timesInt(self: BigInt, rhs: Int) -> BigInt
         xs := self.digits()
@@ -49,19 +49,19 @@ impl BigInt
         carry := 0
         result := []
 
-        while not(null(xs) and carry == 0)
+        while not(xs.null() and carry == 0)
             z := 0
-            if null(xs)
+            if xs.null()
                 z = carry
             else
-                x := head(xs)
+                x := xs.head()
                 z = x * rhs + carry
-                xs = tail(xs)
+                xs = xs.tail()
 
             result = (z mod 10) :: result
             carry = z / 10
 
-        return BigInt(reverse(result))
+        return BigInt(result.reverse())
 
     def shift(self: BigInt, n: Int) -> BigInt
         if n == 0
@@ -79,8 +79,8 @@ impl BigInt
         partialProducts := []
 
         result := toBigInt(0)
-        for n = 0 to length(ys) - 1
-            y := at(n, ys)
+        for n = 0 to ys.length() - 1
+            y := ys.at(n)
             z1 := self.timesInt(y)
             z2 := z1.shift(n)
 

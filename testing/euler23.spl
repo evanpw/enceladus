@@ -43,14 +43,14 @@ for i = 1 to 28123
 
 
 # Convert the list into an array
-n := length(reversedList)
+n := reversedList.length()
 abundants := makeArray(n, 0)
 
 for j = 0 to n - 1
-    x := head(reversedList)
-    reversedList = tail(reversedList)
+    x := reversedList.head()
+    reversedList = reversedList.tail()
 
-    arraySet(abundants, n - j - 1, x)
+    abundants.set(n - j - 1, x)
 
 # Find all numbers in the range which are the sum of two abundants
 total := 0

@@ -1058,9 +1058,13 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     node->symbol = symbol;
 
     // HACK: Give the code generator access to these symbols
-    node->headSymbol = resolveSymbol("head");
-    node->tailSymbol = resolveSymbol("tail");
-    node->nullSymbol = resolveSymbol("null");
+    std::vector<MethodSymbol*> symbols;
+    resolveMethodSymbol("head", listType, symbols);
+    node->headSymbol = symbols.front();
+    resolveMethodSymbol("tail", listType, symbols);
+    node->tailSymbol = symbols.front();
+    resolveMethodSymbol("null", listType, symbols);
+    node->nullSymbol = symbols.front();
 
     node->type = _typeTable->Unit;
     node->body->accept(this);

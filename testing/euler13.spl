@@ -15,7 +15,7 @@ for i = 1 to 100
     xs = xs.plus(readNumber())
 
 n := 0
-for x in take(10, reverse(xs.digits()))
+for x in xs.digits().reverse().take(10)
     n = (n * 10) + x
 
 print $ show(n)

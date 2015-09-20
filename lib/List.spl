@@ -4,13 +4,13 @@ def eqInt(x: Int, y: Int) -> Bool
 
 
 def eqList(xs: [Int], ys: [Int]) -> Bool
-    if null(xs)
-        return null(ys)
+    if xs.null()
+        return ys.null()
 
-    if null(ys)
-        return null(xs)
+    if ys.null()
+        return xs.null()
 
-    return head(xs) == head(ys) and eqList(tail(xs), tail(ys))
+    return xs.head() == ys.head() and eqList(xs.tail(), ys.tail())
 
 
 # Comparisons
@@ -22,20 +22,20 @@ def cmpInt(x: Int, y: Int) -> Int
 
 
 def cmpList(xs: [Int], ys: [Int]) -> Int
-    if null(xs)
-        if null(ys)
+    if xs.null()
+        if ys.null()
             return 0
         else
             return -1
-    elif null(ys)
+    elif ys.null()
         return 1
     else
-        if head(xs) < head(ys)
+        if xs.head() < ys.head()
             return -1
-        elif head(xs) > head(ys)
+        elif xs.head() > ys.head()
             return 1
         else
-            return cmpList(tail(xs), tail(ys))
+            return cmpList(xs.tail(), ys.tail())
 
 
 def cmpString(xs: String, ys: String) -> Int
@@ -81,25 +81,25 @@ def splitList<T>(cmp: |T, T| -> Int, xs: [T], pivot: T) -> Pair<[T]>
 
 
 def sort<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
-    if length(xs) <= 1
+    if xs.length() <= 1
         return xs
 
-    pivot := head(xs)
-    let Pair(lhs, rhs) := splitList(cmp, tail(xs), pivot)
+    pivot := xs.head()
+    let Pair(lhs, rhs) := splitList(cmp, xs.tail(), pivot)
 
     return sort(cmp, lhs) ++ [pivot] ++ sort(cmp, rhs)
 
 
 def uniquify<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
-    if null(xs)
+    if xs.null()
         return []
 
     xs = sort(cmp, xs)
 
-    result := [head(xs)]
-    last := head(xs)
+    result := [xs.head()]
+    last := xs.head()
 
-    for x in tail(xs)
+    for x in xs.tail()
         if cmp(last, x) != 0
             result = x :: result
 

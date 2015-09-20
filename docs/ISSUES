@@ -63,3 +63,13 @@
 * Clarify the difference between a type alias and a newtype (which one does type do?)
 
 * Allow methods to be implemented in C (needed for String methods mostly)
+
+* Allow passing a method as an argument to a function (should look just like a function)
+
+* Convert the "++" operator to use the concat method instead of the free-standing function
+
+* Convert some of the functions in List.spl to be methods, and move some functions / methods out of prelude.spl
+
+* Make sure that methods work for structs, and automatically generate getters for each field
+
+* Rename "null" to "empty"
