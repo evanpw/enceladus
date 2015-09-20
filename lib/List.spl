@@ -39,21 +39,21 @@ def cmpList(xs: [Int], ys: [Int]) -> Int
 
 
 def cmpString(xs: String, ys: String) -> Int
-    n1 := strLength(xs)
-    n2 := strLength(ys)
+    n1 := xs.length()
+    n2 := ys.length()
 
     for n = 0 to min(n1, n2)
-        if strLength(xs) <= n
-            if strLength(ys) <= n
+        if xs.length() <= n
+            if ys.length() <= n
                 return 0
             else
                 return -1
-        elif strLength(ys) <= n
+        elif ys.length() <= n
             return 1
         else
-            if strAt(xs, n) < strAt(ys, n)
+            if xs.at(n) < ys.at(n)
                 return -1
-            elif strAt(xs, n) > strAt(ys, n)
+            elif xs.at(n) > ys.at(n)
                 return 1
 
     die("Unreachable")

@@ -199,8 +199,7 @@ negation_expression
     : [ '-' ] method_call_expression
 
 method_call_expression
-    : func_call_expression
-    | func_call_expression '.' '(' [ expression ] { ',' expression } ] ')'
+    : func_call_expression { '.' '(' [ expression ] { ',' expression } ] ')' }
 
 func_call_expression
     : ident '$' expression

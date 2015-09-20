@@ -6,18 +6,18 @@ import String
 def readNames() -> [String]
     line := readLine()
 
-    pieces := splitBy(',', unwrap(line))
+    pieces := unwrap(line).splitBy(',')
 
     result := []
     for piece in pieces
-        result = trimChar('"', piece) :: result
+        result = piece.trimChar('"') :: result
 
     return result
 
 def score(name: String) -> Int
     total := 0
-    for i = 0 to strLength(name) - 1
-        c := strAt(name, i)
+    for i = 0 to name.length() - 1
+        c := name.at(i)
         total += (c - 'A') + 1
 
     return total

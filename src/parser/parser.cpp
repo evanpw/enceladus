@@ -1087,14 +1087,13 @@ ExpressionNode* Parser::negation_expression()
 }
 
 /// method_call_expression
-///     : func_call_expression
-///     | func_call_expression '.' '(' [ expression ] { ',' expression } ] ')'
+///     : func_call_expression { '.' '(' [ expression ] { ',' expression } ] ')' }
 ExpressionNode* Parser::method_call_expression()
 {
     YYLTYPE location = getLocation();
 
-    ExpressionNode* lhs = func_call_expression();
-    if (accept('.'))
+    ExpressionNode* expr = func_call_expression();
+    while (accept('.'))
     {
         Token methodName = expect(tLIDENT);
 
@@ -1113,12 +1112,10 @@ ExpressionNode* Parser::method_call_expression()
             expect(')');
         }
 
-        return new MethodCallNode(_context, location, lhs, methodName.value.str, std::move(argList));
+        expr = new MethodCallNode(_context, location, expr, methodName.value.str, std::move(argList));
     }
-    else
-    {
-        return lhs;
-    }
+
+    return expr;
 }
 
 /// func_call_expression

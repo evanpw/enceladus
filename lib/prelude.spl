@@ -9,6 +9,17 @@ foreign strFromList(s: [Char]) -> String
 foreign strCat(lhs: String, rhs: String) -> String
 foreign show(x: Int) -> String
 
+# Method wrappers (methods can't be implemented in C)
+impl String
+    def length(self: String) -> Int
+        return strLength(self)
+
+    def slice(self: String, pos: Int, len: Int) -> String
+        return strSlice(self, pos, len)
+
+    def at(self: String, n: Int) -> Int
+        return strAt(self, n)
+
 ## Array ##
 foreign makeArray<T>(n: Int, value: T) -> Array<T>
 foreign arrayAt<T>(arr: Array<T>, n: Int) -> T
@@ -23,22 +34,22 @@ data Option<T> = Some(T) | None
 def isSome<T>(x: Option<T>) -> Bool
     match x
         Some(_) => return True
-        None   => return False
+        None    => return False
 
 def isNone<T>(x: Option<T>) -> Bool
     match x
         Some(_) => return False
-        None   => return True
+        None    => return True
 
 def unwrap<T>(x: Option<T>) -> T
     match x
         Some(y) => return y
-        None   => die("*** Exception: Cannot unwrap None")
+        None    => die("*** Exception: Cannot unwrap None")
 
 def unwrapOr<T>(x: Option<T>, other: T) -> T
     match x
         Some(y) => return y
-        None   => return other
+        None    => return other
 
 # I/O functions
 foreign read() -> Int

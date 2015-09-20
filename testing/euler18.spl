@@ -6,18 +6,20 @@ def readInput() -> [[Int]]
     pyramid := []
 
     forever
-        line := readLine()
+        maybeLine := readLine()
 
-        if isSome(line)
-            xs := []
-            for s in split(unwrap(line))
-                xs = unwrap(stringToInt(s)) :: xs
+        match maybeLine
+            Some(line) =>
+                xs := []
+                for s in line.split()
+                    xs = unwrap(s.toInt()) :: xs
 
-            row := reverse(xs)
+                row := reverse(xs)
 
-            pyramid = row :: pyramid
-        else
-            break
+                pyramid = row :: pyramid
+
+            None =>
+                break
 
     return reverse(pyramid)
 

@@ -17,7 +17,7 @@ def numInWords(x: Int) -> String
         ones := x mod 10
 
         if ones != 0
-            return join("", [at(tens, multiplesOfTen), at(ones, smallNumbers)])
+            return "".join([at(tens, multiplesOfTen), at(ones, smallNumbers)])
         else
             return at(tens, multiplesOfTen)
     elif x < 1000
@@ -27,17 +27,17 @@ def numInWords(x: Int) -> String
         rest := x mod 100
 
         if rest != 0
-            return join("", [at(hundreds, smallNumbers), "hundred", "and", numInWords(rest)])
+            return "".join([at(hundreds, smallNumbers), "hundred", "and", numInWords(rest)])
         else
-            return join("", [at(hundreds, smallNumbers), "hundred"])
+            return "".join([at(hundreds, smallNumbers), "hundred"])
     elif x == 1000
-        return join("", ["one", "thousand"])
+        return "".join(["one", "thousand"])
     else
         return "unknown"
 
 totalLength := 0
 for i = 1 to 1000
     s := numInWords(i)
-    totalLength += strLength(s)
+    totalLength += s.length()
 
 print $ show(totalLength)
