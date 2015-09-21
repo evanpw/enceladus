@@ -1066,8 +1066,8 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     node->headSymbol = symbols.front();
     resolveMethodSymbol("tail", listType, symbols);
     node->tailSymbol = symbols.front();
-    resolveMethodSymbol("null", listType, symbols);
-    node->nullSymbol = symbols.front();
+    resolveMethodSymbol("empty", listType, symbols);
+    node->emptySymbol = symbols.front();
 
     node->type = _typeTable->Unit;
     node->body->accept(this);

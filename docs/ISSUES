@@ -46,11 +46,7 @@
 
 * Add syntactic sugar for ranges
 
-* Make not a unary operator rather than a function
-
-* Make let statements, data declarations, and match statements look more like other function calls
-
-* Change "length" to "len"
+* Make "not" a unary operator rather than a function
 
 * Remove readLine from the list of special keywords for syntax highlighting
 
@@ -71,5 +67,3 @@
 * Convert some of the functions in List.spl to be methods, and move some functions / methods out of prelude.spl
 
 * Make sure that methods work for structs, and automatically generate getters for each field
-
-* Rename "null" to "empty"

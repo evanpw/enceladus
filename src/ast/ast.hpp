@@ -341,7 +341,7 @@ public:
 	// HACK: give the code generator to these functions
 	Symbol* headSymbol;
 	Symbol* tailSymbol;
-	Symbol* nullSymbol;
+	Symbol* emptySymbol;
 };
 
 class ForNode : public LoopNode

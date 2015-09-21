@@ -4,11 +4,11 @@ def eqInt(x: Int, y: Int) -> Bool
 
 
 def eqList(xs: [Int], ys: [Int]) -> Bool
-    if xs.null()
-        return ys.null()
+    if xs.empty()
+        return ys.empty()
 
-    if ys.null()
-        return xs.null()
+    if ys.empty()
+        return xs.empty()
 
     return xs.head() == ys.head() and eqList(xs.tail(), ys.tail())
 
@@ -22,12 +22,12 @@ def cmpInt(x: Int, y: Int) -> Int
 
 
 def cmpList(xs: [Int], ys: [Int]) -> Int
-    if xs.null()
-        if ys.null()
+    if xs.empty()
+        if ys.empty()
             return 0
         else
             return -1
-    elif ys.null()
+    elif ys.empty()
         return 1
     else
         if xs.head() < ys.head()
@@ -91,7 +91,7 @@ def sort<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
 
 
 def uniquify<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
-    if xs.null()
+    if xs.empty()
         return []
 
     xs = sort(cmp, xs)

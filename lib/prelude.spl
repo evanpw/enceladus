@@ -89,7 +89,7 @@ impl<T> List<T>
             Nil
                 die("*** Exception: Called tail on empty list")
 
-    def null(self: [T]) -> Bool
+    def empty(self: [T]) -> Bool
         match self
             Cons(_, _)
                 return False
@@ -100,7 +100,7 @@ impl<T> List<T>
         result := 0
         xs := self
 
-        while not $ xs.null()
+        while not $ xs.empty()
             xs = xs.tail()
             result += 1
 
@@ -170,7 +170,7 @@ def assertMessage(b: Bool, err: String) -> Unit
 
 
 def concat<T>(xs: [T], ys: [T]) -> [T]
-    if xs.null()
+    if xs.empty()
         return ys
     else
         return xs.head() :: concat(xs.tail(), ys)
@@ -196,7 +196,7 @@ def sum(xs: [Int]) -> Int
 
 
 def product(xs: [Int]) -> Int
-    if xs.null()
+    if xs.empty()
         return 1
     else
         return xs.head() * product(xs.tail())

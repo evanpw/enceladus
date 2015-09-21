@@ -23,14 +23,14 @@ impl BigInt
 
         x := 0
         y := 0
-        while not(xs.null() and ys.null() and carry == 0)
-            if xs.null()
+        while not(xs.empty() and ys.empty() and carry == 0)
+            if xs.empty()
                 x = 0
             else
                 x = xs.head()
                 xs = xs.tail()
 
-            if ys.null()
+            if ys.empty()
                 y = 0
             else
                 y = ys.head()
@@ -49,9 +49,9 @@ impl BigInt
         carry := 0
         result := []
 
-        while not(xs.null() and carry == 0)
+        while not(xs.empty() and carry == 0)
             z := 0
-            if xs.null()
+            if xs.empty()
                 z = carry
             else
                 x := xs.head()

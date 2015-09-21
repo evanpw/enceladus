@@ -553,7 +553,7 @@ void TACCodeGen::visit(ForeachNode* node)
     // HACK
     Value* headFunction = getValue(node->headSymbol);
     Value* tailFunction = getValue(node->tailSymbol);
-    Value* nullFunction = getValue(node->nullSymbol);
+    Value* emptyFunction = getValue(node->emptySymbol);
 
 
     BasicBlock* loopInit = createBlock();
@@ -578,7 +578,7 @@ void TACCodeGen::visit(ForeachNode* node)
     Value* currentList = createTemp(ValueType::BoxOrInt);
     emit(new LoadInst(currentList, listVar));
     Value* isNull = createTemp(ValueType::Integer);
-    emit(new CallInst(isNull, nullFunction, {currentList}));
+    emit(new CallInst(isNull, emptyFunction, {currentList}));
     emit(new JumpIfInst(isNull, loopExit, loopBody));
 
     // Push a new inner loop on the (implicit) stack

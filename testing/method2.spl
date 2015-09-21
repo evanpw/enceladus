@@ -4,10 +4,10 @@ impl Int
 
 impl [Int]
     def eq(self: [Int], other: [Int]) -> Bool
-        if self.null()
-            return other.null()
+        if self.empty()
+            return other.empty()
 
-        elif other.null()
+        elif other.empty()
             return False
 
         else

@@ -85,7 +85,7 @@ impl String
         return result.reverse()
 
     def join(s: String, xs: [String]) -> String
-        if xs.null()
+        if xs.empty()
             return ""
         elif xs.length() == 1
             return xs.head()

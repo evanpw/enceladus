@@ -1,7 +1,7 @@
 # Solves Project Euler 12
 
 def countGroups(xs: [Int]) -> [Int]
-    if xs.null()
+    if xs.empty()
         return []
 
     result := []
@@ -9,7 +9,7 @@ def countGroups(xs: [Int]) -> [Int]
     count := 1
     xs = xs.tail()
 
-    while not $ xs.null()
+    while not $ xs.empty()
         if xs.head() == last
             count += 1
         else
