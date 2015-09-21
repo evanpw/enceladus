@@ -187,8 +187,7 @@ multiplicative_expression
     : concat_expression { ( '*' | '/' | MOD ) concat_expression }
 
 concat_expression
-    : negation_expression [ CONCAT concat_expression ]
-    | negation_expression [ '^' concat_expression ]
+    : negation_expression [ '++' concat_expression ]
 
 negation_expression
     : [ '-' ] method_or_member_expression

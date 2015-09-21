@@ -38,7 +38,6 @@ def add(name, input_file=None):
 
 add('euler12', )
 add('euler19',)
-add('euler19-2')
 add('euler26')
 add('euler25')
 add('euler10')

@@ -20,6 +20,9 @@ impl String
     def at(self: String, n: Int) -> Int
         return strAt(self, n)
 
+    def concat(self: String, other: String) -> String
+        return strCat(self, other)
+
 ## Array ##
 foreign makeArray<T>(n: Int, value: T) -> Array<T>
 foreign arrayAt<T>(arr: Array<T>, n: Int) -> T
@@ -166,7 +169,7 @@ def assert(b: Bool) -> Unit
 
 def assertMessage(b: Bool, err: String) -> Unit
     if not(b)
-        die("*** Exception: Assertion failed: " ^ err)
+        die("*** Exception: Assertion failed: " ++ err)
 
 
 def range(a: Int, b: Int) -> [Int]

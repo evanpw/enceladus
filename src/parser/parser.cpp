@@ -1043,6 +1043,8 @@ ExpressionNode* Parser::multiplicative_expression()
     return result;
 }
 
+/// concat_expression
+///     : negation_expression [ '++' concat_expression ]
 ExpressionNode* Parser::concat_expression()
 {
     ExpressionNode* lhs = negation_expression();
@@ -1050,10 +1052,6 @@ ExpressionNode* Parser::concat_expression()
     if (accept(tCONCAT))
     {
         return new MethodCallNode(_context, getLocation(), lhs, "concat", {concat_expression()});
-    }
-    else if (accept('^'))
-    {
-        return new FunctionCallNode(_context, getLocation(), "strCat", {lhs, concat_expression()});
     }
     else
     {
