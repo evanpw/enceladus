@@ -62,8 +62,6 @@
 
 * Allow passing a method as an argument to a function (should look just like a function)
 
-* Convert the "++" operator to use the concat method instead of the free-standing function
-
 * Convert some of the functions in List.spl to be methods, and move some functions / methods out of prelude.spl
 
 * Make sure that methods work for structs, and automatically generate getters for each field

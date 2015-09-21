@@ -1056,7 +1056,7 @@ ExpressionNode* Parser::concat_expression()
 
     if (accept(tCONCAT))
     {
-        return new FunctionCallNode(_context, getLocation(), "concat", {lhs, concat_expression()});
+        return new MethodCallNode(_context, getLocation(), lhs, "concat", {concat_expression()});
     }
     else if (accept('^'))
     {

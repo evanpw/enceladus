@@ -169,13 +169,6 @@ def assertMessage(b: Bool, err: String) -> Unit
         die("*** Exception: Assertion failed: " ^ err)
 
 
-def concat<T>(xs: [T], ys: [T]) -> [T]
-    if xs.empty()
-        return ys
-    else
-        return xs.head() :: concat(xs.tail(), ys)
-
-
 def range(a: Int, b: Int) -> [Int]
     xs := []
 
