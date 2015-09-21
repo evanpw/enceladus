@@ -25,7 +25,7 @@ def numberOfPrimes(q: Quadratic) -> Int
     forever
         p := eval(q, n)
 
-        if not $ isPrime(p)
+        if not isPrime(p)
             break
 
         n += 1

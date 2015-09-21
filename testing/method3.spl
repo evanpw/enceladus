@@ -2,7 +2,7 @@ impl Int
     def eq(self: Int, other: Int) -> Bool
         return self == other
 
-if not $ 4.eq(5)
+if not 4.eq(5)
     print $ "Different"
 else
     print $ "Same"

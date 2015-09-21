@@ -55,7 +55,7 @@ for j = 0 to n - 1
 # Find all numbers in the range which are the sum of two abundants
 total := 0
 for k = 1 to 28123
-    if not $ isSumOfTwo(k, abundants, n)
+    if not isSumOfTwo(k, abundants, n)
         total += k
 
 print $ show(total)

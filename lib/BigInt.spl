@@ -23,7 +23,7 @@ impl BigInt
 
         x := 0
         y := 0
-        while not(xs.empty() and ys.empty() and carry == 0)
+        while not (xs.empty() and ys.empty() and carry == 0)
             if xs.empty()
                 x = 0
             else

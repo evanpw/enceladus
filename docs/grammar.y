@@ -190,7 +190,9 @@ concat_expression
     : negation_expression [ '++' concat_expression ]
 
 negation_expression
-    : [ '-' ] method_or_member_expression
+    : method_or_member_expression
+    | '-' method_or_member_expression
+    | NOT method_or_member_expression
 
 method_or_member_expression
     : func_call_expression

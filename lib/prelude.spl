@@ -103,7 +103,7 @@ impl<T> List<T>
         result := 0
         xs := self
 
-        while not $ xs.empty()
+        while not xs.empty()
             xs = xs.tail()
             result += 1
 
@@ -168,7 +168,7 @@ def assert(b: Bool) -> Unit
 
 
 def assertMessage(b: Bool, err: String) -> Unit
-    if not(b)
+    if not b
         die("*** Exception: Assertion failed: " ++ err)
 
 

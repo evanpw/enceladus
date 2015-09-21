@@ -72,6 +72,8 @@ std::string tokenToString(TokenType t)
         return "tMOD";
     case tNE:
         return "tNE";
+    case tNOT:
+        return "tNOT";
     case tOR:
         return "tOR";
     case tPLUS_EQUAL:

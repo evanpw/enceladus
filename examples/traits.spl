@@ -5,17 +5,10 @@ impl Eq for Int
     def eq(self: Int, other: Int) -> Bool
         return self == other
 
-x := 1
-y := 2
+def test<T: Eq>(x: T, y: T) -> Bool
+    return x.eq(y)
 
-if eq x y
+if test(1, 2)
     print "Same"
 else
     print "Different"
-
-#impl Eq for [Int]
-#    def eq(self: [Int], other: [Int]) -> Bool
-#        if null self: return null self
-#        if null other: return null other
-
-#        return (head self == head other) and eq (tail self) (tail other)

@@ -42,8 +42,6 @@
 
 * Add syntactic sugar for ranges
 
-* Make "not" a unary operator rather than a function
-
 * Remove readLine from the list of special keywords for syntax highlighting
 
 * Fix NullaryNode: if capitalized, then must be a variable, and if uppercase, must be a nullary value constructor

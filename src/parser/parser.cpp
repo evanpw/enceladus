@@ -1059,11 +1059,19 @@ ExpressionNode* Parser::concat_expression()
     }
 }
 
+/// negation_expression
+///     : method_or_member_expression
+///     | '-' method_or_member_expression
+///     | NOT method_or_member_expression
 ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
-        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), func_call_expression()});
+        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), method_or_member_expression()});
+    }
+    else if (accept(tNOT))
+    {
+        return new FunctionCallNode(_context, getLocation(), "not", {method_or_member_expression()});
     }
     else
     {

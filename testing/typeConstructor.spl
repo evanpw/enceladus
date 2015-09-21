@@ -15,7 +15,7 @@ def identity<T>(x: T) -> T
 
 result += identity(3)
 
-if not $ identity(False)
+if not identity(False)
     result += 1
 
 print $ show(result)

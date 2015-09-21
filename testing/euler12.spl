@@ -9,7 +9,7 @@ def countGroups(xs: [Int]) -> [Int]
     count := 1
     xs = xs.tail()
 
-    while not $ xs.empty()
+    while not xs.empty()
         if xs.head() == last
             count += 1
         else

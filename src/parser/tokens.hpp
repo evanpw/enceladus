@@ -40,6 +40,7 @@ enum TokenType : int
     tMINUS_EQUAL,
     tMOD,
     tNE,
+    tNOT,
     tOR,
     tPLUS_EQUAL,
     tRARROW,
