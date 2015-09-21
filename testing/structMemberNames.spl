@@ -1,0 +1,10 @@
+struct Person
+    name: String
+    age: Int
+
+struct Location
+    name: String
+    country: String
+
+print $ show $ Person("Evan", 30).age
+print $ Location("Eiffel Tower", "France").country

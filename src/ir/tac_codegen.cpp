@@ -85,9 +85,10 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
                 result = _context->createFunction(symbol->name);
             }
         }
-        else if (symbol->kind == kMethod)
+        else if (symbol->kind == kMember)
         {
             const MethodSymbol* methodSymbol = dynamic_cast<const MethodSymbol*>(symbol);
+            assert(methodSymbol);
 
             // We have to append a unique number to method names because several
             // types can have a method with the same name
@@ -890,7 +891,7 @@ void TACCodeGen::visit(MethodCallNode* node)
 
     Value* result = node->value;
 
-    assert(node->symbol->kind == kMethod);
+    assert(node->symbol->kind == kMember);
 
     emit(new CallInst(result, getValue(node->symbol), arguments));
 }
@@ -910,10 +911,11 @@ void TACCodeGen::visit(VariableNode* node)
 
 void TACCodeGen::visit(MemberAccessNode* node)
 {
-    node->value = createTemp(getValueType(node->memberSymbol->type));
+    node->value = createTemp(getValueType(node->type));
 
-    Value* structure = createTemp(getValueType(node->varSymbol->type));
-    emit(new LoadInst(structure, getValue(node->varSymbol)));
+    node->object->accept(this);
+
+    Value* structure = node->object->value;
     emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * node->memberLocation));
 }
 

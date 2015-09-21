@@ -1,0 +1,6 @@
+struct Test
+    f: Int
+
+impl Test
+    def f(self: Test) -> Int
+        return 0

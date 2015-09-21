@@ -17,17 +17,23 @@ FunctionSymbol* SymbolTable::createFunctionSymbol(const std::string& name, AstNo
     return symbol;
 }
 
-MemberSymbol* SymbolTable::createMemberSymbol(const std::string& name, AstNode* node)
+MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType)
 {
-    MemberSymbol* symbol = new MemberSymbol(name, node);
-    insert(symbol);
+    auto& bucket = _members[name];
+    MethodSymbol* symbol = new MethodSymbol(name, node, parentType, bucket.size());
+
+    if (symbol->name != "_")
+    {
+        bucket.push_back(symbol);
+    }
+
     return symbol;
 }
 
-MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType)
+MemberVarSymbol* SymbolTable::createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t location)
 {
-    auto& bucket = _methods[name];
-    MethodSymbol* symbol = new MethodSymbol(name, node, definition, parentType, bucket.size());
+    auto& bucket = _members[name];
+    MemberVarSymbol* symbol = new MemberVarSymbol(name, node, parentType, bucket.size(), location);
 
     if (symbol->name != "_")
     {
@@ -92,12 +98,12 @@ Symbol* SymbolTable::findTopScope(const std::string& name, WhichTable whichTable
     }
 }
 
-void SymbolTable::findMethods(const std::string& name, std::vector<MethodSymbol*>& result)
+void SymbolTable::findMembers(const std::string& name, std::vector<MemberSymbol*>& result)
 {
     result.clear();
 
-    auto i = _methods.find(name);
-    if (i != _methods.end())
+    auto i = _members.find(name);
+    if (i != _members.end())
     {
         result = i->second;
     }
@@ -114,10 +120,4 @@ void SymbolTable::insert(Symbol* symbol, WhichTable whichTable)
 
     if (symbol->name != "_")
         scope.emplace(key, symbol);
-}
-
-void SymbolTable::insertMethod(MethodSymbol* symbol)
-{
-    if (symbol->name != "_")
-        _methods[symbol->name].push_back(symbol);
 }

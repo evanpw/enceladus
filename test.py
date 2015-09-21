@@ -129,13 +129,13 @@ class TestAcceptance(object):
         self.run('closure', result='7')
 
     def test_structMembers1(self):
-        self.run('structMembers1', build_error='Error: testing/structMembers1.spl:3:5: symbol "x" is already defined')
+        self.run('structMembers1', build_error='Error: testing/structMembers1.spl:1:1: type "Test" already has a member named "x"')
 
     def test_structMembers2(self):
-        self.run('structMembers2', build_error='Error: testing/structMembers2.spl:7:5: symbol "y" is already defined')
+        self.run('structMembers2', result='')
 
     def test_structMembers3(self):
-        self.run('structMembers3', build_error='Error: testing/structMembers3.spl:5:1: symbol "x" is already defined in this scope')
+        self.run('structMembers3', result='')
 
     def test_structInference(self):
         self.run('structInference', result='7')
@@ -261,7 +261,7 @@ class TestAcceptance(object):
         self.run('method4', '3')
 
     def test_method5(self):
-        self.run('method5', build_error='Error: testing/method5.spl:11:5: an implementation of method "myAt" already exists for type "[Int]"')
+        self.run('method5', build_error='Error: testing/method5.spl:11:5: type "[Int]" already has a method or member named "myAt"')
 
     def test_map(self):
         self.run('map', result='3')
@@ -284,6 +284,18 @@ class TestAcceptance(object):
     def test_repeatedTypeParam6(self):
         self.run('repeatedTypeParam6', build_error='Error: testing/repeatedTypeParam6.spl:1:1: type parameter "T" is already defined')
 
+    def test_memberMethodConflict(self):
+        self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:5:5: type "Test" already has a method or member named "f"')
+
+    def test_memberAsMethod(self):
+        self.run('memberAsMethod', build_error='Error: testing/memberAsMethod.spl:5:1: "test" is a member variable, not a method')
+
+    def test_methodAsMember(self):
+        self.run('methodAsMember', build_error='Error: testing/methodAsMember.spl:9:1: "doSomething" is a method, not a member variable')
+
+    def test_structMemberNames(self):
+        self.run('structMemberNames', result='30\nFrance')
+
 
     # Medium tests (100ms-1s)
 
@@ -298,9 +310,6 @@ class TestAcceptance(object):
 
     def test_euler19(self):
         self.run('euler19', result='171')
-
-    def test_euler19_2(self):
-        self.run('euler19-2', result='171')
 
     def test_euler26(self):
         self.run('euler26', result='983')

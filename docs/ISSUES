@@ -10,10 +10,6 @@
 * Allow pattern-matching let statement to be an expression by adding an "in"
   clause (see matchExpression.spl)
 
-* Struct members names should be allowed to clash when there is no ambiguity
-  Don't try to infer type of structs when accessing a member.
-  (see structMemberNames.spl)
-
 * Remove implicit returns, and add a separate semantic-analysis pass that
   makes sure every path through a function has a return statement
 
@@ -63,5 +59,3 @@
 * Allow passing a method as an argument to a function (should look just like a function)
 
 * Convert some of the functions in List.spl to be methods, and move some functions / methods out of prelude.spl
-
-* Make sure that methods work for structs, and automatically generate getters for each field

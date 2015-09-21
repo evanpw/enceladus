@@ -395,7 +395,6 @@ StatementNode* Parser::struct_declaration()
 
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
-    expect('=');
     std::vector<MemberDefNode*> memberList = members();
 
     return new StructDefNode(_context, location, name.value.str, memberList);
@@ -887,21 +886,15 @@ std::vector<MemberDefNode*> Parser::members()
 {
     std::vector<MemberDefNode*> memberList;
 
-    if (accept(tEOL))
-    {
-        expect(tINDENT);
+    expect(tEOL);
+    expect(tINDENT);
 
-        while (peekType() != tDEDENT)
-        {
-            memberList.push_back(member_definition());
-        }
-
-        expect(tDEDENT);
-    }
-    else
+    while (peekType() != tDEDENT)
     {
         memberList.push_back(member_definition());
     }
+
+    expect(tDEDENT);
 
     return memberList;
 }
@@ -1076,37 +1069,44 @@ ExpressionNode* Parser::negation_expression()
     }
     else
     {
-        return method_call_expression();
+        return method_or_member_expression();
     }
 }
 
-/// method_call_expression
-///     : func_call_expression { '.' '(' [ expression ] { ',' expression } ] ')' }
-ExpressionNode* Parser::method_call_expression()
+/// method_or_member_expression
+///     : func_call_expression
+///     | func_call_expression '.' LIDENT
+///     | func_call_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
+ExpressionNode* Parser::method_or_member_expression()
 {
     YYLTYPE location = getLocation();
 
     ExpressionNode* expr = func_call_expression();
     while (accept('.'))
     {
-        Token methodName = expect(tLIDENT);
+        Token name = expect(tLIDENT);
 
-        expect('(');
-
-        std::vector<ExpressionNode*> argList;
-        if (!accept(')'))
+        if (accept('('))
         {
-            argList.push_back(expression());
-
-            while (accept(','))
+            std::vector<ExpressionNode*> argList;
+            if (!accept(')'))
             {
                 argList.push_back(expression());
+
+                while (accept(','))
+                {
+                    argList.push_back(expression());
+                }
+
+                expect(')');
             }
 
-            expect(')');
+            expr = new MethodCallNode(_context, location, expr, name.value.str, std::move(argList));
         }
-
-        expr = new MethodCallNode(_context, location, expr, methodName.value.str, std::move(argList));
+        else
+        {
+            expr = new MemberAccessNode(_context, location, expr, name.value.str);
+        }
     }
 
     return expr;
@@ -1212,16 +1212,7 @@ ExpressionNode* Parser::unary_expression()
 
     case tLIDENT:
     case tUIDENT:
-        if (peekType() == tLIDENT && peek2ndType() == '{')
-        {
-            Token varName = expect(tLIDENT);
-            expect('{');
-            Token memberName = expect(tLIDENT);
-            expect('}');
-
-            return new MemberAccessNode(_context, location, varName.value.str, memberName.value.str);
-        }
-        else if (peekType() == tLIDENT && peek2ndType() == tDOT_BRACKET)
+        if (peekType() == tLIDENT && peek2ndType() == tDOT_BRACKET)
         {
             Token varName = expect(tLIDENT);
             expect(tDOT_BRACKET);

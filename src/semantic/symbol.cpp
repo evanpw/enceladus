@@ -1,4 +1,5 @@
 #include "semantic/symbol.hpp"
+#include "ast/ast.hpp"
 
 VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
 : Symbol(name, kVariable, node, enclosingFunction, global)
@@ -23,15 +24,21 @@ TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* n
 {
 }
 
-MemberSymbol::MemberSymbol(const std::string& name, AstNode* node)
+MemberSymbol::MemberSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index)
 : Symbol(name, kMember, node, nullptr, true)
+, parentType(parentType)
+, index(index)
 {
 }
 
-MethodSymbol::MethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index)
-: Symbol(name, kMethod, node, nullptr, true)
-, definition(definition)
-, parentType(parentType)
-, index(index)
+MethodSymbol::MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType, size_t index)
+: MemberSymbol(name, node, parentType, index)
+, definition(node)
+{
+}
+
+MemberVarSymbol::MemberVarSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index, size_t location)
+: MemberSymbol(name, node, parentType, index)
+, location(location)
 {
 }

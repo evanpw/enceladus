@@ -49,18 +49,18 @@ public:
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
+    virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
     virtual void visit(MatchArm* node);
-    virtual void visit(LetNode* node);
-    virtual void visit(ProgramNode* node);
     virtual void visit(MatchNode* node);
+    virtual void visit(MemberAccessNode* node);
+    virtual void visit(ProgramNode* node);
     virtual void visit(WhileNode* node);
 
     // Leaf nodes
     virtual void visit(BoolNode* node);
     virtual void visit(BreakNode* node);
     virtual void visit(IntNode* node);
-    virtual void visit(MemberAccessNode* node);
     virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);
     virtual void visit(ReturnNode* node);
@@ -103,7 +103,7 @@ private:
 
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);
-    void resolveMethodSymbol(const std::string& name, Type* parentType, std::vector<MethodSymbol*>& symbols);
+    void resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols);
 
     ProgramNode* _root;
     AstContext* _context;

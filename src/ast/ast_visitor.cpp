@@ -202,3 +202,8 @@ void AstVisitor::visit(MethodCallNode* node)
 		argument->accept(this);
 	}
 }
+
+void AstVisitor::visit(MemberAccessNode* node)
+{
+	node->object->accept(this);
+}

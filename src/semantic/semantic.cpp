@@ -70,7 +70,7 @@ struct NotCompatible
     : self(self)
     {}
 
-    bool operator()(MethodSymbol* symbol)
+    bool operator()(MemberSymbol* symbol)
     {
         return !isCompatible(self, symbol->parentType);
     }
@@ -78,9 +78,9 @@ struct NotCompatible
     Type* self;
 };
 
-void SemanticAnalyzer::resolveMethodSymbol(const std::string& name, Type* parentType, std::vector<MethodSymbol*>& symbols)
+void SemanticAnalyzer::resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols)
 {
-    _symbolTable->findMethods(name, symbols);
+    _symbolTable->findMembers(name, symbols);
 
     // Filter out types that can't be unifed with parentType
     symbols.erase(std::remove_if(symbols.begin(), symbols.end(), NotCompatible(parentType)), symbols.end());
@@ -1061,12 +1061,12 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     node->symbol = symbol;
 
     // HACK: Give the code generator access to these symbols
-    std::vector<MethodSymbol*> symbols;
-    resolveMethodSymbol("head", listType, symbols);
+    std::vector<MemberSymbol*> symbols;
+    resolveMemberSymbol("head", listType, symbols);
     node->headSymbol = symbols.front();
-    resolveMethodSymbol("tail", listType, symbols);
+    resolveMemberSymbol("tail", listType, symbols);
     node->tailSymbol = symbols.front();
-    resolveMethodSymbol("empty", listType, symbols);
+    resolveMemberSymbol("empty", listType, symbols);
     node->emptySymbol = symbols.front();
 
     node->type = _typeTable->Unit;
@@ -1209,15 +1209,20 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 
     std::vector<std::string> memberNames;
     std::vector<Type*> memberTypes;
-    std::vector<MemberSymbol*> memberSymbols;
-    for (auto& member : node->members)
+    std::vector<MemberVarSymbol*> memberSymbols;
+    std::unordered_set<std::string> alreadyUsed;
+    for (size_t i = 0; i < node->members.size(); ++i)
     {
-        CHECK_UNDEFINED_IN(member->name, member);
+        auto& member = node->members[i];
+
+        // Make sure there are no repeated member names
+        CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type \"{}\" already has a member named \"{}\"", node->name, member->name);
+        alreadyUsed.insert(member->name);
 
         memberTypes.push_back(member->memberType);
         memberNames.push_back(member->name);
 
-        MemberSymbol* memberSymbol = _symbolTable->createMemberSymbol(member->name, node);
+        MemberVarSymbol* memberSymbol = _symbolTable->createMemberVarSymbol(member->name, node, nullptr, newType, i);
         memberSymbol->type = _typeTable->createFunctionType({newType}, member->memberType);
         memberSymbols.push_back(memberSymbol);
     }
@@ -1230,15 +1235,6 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     ValueConstructor* valueConstructor = _typeTable->createValueConstructor(symbol, memberTypes, memberNames);
     node->valueConstructor = valueConstructor;
     newType->addValueConstructor(valueConstructor);
-
-    assert(valueConstructor->members().size() == memberSymbols.size());
-    for (size_t i = 0; i < memberSymbols.size(); ++i)
-    {
-        ValueConstructor::MemberDesc& member = valueConstructor->members().at(i);
-        assert(member.name == memberNames[i]);
-
-        memberSymbols[i]->location = member.location;
-    }
 
     node->structType = newType;
     node->type = _typeTable->Unit;
@@ -1254,26 +1250,25 @@ void SemanticAnalyzer::visit(MemberDefNode* node)
 
 void SemanticAnalyzer::visit(MemberAccessNode* node)
 {
-    const std::string& name = node->varName;
+    node->object->accept(this);
+    Type* objectType = node->object->type;
 
-    Symbol* varSymbol = resolveSymbol(name);
-    CHECK(varSymbol, "symbol \"{}\" is not defined in this scope", name);
-    CHECK(varSymbol->kind == kVariable, "\"{}\" is not the name of a variable", name);
-    node->varSymbol = dynamic_cast<VariableSymbol*>(varSymbol);
+    std::vector<MemberSymbol*> symbols;
+    resolveMemberSymbol(node->memberName, objectType, symbols);
+    CHECK(!symbols.empty(), "no member named \"{}\" found for type \"{}\"", node->memberName, objectType->name());
+    assert(symbols.size() < 2);
 
-    CHECK(node->memberName != "_", "member access syntax cannot be used with unnamed members");
-    Symbol* memberSymbol = resolveSymbol(node->memberName);
-    CHECK(memberSymbol, "symbol \"{}\" is not defined in this scope", name);
-    CHECK(memberSymbol->kind == kMember, "\"{}\" is not the name of a data type member", node->memberName);
-    node->memberSymbol = dynamic_cast<MemberSymbol*>(memberSymbol);
+    CHECK(symbols.front()->isMemberVar(), "\"{}\" is a method, not a member variable", node->memberName);
+    MemberVarSymbol* symbol = dynamic_cast<MemberVarSymbol*>(symbols.front());
+    node->symbol = symbol;
 
-    Type* varType = varSymbol->type;
-    Type* memberType = instantiate(memberSymbol->type);
     Type* returnType = _typeTable->createTypeVariable();
-    unify(memberType, _typeTable->createFunctionType({varType}, returnType), node);
+    Type* functionType = instantiate(symbol->type);
+
+    unify(functionType, _typeTable->createFunctionType({objectType}, returnType), node);
 
     node->type = returnType;
-    node->memberLocation = dynamic_cast<MemberSymbol*>(memberSymbol)->location;
+    node->memberLocation = symbol->location;
 }
 
 void SemanticAnalyzer::visit(FunctionDeclNode* node)
@@ -1365,10 +1360,10 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     CHECK(!_enclosingFunction, "methods cannot be nested");
     CHECK(_enclosingImplNode, "methods can only appear inside impl blocks");
 
-    std::vector<MethodSymbol*> symbols;
+    std::vector<MemberSymbol*> symbols;
     Type* parentType = _enclosingImplNode->typeName->type;
-    resolveMethodSymbol(node->name, parentType, symbols);
-    CHECK(symbols.empty(), "an implementation of method \"{}\" already exists for type \"{}\"", node->name, parentType->name());
+    resolveMemberSymbol(node->name, parentType, symbols);
+    CHECK(symbols.empty(), "type \"{}\" already has a method or member named \"{}\"", parentType->name(), node->name);
 
     // Create type variables for each type parameter
     std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
@@ -1394,7 +1389,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
     CHECK(!paramTypes.empty(), "methods must take at least one argument");
     unify(paramTypes[0], parentType, node);
 
-    MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, node, parentType);
+    MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, parentType);
     symbol->type = type;
     node->symbol = symbol;
 
@@ -1430,12 +1425,13 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     node->object->accept(this);
     Type* objectType = node->object->type;
 
-    std::vector<MethodSymbol*> symbols;
-    resolveMethodSymbol(node->methodName, objectType, symbols);
+    std::vector<MemberSymbol*> symbols;
+    resolveMemberSymbol(node->methodName, objectType, symbols);
     CHECK(!symbols.empty(), "no method named \"{}\" found for type \"{}\"", node->methodName, objectType->name());
     CHECK(symbols.size() < 2, "method call is amiguous");
 
-    Symbol* symbol = symbols.front();
+    CHECK(symbols.front()->isMethod(), "\"{}\" is a member variable, not a method", node->methodName);
+    MethodSymbol* symbol = dynamic_cast<MethodSymbol*>(symbols.front());
 
     std::vector<Type*> paramTypes = {objectType};
     for (size_t i = 0; i < node->arguments.size(); ++i)

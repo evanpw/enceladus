@@ -156,15 +156,10 @@ type_params
  //// Structures ///////////////////////////////////////////////////////////////
 
 members
-    : member_definition
-    | EOL INDENT member_list DEDENT
+    : EOL INDENT member_definition { member_definition } DEDENT
 
 member_definition
     : LIDENT ':' type EOL
-
-member_list
-    : member_definition
-    | member_list member_definition
 
  //// Expressions //////////////////////////////////////////////////////////////
 
@@ -196,10 +191,12 @@ concat_expression
     | negation_expression [ '^' concat_expression ]
 
 negation_expression
-    : [ '-' ] method_call_expression
+    : [ '-' ] method_or_member_expression
 
-method_call_expression
-    : func_call_expression { '.' '(' [ expression ] { ',' expression } ] ')' }
+method_or_member_expression
+    : func_call_expression
+    | func_call_expression '.' LIDENT
+    | func_call_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
 
 func_call_expression
     : ident '$' expression
@@ -209,7 +206,6 @@ func_call_expression
 unary_expression
     | '(' expression ')'
     | ident
-    | LIDENT '{' LIDENT '}'
     | TRUE
     | FALSE
     | inline_list

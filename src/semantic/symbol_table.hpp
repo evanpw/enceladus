@@ -11,8 +11,9 @@ class SymbolTable
 public:
     VariableSymbol* createVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global);
     FunctionSymbol* createFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
-    MemberSymbol* createMemberSymbol(const std::string& name, AstNode* node);
-    MethodSymbol* createMethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType);
+
+    MethodSymbol* createMethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType);
+    MemberVarSymbol* createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t location);
 
     TypeSymbol* createTypeSymbol(const std::string& name, AstNode* node, Type* type);
     TypeConstructorSymbol* createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
@@ -26,15 +27,14 @@ public:
     Symbol* find(const std::string& name, WhichTable whichTable = OTHER);
     Symbol* findTopScope(const std::string& name, WhichTable whichTable = OTHER);
 
-    // Methods are stored in a separate unscoped table, and can have more than
-    // one entry with the same name
-    void findMethods(const std::string& name, std::vector<MethodSymbol*>& result);
+    // Members are stored in a separate unscoped table, and can have more than
+    // one entry with the same name (with different types)
+    void findMembers(const std::string& name, std::vector<MemberSymbol*>& result);
 
     bool isTopScope() const { return _scopes.size() == 1; }
 
 private:
     void insert(Symbol* symbol, WhichTable = OTHER);
-    void insertMethod(MethodSymbol* symbol);
 
     // Owning references
     std::vector<std::unique_ptr<Symbol>> _symbols;
@@ -53,8 +53,8 @@ private:
     using Scope = std::unordered_map<KeyType, Symbol*, PairHash>;
     std::vector<Scope> _scopes;
 
-    // Unscoped method table
-    std::unordered_map<std::string, std::vector<MethodSymbol*>> _methods;
+    // Unscoped table of methods / member variables
+    std::unordered_map<std::string, std::vector<MemberSymbol*>> _members;
 };
 
 #endif

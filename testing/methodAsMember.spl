@@ -1,0 +1,9 @@
+struct Test
+    test: Int
+
+impl Test
+    def doSomething(self: Test) -> Int
+        return self.test
+
+x := Test(1)
+x.doSomething

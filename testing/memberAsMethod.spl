@@ -1,0 +1,5 @@
+struct Test
+    test: Int
+
+x := Test(1)
+x.test()

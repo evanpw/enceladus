@@ -63,7 +63,7 @@ private:
     ExpressionNode* concat_expression();
     ExpressionNode* negation_expression();
     ExpressionNode* func_call_expression();
-    ExpressionNode* method_call_expression();
+    ExpressionNode* method_or_member_expression();
     ExpressionNode* unary_expression();
     std::string ident();
 };

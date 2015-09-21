@@ -1,9 +1,9 @@
-struct Test =
+struct Test
     left: Int
     right: Int
 
 def doSomething(test: Test) -> Int
-    return test{left} + test{right}
+    return test.left + test.right
 
 test := Test(3, 4)
 print $ show $ doSomething(test)

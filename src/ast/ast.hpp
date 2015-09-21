@@ -668,18 +668,17 @@ public:
 class MemberAccessNode : public ExpressionNode
 {
 public:
-	MemberAccessNode(AstContext* context, const YYLTYPE& location, const std::string& varName, const std::string& memberName)
-	: ExpressionNode(context, location), varName(varName), memberName(memberName)
+	MemberAccessNode(AstContext* context, const YYLTYPE& location, ExpressionNode* object, const std::string& memberName)
+	: ExpressionNode(context, location), object(object), memberName(memberName)
 	{}
 
 	AST_VISITABLE();
 
-	std::string varName;
+	ExpressionNode* object;
 	std::string memberName;
 
 	// Annotations
-	VariableSymbol* varSymbol;
-	MemberSymbol* memberSymbol;
+	MemberVarSymbol* symbol;
 	size_t memberLocation;
 };
 

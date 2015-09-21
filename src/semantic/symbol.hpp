@@ -13,7 +13,7 @@ class TraitDefNode;
 class SymbolTable;
 
 
-enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMember = 4, kMethod = 5};
+enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMember = 4};
 
 class Symbol
 {
@@ -99,29 +99,44 @@ private:
     TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 };
 
-struct MemberSymbol : public Symbol
+class MemberSymbol : public Symbol
+{
+public:
+    Type* parentType;
+
+    virtual bool isMethod() { return false; }
+    virtual bool isMemberVar() { return false; }
+
+    // A number which is unique among members with the same name (for different types)
+    size_t index;
+
+protected:
+    friend class SymbolTable;
+    MemberSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index);
+};
+
+class MethodSymbol : public MemberSymbol
+{
+public:
+    FunctionDefNode* definition;
+
+    virtual bool isMethod() { return true; }
+
+protected:
+    friend class SymbolTable;
+    MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType, size_t index);
+};
+
+struct MemberVarSymbol : public MemberSymbol
 {
 public:
     size_t location;
 
-private:
-    friend class SymbolTable;
-    MemberSymbol(const std::string& name, AstNode* node);
-};
-
-
-class MethodSymbol : public Symbol
-{
-public:
-    FunctionDefNode* definition;
-    Type* parentType;
-
-    // A number which is unique among methods with the same name
-    size_t index;
+    virtual bool isMemberVar() { return true; }
 
 private:
     friend class SymbolTable;
-    MethodSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index);
+    MemberVarSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index, size_t location);
 };
 
 #endif
