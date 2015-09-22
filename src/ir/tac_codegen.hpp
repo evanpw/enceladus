@@ -7,7 +7,7 @@
 #include "ir/tac_instruction.hpp"
 #include "ir/value.hpp"
 
-#include <boost/lexical_cast.hpp>
+#include <deque>
 
 #define UNSUPPORTED(T) virtual void visit(T* node) { assert(false); }
 
@@ -25,7 +25,7 @@ public:
     UNSUPPORTED(ForeachNode);
     UNSUPPORTED(ForeverNode);
     UNSUPPORTED(ForNode);
-    UNSUPPORTED(FunctionDeclNode);
+    UNSUPPORTED(MethodDeclNode);
     UNSUPPORTED(FunctionDefNode);
     UNSUPPORTED(IfElseNode);
     UNSUPPORTED(IfNode);
@@ -131,10 +131,11 @@ public:
     virtual void visit(ImplNode* node);
     virtual void visit(MethodDefNode*);
     virtual void visit(MethodCallNode* node);
+    virtual void visit(TraitImplNode* node);
 
-    virtual void visit(FunctionDeclNode*) {}
-    virtual void visit(TraitDefNode*) {}
-    virtual void visit(TraitImplNode*) {}
+    // No code to generate
+    virtual void visit(MethodDeclNode* node) {}
+    virtual void visit(TraitDefNode* node) {}
 
 private:
     // We cache the Value corresponding to each symbol so that the value
@@ -154,12 +155,9 @@ private:
 
     // We accumulate these lists while walking through the top level, and then
     // generate code for each of them after the main function is finished
-    std::vector<FunctionDefNode*> _functions;
-    std::vector<MethodDefNode*> _methods;
-    std::vector<DataDeclaration*> _dataDeclarations;
-    std::vector<StructDefNode*> _structDeclarations;
-
-    void createConstructor(ValueConstructor* constructor, size_t constructorTag);
+    std::deque<FunctionDefNode*> _functions;
+    std::vector<ConstructorSymbol*> _constructors;
+    void createConstructor(ValueConstructor* constructor);
 
     TACContext* _context;
     Function* _currentFunction;

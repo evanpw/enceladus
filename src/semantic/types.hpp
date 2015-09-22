@@ -294,18 +294,9 @@ private:
 };
 
 
-struct Symbol;
-
 class ValueConstructor
 {
 public:
-    virtual std::string name() const;
-
-    Symbol* symbol() const
-    {
-        return _symbol;
-    }
-
     struct MemberDesc
     {
         MemberDesc(const std::string& name, Type* type, size_t location)
@@ -317,18 +308,29 @@ public:
         size_t location;
     };
 
+    virtual std::string name() const
+    {
+        return _name;
+    }
+
     std::vector<MemberDesc>& members()
     {
         return _members;
     }
 
+    size_t constructorTag() const
+    {
+        return _constructorTag;
+    }
+
 private:
     friend TypeTable;
 
-    ValueConstructor(Symbol* symbol, const std::vector<Type*>& memberTypes, const std::vector<std::string>& memberNames = {});
+    ValueConstructor(const std::string& name, size_t constructorTag, const std::vector<Type*>& memberTypes, const std::vector<std::string>& memberNames = {});
 
-    Symbol* _symbol;
+    std::string _name;
     std::vector<MemberDesc> _members;
+    size_t _constructorTag;
 };
 
 
@@ -433,9 +435,9 @@ public:
         return typeConstructor;
     }
 
-    ValueConstructor* createValueConstructor(Symbol* symbol, const std::vector<Type*>& memberTypes, const std::vector<std::string>& memberNames = {})
+    ValueConstructor* createValueConstructor(const std::string& name, size_t constructorTag, const std::vector<Type*>& memberTypes, const std::vector<std::string>& memberNames = {})
     {
-        ValueConstructor* valueConstructor = new ValueConstructor(symbol, memberTypes, memberNames);
+        ValueConstructor* valueConstructor = new ValueConstructor(name, constructorTag, memberTypes, memberNames);
         _valueConstructors.emplace_back(valueConstructor);
 
         return valueConstructor;

@@ -4,6 +4,7 @@
 #include "lib/library.h"
 #include "semantic/types.hpp"
 
+#include <cstddef>
 #include <iostream>
 
 TACCodeGen::TACCodeGen(TACContext* context)
@@ -83,6 +84,9 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
             else
             {
                 result = _context->createFunction(symbol->name);
+
+                if (!functionSymbol->isConstructor)
+                    _functions.push_back(functionSymbol->definition);
             }
         }
         else if (symbol->kind == kMember)
@@ -96,6 +100,8 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
             ss << methodSymbol->name << "$" << methodSymbol->index;
 
             result = _context->createFunction(ss.str());
+
+            _functions.push_back(methodSymbol->definition);
         }
         else
         {
@@ -147,11 +153,24 @@ void TACCodeGen::visit(ProgramNode* node)
 
     emit(new ReturnInst());
 
-    // The previous loop will have filled in _functions and _methods with a
-    // list of all other functions. Now generate code for those
-    for (FunctionDefNode* funcDefNode : _functions)
+    // The previous loop will have filled in _functions with all
+    // functions / methods visited from the top level. Recursively generate
+    // code for all functions / methods reachable from those, and so on.
+    std::unordered_set<FunctionDefNode*> visited;
+    while (!_functions.empty())
     {
+        FunctionDefNode* funcDefNode = _functions.front();
+        _functions.pop_front();
+
+        // The same function can end up in the list twice. Avoid performing
+        // code generation again.
+        if (visited.count(funcDefNode) > 0)
+            continue;
+        else
+            visited.insert(funcDefNode);
+
         Function* function = (Function*)getValue(funcDefNode->symbol);
+
         _currentFunction = function;
         _nextSeqNumber = 0;
         setBlock(createBlock());
@@ -173,55 +192,17 @@ void TACCodeGen::visit(ProgramNode* node)
         }
     }
 
-    for (MethodDefNode* methodDefNode : _methods)
+    for (ConstructorSymbol* constructorSymbol : _constructors)
     {
-        Function* function = (Function*)getValue(methodDefNode->symbol);
+        ValueConstructor* constructor = constructorSymbol->constructor;
+
+        Function* function = (Function*)getValue(constructorSymbol);
         _currentFunction = function;
         _nextSeqNumber = 0;
         setBlock(createBlock());
 
-        // Collect all function parameters
-        for (Symbol* param : methodDefNode->parameterSymbols)
-        {
-            assert(dynamic_cast<VariableSymbol*>(param)->isParam);
-            _currentFunction->params.push_back(getValue(param));
-        }
-
-        // Generate code for the function body
-        methodDefNode->body->accept(this);
-
-        // Handle implicit return values
-        if (!_currentBlock->isTerminated())
-        {
-            emit(new ReturnInst(methodDefNode->body->value));
-        }
-    }
-
-    for (DataDeclaration* dataDeclaration : _dataDeclarations)
-    {
-        for (size_t i = 0; i < dataDeclaration->valueConstructors.size(); ++i)
-        {
-            ValueConstructor* constructor = dataDeclaration->valueConstructors[i];
-
-            Function* function = (Function*)getValue(constructor->symbol());
-            _currentFunction = function;
-            _nextSeqNumber = 0;
-            setBlock(createBlock());
-
-            createConstructor(constructor, i);
-        }
-    }
-
-    for (StructDefNode* structDeclaration : _structDeclarations)
-    {
-        ValueConstructor* constructor = structDeclaration->valueConstructor;
-
-        Function* function = (Function*)getValue(constructor->symbol());
-        _currentFunction = function;
-        _nextSeqNumber = 0;
-        setBlock(createBlock());
-
-        createConstructor(structDeclaration->valueConstructor, 0);
+        createConstructor(constructor);
+        continue;
     }
 }
 
@@ -919,11 +900,6 @@ void TACCodeGen::visit(MemberAccessNode* node)
     emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * node->memberLocation));
 }
 
-void TACCodeGen::visit(StructDefNode* node)
-{
-    _structDeclarations.push_back(node);
-}
-
 void TACCodeGen::visit(MemberDefNode* node)
 {
 }
@@ -934,14 +910,19 @@ void TACCodeGen::visit(TypeAliasNode* node)
 
 void TACCodeGen::visit(FunctionDefNode* node)
 {
-    // Do the code generation for this function later, after we've generated
-    // code for the main function
-    _functions.push_back(node);
 }
 
 void TACCodeGen::visit(DataDeclaration* node)
 {
-    _dataDeclarations.push_back(node);
+    for (ConstructorSymbol* symbol : node->constructorSymbols)
+    {
+        _constructors.push_back(symbol);
+    }
+}
+
+void TACCodeGen::visit(StructDefNode* node)
+{
+    _constructors.push_back(node->constructorSymbol);
 }
 
 void TACCodeGen::visit(MatchNode* node)
@@ -1055,9 +1036,10 @@ void TACCodeGen::visit(StringLiteralNode* node)
     node->value = getValue(node->symbol);
 }
 
-void TACCodeGen::createConstructor(ValueConstructor* constructor, size_t constructorTag)
+void TACCodeGen::createConstructor(ValueConstructor* constructor)
 {
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
+    size_t constructorTag = constructor->constructorTag();
 
     // Value constructors with no parameters are represented as immediates
     if (members.size() == 0)
@@ -1113,7 +1095,9 @@ void TACCodeGen::visit(ImplNode* node)
 
 void TACCodeGen::visit(MethodDefNode* node)
 {
-    // Do the code generation for this method later, after we've generated
-    // code for the main function
-    _methods.push_back(node);
+}
+
+void TACCodeGen::visit(TraitImplNode* node)
+{
+    AstVisitor::visit(node);
 }

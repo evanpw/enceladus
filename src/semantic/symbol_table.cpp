@@ -17,6 +17,13 @@ FunctionSymbol* SymbolTable::createFunctionSymbol(const std::string& name, AstNo
     return symbol;
 }
 
+ConstructorSymbol* SymbolTable::createConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor)
+{
+    ConstructorSymbol* symbol = new ConstructorSymbol(name, node, constructor);
+    insert(symbol);
+    return symbol;
+}
+
 MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType)
 {
     auto& bucket = _members[name];

@@ -154,7 +154,7 @@ void AstVisitor::visit(DataDeclaration* node)
 
 
 
-void AstVisitor::visit(FunctionDeclNode* node)
+void AstVisitor::visit(MethodDeclNode* node)
 {
 	node->typeName->accept(this);
 }

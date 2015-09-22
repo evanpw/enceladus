@@ -115,9 +115,12 @@ std::string ConstructedType::name() const
 
 int TypeVariable::_count;
 
-ValueConstructor::ValueConstructor(Symbol* symbol, const std::vector<Type*>& memberTypes,
+ValueConstructor::ValueConstructor(const std::string& name,
+                                   size_t constructorTag,
+                                   const std::vector<Type*>& memberTypes,
                                    const std::vector<std::string>& memberNames)
-: _symbol(symbol)
+: _name(name)
+, _constructorTag(constructorTag)
 {
     assert(memberNames.empty() || (memberNames.size() == memberTypes.size()));
 
@@ -127,11 +130,6 @@ ValueConstructor::ValueConstructor(Symbol* symbol, const std::vector<Type*>& mem
         Type* type = memberTypes[i];
         _members.emplace_back(memberName, type, i);
     }
-}
-
-std::string ValueConstructor::name() const
-{
-    return _symbol->name;
 }
 
 // Two (possibly polymorphic) types are compatible iff there is at least one

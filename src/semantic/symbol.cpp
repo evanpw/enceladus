@@ -12,6 +12,14 @@ FunctionSymbol::FunctionSymbol(const std::string& name, AstNode* node, FunctionD
 {
 }
 
+ConstructorSymbol::ConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor)
+: FunctionSymbol(name, node, nullptr)
+, constructor(constructor)
+{
+    isConstructor = true;
+    isForeign = true;
+}
+
 TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)
 : Symbol(name, kType, node, nullptr, true)
 {

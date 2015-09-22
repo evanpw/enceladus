@@ -8,7 +8,7 @@
 
 class AstNode;
 class FunctionDefNode;
-class FunctionDeclNode;
+class MethodDeclNode;
 class TraitDefNode;
 class SymbolTable;
 
@@ -74,12 +74,23 @@ public:
     bool isForeign = false;     // C argument-passing style
     bool isExternal = false;
     bool isBuiltin = false;
+    bool isConstructor = false;
 
     FunctionDefNode* definition;
 
-private:
+protected:
     friend class SymbolTable;
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
+};
+
+class ConstructorSymbol : public FunctionSymbol
+{
+public:
+    ValueConstructor* constructor;
+
+private:
+    friend class SymbolTable;
+    ConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor);
 };
 
 class TypeSymbol : public Symbol

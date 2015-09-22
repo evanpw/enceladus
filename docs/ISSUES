@@ -57,3 +57,5 @@
 * Allow passing a method as an argument to a function (should look just like a function)
 
 * Convert some of the functions in List.spl to be methods, and move some functions / methods out of prelude.spl
+
+* Allow all methods in the same implementation block to be mutually recursive

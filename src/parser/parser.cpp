@@ -523,7 +523,7 @@ StatementNode* Parser::trait_definition()
     expect(tEOL);
     expect(tINDENT);
 
-    std::vector<FunctionDeclNode*> methods;
+    std::vector<MethodDeclNode*> methods;
     while (peekType() == tDEF)
     {
         YYLTYPE methodLocation = getLocation();
@@ -533,7 +533,7 @@ StatementNode* Parser::trait_definition()
         auto paramList = params_and_types();
         expect(tEOL);
 
-        methods.push_back(new FunctionDeclNode(_context, methodLocation, methodName.value.str, paramList.first, paramList.second));
+        methods.push_back(new MethodDeclNode(_context, methodLocation, methodName.value.str, paramList.first, paramList.second));
     }
 
     expect(tDEDENT);
@@ -582,7 +582,7 @@ StatementNode* Parser::implementation_block()
     }
     else
     {
-        return new TraitImplNode(_context, location, std::move(typeParams), traitName, typeName, std::move(methods));
+        return new TraitImplNode(_context, location, std::move(typeParams), typeName, std::move(methods), traitName);
     }
 }
 

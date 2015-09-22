@@ -97,10 +97,12 @@ public:
 	std::vector<TypeName*> members;
 
 	// Annotations
+	size_t constructorTag;
 	std::unordered_map<std::string, Type*> typeContext;
 	Type* resultType;
 	std::vector<Type*> memberTypes;
 	ValueConstructor* valueConstructor;
+	ConstructorSymbol* symbol;
 };
 
 ////// Top-level nodes /////////////////////////////////////////////////////////
@@ -449,10 +451,10 @@ public:
 	AST_VISITABLE();
 };
 
-class FunctionDeclNode : public StatementNode
+class MethodDeclNode : public StatementNode
 {
 public:
-	FunctionDeclNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
+	MethodDeclNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
 	: StatementNode(context, location), name(name), params(params), typeName(typeName)
 	{}
 
@@ -463,22 +465,20 @@ public:
 	TypeName* typeName;
 
 	// Annotations
-	Symbol* symbol = nullptr;
-	std::vector<Symbol*> parameterSymbols;
-	FunctionType* functionType;
+	FunctionType* methodType;
 };
 
 class TraitDefNode : public StatementNode
 {
 public:
-	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<FunctionDeclNode*>&& methods)
+	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MethodDeclNode*>&& methods)
 	: StatementNode(context, location), name(name), methods(methods)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
-	std::vector<FunctionDeclNode*> methods;
+	std::vector<MethodDeclNode*> methods;
 
 	// Annotations
 	Type* traitType = nullptr;
@@ -501,19 +501,16 @@ public:
 	std::unordered_map<std::string, Type*> typeContext;
 };
 
-class TraitImplNode : public StatementNode
+class TraitImplNode : public ImplNode
 {
 public:
-	TraitImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::string>&& typeParams, const std::string& traitName, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
-	: StatementNode(context, location), typeParams(typeParams), traitName(traitName), typeName(typeName), methods(methods)
+	TraitImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::string>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods, const std::string& traitName)
+	: ImplNode(context, location, std::move(typeParams), typeName, std::move(methods)), traitName(traitName)
 	{}
 
 	AST_VISITABLE();
 
-	std::vector<std::string> typeParams;
 	std::string traitName;
-	TypeName* typeName;
-	std::vector<MethodDefNode*> methods;
 };
 
 class LetNode : public StatementNode
@@ -584,6 +581,7 @@ public:
 
 	// Annotations
 	std::vector<ValueConstructor*> valueConstructors;
+	std::vector<ConstructorSymbol*> constructorSymbols;
 };
 
 class TypeAliasNode : public StatementNode
@@ -662,6 +660,7 @@ public:
 	// Annotations
 	Type* structType;
 	ValueConstructor* valueConstructor;
+	ConstructorSymbol* constructorSymbol;
 };
 
 

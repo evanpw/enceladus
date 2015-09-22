@@ -519,14 +519,14 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
         node->memberTypes.push_back(member->type);
     }
 
-    // Create a symbol for the constructor
-    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(node->name, node, nullptr);
-    symbol->isForeign = true;
-    symbol->type = _typeTable->createFunctionType(node->memberTypes, node->resultType);
-
-    ValueConstructor* valueConstructor = _typeTable->createValueConstructor(symbol, node->memberTypes);
+    ValueConstructor* valueConstructor = _typeTable->createValueConstructor(node->name, node->constructorTag, node->memberTypes);
     node->valueConstructor = valueConstructor;
     node->resultType->addValueConstructor(valueConstructor);
+
+    // Create a symbol for the constructor
+    ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(node->name, node, valueConstructor);
+    symbol->type = _typeTable->createFunctionType(node->memberTypes, node->resultType);
+    node->symbol = symbol;
 
     node->type = _typeTable->Unit;
 }
@@ -546,11 +546,15 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         Type* newType = _typeTable->createBaseType(node->name);
         _symbolTable->createTypeSymbol(name, node, newType);
 
-        for (auto& spec : node->constructorSpecs)
+        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
         {
+            auto& spec = node->constructorSpecs[i];
+            spec->constructorTag = i;
             spec->resultType = newType;
             spec->accept(this);
+
             node->valueConstructors.push_back(spec->valueConstructor);
+            node->constructorSymbols.push_back(spec->symbol);
         }
     }
     else
@@ -574,13 +578,17 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
 
         Type* newType = _typeTable->createConstructedType(typeConstructor, variables);
 
-        for (auto& spec : node->constructorSpecs)
+        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
         {
+            auto& spec = node->constructorSpecs[i];
+            spec->constructorTag = i;
             spec->typeContext = typeContext;
             spec->resultType = newType;
             spec->accept(this);
+
             typeConstructor->addValueConstructor(spec->valueConstructor);
             node->valueConstructors.push_back(spec->valueConstructor);
+            node->constructorSymbols.push_back(spec->symbol);
         }
     }
 
@@ -1227,14 +1235,14 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         memberSymbols.push_back(memberSymbol);
     }
 
-    // Create a symbol for the constructor
-    FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(typeName, node, nullptr);
-    symbol->isForeign = true;
-    symbol->type = _typeTable->createFunctionType(memberTypes, newType);
-
-    ValueConstructor* valueConstructor = _typeTable->createValueConstructor(symbol, memberTypes, memberNames);
+    ValueConstructor* valueConstructor = _typeTable->createValueConstructor(typeName, 0, memberTypes, memberNames);
     node->valueConstructor = valueConstructor;
     newType->addValueConstructor(valueConstructor);
+
+    // Create a symbol for the constructor
+    ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor);
+    symbol->type = _typeTable->createFunctionType(memberTypes, newType);
+    node->constructorSymbol = symbol;
 
     node->structType = newType;
     node->type = _typeTable->Unit;
@@ -1271,60 +1279,72 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     node->memberLocation = symbol->location;
 }
 
-void SemanticAnalyzer::visit(FunctionDeclNode* node)
-{
-    /*
-    // Functions cannot be declared inside of another function
-    CHECK(_enclosingTrait, "method declarations can appear only inside trait definitions");
-
-    // The function name cannot have already been used as something else
-    const std::string& name = node->name;
-    CHECK_UNDEFINED(name);
-
-    std::unordered_map<std::string, Type*> typeContext;
-    typeContext["Self"] = _enclosingTrait->traitType;
-
-    resolveTypeName(node->typeName, typeContext);
-    Type* type = node->typeName->type;
-    FunctionType* functionType = type->get<FunctionType>();
-    node->functionType = functionType;
-
-    assert(functionType->inputs().size() == node->params.size());
-
-    const std::vector<Type*>& paramTypes = functionType->inputs();
-
-    CHECK(paramTypes.size() >= 1, "methods must take an argument of type Self");
-    unify(paramTypes[0], _enclosingTrait->traitType, node);
-
-    MethodSymbol* symbol = _symbolTable->createMethodSymbol(name, node, node, _enclosingTrait);
-    symbol->type = type;
-    node->symbol = symbol;
-    */
-
-    AstVisitor::visit(node);
-    node->type = _typeTable->Unit;
-}
-
 void SemanticAnalyzer::visit(TraitDefNode* node)
 {
-    /*
     assert(!_enclosingTrait);
-    _enclosingTrait = node;
 
     node->traitType = _typeTable->createTypeVariable("Self", true);
 
+    _enclosingTrait = node;
     AstVisitor::visit(node);
-
     _enclosingTrait = nullptr;
-    */
 
-    AstVisitor::visit(node);
+    node->type = _typeTable->Unit;
+}
+
+void SemanticAnalyzer::visit(MethodDeclNode* node)
+{
+    // Functions cannot be declared inside of another function
+    CHECK(_enclosingTrait, "method declarations can appear only inside trait definitions");
+
+    std::vector<MemberSymbol*> symbols;
+    Type* parentType = _enclosingTrait->traitType;
+    resolveMemberSymbol(node->name, parentType, symbols);
+    CHECK(symbols.empty(), "type \"{}\" already has a method or member named \"{}\"", parentType->name(), node->name);
+
+    // TODO: Relax this constraint
+    //CHECK(node->typeParams.empty(), "trait methods cannot be generic");
+
+    std::unordered_map<std::string, Type*> typeContext;
+    typeContext["Self"] = parentType;
+
+    resolveTypeName(node->typeName, typeContext);
+
+    Type* type = node->typeName->type;
+    FunctionType* methodType = type->get<FunctionType>();
+    node->methodType = methodType;
+
+    assert(methodType->inputs().size() == node->params.size());
+
+    const std::vector<Type*>& paramTypes = methodType->inputs();
+    CHECK(!paramTypes.empty(), "methods must take at least one argument");
+    unify(paramTypes[0], parentType, node);
+
     node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(TraitImplNode* node)
 {
+    assert(!_enclosingImplNode);
+
+    // Create type variables for each type parameter
+    std::unordered_map<std::string, Type*> typeContext;
+    for (auto& typeParameter : node->typeParams)
+    {
+        CHECK_UNDEFINED(typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+
+        Type* var = _typeTable->createTypeVariable(typeParameter, true);
+        typeContext.emplace(typeParameter, var);
+    }
+
+    resolveTypeName(node->typeName, typeContext);
+    node->typeContext = typeContext;
+
+    _enclosingImplNode = node;
     AstVisitor::visit(node);
+    _enclosingImplNode = nullptr;
+
     node->type = _typeTable->Unit;
 }
 

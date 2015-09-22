@@ -68,7 +68,7 @@ public:
     virtual void visit(VariableNode* node);
 
     // Work in progress
-    virtual void visit(FunctionDeclNode* node);
+    virtual void visit(MethodDeclNode* node);
     virtual void visit(ImplNode* node);
     virtual void visit(MethodDefNode* node);
     virtual void visit(TraitDefNode* node);
