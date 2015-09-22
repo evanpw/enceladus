@@ -14,14 +14,13 @@ A simple compiler for a simple language.
 * flex
 
 ## Features
-* Syntax inspired by Python and Haskell
+* Syntax inspired by Python, Haskell, and Rust
   * Blocks defined by indentation, a la Python
-  * Noiseless function-call syntax, a la Haskell: "f x y" instead of "f(x, y)"
 * Hindley-Milner type system with type inference
 * Parametric polymorphism
 * Unboxed Int and Bool types (through tagging)
 * Cheney-style copying garbage collection
-* Local and global variables are immutable, but member of data structures are immutable
+* Local and global variables are immutable, but member of data structures are immutable (except for arrays)
 * Support for calling C functions
 * Syntax highlighting for Sublime Text (see sublime/ directory)
 
@@ -29,7 +28,7 @@ A simple compiler for a simple language.
 * Lexer, written in flex
 * Lexer post-processing step: handles indentation and inserts INDENT and DEDENT tokens
 * Parser: hand-coded recursive descent
-* Semantic analysis: with global type inference
-* Intermediate code generation: three-address style
+* Semantic analysis: type inference within functions and at top level
+* Intermediate code generation: SSA three-address code
 * IR optimization
 * Final codegen: x86_64, nasm syntax
