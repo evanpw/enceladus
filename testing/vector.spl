@@ -1,0 +1,51 @@
+# Ideas:
+# LANG: Allow structs to be generic
+# LIB: Create a library function to create an empty array
+# BUG: self.content.[i] doesn't parse correctly
+# LANG: Allow mutation of structs
+
+struct Vector
+    content: Array<Int>
+    capacity: Int
+    size: Int
+
+def vector() -> Vector
+    content := makeArray(0, 0)
+    return Vector(content, 0, 0)
+
+impl Vector
+    def pushBack(self: Vector, x: Int) -> Vector
+        if self.size < self.capacity
+            self.content.set(self.size, x)
+            return Vector(self.content, self.capacity, self.size + 1)
+        else
+            newCapacity := self.capacity * 2 + 1
+            newContent := makeArray(self.capacity * 2, 0)
+            for i = 0 to self.size - 1
+                newContent.set(i, arrayAt(self.content, i))
+
+            newContent.set(self.size, x)
+            return Vector(newContent, newCapacity, self.size + 1)
+
+    def popBack(self: Vector) -> Vector
+        assert self.size > 0
+        return Vector(self.content, self.capacity, self.size - 1)
+
+    def at(self: Vector, n: Int) -> Int
+        return self.content.at(n)
+
+
+v := vector()
+
+for i = 1 to 10
+    v = v.pushBack(i)
+
+v = v.popBack()
+v = v.popBack()
+
+total := 0
+for i = 0 to v.size - 1
+    total += v.at(i)
+
+print $ show(total)
+

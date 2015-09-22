@@ -61,3 +61,9 @@
 * Allow all methods in the same implementation block to be mutually recursive
 
 * Allow assert to include a message
+
+* Allow generic structs
+
+* Allow underscores in identifiers? (and highlight them correctly)
+
+* If self.content has array type, then self.content.[n] doesn't parse correctly

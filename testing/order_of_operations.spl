@@ -1,7 +1,6 @@
 # TopCoder SRM 667, Round 1, Problem 1
 
 # Ideas:
-# LANG: Make assert statements print out the location of failure
 # LANG: Add a python-style list to the language (maybe replace current list type)
 # LANG: Add bit operations to the language
 # LIB: Create a string that consists of a repeated character
