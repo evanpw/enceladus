@@ -40,8 +40,6 @@ public:
     UNSUPPORTED(ReturnNode);
     UNSUPPORTED(StringLiteralNode);
     UNSUPPORTED(StructDefNode);
-    UNSUPPORTED(TraitDefNode);
-    UNSUPPORTED(TraitImplNode);
     UNSUPPORTED(TypeAliasNode);
     UNSUPPORTED(VariableDefNode);
     UNSUPPORTED(WhileNode);
@@ -107,35 +105,30 @@ public:
     virtual void visit(ForeverNode* node);
     virtual void visit(ForNode* node);
     virtual void visit(FunctionCallNode* node);
-    virtual void visit(FunctionDefNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
+    virtual void visit(ImplNode* node);
     virtual void visit(IntNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
     virtual void visit(MatchArm* node);
     virtual void visit(MatchNode* node);
     virtual void visit(MemberAccessNode* node);
-    virtual void visit(MemberDefNode* node);
+    virtual void visit(MethodCallNode* node);
     virtual void visit(NullaryNode* node);
     virtual void visit(ProgramNode* node);
     virtual void visit(ReturnNode* node);
     virtual void visit(StringLiteralNode* node);
     virtual void visit(StructDefNode* node);
-    virtual void visit(TypeAliasNode* node);
     virtual void visit(VariableDefNode* node);
     virtual void visit(VariableNode* node);
     virtual void visit(WhileNode* node);
 
-    // Work in progress
-    virtual void visit(ImplNode* node);
-    virtual void visit(MethodDefNode*);
-    virtual void visit(MethodCallNode* node);
-    virtual void visit(TraitImplNode* node);
-
-    // No code to generate
-    virtual void visit(MethodDeclNode* node) {}
-    virtual void visit(TraitDefNode* node) {}
+    // No code to generate (or handled separately)
+    virtual void visit(MethodDefNode*) {}
+    virtual void visit(MemberDefNode* node) {}
+    virtual void visit(TypeAliasNode* node) {}
+    virtual void visit(FunctionDefNode* node) {}
 
 private:
     // We cache the Value corresponding to each symbol so that the value

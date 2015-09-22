@@ -93,7 +93,6 @@ SemanticAnalyzer::SemanticAnalyzer(AstContext* context)
 , _symbolTable(context->symbolTable())
 , _enclosingFunction(nullptr)
 , _enclosingLoop(nullptr)
-, _enclosingTrait(nullptr)
 , _enclosingImplNode(nullptr)
 {
 }
@@ -1277,75 +1276,6 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
 
     node->type = returnType;
     node->memberLocation = symbol->location;
-}
-
-void SemanticAnalyzer::visit(TraitDefNode* node)
-{
-    assert(!_enclosingTrait);
-
-    node->traitType = _typeTable->createTypeVariable("Self", true);
-
-    _enclosingTrait = node;
-    AstVisitor::visit(node);
-    _enclosingTrait = nullptr;
-
-    node->type = _typeTable->Unit;
-}
-
-void SemanticAnalyzer::visit(MethodDeclNode* node)
-{
-    // Functions cannot be declared inside of another function
-    CHECK(_enclosingTrait, "method declarations can appear only inside trait definitions");
-
-    std::vector<MemberSymbol*> symbols;
-    Type* parentType = _enclosingTrait->traitType;
-    resolveMemberSymbol(node->name, parentType, symbols);
-    CHECK(symbols.empty(), "type \"{}\" already has a method or member named \"{}\"", parentType->name(), node->name);
-
-    // TODO: Relax this constraint
-    //CHECK(node->typeParams.empty(), "trait methods cannot be generic");
-
-    std::unordered_map<std::string, Type*> typeContext;
-    typeContext["Self"] = parentType;
-
-    resolveTypeName(node->typeName, typeContext);
-
-    Type* type = node->typeName->type;
-    FunctionType* methodType = type->get<FunctionType>();
-    node->methodType = methodType;
-
-    assert(methodType->inputs().size() == node->params.size());
-
-    const std::vector<Type*>& paramTypes = methodType->inputs();
-    CHECK(!paramTypes.empty(), "methods must take at least one argument");
-    unify(paramTypes[0], parentType, node);
-
-    node->type = _typeTable->Unit;
-}
-
-void SemanticAnalyzer::visit(TraitImplNode* node)
-{
-    assert(!_enclosingImplNode);
-
-    // Create type variables for each type parameter
-    std::unordered_map<std::string, Type*> typeContext;
-    for (auto& typeParameter : node->typeParams)
-    {
-        CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
-
-        Type* var = _typeTable->createTypeVariable(typeParameter, true);
-        typeContext.emplace(typeParameter, var);
-    }
-
-    resolveTypeName(node->typeName, typeContext);
-    node->typeContext = typeContext;
-
-    _enclosingImplNode = node;
-    AstVisitor::visit(node);
-    _enclosingImplNode = nullptr;
-
-    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(ImplNode* node)

@@ -35,8 +35,6 @@ class ProgramNode;
 class ReturnNode;
 class StringLiteralNode;
 class StructDefNode;
-class TraitDefNode;
-class TraitImplNode;
 class TypeAliasNode;
 class TypeName;
 class VariableDefNode;
@@ -60,12 +58,15 @@ public:
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
+	virtual void visit(ImplNode* node);
 	virtual void visit(LetNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(MatchArm* node);
 	virtual void visit(MatchNode* node);
 	virtual void visit(MemberAccessNode* node);
 	virtual void visit(MemberDefNode* node);
+	virtual void visit(MethodCallNode* node);
+	virtual void visit(MethodDefNode* node);
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(StructDefNode* node);
@@ -81,14 +82,6 @@ public:
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(TypeName* node) {}
 	virtual void visit(VariableNode* node) {}
-
-	// Work in progress
-	virtual void visit(MethodDeclNode* node);
-	virtual void visit(ImplNode* node);
-	virtual void visit(MethodDefNode* node);
-	virtual void visit(TraitDefNode* node);
-	virtual void visit(TraitImplNode* node);
-	virtual void visit(MethodCallNode* node);
 };
 
 #endif

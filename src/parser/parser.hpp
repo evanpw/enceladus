@@ -39,7 +39,6 @@ private:
     StatementNode* variable_declaration();
     StatementNode* break_statement();
     StatementNode* suite();
-    StatementNode* trait_definition();
     StatementNode* implementation_block();
     StatementNode* method_definition();
     std::vector<std::string> parameters();

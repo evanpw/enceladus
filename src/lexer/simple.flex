@@ -219,7 +219,6 @@ extern "C" int yywrap()
 "return"    { return tRETURN; }
 "struct"    { return tSTRUCT; }
 "to"        { return tTO; }
-"trait"     { return tTRAIT; }
 "True"      { return tTRUE; }
 "type"      { return tTYPE; }
 "var"       { return tVAR; }

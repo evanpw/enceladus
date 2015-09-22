@@ -900,18 +900,6 @@ void TACCodeGen::visit(MemberAccessNode* node)
     emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * node->memberLocation));
 }
 
-void TACCodeGen::visit(MemberDefNode* node)
-{
-}
-
-void TACCodeGen::visit(TypeAliasNode* node)
-{
-}
-
-void TACCodeGen::visit(FunctionDefNode* node)
-{
-}
-
 void TACCodeGen::visit(DataDeclaration* node)
 {
     for (ConstructorSymbol* symbol : node->constructorSymbols)
@@ -1089,15 +1077,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
 }
 
 void TACCodeGen::visit(ImplNode* node)
-{
-    AstVisitor::visit(node);
-}
-
-void TACCodeGen::visit(MethodDefNode* node)
-{
-}
-
-void TACCodeGen::visit(TraitImplNode* node)
 {
     AstVisitor::visit(node);
 }

@@ -90,8 +90,6 @@ std::string tokenToString(TokenType t)
         return "tTIMES_EQUAL";
     case tTO:
         return "tTO";
-    case tTRAIT:
-        return "tTRAIT";
     case tTRUE:
         return "tTRUE";
     case tTYPE:

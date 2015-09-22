@@ -451,39 +451,6 @@ public:
 	AST_VISITABLE();
 };
 
-class MethodDeclNode : public StatementNode
-{
-public:
-	MethodDeclNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& params, TypeName* typeName)
-	: StatementNode(context, location), name(name), params(params), typeName(typeName)
-	{}
-
-	AST_VISITABLE();
-
-	std::string name;
-	std::vector<std::string> params;
-	TypeName* typeName;
-
-	// Annotations
-	FunctionType* methodType;
-};
-
-class TraitDefNode : public StatementNode
-{
-public:
-	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MethodDeclNode*>&& methods)
-	: StatementNode(context, location), name(name), methods(methods)
-	{}
-
-	AST_VISITABLE();
-
-	std::string name;
-	std::vector<MethodDeclNode*> methods;
-
-	// Annotations
-	Type* traitType = nullptr;
-};
-
 class ImplNode : public StatementNode
 {
 public:
@@ -499,18 +466,6 @@ public:
 
 	// Annotations
 	std::unordered_map<std::string, Type*> typeContext;
-};
-
-class TraitImplNode : public ImplNode
-{
-public:
-	TraitImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::string>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods, const std::string& traitName)
-	: ImplNode(context, location, std::move(typeParams), typeName, std::move(methods)), traitName(traitName)
-	{}
-
-	AST_VISITABLE();
-
-	std::string traitName;
 };
 
 class LetNode : public StatementNode

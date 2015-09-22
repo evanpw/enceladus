@@ -153,9 +153,6 @@ StatementNode* Parser::statement()
     case tBREAK:
         return break_statement();
 
-    case tTRAIT:
-        return trait_definition();
-
     case tIMPL:
         return implementation_block();
 
@@ -504,48 +501,8 @@ StatementNode* Parser::break_statement()
     return new BreakNode(_context, location);
 }
 
-
-/// trait_definition
-///     : TRAIT UIDENT EOL INDENT decl_list DEDENT
-///
-/// function_declaration
-///     : DEF ident params_and_types EOL
-///
-/// decl_list
-///     : function_declaration
-///     | def_list function_declaration
-StatementNode* Parser::trait_definition()
-{
-    YYLTYPE location = getLocation();
-
-    expect(tTRAIT);
-    Token traitName = expect(tUIDENT);
-    expect(tEOL);
-    expect(tINDENT);
-
-    std::vector<MethodDeclNode*> methods;
-    while (peekType() == tDEF)
-    {
-        YYLTYPE methodLocation = getLocation();
-
-        expect(tDEF);
-        Token methodName = expect(tLIDENT);
-        auto paramList = params_and_types();
-        expect(tEOL);
-
-        methods.push_back(new MethodDeclNode(_context, methodLocation, methodName.value.str, paramList.first, paramList.second));
-    }
-
-    expect(tDEDENT);
-
-    return new TraitDefNode(_context, location, traitName.value.str, std::move(methods));
-}
-
-
-
 /// implementation_block
-///     : IMPL type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
-///     | IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
+///     : IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
 StatementNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
@@ -553,14 +510,7 @@ StatementNode* Parser::implementation_block()
     expect(tIMPL);
 
     std::vector<std::string> typeParams = type_params();
-
-    std::string traitName;
     TypeName* typeName = type();
-    if (typeName->parameters.empty() && accept(tFOR))
-    {
-        traitName = typeName->name;
-        typeName = type();
-    }
 
     expect(tEOL);
     expect(tINDENT);
@@ -576,14 +526,7 @@ StatementNode* Parser::implementation_block()
 
     expect(tDEDENT);
 
-    if (traitName.empty())
-    {
-        return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods));
-    }
-    else
-    {
-        return new TraitImplNode(_context, location, std::move(typeParams), typeName, std::move(methods), traitName);
-    }
+    return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods));
 }
 
 StatementNode* Parser::method_definition()

@@ -28,7 +28,6 @@ statement
     | variable_declaration
     | while_statement
     | break_statement
-    | trait_definition
     | implementation_block
     | expression EOL
 
@@ -89,19 +88,8 @@ while_statement
 break_statement
     : BREAK EOL
 
-trait_definition
-    : TRAIT UIDENT EOL INDENT decl_list DEDENT
-
-function_declaration
-    : DEF ident params_and_types EOL
-
-decl_list
-    : function_declaration
-    | def_list function_declaration
-
 implementation_block
-    : IMPL type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
-    | IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
+    : IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
 
 method_definition
     : DEF ident type_params params_and_types suite
