@@ -14,6 +14,7 @@ program
 statement
     : EOL
     | if_statement
+    | assert_statement
     | assignment_statement
     | data_declaration
     | type_alias_declaration
@@ -33,6 +34,9 @@ statement
 
 if_statement
     : IF expression suite { ELIF expression suite } [ ELSE suite ]
+
+assert_statement
+    : ASSERT expression EOL
 
 assignment_statement
     : LIDENT '=' expression EOL

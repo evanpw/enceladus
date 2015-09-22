@@ -504,6 +504,40 @@ void TACCodeGen::visit(IfElseNode* node)
     }
 }
 
+void TACCodeGen::visit(AssertNode* node)
+{
+    static size_t counter = 1;
+
+    // HACK
+    Value* dieFunction = getValue(node->dieSymbol);
+
+    BasicBlock* falseBranch = createBlock();
+    BasicBlock* continueAt = createBlock();
+
+    _conditionalCodeGen.visitCondition(*node->condition, continueAt, falseBranch);
+
+    setBlock(falseBranch);
+
+    // Create the assert failure message as a static string
+    auto location = node->location;
+    std::string name = "__assertMessage" + std::to_string(counter++);
+    std::stringstream contents;
+    contents << "*** Exception: Assertion failed at "
+             << location.filename << ":"
+             << location.first_line << ":"
+             << location.first_column;
+
+    Value* message = _context->createStaticString(name, contents.str());
+    CallInst* inst = new CallInst(nullptr, dieFunction, {message});
+    inst->foreign = true;
+    inst->ccall = true;
+    inst->regpass = true;
+    emit(inst);
+
+    emit(new JumpInst(continueAt));
+    setBlock(continueAt);
+}
+
 void TACCodeGen::visit(WhileNode* node)
 {
     BasicBlock* loopBegin = createBlock();

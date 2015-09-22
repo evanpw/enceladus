@@ -23,6 +23,7 @@ private:
     StatementNode* statement();
     StatementNode* if_statement();
     StatementNode* if_helper(const YYLTYPE& location);
+    StatementNode* assert_statement();
     StatementNode* data_declaration();
     StatementNode* type_alias_declaration();
     StatementNode* function_definition();

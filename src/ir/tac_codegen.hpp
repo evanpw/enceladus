@@ -18,6 +18,7 @@ class TACConditionalCodeGen : public AstVisitor
 public:
     TACConditionalCodeGen(TACCodeGen* mainCodeGen);
 
+    UNSUPPORTED(AssertNode);
     UNSUPPORTED(AssignNode);
     UNSUPPORTED(BlockNode);
     UNSUPPORTED(BreakNode);
@@ -95,6 +96,7 @@ public:
 
     void codeGen(AstContext* astContext);
 
+    virtual void visit(AssertNode* node);
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(BoolNode* node);

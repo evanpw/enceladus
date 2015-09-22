@@ -9,6 +9,7 @@ enum TokenType : int
     tEOF = 0,
 
     tAND = 256,
+    tASSERT,
     tBREAK,
     tCOLON_EQUAL,
     tCONCAT,

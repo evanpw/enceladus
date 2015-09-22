@@ -31,7 +31,7 @@ def factorial(n: Int) -> Int
 
 def permutationAt(n: Int, digits: [Int]) -> [Int]
     if digits.length() == 1
-        assert(n == 0)
+        assert n == 0
         return [digits.head()]
 
     subCount := factorial(digits.length() - 1)

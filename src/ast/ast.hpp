@@ -311,6 +311,21 @@ public:
 	StatementNode* elseBody;
 };
 
+class AssertNode : public StatementNode
+{
+public:
+	AssertNode(AstContext* context, const YYLTYPE& location, ExpressionNode* condition)
+	: StatementNode(context, location), condition(condition)
+	{}
+
+	AST_VISITABLE();
+
+	ExpressionNode* condition;
+
+	// Annotations
+	Symbol* dieSymbol; // HACK
+};
+
 class WhileNode : public LoopNode
 {
 public:

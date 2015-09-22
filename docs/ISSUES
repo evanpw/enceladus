@@ -59,3 +59,5 @@
 * Convert some of the functions in List.spl to be methods, and move some functions / methods out of prelude.spl
 
 * Allow all methods in the same implementation block to be mutually recursive
+
+* Allow assert to include a message

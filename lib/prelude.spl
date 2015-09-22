@@ -162,11 +162,6 @@ impl<T> List<T>
 
 
 ## Native-language standard library
-def assert(b: Bool) -> Unit
-    if not(b)
-        die("*** Exception: Assertion failed")
-
-
 def assertMessage(b: Bool, err: String) -> Unit
     if not b
         die("*** Exception: Assertion failed: " ++ err)

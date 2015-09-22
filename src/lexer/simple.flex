@@ -200,6 +200,7 @@ extern "C" int yywrap()
 "++"    { return tCONCAT; }
 
  /* Keywords */
+"assert"    { return tASSERT; }
 "break"     { return tBREAK; }
 "data"      { return tDATA; }
 "def"       { return tDEF; }

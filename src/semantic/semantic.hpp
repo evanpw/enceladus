@@ -31,6 +31,7 @@ public:
     bool analyze();
 
     // Internal nodes
+    virtual void visit(AssertNode* node);
     virtual void visit(AssignNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(ComparisonNode* node);

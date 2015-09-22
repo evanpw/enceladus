@@ -357,6 +357,12 @@ void* gcCopy(void* object)
 
     // Back up one word to the beginning of the allocated block
     uint64_t* block = (uint64_t*)object - 1;
+
+    // It's possible for heap objects to contain references to non-heap memory,
+    // like static strings
+    if (block < heapStart || block >= heapEnd)
+        return object;
+
     uint64_t header = *block;
     if (!(header & 1))
     {

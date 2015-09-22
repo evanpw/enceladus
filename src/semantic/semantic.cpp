@@ -1020,6 +1020,17 @@ void SemanticAnalyzer::visit(IfElseNode* node)
     node->type = node->body->type;
 }
 
+void SemanticAnalyzer::visit(AssertNode* node)
+{
+    node->condition->accept(this);
+    unify(node->condition->type, _typeTable->Bool, node);
+
+    // HACK: Give the code generator access to these symbols
+    node->dieSymbol = resolveSymbol("die");
+
+    node->type = _typeTable->Unit;
+}
+
 void SemanticAnalyzer::visit(WhileNode* node)
 {
     node->condition->accept(this);

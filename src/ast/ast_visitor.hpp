@@ -3,6 +3,7 @@
 
 #include <vector>
 
+class AssertNode;
 class AssignNode;
 class BlockNode;
 class BoolNode;
@@ -16,7 +17,6 @@ class ForeignDeclNode;
 class ForeverNode;
 class ForNode;
 class FunctionCallNode;
-class MethodDeclNode;
 class FunctionDefNode;
 class IfElseNode;
 class IfNode;
@@ -29,6 +29,7 @@ class MatchNode;
 class MemberAccessNode;
 class MemberDefNode;
 class MethodCallNode;
+class MethodDeclNode;
 class MethodDefNode;
 class NullaryNode;
 class ProgramNode;
@@ -45,6 +46,7 @@ class AstVisitor
 {
 public:
 	// Default implementations do nothing but visit each child
+	virtual void visit(AssertNode* node);
 	virtual void visit(AssignNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(ComparisonNode* node);

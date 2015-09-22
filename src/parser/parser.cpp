@@ -114,6 +114,9 @@ StatementNode* Parser::statement()
     case tIF:
         return if_statement();
 
+    case tASSERT:
+        return assert_statement();
+
     case tDATA:
         return data_declaration();
 
@@ -209,6 +212,19 @@ StatementNode* Parser::if_statement()
 
     expect(tIF);
     return if_helper(location);
+}
+
+/// assert_statement
+///     : ASSERT expression EOL
+StatementNode* Parser::assert_statement()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tASSERT);
+    ExpressionNode* condition = expression();
+    expect(tEOL);
+
+    return new AssertNode(_context, location, condition);
 }
 
 /// data_declaration
@@ -451,8 +467,17 @@ StatementNode* Parser::assignment_statement()
         break;
 
     default:
-        std::cerr << "ERROR: Unexpected " << tokenToString(nextTokens[0].type) << std::endl;
-        exit(1);
+    {
+        YYLTYPE location = getLocation();
+
+        std::stringstream ss;
+
+        ss << location.filename << ":" << location.first_line << ":" << location.first_column
+           << ": expected operator, but got "
+           << tokenToString(nextTokens[0].type);
+
+        throw LexerError(ss.str());
+    }
 
     }
 
@@ -591,6 +616,8 @@ std::vector<std::string> Parser::parameters()
 
 std::string Parser::ident()
 {
+    YYLTYPE location = getLocation();
+
     Token name;
     if (peekType() == tLIDENT)
     {
@@ -602,8 +629,13 @@ std::string Parser::ident()
     }
     else
     {
-        std::cerr << "ERROR: Expected identifier, but got " << tokenToString(nextTokens[0].type) << std::endl;
-        exit(1);
+        std::stringstream ss;
+
+        ss << location.filename << ":" << location.first_line << ":" << location.first_column
+           << ": expected identifier, but got "
+           << tokenToString(nextTokens[0].type);
+
+        throw LexerError(ss.str());
     }
 
     return name.value.str;

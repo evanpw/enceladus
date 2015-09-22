@@ -52,6 +52,11 @@ void AstVisitor::visit(IfElseNode* node)
 	node->elseBody->accept(this);
 }
 
+void AstVisitor::visit(AssertNode* node)
+{
+	node->condition->accept(this);
+}
+
 void AstVisitor::visit(WhileNode* node)
 {
 	node->condition->accept(this);
