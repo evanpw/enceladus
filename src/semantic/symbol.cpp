@@ -32,21 +32,21 @@ TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* n
 {
 }
 
-MemberSymbol::MemberSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index)
-: Symbol(name, kMember, node, nullptr, true)
+MemberSymbol::MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType, size_t index)
+: Symbol(name, kind, node, nullptr, true)
 , parentType(parentType)
 , index(index)
 {
 }
 
 MethodSymbol::MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType, size_t index)
-: MemberSymbol(name, node, parentType, index)
+: MemberSymbol(name, kMethod, node, parentType, index)
 , definition(node)
 {
 }
 
 MemberVarSymbol::MemberVarSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index, size_t location)
-: MemberSymbol(name, node, parentType, index)
+: MemberSymbol(name, kMemberVar, node, parentType, index)
 , location(location)
 {
 }

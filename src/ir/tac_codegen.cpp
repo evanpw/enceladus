@@ -89,7 +89,7 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
                     _functions.push_back(functionSymbol->definition);
             }
         }
-        else if (symbol->kind == kMember)
+        else if (symbol->kind == kMethod)
         {
             const MethodSymbol* methodSymbol = dynamic_cast<const MethodSymbol*>(symbol);
             assert(methodSymbol);
@@ -706,10 +706,31 @@ void TACCodeGen::visit(BreakNode* node)
 
 void TACCodeGen::visit(AssignNode* node)
 {
-    Value* dest = getValue(node->symbol);
     Value* value = visitAndGet(node->rhs);
 
-    emit(new StoreInst(dest, value));
+    // TODO: Is there a less-hacky way of doing this?
+    Symbol* symbol;
+    if (VariableNode* lhs = dynamic_cast<VariableNode*>(node->lhs))
+    {
+        Value* dest = getValue(lhs->symbol);
+        emit(new StoreInst(dest, value));
+    }
+    else if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
+    {
+        Value* dest = getValue(lhs->symbol);
+        emit(new StoreInst(dest, value));
+    }
+    else if (MemberAccessNode* lhs = dynamic_cast<MemberAccessNode*>(node->lhs))
+    {
+        lhs->object->accept(this);
+
+        Value* structure = lhs->object->value;
+        emit(new IndexedStoreInst(structure, sizeof(SplObject) + 8 * lhs->memberLocation, value));
+    }
+    else
+    {
+        assert(false);
+    }
 }
 
 void TACCodeGen::visit(VariableDefNode* node)
@@ -906,7 +927,7 @@ void TACCodeGen::visit(MethodCallNode* node)
 
     Value* result = node->value;
 
-    assert(node->symbol->kind == kMember);
+    assert(node->symbol->kind == kMethod);
 
     emit(new CallInst(result, getValue(node->symbol), arguments));
 }

@@ -83,6 +83,7 @@ void AstVisitor::visit(ForeverNode* node)
 
 void AstVisitor::visit(AssignNode* node)
 {
+	node->lhs->accept(this);
 	node->rhs->accept(this);
 }
 

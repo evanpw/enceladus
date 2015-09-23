@@ -15,7 +15,6 @@ statement
     : EOL
     | if_statement
     | assert_statement
-    | assignment_statement
     | data_declaration
     | type_alias_declaration
     | function_definition
@@ -30,7 +29,7 @@ statement
     | while_statement
     | break_statement
     | implementation_block
-    | expression EOL
+    | assign_or_expr
 
 if_statement
     : IF expression suite { ELIF expression suite } [ ELSE suite ]
@@ -38,12 +37,13 @@ if_statement
 assert_statement
     : ASSERT expression EOL
 
-assignment_statement
-    : LIDENT '=' expression EOL
-    | LIDENT DIV_EQUAL expression EOL
-    | LIDENT MINUS_EQUAL expression EOL
-    | LIDENT PLUS_EQUAL expression EOL
-    | LIDENT TIMES_EQUAL expression EOL
+assign_or_expr
+    : expression '=' expression EOL
+    | expression DIV_EQUAL expression EOL
+    | expression MINUS_EQUAL expression EOL
+    | expression PLUS_EQUAL expression EOL
+    | expression TIMES_EQUAL expression EOL
+    | expression EOL
 
 data_declaration
     : DATA UIDENT type_params '=' constructor_spec { '|' constructor_spec } EOL

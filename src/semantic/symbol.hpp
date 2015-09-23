@@ -13,7 +13,7 @@ class TraitDefNode;
 class SymbolTable;
 
 
-enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMember = 4};
+enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMethod = 4, kMemberVar = 5};
 
 class Symbol
 {
@@ -123,7 +123,7 @@ public:
 
 protected:
     friend class SymbolTable;
-    MemberSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index);
+    MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType, size_t index);
 };
 
 class MethodSymbol : public MemberSymbol

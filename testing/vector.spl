@@ -9,10 +9,10 @@ import Vector
 v := vector()
 
 for i = 1 to 10
-    v = v.pushBack(i)
+    v.pushBack(i)
 
-v = v.popBack()
-v = v.popBack()
+v.popBack()
+v.popBack()
 
 total := 0
 for i = 0 to v.size - 1
@@ -20,8 +20,8 @@ for i = 0 to v.size - 1
 
 # Boolean vector
 v2 := vector()
-v2 = v2.pushBack(True)
-v2 = v2.pushBack(False)
+v2.pushBack(True)
+v2.pushBack(False)
 
 if v2[0]
     total += 1

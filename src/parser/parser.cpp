@@ -160,16 +160,7 @@ StatementNode* Parser::statement()
         return implementation_block();
 
     case tLIDENT:
-        if (peek2ndType() == '{' ||
-            peek2ndType() == '=' ||
-            peek2ndType() == tPLUS_EQUAL ||
-            peek2ndType() == tMINUS_EQUAL ||
-            peek2ndType() == tTIMES_EQUAL ||
-            peek2ndType() == tDIV_EQUAL)
-        {
-            return assignment_statement();
-        }
-        else if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == ':')
+        if (peek2ndType() == tCOLON_EQUAL)
         {
             return variable_declaration();
         }
@@ -177,9 +168,7 @@ StatementNode* Parser::statement()
         // Else fallthrough
 
     default:
-        ExpressionNode* expressionNode = expression();
-        expect(tEOL);
-        return expressionNode;
+        return assign_or_expr();
     }
 }
 
@@ -429,12 +418,11 @@ StatementNode* Parser::while_statement()
     return new WhileNode(_context, location, condition, body);
 }
 
-StatementNode* Parser::assignment_statement()
+StatementNode* Parser::assign_or_expr()
 {
     YYLTYPE location = getLocation();
 
-    Token token = expect(tLIDENT);
-    std::string lhs = token.value.str;
+    ExpressionNode* lhs = expression();
 
     if (accept('='))
     {
@@ -444,54 +432,53 @@ StatementNode* Parser::assignment_statement()
 
         return new AssignNode(_context, location, lhs, rhs);
     }
-
-    std::vector<ExpressionNode*> argList;
-    argList.push_back(new VariableNode(_context, location, lhs));
-
-    std::string functionName;
-    switch (peekType())
+    else if (peekType() == tPLUS_EQUAL ||
+             peekType() == tMINUS_EQUAL ||
+             peekType() == tTIMES_EQUAL ||
+             peekType() == tDIV_EQUAL)
     {
-    case tPLUS_EQUAL:
-        expect(tPLUS_EQUAL);
-        functionName = '+';
-        break;
+        std::vector<ExpressionNode*> argList;
+        argList.push_back(lhs);
 
-    case tMINUS_EQUAL:
-        expect(tMINUS_EQUAL);
-        functionName = '-';
-        break;
+        std::string functionName;
+        switch (peekType())
+        {
+        case tPLUS_EQUAL:
+            expect(tPLUS_EQUAL);
+            functionName = '+';
+            break;
 
-    case tTIMES_EQUAL:
-        expect(tTIMES_EQUAL);
-        functionName = '*';
-        break;
+        case tMINUS_EQUAL:
+            expect(tMINUS_EQUAL);
+            functionName = '-';
+            break;
 
-    case tDIV_EQUAL:
-        expect(tDIV_EQUAL);
-        functionName = '/';
-        break;
+        case tTIMES_EQUAL:
+            expect(tTIMES_EQUAL);
+            functionName = '*';
+            break;
 
-    default:
+        case tDIV_EQUAL:
+            expect(tDIV_EQUAL);
+            functionName = '/';
+            break;
+
+        default:
+            assert(false);
+        }
+
+        ExpressionNode* rhs = expression();
+        argList.push_back(rhs);
+
+        expect(tEOL);
+
+        return new AssignNode(_context, location, lhs, new FunctionCallNode(_context, location, functionName, std::move(argList)));
+    }
+    else
     {
-        YYLTYPE location = getLocation();
-
-        std::stringstream ss;
-
-        ss << location.filename << ":" << location.first_line << ":" << location.first_column
-           << ": expected operator, but got "
-           << tokenToString(nextTokens[0].type);
-
-        throw LexerError(ss.str());
+        expect(tEOL);
+        return lhs;
     }
-
-    }
-
-    ExpressionNode* rhs = expression();
-    argList.push_back(rhs);
-
-    expect(tEOL);
-
-    return new AssignNode(_context, location, lhs, new FunctionCallNode(_context, location, functionName, std::move(argList)));
 }
 
 StatementNode* Parser::variable_declaration()

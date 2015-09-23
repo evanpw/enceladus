@@ -159,10 +159,10 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error='Error: testing/importSemantic.spl:4:1: cannot unify types Bool and Int')
+        self.run('importSemantic', build_error='Error: testing/importSemantic.spl:4:1: cannot unify types Int and Bool')
 
     def test_syntaxError(self):
-        self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:3: expected tEOL, but got =')
+        self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:1: left-hand side of assignment statement is not an lvalue')
 
     def test_constructorMismatch(self):
         self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
@@ -298,6 +298,12 @@ class TestAcceptance(object):
 
     def test_vector(self):
         self.run('vector', result='37')
+
+    def test_assignToFunction(self):
+        self.run('assignToFunction', build_error='Error: testing/assignToFunction.spl:4:1: symbol "f" is not a variable')
+
+    def test_mutateStruct(self):
+        self.run('mutateStruct', result='4\n5')
 
 
     # Medium tests (100ms-1s)

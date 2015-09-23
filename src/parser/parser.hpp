@@ -36,7 +36,7 @@ private:
     StatementNode* return_statement();
     StatementNode* struct_declaration();
     StatementNode* while_statement();
-    StatementNode* assignment_statement();
+    StatementNode* assign_or_expr();
     StatementNode* variable_declaration();
     StatementNode* break_statement();
     StatementNode* suite();

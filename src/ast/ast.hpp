@@ -404,14 +404,14 @@ public:
 class AssignNode : public StatementNode
 {
 public:
-	AssignNode(AstContext* context, const YYLTYPE& location, const std::string& target, ExpressionNode* rhs)
-	: StatementNode(context, location), target(target), rhs(rhs)
+	AssignNode(AstContext* context, const YYLTYPE& location, ExpressionNode* lhs, ExpressionNode* rhs)
+	: StatementNode(context, location), lhs(lhs), rhs(rhs)
 	{
 	}
 
 	AST_VISITABLE();
 
-	std::string target;
+	ExpressionNode* lhs;
 	ExpressionNode* rhs;
 
 	// Annotations

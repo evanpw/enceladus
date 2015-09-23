@@ -7,10 +7,10 @@ def vector<T>() -> Vector<T>
     return Vector(emptyArray(), 0, 0)
 
 impl<T> Vector<T>
-    def pushBack(self: Vector<T>, x: T) -> Vector<T>
+    def pushBack(self: Vector<T>, x: T) -> Unit
         if self.size < self.capacity
             self.content.set(self.size, Some(x))
-            return Vector(self.content, self.capacity, self.size + 1)
+            self.size += 1
         else
             newCapacity := self.capacity * 2 + 1
             newContent := makeArray(self.capacity * 2, None)
@@ -18,11 +18,17 @@ impl<T> Vector<T>
                 newContent.set(i, self.content[i])
 
             newContent.set(self.size, Some(x))
-            return Vector(newContent, newCapacity, self.size + 1)
 
-    def popBack(self: Vector<T>) -> Vector<T>
+            self.content = newContent
+            self.capacity = newCapacity
+            self.size += 1
+
+    def popBack(self: Vector<T>) -> T
         assert self.size > 0
-        return Vector(self.content, self.capacity, self.size - 1)
+        value := self.content[self.size - 1]
+        self.size -= 1
+
+        return value.unwrap()
 
     def at(self: Vector<T>, n: Int) -> T
         return self.content.at(n).unwrap()

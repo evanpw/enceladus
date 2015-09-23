@@ -778,14 +778,32 @@ void SemanticAnalyzer::visit(LetNode* node)
 
 void SemanticAnalyzer::visit(AssignNode* node)
 {
-    Symbol* symbol = resolveSymbol(node->target);
-    CHECK(symbol != nullptr, "symbol \"{}\" is not defined in this scope. Did you mean to define it here?", node->target);
-    CHECK(symbol->kind == kVariable, "symbol \"{}\" is not a variable", node->target);
+    node->lhs->accept(this);
+
+    Symbol* symbol;
+    if (VariableNode* lhs = dynamic_cast<VariableNode*>(node->lhs))
+    {
+        symbol = lhs->symbol;
+    }
+    else if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
+    {
+        symbol = lhs->symbol;
+    }
+    else if (MemberAccessNode* lhs = dynamic_cast<MemberAccessNode*>(node->lhs))
+    {
+        symbol = lhs->symbol;
+    }
+    else
+    {
+        CHECK(false, "left-hand side of assignment statement is not an lvalue");
+    }
+
+    CHECK(symbol->kind == kVariable || symbol->kind == kMemberVar, "symbol \"{}\" is not a variable", symbol->name);
     node->symbol = symbol;
 
 	node->rhs->accept(this);
 
-    unify(node->rhs->type, node->symbol->type, node);
+    unify(node->lhs->type, node->rhs->type, node);
 
     node->type = _typeTable->Unit;
 }

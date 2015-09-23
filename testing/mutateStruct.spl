@@ -1,0 +1,10 @@
+struct Test
+    value: Int
+
+x := Test(4)
+
+print $ show(x.value)
+
+x.value = 5
+
+print $ show(x.value)
