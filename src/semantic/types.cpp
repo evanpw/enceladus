@@ -8,6 +8,14 @@
 #include <cassert>
 #include <sstream>
 
+void Type::assign(Type* rhs)
+{
+    assert(isVariable());
+    assert(!get<TypeVariable>()->quantified());
+
+    _impl = rhs->_impl;
+}
+
 TypeTable::TypeTable()
 {
     Int = createBaseType("Int", true);

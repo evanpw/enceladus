@@ -986,12 +986,9 @@ void SemanticAnalyzer::visit(WhileNode* node)
 
 void SemanticAnalyzer::visit(ForeachNode* node)
 {
-    TypeConstructor* List = getTypeConstructor(node->location, "List");
-    Type* varType = _typeTable->createTypeVariable();
-    Type* listType = _typeTable->createConstructedType(List, {varType});
-
     node->listExpression->accept(this);
-    unify(node->listExpression->type, listType, node);
+    Type* iteratorType = node->listExpression->type;
+    Type* varType = _typeTable->createTypeVariable();
 
     // Save the current inner-most loop so that we can restore it after
     // visiting the children of this loop.
@@ -1011,20 +1008,25 @@ void SemanticAnalyzer::visit(ForeachNode* node)
 
     // HACK: Give the code generator access to these symbols
     std::vector<MemberSymbol*> symbols;
-    resolveMemberSymbol("head", listType, symbols);
+    resolveMemberSymbol("head", iteratorType, symbols);
     node->headSymbol = symbols.front();
-    resolveMemberSymbol("tail", listType, symbols);
-    node->tailSymbol = symbols.front();
-    resolveMemberSymbol("empty", listType, symbols);
-    node->emptySymbol = symbols.front();
+    unify(instantiate(node->headSymbol->type), _typeTable->createFunctionType({iteratorType}, varType), node);
 
-    node->type = _typeTable->Unit;
+    resolveMemberSymbol("tail", iteratorType, symbols);
+    node->tailSymbol = symbols.front();
+    unify(instantiate(node->tailSymbol->type), _typeTable->createFunctionType({iteratorType}, iteratorType), node);
+
+    resolveMemberSymbol("empty", iteratorType, symbols);
+    node->emptySymbol = symbols.front();
+    unify(instantiate(node->emptySymbol->type), _typeTable->createFunctionType({iteratorType}, _typeTable->Bool), node);
+
     node->body->accept(this);
+    unify(node->body->type, _typeTable->Unit, node);
 
     _symbolTable->popScope();
     _enclosingLoop = outerLoop;
 
-    unify(node->body->type, _typeTable->Unit, node);
+    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(ForNode* node)

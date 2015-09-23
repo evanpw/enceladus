@@ -125,11 +125,7 @@ public:
         _impl->addValueConstructor(valueConstructor);
     }
 
-    void assign(Type* rhs)
-    {
-        assert(isVariable());
-        _impl = rhs->_impl;
-    }
+    void assign(Type* rhs);
 
     bool equals(Type* rhs)
     {

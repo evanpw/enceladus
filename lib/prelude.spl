@@ -162,21 +162,41 @@ impl<T> List<T>
         return result.reverse()
 
 
+## Range ##
+struct Range
+    start: Int
+    end: Int
+
+def range(start: Int, end: Int) -> Range
+    return Range(start, end)
+
+impl Range
+    def head(self: Range) -> Int
+        assert self.start <= self.end
+        return self.start
+
+    def tail(self: Range) -> Range
+        assert self.start <= self.end
+        return Range(self.start + 1, self.end)
+
+    def empty(self: Range) -> Bool
+        return self.start > self.end
+
+    def toList(self: Range) -> [Int]
+        result := []
+
+        i := self.end
+        while i >= self.start
+            result = i :: result
+            i -= 1
+
+        return result
+
+
 ## Native-language standard library
 def assertMessage(b: Bool, err: String) -> Unit
     if not b
         die("*** Exception: Assertion failed: " ++ err)
-
-
-def range(a: Int, b: Int) -> [Int]
-    xs := []
-
-    i := b
-    while i >= a
-        xs = i :: xs
-        i -= 1
-
-    return xs
 
 
 def sum(xs: [Int]) -> Int

@@ -3,4 +3,4 @@
 def good(x: Int) -> Bool
     return (x mod 3 == 0) or (x mod 5 == 0)
 
-print $ show $ sum $ range(1, 9999999).filter(good)
+print $ show $ sum $ range(1, 9999999).toList().filter(good)

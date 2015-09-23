@@ -33,7 +33,7 @@ def makeRun(x: Int, y: Int, dx: Int, dy: Int) -> Int
 
     return x1 * x2 * x3 * x4
 
-def allRuns(xrange: [Int], yrange: [Int], dx: Int, dy: Int) -> [Int]
+def allRuns(xrange: Range, yrange: Range, dx: Int, dy: Int) -> [Int]
     xs := []
 
     for x in xrange

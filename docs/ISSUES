@@ -68,3 +68,5 @@
 * Allow underscores in identifiers? (and highlight them correctly)
 
 * If self.content has array type, then self.content.[n] doesn't parse correctly
+
+* Get rid of integer-based for loop in favor of "for x in range(...)"
