@@ -297,7 +297,7 @@ class TestAcceptance(object):
         self.run('structMemberNames', result='30\nFrance')
 
     def test_vector(self):
-        self.run('vector', result='36')
+        self.run('vector', result='37')
 
 
     # Medium tests (100ms-1s)

@@ -24,7 +24,7 @@ def isSumOfTwo(y: Int, xs: Array<Int>, n: Int) -> Bool
     j := n - 1
 
     while i <= j
-        s := xs.[i] + xs.[j]
+        s := xs[i] + xs[j]
 
         if s == y
             return True

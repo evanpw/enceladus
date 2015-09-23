@@ -180,7 +180,6 @@ extern "C" int yywrap()
 "}"     { return '}'; }
 "|"     { return '|'; }
 "^"     { return '^'; }
-".["    { return tDOT_BRACKET; }
 "mod"   { return tMOD; }
 "->"    { return tRARROW; }
 "=>"    { return tDARROW; }

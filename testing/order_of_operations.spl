@@ -10,7 +10,7 @@
 # LANG: Syntactic sugar for String.at
 # LANG: Make destructuring look more like a normal variable definition?
 # LIB: Deque data structure
-# LANG: Set array elements using the same array.[offset] syntax as getting
+# LANG: Set array elements using the same array[offset] syntax as getting
 # LANG: Add continue keyword
 # LIB: String comparison
 
@@ -64,13 +64,13 @@ def cacheToOffset(cache: String) -> Int
 
 def hasValue(memo: Array<Int>, cache: String) -> Bool
     offset := cacheToOffset(cache)
-    value := memo.[offset]
+    value := memo[offset]
 
     return value != -1
 
 def getValue(memo: Array<Int>, cache: String) -> Int
     offset := cacheToOffset(cache)
-    value := memo.[offset]
+    value := memo[offset]
 
     assert value != -1
 
@@ -78,7 +78,7 @@ def getValue(memo: Array<Int>, cache: String) -> Int
 
 def setValue(memo: Array<Int>, cache: String, value: Int) -> Unit
     offset := cacheToOffset(cache)
-    assert memo.[offset] == -1
+    assert memo[offset] == -1
     memo.set(offset, value)
 
 # Return a string that differs from the given one by setting location n to

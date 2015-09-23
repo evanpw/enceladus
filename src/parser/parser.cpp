@@ -402,15 +402,20 @@ StatementNode* Parser::return_statement()
     return new ReturnNode(_context, location, value);
 }
 
+/// struct_declaration
+///     : STRUCT UIDENT type_params '=' members
 StatementNode* Parser::struct_declaration()
 {
     YYLTYPE location = getLocation();
 
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
+
+    std::vector<std::string> typeParams = type_params();
+
     std::vector<MemberDefNode*> memberList = members();
 
-    return new StructDefNode(_context, location, name.value.str, memberList);
+    return new StructDefNode(_context, location, name.value.str, std::move(memberList), std::move(typeParams));
 }
 
 StatementNode* Parser::while_statement()
@@ -1035,22 +1040,43 @@ ExpressionNode* Parser::concat_expression()
 }
 
 /// negation_expression
-///     : method_or_member_expression
-///     | '-' method_or_member_expression
-///     | NOT method_or_member_expression
+///     : index_expression
+///     | '-' index_expression
+///     | NOT index_expression
 ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
-        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), method_or_member_expression()});
+        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), index_expression()});
     }
     else if (accept(tNOT))
     {
-        return new FunctionCallNode(_context, getLocation(), "not", {method_or_member_expression()});
+        return new FunctionCallNode(_context, getLocation(), "not", {index_expression()});
     }
     else
     {
-        return method_or_member_expression();
+        return index_expression();
+    }
+}
+
+/// index_expression
+///     : method_or_member_expression
+///     | method_or_member_expression '[' expression ']'
+ExpressionNode* Parser::index_expression()
+{
+    YYLTYPE location = getLocation();
+
+    ExpressionNode* lhs = method_or_member_expression();
+    if (accept('['))
+    {
+        ExpressionNode* index = expression();
+        expect(']');
+
+        return new MethodCallNode(_context, location, lhs, "at", {index});
+    }
+    else
+    {
+        return lhs;
     }
 }
 
@@ -1193,20 +1219,7 @@ ExpressionNode* Parser::unary_expression()
 
     case tLIDENT:
     case tUIDENT:
-        if (peekType() == tLIDENT && peek2ndType() == tDOT_BRACKET)
-        {
-            Token varName = expect(tLIDENT);
-            expect(tDOT_BRACKET);
-            ExpressionNode* index = expression();
-            expect(']');
-
-            return new FunctionCallNode(_context, location, "arrayAt",
-                {new VariableNode(_context, location, varName.value.str), index});
-        }
-        else
-        {
-            return new NullaryNode(_context, location, ident());
-        }
+        return new NullaryNode(_context, location, ident());
 
     default:
     {

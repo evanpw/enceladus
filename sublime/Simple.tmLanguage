@@ -476,7 +476,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>^\s*(def)\s*([a-z][a-zA-Z0-9.']*)</string>
+			<string>^\s*\b(def)\b\s*([a-z][a-zA-Z0-9.']*)</string>
 			<key>captures</key>
 			<dict>
 				<key>1</key>

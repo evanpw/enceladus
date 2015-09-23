@@ -613,19 +613,21 @@ public:
 
 	// Annotations
 	Type* memberType;
+	std::unordered_map<std::string, Type*> typeContext;
 };
 
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<MemberDefNode*>& members)
-	: StatementNode(context, location), name(name), members(members)
+	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<std::string>&& typeParameters)
+	: StatementNode(context, location), name(name), members(members), typeParameters(typeParameters)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
 	std::vector<MemberDefNode*> members;
+	std::vector<std::string> typeParameters;
 
 	// Annotations
 	Type* structType;

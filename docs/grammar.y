@@ -80,7 +80,7 @@ return_statement
     : RETURN expression EOL
 
 struct_declaration
-    : STRUCT UIDENT '=' members
+    : STRUCT UIDENT type_params '=' members
 
 variable_declaration
     : LIDENT [ ':' type ] COLON_EQUAL expression EOL
@@ -182,9 +182,13 @@ concat_expression
     : negation_expression [ '++' concat_expression ]
 
 negation_expression
+    : index_expression
+    | '-' index_expression
+    | NOT index_expression
+
+index_expression
     : method_or_member_expression
-    | '-' method_or_member_expression
-    | NOT method_or_member_expression
+    | method_or_member_expression '[' expression ']'
 
 method_or_member_expression
     : func_call_expression
@@ -204,7 +208,6 @@ unary_expression
     | inline_list
     | INT_LIT
     | STRING_LIT
-    | LIDENT DOT_BRACKET expression ']'
 
 inline_list
     : '[' list_interior ']'

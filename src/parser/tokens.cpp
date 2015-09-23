@@ -28,8 +28,6 @@ std::string tokenToString(TokenType t)
         return "tDEF";
     case tDIV_EQUAL:
         return "tDIV_EQUAL";
-    case tDOT_BRACKET:
-        return "tDOT_BRACKET";
     case tELIF:
         return "tELIF";
     case tELSE:

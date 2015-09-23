@@ -507,93 +507,6 @@ void SemanticAnalyzer::visit(ProgramNode* node)
     node->type = _typeTable->Unit;
 }
 
-void SemanticAnalyzer::visit(ConstructorSpec* node)
-{
-    CHECK_UNDEFINED_SYMBOL(node->name);
-
-    // Resolve member types
-    for (auto& member : node->members)
-    {
-        resolveTypeName(member, node->typeContext);
-        node->memberTypes.push_back(member->type);
-    }
-
-    ValueConstructor* valueConstructor = _typeTable->createValueConstructor(node->name, node->constructorTag, node->memberTypes);
-    node->valueConstructor = valueConstructor;
-    node->resultType->addValueConstructor(valueConstructor);
-
-    // Create a symbol for the constructor
-    ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(node->name, node, valueConstructor);
-    symbol->type = _typeTable->createFunctionType(node->memberTypes, node->resultType);
-    node->symbol = symbol;
-
-    node->type = _typeTable->Unit;
-}
-
-void SemanticAnalyzer::visit(DataDeclaration* node)
-{
-	// Data declarations cannot be local
-    CHECK_TOP_LEVEL("data declaration");
-
-	// The data type name cannot have already been used for something
-	const std::string& name = node->name;
-    CHECK_UNDEFINED(name);
-
-    // Actually create the type
-    if (node->typeParameters.empty())
-    {
-        Type* newType = _typeTable->createBaseType(node->name);
-        _symbolTable->createTypeSymbol(name, node, newType);
-
-        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
-        {
-            auto& spec = node->constructorSpecs[i];
-            spec->constructorTag = i;
-            spec->resultType = newType;
-            spec->accept(this);
-
-            node->valueConstructors.push_back(spec->valueConstructor);
-            node->constructorSymbols.push_back(spec->symbol);
-        }
-    }
-    else
-    {
-        // Create type variables for each type parameter
-        std::vector<Type*> variables;
-        std::unordered_map<std::string, Type*> typeContext;
-        for (auto& typeParameter : node->typeParameters)
-        {
-            CHECK_UNDEFINED(typeParameter);
-            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
-
-            Type* var = _typeTable->createTypeVariable(typeParameter, true);
-            variables.push_back(var);
-
-            typeContext.emplace(typeParameter, var);
-        }
-
-        TypeConstructor* typeConstructor = _typeTable->createTypeConstructor(name, node->typeParameters.size());
-        TypeConstructorSymbol* symbol = _symbolTable->createTypeConstructorSymbol(name, node, typeConstructor);
-
-        Type* newType = _typeTable->createConstructedType(typeConstructor, variables);
-
-        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
-        {
-            auto& spec = node->constructorSpecs[i];
-            spec->constructorTag = i;
-            spec->typeContext = typeContext;
-            spec->resultType = newType;
-            spec->accept(this);
-
-            typeConstructor->addValueConstructor(spec->valueConstructor);
-            node->valueConstructors.push_back(spec->valueConstructor);
-            node->constructorSymbols.push_back(spec->symbol);
-        }
-    }
-
-	node->type = _typeTable->Unit;
-}
-
 void SemanticAnalyzer::visit(TypeAliasNode* node)
 {
     // Type aliases cannot be local
@@ -1209,12 +1122,97 @@ void SemanticAnalyzer::visit(VariableNode* node)
     node->type = symbol->type;
 }
 
+void SemanticAnalyzer::visit(DataDeclaration* node)
+{
+    // Data declarations cannot be local
+    CHECK_TOP_LEVEL("data declaration");
+
+    // The data type name cannot have already been used for something
+    const std::string& name = node->name;
+    CHECK_UNDEFINED(name);
+
+    // Actually create the type
+    if (node->typeParameters.empty())
+    {
+        Type* newType = _typeTable->createBaseType(node->name);
+        _symbolTable->createTypeSymbol(name, node, newType);
+
+        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
+        {
+            auto& spec = node->constructorSpecs[i];
+            spec->constructorTag = i;
+            spec->resultType = newType;
+            spec->accept(this);
+
+            node->valueConstructors.push_back(spec->valueConstructor);
+            node->constructorSymbols.push_back(spec->symbol);
+        }
+    }
+    else
+    {
+        // Create type variables for each type parameter
+        std::vector<Type*> variables;
+        std::unordered_map<std::string, Type*> typeContext;
+        for (auto& typeParameter : node->typeParameters)
+        {
+            CHECK_UNDEFINED(typeParameter);
+            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+
+            Type* var = _typeTable->createTypeVariable(typeParameter, true);
+            variables.push_back(var);
+
+            typeContext.emplace(typeParameter, var);
+        }
+
+        TypeConstructor* typeConstructor = _typeTable->createTypeConstructor(name, node->typeParameters.size());
+        TypeConstructorSymbol* symbol = _symbolTable->createTypeConstructorSymbol(name, node, typeConstructor);
+
+        Type* newType = _typeTable->createConstructedType(typeConstructor, variables);
+
+        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
+        {
+            auto& spec = node->constructorSpecs[i];
+            spec->constructorTag = i;
+            spec->typeContext = typeContext;
+            spec->resultType = newType;
+            spec->accept(this);
+
+            typeConstructor->addValueConstructor(spec->valueConstructor);
+            node->valueConstructors.push_back(spec->valueConstructor);
+            node->constructorSymbols.push_back(spec->symbol);
+        }
+    }
+
+    node->type = _typeTable->Unit;
+}
+
+void SemanticAnalyzer::visit(ConstructorSpec* node)
+{
+    CHECK_UNDEFINED_SYMBOL(node->name);
+
+    // Resolve member types
+    for (auto& member : node->members)
+    {
+        resolveTypeName(member, node->typeContext);
+        node->memberTypes.push_back(member->type);
+    }
+
+    ValueConstructor* valueConstructor = _typeTable->createValueConstructor(node->name, node->constructorTag, node->memberTypes);
+    node->valueConstructor = valueConstructor;
+    node->resultType->addValueConstructor(valueConstructor);
+
+    // Create a symbol for the constructor
+    ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(node->name, node, valueConstructor);
+    symbol->type = _typeTable->createFunctionType(node->memberTypes, node->resultType);
+    node->symbol = symbol;
+
+    node->type = _typeTable->Unit;
+}
+
 void SemanticAnalyzer::visit(StructDefNode* node)
 {
     // Struct definitions cannot be local
     CHECK_TOP_LEVEL("struct declaration");
-
-    AstVisitor::visit(node);
 
     // The type name cannot have already been used for something
     const std::string& typeName = node->name;
@@ -1222,46 +1220,108 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 
     CHECK(!node->members.empty(), "structs cannot be empty");
 
-    Type* newType = _typeTable->createBaseType(node->name);
-    _symbolTable->createTypeSymbol(typeName, node, newType);
-
-    std::vector<std::string> memberNames;
-    std::vector<Type*> memberTypes;
-    std::vector<MemberVarSymbol*> memberSymbols;
-    std::unordered_set<std::string> alreadyUsed;
-    for (size_t i = 0; i < node->members.size(); ++i)
+    // TODO: Refactor these two cases (and maybe DataDeclaration as well)
+    if (node->typeParameters.empty())
     {
-        auto& member = node->members[i];
+        AstVisitor::visit(node);
 
-        // Make sure there are no repeated member names
-        CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type \"{}\" already has a member named \"{}\"", node->name, member->name);
-        alreadyUsed.insert(member->name);
+        Type* newType = _typeTable->createBaseType(node->name);
+        _symbolTable->createTypeSymbol(typeName, node, newType);
 
-        memberTypes.push_back(member->memberType);
-        memberNames.push_back(member->name);
+        std::vector<std::string> memberNames;
+        std::vector<Type*> memberTypes;
+        std::vector<MemberVarSymbol*> memberSymbols;
+        std::unordered_set<std::string> alreadyUsed;
+        for (size_t i = 0; i < node->members.size(); ++i)
+        {
+            auto& member = node->members[i];
 
-        MemberVarSymbol* memberSymbol = _symbolTable->createMemberVarSymbol(member->name, node, nullptr, newType, i);
-        memberSymbol->type = _typeTable->createFunctionType({newType}, member->memberType);
-        memberSymbols.push_back(memberSymbol);
+            // Make sure there are no repeated member names
+            CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type \"{}\" already has a member named \"{}\"", node->name, member->name);
+            alreadyUsed.insert(member->name);
+
+            memberTypes.push_back(member->memberType);
+            memberNames.push_back(member->name);
+
+            MemberVarSymbol* memberSymbol = _symbolTable->createMemberVarSymbol(member->name, node, nullptr, newType, i);
+            memberSymbol->type = _typeTable->createFunctionType({newType}, member->memberType);
+            memberSymbols.push_back(memberSymbol);
+        }
+
+        ValueConstructor* valueConstructor = _typeTable->createValueConstructor(typeName, 0, memberTypes, memberNames);
+        node->valueConstructor = valueConstructor;
+        newType->addValueConstructor(valueConstructor);
+
+        // Create a symbol for the constructor
+        ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor);
+        symbol->type = _typeTable->createFunctionType(memberTypes, newType);
+        node->constructorSymbol = symbol;
+
+        node->structType = newType;
+    }
+    else
+    {
+        // Create type variables for each type parameter
+        std::vector<Type*> variables;
+        std::unordered_map<std::string, Type*> typeContext;
+        for (auto& typeParameter : node->typeParameters)
+        {
+            CHECK_UNDEFINED(typeParameter);
+            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+
+            Type* var = _typeTable->createTypeVariable(typeParameter, true);
+            variables.push_back(var);
+
+            typeContext.emplace(typeParameter, var);
+        }
+
+        TypeConstructor* typeConstructor = _typeTable->createTypeConstructor(typeName, node->typeParameters.size());
+        TypeConstructorSymbol* symbol = _symbolTable->createTypeConstructorSymbol(typeName, node, typeConstructor);
+
+        Type* newType = _typeTable->createConstructedType(typeConstructor, variables);
+
+        std::vector<std::string> memberNames;
+        std::vector<Type*> memberTypes;
+        std::vector<MemberVarSymbol*> memberSymbols;
+        std::unordered_set<std::string> alreadyUsed;
+        for (size_t i = 0; i < node->members.size(); ++i)
+        {
+            MemberDefNode* member = node->members[i];
+
+            // Make sure there are no repeated member names
+            CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type \"{}\" already has a member named \"{}\"", node->name, member->name);
+            alreadyUsed.insert(member->name);
+
+            member->typeContext = typeContext;
+            member->accept(this);
+
+            memberTypes.push_back(member->memberType);
+            memberNames.push_back(member->name);
+
+            MemberVarSymbol* memberSymbol = _symbolTable->createMemberVarSymbol(member->name, node, nullptr, newType, i);
+            memberSymbol->type = _typeTable->createFunctionType({newType}, member->memberType);
+            memberSymbols.push_back(memberSymbol);
+        }
+
+        ValueConstructor* valueConstructor = _typeTable->createValueConstructor(typeName, 0, memberTypes, memberNames);
+        node->valueConstructor = valueConstructor;
+        typeConstructor->addValueConstructor(valueConstructor);
+
+        // Create a symbol for the constructor
+        ConstructorSymbol* constructorSymbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor);
+        constructorSymbol->type = _typeTable->createFunctionType(memberTypes, newType);
+        node->constructorSymbol = constructorSymbol;
+
+        node->structType = newType;
     }
 
-    ValueConstructor* valueConstructor = _typeTable->createValueConstructor(typeName, 0, memberTypes, memberNames);
-    node->valueConstructor = valueConstructor;
-    newType->addValueConstructor(valueConstructor);
-
-    // Create a symbol for the constructor
-    ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor);
-    symbol->type = _typeTable->createFunctionType(memberTypes, newType);
-    node->constructorSymbol = symbol;
-
-    node->structType = newType;
     node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(MemberDefNode* node)
 {
     // All of the constructor members must refer to already-declared types
-    resolveTypeName(node->typeName);
+    resolveTypeName(node->typeName, node->typeContext);
     node->memberType = node->typeName->type;
     node->type = _typeTable->Unit;
 }
