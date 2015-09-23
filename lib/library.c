@@ -56,7 +56,7 @@ uint64_t arrayAt(Array* arr, int64_t n)
 {
     int64_t index = FROM_INT(n);
 
-    if (index < 0 || index > arr->sizeInWords)
+    if (index < 0 || index >= arr->sizeInWords)
     {
         fail("*** Exception: Out-of-bounds array access");
     }

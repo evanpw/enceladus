@@ -13,7 +13,7 @@ impl<T> Vector<T>
             self.size += 1
         else
             newCapacity := self.capacity * 2 + 1
-            newContent := makeArray(self.capacity * 2, None)
+            newContent := makeArray(newCapacity, None)
             for i = 0 to self.size - 1
                 newContent.set(i, self.content[i])
 
