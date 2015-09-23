@@ -24,13 +24,22 @@ uint64_t* arrayContent(Array* s)
     return (uint64_t*)(s + 1);
 }
 
+Array* emptyArray()
+{
+    Array* result = gcAllocate(sizeof(SplObject));
+    result->constructorTag = ARRAY_TAG;
+    result->sizeInWords = 0;
+
+    return result;
+}
+
 Array* makeArray(int64_t n, uint64_t value)
 {
     int64_t size = FROM_INT(n);
 
     if (size < 0) fail("*** Exception: Cannot create array of negative size");
 
-    Array* result = gcAllocate(sizeof(SplObject) + n * 8);
+    Array* result = gcAllocate(sizeof(SplObject) + size * 8);
     result->constructorTag = ARRAY_TAG;
     result->sizeInWords = size;
 

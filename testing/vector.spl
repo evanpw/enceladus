@@ -2,41 +2,10 @@
 # LIB: Create a library function to create an empty array
 # LANG: Allow mutation of structs
 # LANG: Add static methods (for scoping)
-# BUG: self.content[i] doesn't parse correctly
 # LANG / LIB: Add a trait Default for types that have a default value
+import Vector
 
-struct Vector<T>
-    content: Array<T>
-    capacity: Int
-    size: Int
-    defaultValue: T
-
-def vector() -> Vector<Int>
-    content := makeArray(0, 0)
-    return Vector(content, 0, 0, 0)
-
-impl<T> Vector<T>
-    def pushBack(self: Vector<T>, x: T) -> Vector<T>
-        if self.size < self.capacity
-            self.content.set(self.size, x)
-            return Vector(self.content, self.capacity, self.size + 1, self.defaultValue)
-        else
-            newCapacity := self.capacity * 2 + 1
-            newContent := makeArray(self.capacity * 2, self.defaultValue)
-            for i = 0 to self.size - 1
-                newContent.set(i, self.content[i])
-
-            newContent.set(self.size, x)
-            return Vector(newContent, newCapacity, self.size + 1, self.defaultValue)
-
-    def popBack(self: Vector<T>) -> Vector<T>
-        assert self.size > 0
-        return Vector(self.content, self.capacity, self.size - 1, self.defaultValue)
-
-    def at(self: Vector<T>, n: Int) -> T
-        return self.content.at(n)
-
-
+# Int vector
 v := vector()
 
 for i = 1 to 10
@@ -47,14 +16,14 @@ v = v.popBack()
 
 total := 0
 for i = 0 to v.size - 1
-    total += v.at(i)
+    total += v[i]
 
 # Boolean vector
-v2 := Vector(makeArray(0, False), 0, 0, False)
+v2 := vector()
 v2 = v2.pushBack(True)
 v2 = v2.pushBack(False)
 
-if v2.at(0)
+if v2[0]
     total += 1
 
 print $ show(total)

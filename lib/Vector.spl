@@ -1,0 +1,28 @@
+struct Vector<T>
+    content: Array<Option<T>>
+    capacity: Int
+    size: Int
+
+def vector<T>() -> Vector<T>
+    return Vector(emptyArray(), 0, 0)
+
+impl<T> Vector<T>
+    def pushBack(self: Vector<T>, x: T) -> Vector<T>
+        if self.size < self.capacity
+            self.content.set(self.size, Some(x))
+            return Vector(self.content, self.capacity, self.size + 1)
+        else
+            newCapacity := self.capacity * 2 + 1
+            newContent := makeArray(self.capacity * 2, None)
+            for i = 0 to self.size - 1
+                newContent.set(i, self.content[i])
+
+            newContent.set(self.size, Some(x))
+            return Vector(newContent, newCapacity, self.size + 1)
+
+    def popBack(self: Vector<T>) -> Vector<T>
+        assert self.size > 0
+        return Vector(self.content, self.capacity, self.size - 1)
+
+    def at(self: Vector<T>, n: Int) -> T
+        return self.content.at(n).unwrap()

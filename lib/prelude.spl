@@ -24,6 +24,7 @@ impl String
         return strCat(self, other)
 
 ## Array ##
+foreign emptyArray<T>() -> Array<T>
 foreign makeArray<T>(n: Int, value: T) -> Array<T>
 foreign arrayAt<T>(arr: Array<T>, n: Int) -> T
 foreign arraySet<T>(arr: Array<T>, n: Int, value: T) -> Unit
