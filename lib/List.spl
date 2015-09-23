@@ -67,7 +67,7 @@ def isIn<T>(eq: |T, T| -> Bool, x: T, ys: [T]) -> Bool
     return False
 
 
-def splitList<T>(cmp: |T, T| -> Int, xs: [T], pivot: T) -> Pair<[T]>
+def splitList<T>(cmp: |T, T| -> Int, xs: [T], pivot: T) -> Pair<[T], [T]>
     lhs := []
     rhs := []
 

@@ -273,17 +273,17 @@ def pow(a: Int, b: Int) -> Int
 
 
 ## Pair ##
-data Pair<T> = Pair(T, T)
+data Pair<S, T> = Pair(S, T)
 
-impl<T> Pair<T>
-    def first(self: Pair<T>) -> T
+impl<S, T> Pair<S, T>
+    def first(self: Pair<S, T>) -> S
         match self
             Pair(x, _) => return x
 
-    def second(self: Pair<T>) -> T
+    def second(self: Pair<S, T>) -> T
         match self
             Pair(_, x) => return x
 
 
-def splitAt<T>(n: Int, xs: [T]) -> Pair<[T]>
+def splitAt<T>(n: Int, xs: [T]) -> Pair<[T], [T]>
     return Pair(xs.take(n), xs.drop(n))

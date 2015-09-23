@@ -182,18 +182,15 @@ concat_expression
     : negation_expression [ '++' concat_expression ]
 
 negation_expression
-    : index_expression
-    | '-' index_expression
-    | NOT index_expression
+    : method_member_idx_expression
+    | '-' method_member_idx_expression
+    | NOT method_member_idx_expression
 
-index_expression
-    : method_or_member_expression
-    | method_or_member_expression '[' expression ']'
-
-method_or_member_expression
+method_member_idx_expression
     : func_call_expression
-    | func_call_expression '.' LIDENT
-    | func_call_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
+    | method_member_idx_expression '.' LIDENT
+    | method_member_idx_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
+    | method_member_idx_expression '[' expression ']'
 
 func_call_expression
     : ident '$' expression

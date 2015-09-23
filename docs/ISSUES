@@ -18,15 +18,11 @@
 * Optimization: Remove labels which are never referenced (can eliminate spills
   or enable other optimizations)
 
-* Separate scope containing for-loop induction variable
-
 * Add a real module system
 
 * Use a better representation for the in-memory stack map
 
 * Add syntax for return with no argument
-
-* Combine redundant definitions
 
 * Turn stack locations into outputs of instructions instead of inputs
 
@@ -63,10 +59,12 @@
 
 * Allow assert to include a message
 
-* Allow generic structs
-
 * Allow underscores in identifiers? (and highlight them correctly)
 
-* If self.content has array type, then self.content.[n] doesn't parse correctly
-
 * Get rid of integer-based for loop in favor of "for x in range(...)"
+
+* Add a hash table to the library
+
+* Allow generic type aliases (e.g., type TableEntry<S, T> = Option<Pair<S, T>>)
+
+* Add a function to get the size of an array

@@ -1027,79 +1027,73 @@ ExpressionNode* Parser::concat_expression()
 }
 
 /// negation_expression
-///     : index_expression
-///     | '-' index_expression
-///     | NOT index_expression
+///     : method_member_idx_expression
+///     | '-' method_member_idx_expression
+///     | NOT method_member_idx_expression
 ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
-        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), index_expression()});
+        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), method_member_idx_expression()});
     }
     else if (accept(tNOT))
     {
-        return new FunctionCallNode(_context, getLocation(), "not", {index_expression()});
+        return new FunctionCallNode(_context, getLocation(), "not", {method_member_idx_expression()});
     }
     else
     {
-        return index_expression();
+        return method_member_idx_expression();
     }
 }
 
-/// index_expression
-///     : method_or_member_expression
-///     | method_or_member_expression '[' expression ']'
-ExpressionNode* Parser::index_expression()
-{
-    YYLTYPE location = getLocation();
-
-    ExpressionNode* lhs = method_or_member_expression();
-    if (accept('['))
-    {
-        ExpressionNode* index = expression();
-        expect(']');
-
-        return new MethodCallNode(_context, location, lhs, "at", {index});
-    }
-    else
-    {
-        return lhs;
-    }
-}
-
-/// method_or_member_expression
+/// method_member_idx_expression
 ///     : func_call_expression
-///     | func_call_expression '.' LIDENT
-///     | func_call_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
-ExpressionNode* Parser::method_or_member_expression()
+///     | method_member_idx_expression '.' LIDENT
+///     | method_member_idx_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
+///     | method_member_idx_expression '[' expression ']'
+ExpressionNode* Parser::method_member_idx_expression()
 {
     YYLTYPE location = getLocation();
 
     ExpressionNode* expr = func_call_expression();
-    while (accept('.'))
+    while (true)
     {
-        Token name = expect(tLIDENT);
-
-        if (accept('('))
+        if (accept('.'))
         {
-            std::vector<ExpressionNode*> argList;
-            if (!accept(')'))
-            {
-                argList.push_back(expression());
+            Token name = expect(tLIDENT);
 
-                while (accept(','))
+            if (accept('('))
+            {
+                std::vector<ExpressionNode*> argList;
+                if (!accept(')'))
                 {
                     argList.push_back(expression());
+
+                    while (accept(','))
+                    {
+                        argList.push_back(expression());
+                    }
+
+                    expect(')');
                 }
 
-                expect(')');
+                expr = new MethodCallNode(_context, location, expr, name.value.str, std::move(argList));
             }
+            else
+            {
+                expr = new MemberAccessNode(_context, location, expr, name.value.str);
+            }
+        }
+        else if (accept('['))
+        {
+            ExpressionNode* index = expression();
+            expect(']');
 
-            expr = new MethodCallNode(_context, location, expr, name.value.str, std::move(argList));
+            expr = new MethodCallNode(_context, location, expr, "at", {index});
         }
         else
         {
-            expr = new MemberAccessNode(_context, location, expr, name.value.str);
+            break;
         }
     }
 
