@@ -309,7 +309,7 @@ class TestAcceptance(object):
         self.run('mutateStruct', result='4\n5')
 
     def test_mututallyRecursiveMethods(self):
-        self.run('mututallyRecursiveMethods', '0')
+        self.run('mutuallyRecursiveMethods', '0')
 
     def test_unreachable(self):
         self.run('unreachable', '4')

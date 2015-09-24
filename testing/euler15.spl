@@ -1,24 +1,18 @@
-data MyPair = MyPair(Int, Int)
-data Memo = Memo(MyPair, Int)
+import HashTable
 
-memo := []
-def searchMemo(p: MyPair) -> Int
-    let MyPair(x, y) := p
+def hashPair(key: Pair<Int, Int>) -> Int
+    return 20 * key.first() + key.second()
 
-    for m in memo
-        let Memo(p', count) := m
-        let MyPair(x', y') := p'
+def cmpPair(lhs: Pair<Int, Int>, rhs: Pair<Int, Int>) -> Bool
+    let Pair(x1, y1) := lhs
+    let Pair(x2, y2) := rhs
 
-        if x == x' and y == y'
-            return count
+    return x1 == x2 and y1 == y2
 
-    return -1
+memo := hashTable(hashPair, cmpPair)
 
-def insertMemo(p: MyPair, count: Int) -> Unit
-    memo = Memo(p, count) :: memo
-
-def countPaths(p: MyPair) -> Int
-    let MyPair(x, y) := p
+def countPaths(p: Pair<Int, Int>) -> Int
+    let Pair(x, y) := p
 
     if x == 20 and y == 20
         return 1
@@ -26,15 +20,15 @@ def countPaths(p: MyPair) -> Int
     if x > 20 or y > 20
         return 0
 
-    memoCount := searchMemo(p)
-    if memoCount >= 0
-        return memoCount
+    memoCount := memo.get(p)
+    if memoCount.isSome()
+        return memoCount.unwrap()
 
     count := 0
-    count += countPaths $ MyPair(x + 1, y)
-    count += countPaths $ MyPair(x, y + 1)
+    count += countPaths $ Pair(x + 1, y)
+    count += countPaths $ Pair(x, y + 1)
 
-    insertMemo(p, count)
+    memo.insert(p, count)
     return count
 
-print $ show $ countPaths $ MyPair(0, 0)
+print $ show $ countPaths $ Pair(0, 0)

@@ -47,6 +47,9 @@ impl<S, T> HashTable<S, T>
         self.size += 1
 
     def get(self: HashTable<S, T>, key: S) -> Option<T>
+        if self.capacity == 0
+            return None
+
         startIdx := self.hash(key) mod self.capacity
 
         idx := startIdx
