@@ -1,0 +1,13 @@
+import HashTable
+
+table := hashTable(hashString, eqString)
+
+table.insert("One", 1)
+table.insert("Two", 2)
+table.insert("Three", 3)
+
+match table.get("Two")
+    Some(x)
+        print $ show(x)
+    None
+        print $ "None"

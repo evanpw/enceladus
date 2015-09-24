@@ -7,7 +7,12 @@ foreign strSlice(s: String, pos: Int, len: Int) -> String
 foreign strAt(s: String, n: Int) -> Char
 foreign strFromList(s: [Char]) -> String
 foreign strCat(lhs: String, rhs: String) -> String
+foreign strHash(s: String) -> Int
 foreign show(x: Int) -> String
+
+struct StringIterator
+    str: String
+    offset: Int
 
 # Method wrappers (methods can't be implemented in C)
 impl String
@@ -22,6 +27,20 @@ impl String
 
     def concat(self: String, other: String) -> String
         return strCat(self, other)
+
+    def iter(self: String) -> StringIterator
+        return StringIterator(self, 0)
+
+impl StringIterator
+    def head(self: StringIterator) -> Char
+        return self.str[self.offset]
+
+    def tail(self: StringIterator) -> StringIterator
+        assert self.offset < self.str.length()
+        return StringIterator(self.str, self.offset + 1)
+
+    def empty(self: StringIterator) -> Bool
+        return self.offset >= self.str.length()
 
 ## Array ##
 foreign emptyArray<T>() -> Array<T>

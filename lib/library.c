@@ -200,6 +200,20 @@ String* show(int64_t x)
     return result;
 }
 
+// FNV-1a 64-bit
+int64_t strHash(String* s)
+{
+    uint64_t hash = 14695981039346656037ULL;
+
+    char* content = strContent(s);
+    for (size_t i = 0; i < strLength(s); ++i)
+    {
+        hash ^= content[i];
+        hash *= 1099511628211;
+    }
+
+    return TO_INT(hash);
+}
 
 //// I/O ///////////////////////////////////////////////////////////////////////
 

@@ -320,6 +320,15 @@ class TestAcceptance(object):
     def test_hashTable2(self):
         self.run('hashTable2', '20')
 
+    def test_hashTable3(self):
+        self.run('hashTable3', '2')
+
+    def test_foreignClosure(self):
+        self.run('foreignClosure', build_error='Error: testing/foreignClosure.spl:1:6: Cannot put external function "strHash" into a closure')
+
+    def test_constructorClosure(self):
+        self.run('constructorClosure', '3')
+
 
     # Medium tests (100ms-1s)
 

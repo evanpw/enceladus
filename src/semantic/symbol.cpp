@@ -17,7 +17,6 @@ ConstructorSymbol::ConstructorSymbol(const std::string& name, AstNode* node, Val
 , constructor(constructor)
 {
     isConstructor = true;
-    isForeign = true;
 }
 
 TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)

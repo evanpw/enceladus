@@ -3,9 +3,9 @@ import HashTable
 table := hashTable(hashInt, eqInt)
 
 for i in range(1, 1000)
-    table.insert(i, i * 2)
+    table.insert(-i, i * 2)
 
-match table.get(10)
+match table.get(-10)
     Some(x)
         print $ show(x)
     None

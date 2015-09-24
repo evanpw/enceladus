@@ -1,8 +1,4 @@
 # Equality
-def eqInt(x: Int, y: Int) -> Bool
-    return (x == y)
-
-
 def eqList(xs: [Int], ys: [Int]) -> Bool
     if xs.empty()
         return ys.empty()

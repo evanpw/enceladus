@@ -7,7 +7,6 @@
 # LIB: Replace a specific slice of a string
 # LANG: Iterator that generalizes String and List and can be looped over
 # TST: Add tests for library functions
-# LANG: Syntactic sugar for String.at
 # LANG: Make destructuring look more like a normal variable definition?
 # LIB: Deque data structure
 # LANG: Set array elements using the same array[offset] syntax as getting
@@ -15,6 +14,7 @@
 # LIB: String comparison
 
 import List
+import HashTable
 
 def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
     newCache := []
@@ -48,36 +48,6 @@ def fullCache(instructions: [String]) -> String
 
     return cache
 
-def cacheToOffset(cache: String) -> Int
-    offset := 0
-    for i = 0 to cache.length() - 1
-        c := cache[i]
-
-        offset *= 2
-        if c == '1'
-            offset += 1
-
-    return offset
-
-def hasValue(memo: Array<Int>, cache: String) -> Bool
-    offset := cacheToOffset(cache)
-    value := memo[offset]
-
-    return value != -1
-
-def getValue(memo: Array<Int>, cache: String) -> Int
-    offset := cacheToOffset(cache)
-    value := memo[offset]
-
-    assert value != -1
-
-    return value
-
-def setValue(memo: Array<Int>, cache: String, value: Int) -> Unit
-    offset := cacheToOffset(cache)
-    assert memo[offset] == -1
-    memo.set(offset, value)
-
 # Return a string that differs from the given one by setting location n to
 # the character '0'
 def zeroBit(cache: String, n: Int) -> String
@@ -99,9 +69,10 @@ def predecessors(cache: String) -> [String]
 
     return result
 
-def costAt(memo: Array<Int>, instructions: [String], cache: String) -> Int
-    if hasValue(memo, cache)
-        return getValue(memo, cache)
+def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) -> Int
+    savedValue := memo.get(cache)
+    if savedValue.isSome()
+        return savedValue.unwrap()
 
     # Examine each successor of this cache value
     costs := []
@@ -117,7 +88,7 @@ def costAt(memo: Array<Int>, instructions: [String], cache: String) -> Int
     assert costs.length() > 0
 
     bestCost := minimum(costs)
-    setValue(memo, cache, bestCost)
+    memo.insert(cache, bestCost)
 
     return bestCost
 
@@ -127,10 +98,10 @@ def minTime(instructions: [String]) -> Int
 
     empty := zeroCache(m)
     full := fullCache(instructions)
-    memo := makeArray(pow(2, m), -1)
+    memo := hashTable(hashString, eqString)
 
     # From a full cache, we're finished -> zero time
-    setValue(memo, full, 0)
+    memo.insert(full, 0)
 
     return costAt(memo, instructions, empty)
 

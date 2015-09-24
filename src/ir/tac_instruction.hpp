@@ -478,7 +478,6 @@ struct CallInst : public Instruction
         return ss.str();
     }
 
-    bool foreign = false;
     bool ccall = false;
     bool regpass = false;
 

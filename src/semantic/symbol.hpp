@@ -71,7 +71,6 @@ private:
 class FunctionSymbol : public Symbol
 {
 public:
-    bool isForeign = false;     // C argument-passing style
     bool isExternal = false;
     bool isBuiltin = false;
     bool isConstructor = false;

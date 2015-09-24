@@ -177,7 +177,7 @@ public:
 	std::string name;
 
 	// Annotations
-	enum NullaryKind { VARIABLE, FUNC_CALL, FOREIGN_CALL, CLOSURE };
+	enum NullaryKind { VARIABLE, FUNC_CALL, CLOSURE };
 	Symbol* symbol = nullptr;
 	NullaryKind kind;
 };

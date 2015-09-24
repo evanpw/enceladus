@@ -85,3 +85,25 @@ impl<S, T> HashTable<S, T>
                     self.insert(k, v)
                 None
                     pass
+
+def hashInt(x: Int) -> Int
+    return x
+
+def eqInt(lhs: Int, rhs: Int) -> Bool
+    return lhs == rhs
+
+def hashString(x: String) -> Int
+    return strHash(x)
+
+def eqString(lhs: String, rhs: String) -> Bool
+    n1 := lhs.length()
+    n2 := rhs.length()
+
+    if n1 != n2
+        return False
+
+    for i in range(0, n1 - 1)
+        if lhs.at(i) != rhs.at(i)
+            return False
+
+    return True

@@ -380,17 +380,14 @@ void TACCodeGen::visit(NullaryNode* node)
         ValueType type = getValueType(node->type);
         Value* dest = node->value = createTemp(type);
 
-        if (node->kind == NullaryNode::FOREIGN_CALL)
+        if (node->kind == NullaryNode::FUNC_CALL)
         {
-            CallInst* inst = new CallInst(dest, getValue(node->symbol), {});
-            inst->foreign = true;
-            inst->ccall = dynamic_cast<FunctionSymbol*>(node->symbol)->isExternal;
+            FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
+
+            CallInst* inst = new CallInst(dest, getValue(node->symbol));
+            inst->ccall = functionSymbol->isExternal;
             inst->regpass = inst->ccall;
             emit(inst);
-        }
-        else if (node->kind == NullaryNode::FUNC_CALL)
-        {
-            emit(new CallInst(dest, getValue(node->symbol)));
         }
         else /* node->kind == NullaryNode::CLOSURE */
         {
@@ -398,7 +395,6 @@ void TACCodeGen::visit(NullaryNode* node)
             // evaluates to a function type -- create a closure
             size_t size = sizeof(SplObject) + 8;
             CallInst* callInst = new CallInst(dest, _context->createExternFunction("gcAllocate"), {_context->getConstantInt(size)});
-            callInst->foreign = true;
             callInst->regpass = true;
             emit(callInst);
 
@@ -529,7 +525,6 @@ void TACCodeGen::visit(AssertNode* node)
 
     Value* message = _context->createStaticString(name, contents.str());
     CallInst* inst = new CallInst(nullptr, dieFunction, {message});
-    inst->foreign = true;
     inst->ccall = true;
     inst->regpass = true;
     emit(inst);
@@ -889,7 +884,6 @@ void TACCodeGen::visit(FunctionCallNode* node)
         CallInst* inst = new CallInst(result, getValue(node->symbol), arguments);
 
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
-        inst->foreign = functionSymbol->isForeign;
         inst->ccall = functionSymbol->isExternal;
         inst->regpass = inst->ccall;
         emit(inst);
@@ -1101,7 +1095,6 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
         result,
         _context->createExternFunction("gcAllocate"), // TODO: Fix this
         {_context->getConstantInt(size)});
-    inst->foreign = true;
     inst->regpass = true;
     emit(inst);
 

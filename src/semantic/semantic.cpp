@@ -124,7 +124,6 @@ FunctionSymbol* SemanticAnalyzer::createExternal(const std::string& name)
 {
     FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, _root, nullptr);
     symbol->isExternal = true;
-    symbol->isForeign = true;
 
     return symbol;
 }
@@ -615,7 +614,6 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 
 	FunctionSymbol* symbol = _symbolTable->createFunctionSymbol(name, node, nullptr);
     symbol->type = functionType;
-	symbol->isForeign = true;
 	symbol->isExternal = true;
 	node->symbol = symbol;
 
@@ -860,18 +858,12 @@ void SemanticAnalyzer::visit(NullaryNode* node)
             unify(functionType, _typeTable->createFunctionType({}, returnType), node);
 
             node->type = returnType;
-
-            if (functionSymbol->isForeign)
-            {
-                node->kind = NullaryNode::FOREIGN_CALL;
-            }
-            else
-            {
-                node->kind = NullaryNode::FUNC_CALL;
-            }
+            node->kind = NullaryNode::FUNC_CALL;
         }
         else
         {
+            CHECK(!functionSymbol->isExternal, "Cannot put external function \"{}\" into a closure", name);
+
             node->type = functionType;
             node->kind = NullaryNode::CLOSURE;
         }
