@@ -271,6 +271,16 @@ def pow(a: Int, b: Int) -> Int
 
     return r
 
+# Modulo operator with b > 0 that satisfies 0 <= imod(a, b) < b even if a < 0
+def imod(a: Int, b: Int) -> Int
+    assert b > 0
+
+    result := a mod b
+    if result < 0
+        result += b
+
+    return result
+
 
 ## Pair ##
 data Pair<S, T> = Pair(S, T)

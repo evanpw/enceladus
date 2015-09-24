@@ -524,7 +524,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>[|!%$?~+:\-=&lt;/&gt;\\^]+|mod|@</string>
+			<string>\b([|!%$?~+:\-=&lt;/&gt;\\^]+|mod|@)\b</string>
 			<key>name</key>
 			<string>keyword.operator.simple</string>
 		</dict>

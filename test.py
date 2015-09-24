@@ -317,6 +317,9 @@ class TestAcceptance(object):
     def test_hashTable(self):
         self.run('hashTable', '20')
 
+    def test_hashTable2(self):
+        self.run('hashTable2', '20')
+
 
     # Medium tests (100ms-1s)
 
