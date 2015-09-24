@@ -308,6 +308,15 @@ class TestAcceptance(object):
     def test_mutateStruct(self):
         self.run('mutateStruct', result='4\n5')
 
+    def test_mututallyRecursiveMethods(self):
+        self.run('mututallyRecursiveMethods', '0')
+
+    def test_unreachable(self):
+        self.run('unreachable', '4')
+
+    def test_hashTable(self):
+        self.run('hashTable', '20')
+
 
     # Medium tests (100ms-1s)
 

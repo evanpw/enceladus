@@ -1388,7 +1388,18 @@ void SemanticAnalyzer::visit(ImplNode* node)
     resolveTypeName(node->typeName, typeContext);
 
     node->typeContext = typeContext;
-    AstVisitor::visit(node);
+
+    // First pass: check prototype, and create symbol
+    for (auto& method : node->methods)
+    {
+        method->accept(this);
+    }
+
+    // Second pass: check the method body
+    for (auto& method: node->methods)
+    {
+        method->accept(this);
+    }
 
     _enclosingImplNode = nullptr;
 
@@ -1397,68 +1408,78 @@ void SemanticAnalyzer::visit(ImplNode* node)
 
 void SemanticAnalyzer::visit(MethodDefNode* node)
 {
-    // Functions cannot be declared inside of another function
-    CHECK(!_enclosingFunction, "methods cannot be nested");
-    CHECK(_enclosingImplNode, "methods can only appear inside impl blocks");
-
-    std::vector<MemberSymbol*> symbols;
-    Type* parentType = _enclosingImplNode->typeName->type;
-    resolveMemberSymbol(node->name, parentType, symbols);
-    CHECK(symbols.empty(), "type \"{}\" already has a method or member named \"{}\"", parentType->name(), node->name);
-
-    // Create type variables for each type parameter
-    std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
-    for (auto& typeParameter : node->typeParams)
+    if (!node->firstPassFinished)
     {
-        CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+        // Functions cannot be declared inside of another function
+        CHECK(!_enclosingFunction, "methods cannot be nested");
+        CHECK(_enclosingImplNode, "methods can only appear inside impl blocks");
 
-        Type* var = _typeTable->createTypeVariable(typeParameter, true);
-        typeContext.emplace(typeParameter, var);
+        std::vector<MemberSymbol*> symbols;
+        Type* parentType = _enclosingImplNode->typeName->type;
+        resolveMemberSymbol(node->name, parentType, symbols);
+        CHECK(symbols.empty(), "type \"{}\" already has a method or member named \"{}\"", parentType->name(), node->name);
+
+        // Create type variables for each type parameter
+        std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
+        for (auto& typeParameter : node->typeParams)
+        {
+            CHECK_UNDEFINED(typeParameter);
+            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+
+            Type* var = _typeTable->createTypeVariable(typeParameter, true);
+            typeContext.emplace(typeParameter, var);
+        }
+
+        resolveTypeName(node->typeName, typeContext);
+
+        Type* type = node->typeName->type;
+        FunctionType* functionType = type->get<FunctionType>();
+        node->functionType = functionType;
+
+        assert(functionType->inputs().size() == node->params.size());
+
+        const std::vector<Type*>& paramTypes = functionType->inputs();
+
+        CHECK(!paramTypes.empty(), "methods must take at least one argument");
+        unify(paramTypes[0], parentType, node);
+
+        MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, parentType);
+        symbol->type = type;
+        node->symbol = symbol;
+
+        node->firstPassFinished = true;
     }
-
-    resolveTypeName(node->typeName, typeContext);
-
-    Type* type = node->typeName->type;
-    FunctionType* functionType = type->get<FunctionType>();
-    node->functionType = functionType;
-
-    assert(functionType->inputs().size() == node->params.size());
-
-    const std::vector<Type*>& paramTypes = functionType->inputs();
-
-    CHECK(!paramTypes.empty(), "methods must take at least one argument");
-    unify(paramTypes[0], parentType, node);
-
-    MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, parentType);
-    symbol->type = type;
-    node->symbol = symbol;
-
-    _symbolTable->pushScope();
-
-    // Add symbols corresponding to the formal parameters to the
-    // function's scope
-    for (size_t i = 0; i < node->params.size(); ++i)
+    else
     {
-        const std::string& param = node->params[i];
+        FunctionType* functionType = node->functionType;
+        const std::vector<Type*>& paramTypes = functionType->inputs();
 
-        VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, node, false);
-        paramSymbol->isParam = true;
-        paramSymbol->offset = i;
-        paramSymbol->type = paramTypes[i];
+        _symbolTable->pushScope();
 
-        node->parameterSymbols.push_back(paramSymbol);
+        // Add symbols corresponding to the formal parameters to the
+        // function's scope
+        for (size_t i = 0; i < node->params.size(); ++i)
+        {
+            const std::string& param = node->params[i];
+
+            VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, node, false);
+            paramSymbol->isParam = true;
+            paramSymbol->offset = i;
+            paramSymbol->type = paramTypes[i];
+
+            node->parameterSymbols.push_back(paramSymbol);
+        }
+
+        // Recurse
+        _enclosingFunction = node;
+        node->body->accept(this);
+        _enclosingFunction = nullptr;
+
+        _symbolTable->popScope();
+
+        unify(node->body->type, functionType->output(), node);
+        node->type = _typeTable->Unit;
     }
-
-    // Recurse
-    _enclosingFunction = node;
-    node->body->accept(this);
-    _enclosingFunction = nullptr;
-
-    _symbolTable->popScope();
-
-    unify(node->body->type, functionType->output(), node);
-    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(MethodCallNode* node)
@@ -1491,4 +1512,9 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     unify(functionType, _typeTable->createFunctionType(paramTypes, returnType), node);
 
     node->type = returnType;
+}
+
+void SemanticAnalyzer::visit(PassNode* node)
+{
+    node->type = _typeTable->Unit;
 }

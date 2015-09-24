@@ -1,0 +1,14 @@
+def test(x: Option<Int>) -> Int
+    forever
+        match x
+            Some(item)
+                return item
+
+            None
+                return 0
+
+        if False
+            return -1
+
+
+print $ show $ test(Some(4))

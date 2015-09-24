@@ -1,0 +1,84 @@
+struct HashTable<S, T>
+    contents: Array<Option<Pair<S, T>>>
+    hashFn: |S| -> Int
+    cmpFn: |S, S| -> Bool
+    size: Int
+    capacity: Int
+
+
+def hashTable<S, T>(hashFn: |S| -> Int, cmpFn: |S, S| -> Bool) -> HashTable<S, T>
+    return HashTable(makeArray(0, None), hashFn, cmpFn, 0, 0)
+
+
+impl<S, T> HashTable<S, T>
+    def hash(self: HashTable<S, T>, key: S) -> Int
+        hashFn := self.hashFn
+        return hashFn(key)
+
+    def cmp(self: HashTable<S, T>, lhs: S, rhs: S) -> Bool
+        cmpFn := self.cmpFn
+        return cmpFn(lhs, rhs)
+
+    def insert(self: HashTable<S, T>, key: S, value: T) -> Unit
+        # Resize when 2/3 full
+        if 3 * self.size >= 2 * self.capacity
+            newCapacity := max(1, 3 * self.size)
+            self.resize(newCapacity)
+
+        startIdx := self.hash(key) mod self.capacity
+
+        # Linear probing
+        idx := startIdx
+        forever
+            match self.contents[idx]
+                Some(item)
+                    let Pair(k, v) := item
+
+                    if self.cmp(k, key)
+                        self.contents.set(idx, Some(Pair(key, value)))
+                        break
+
+                None
+                    self.contents.set(idx, Some(Pair(key, value)))
+                    break
+
+            idx = (idx + 1) mod self.capacity
+
+        self.size += 1
+
+    def get(self: HashTable<S, T>, key: S) -> Option<T>
+        startIdx := self.hash(key) mod self.capacity
+
+        idx := startIdx
+        forever
+            match self.contents[idx]
+                Some(item)
+                    let Pair(k, v) := item
+
+                    if self.cmp(k, key)
+                        return Some(v)
+
+                None
+                    return None
+
+            idx = (idx + 1) mod self.capacity
+            if idx == startIdx
+                return None
+
+    def resize(self: HashTable<S, T>, newCapacity: Int) -> Unit
+        assert newCapacity >= self.size
+
+        oldContents := self.contents
+        oldCapacity := self.capacity
+
+        self.capacity = newCapacity
+        self.contents = makeArray(newCapacity, None)
+        self.size = 0
+
+        for idx in range(0, oldCapacity - 1)
+            match oldContents[idx]
+                Some(item)
+                    let Pair(k, v) := item
+                    self.insert(k, v)
+                None
+                    pass

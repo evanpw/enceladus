@@ -26,7 +26,6 @@ public:
     UNSUPPORTED(ForeachNode);
     UNSUPPORTED(ForeverNode);
     UNSUPPORTED(ForNode);
-    UNSUPPORTED(MethodDeclNode);
     UNSUPPORTED(FunctionDefNode);
     UNSUPPORTED(IfElseNode);
     UNSUPPORTED(IfNode);
@@ -36,7 +35,9 @@ public:
     UNSUPPORTED(MatchArm);
     UNSUPPORTED(MatchNode);
     UNSUPPORTED(MemberDefNode);
+    UNSUPPORTED(MethodDeclNode);
     UNSUPPORTED(MethodDefNode);
+    UNSUPPORTED(PassNode);
     UNSUPPORTED(ProgramNode);
     UNSUPPORTED(ReturnNode);
     UNSUPPORTED(StringLiteralNode);
@@ -127,10 +128,11 @@ public:
     virtual void visit(WhileNode* node);
 
     // No code to generate (or handled separately)
-    virtual void visit(MethodDefNode*) {}
-    virtual void visit(MemberDefNode* node) {}
-    virtual void visit(TypeAliasNode* node) {}
     virtual void visit(FunctionDefNode* node) {}
+    virtual void visit(MemberDefNode* node) {}
+    virtual void visit(MethodDefNode*) {}
+    virtual void visit(PassNode* node) {}
+    virtual void visit(TypeAliasNode* node) {}
 
 private:
     // We cache the Value corresponding to each symbol so that the value

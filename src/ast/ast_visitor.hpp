@@ -32,6 +32,7 @@ class MethodCallNode;
 class MethodDeclNode;
 class MethodDefNode;
 class NullaryNode;
+class PassNode;
 class ProgramNode;
 class ReturnNode;
 class StringLiteralNode;
@@ -80,6 +81,7 @@ public:
 	virtual void visit(BreakNode* node) {}
 	virtual void visit(IntNode* node) {}
 	virtual void visit(NullaryNode* node) {}
+	virtual void visit(PassNode* node) {}
 	virtual void visit(StringLiteralNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(TypeName* node) {}

@@ -284,6 +284,16 @@ public:
 
 ////// Statement nodes /////////////////////////////////////////////////////////
 
+class PassNode : public StatementNode
+{
+public:
+	PassNode(AstContext* context, const YYLTYPE& location)
+	: StatementNode(context, location)
+	{}
+
+	AST_VISITABLE();
+};
+
 class IfNode : public StatementNode
 {
 public:
@@ -464,6 +474,9 @@ public:
 	{}
 
 	AST_VISITABLE();
+
+	// Annotations
+	bool firstPassFinished = false;  // semantic analysis takes two passes for method definitions
 };
 
 class ImplNode : public StatementNode

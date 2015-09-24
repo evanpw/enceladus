@@ -118,8 +118,7 @@ ImmDominators ToSSA::getImmediateDominators(const Dominators& dom)
         }
         else if (working.size() == 0)
         {
-            // Should only happen for the entry block
-            assert(block->predecessors().empty());
+            // Happens for the entry block, and can happen for unreachable blocks
             idom[block] = nullptr;
         }
         else

@@ -111,6 +111,9 @@ StatementNode* Parser::statement()
 {
     switch(peekType())
     {
+    case tPASS:
+        return pass_statement();
+
     case tIF:
         return if_statement();
 
@@ -170,6 +173,15 @@ StatementNode* Parser::statement()
     default:
         return assign_or_expr();
     }
+}
+
+StatementNode* Parser::pass_statement()
+{
+    YYLTYPE location = getLocation();
+    expect(tPASS);
+    expect(tEOL);
+
+    return new PassNode(_context, location);
 }
 
 // Like an if statement, but doesn't match IF first

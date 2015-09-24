@@ -55,8 +55,6 @@
 
 * Convert some of the functions in List.spl to be methods, and move some functions / methods out of prelude.spl
 
-* Allow all methods in the same implementation block to be mutually recursive
-
 * Allow assert to include a message
 
 * Allow underscores in identifiers? (and highlight them correctly)
@@ -68,3 +66,9 @@
 * Allow generic type aliases (e.g., type TableEntry<S, T> = Option<Pair<S, T>>)
 
 * Add a function to get the size of an array
+
+* Nested pattern matching (e.g., Some(Pair(k, v)))
+
+* Delete unreachable basic blocks before machine code generation
+
+* Allow member variables which are functions to be called directly (e.g., self.cmpFn(lhs, rhs))

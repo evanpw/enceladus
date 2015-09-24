@@ -65,6 +65,7 @@ public:
     virtual void visit(IntNode* node);
     virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);
+    virtual void visit(PassNode* node);
     virtual void visit(ReturnNode* node);
     virtual void visit(StringLiteralNode* node);
     virtual void visit(VariableNode* node);

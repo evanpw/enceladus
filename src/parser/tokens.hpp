@@ -42,6 +42,7 @@ enum TokenType : int
     tNE,
     tNOT,
     tOR,
+    tPASS,
     tPLUS_EQUAL,
     tRARROW,
     tRETURN,

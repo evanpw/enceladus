@@ -1,0 +1,18 @@
+import HashTable
+
+def identity(x: Int) -> Int
+    return x
+
+def eqInt(x: Int, y: Int) -> Bool
+    return x == y
+
+table := hashTable(identity, eqInt)
+
+for i in range(1, 1000)
+    table.insert(i, i * 2)
+
+match table.get(10)
+    Some(x)
+        print $ show(x)
+    None
+        print $ "None"

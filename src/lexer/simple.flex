@@ -216,6 +216,7 @@ extern "C" int yywrap()
 "let"       { return tLET; }
 "match"     { return tMATCH; }
 "not"       { return tNOT; }
+"pass"      { return tPASS; }
 "return"    { return tRETURN; }
 "struct"    { return tSTRUCT; }
 "to"        { return tTO; }

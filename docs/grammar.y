@@ -28,6 +28,7 @@ statement
     | variable_declaration
     | while_statement
     | break_statement
+    | pass_statement
     | implementation_block
     | assign_or_expr
 
@@ -36,6 +37,9 @@ if_statement
 
 assert_statement
     : ASSERT expression EOL
+
+pass_statement
+    : PASS expression EOL
 
 assign_or_expr
     : expression '=' expression EOL

@@ -21,6 +21,7 @@ private:
     // Individual grammar constructions
     ProgramNode* program();
     StatementNode* statement();
+    StatementNode* pass_statement();
     StatementNode* if_statement();
     StatementNode* if_helper(const YYLTYPE& location);
     StatementNode* assert_statement();
