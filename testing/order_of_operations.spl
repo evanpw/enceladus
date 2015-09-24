@@ -48,29 +48,8 @@ def fullCache(instructions: [String]) -> String
 
     return cache
 
-# Return a string that differs from the given one by setting location n to
-# the character '0'
-def zeroBit(cache: String, n: Int) -> String
-    len := cache.length()
-
-    if n == 0
-        return "0" ++ cache.slice(1, len - 1)
-    else
-        return cache.slice(0, n - 1) ++ "0" ++ cache.slice(n + 1, len - n - 1)
-
-# Determine all cache strings that can be obtained from the given one by
-# removing a single bit
-def predecessors(cache: String) -> [String]
-    result := []
-
-    for i = 0 to cache.length() - 1
-        if cache[i] == '1'
-            result = zeroBit(cache, i) :: result
-
-    return result
-
 def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) -> Int
-    savedValue := memo.get(cache)
+    savedValue := memo[cache]
     if savedValue.isSome()
         return savedValue.unwrap()
 

@@ -68,6 +68,10 @@ impl<S, T> HashTable<S, T>
             if idx == startIdx
                 return None
 
+    # Synonym for get, so that we can use indexing operator
+    def at(self: HashTable<S, T>, key: S) -> Option<T>
+        return self.get(key)
+
     def resize(self: HashTable<S, T>, newCapacity: Int) -> Unit
         assert newCapacity >= self.size
 
