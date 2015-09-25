@@ -10,6 +10,7 @@
 #include <cassert>
 #include <iostream>
 #include <list>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -179,6 +180,7 @@ public:
 	// Annotations
 	enum NullaryKind { VARIABLE, FUNC_CALL, CLOSURE };
 	Symbol* symbol = nullptr;
+	std::map<TypeVariable*, Type*> typeAssignment;
 	NullaryKind kind;
 };
 
@@ -247,6 +249,7 @@ public:
 
 	// Annotations
 	Symbol* symbol = nullptr;
+	std::map<TypeVariable*, Type*> typeAssignment;
 };
 
 class MethodCallNode : public ExpressionNode
@@ -264,6 +267,7 @@ public:
 
 	// Annotations
 	Symbol* symbol = nullptr;
+	std::map<TypeVariable*, Type*> typeAssignment;
 };
 
 class VariableNode : public ExpressionNode
@@ -333,7 +337,7 @@ public:
 	ExpressionNode* condition;
 
 	// Annotations
-	Symbol* dieSymbol; // HACK
+	FunctionSymbol* dieSymbol; // HACK
 };
 
 class WhileNode : public LoopNode
@@ -366,9 +370,12 @@ public:
 	Symbol* symbol;
 
 	// HACK: give the code generator to these functions
-	Symbol* headSymbol;
-	Symbol* tailSymbol;
-	Symbol* emptySymbol;
+	MethodSymbol* headSymbol;
+	std::map<TypeVariable*, Type*> headTypeAssignment;
+	MethodSymbol* tailSymbol;
+	std::map<TypeVariable*, Type*> tailTypeAssignment;
+	MethodSymbol* emptySymbol;
+	std::map<TypeVariable*, Type*> emptyTypeAssignment;
 };
 
 class ForNode : public LoopNode

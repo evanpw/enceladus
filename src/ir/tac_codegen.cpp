@@ -84,9 +84,6 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
             else
             {
                 result = _context->createFunction(symbol->name);
-
-                if (!functionSymbol->isConstructor)
-                    _functions.push_back(functionSymbol->definition);
             }
         }
         else if (symbol->kind == kMethod)
@@ -100,8 +97,6 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
             ss << methodSymbol->name << "$" << methodSymbol->index;
 
             result = _context->createFunction(ss.str());
-
-            _functions.push_back(methodSymbol->definition);
         }
         else
         {
@@ -380,19 +375,43 @@ void TACCodeGen::visit(NullaryNode* node)
         ValueType type = getValueType(node->type);
         Value* dest = node->value = createTemp(type);
 
+        FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
+
         if (node->kind == NullaryNode::FUNC_CALL)
         {
-            FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
+            if (!functionSymbol->isConstructor && !functionSymbol->isExternal)
+            {
+                std::cerr << node->symbol->name << ":" << std::endl;
+                for (auto& item : node->typeAssignment)
+                {
+                    std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
+                }
+
+                _functions.push_back(functionSymbol->definition);
+            }
 
             CallInst* inst = new CallInst(dest, getValue(node->symbol));
             inst->ccall = functionSymbol->isExternal;
             inst->regpass = inst->ccall;
             emit(inst);
         }
-        else /* node->kind == NullaryNode::CLOSURE */
+        else
         {
-            // If the function is not completely applied, then this nullary node
-            // evaluates to a function type -- create a closure
+            assert(node->kind == NullaryNode::CLOSURE);
+
+            if (!functionSymbol->isConstructor)
+            {
+                assert(!functionSymbol->isExternal);
+
+                std::cerr << node->symbol->name << ":" << std::endl;
+                for (auto& item : node->typeAssignment)
+                {
+                    std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
+                }
+
+                _functions.push_back(functionSymbol->definition);
+            }
+
             size_t size = sizeof(SplObject) + 8;
             CallInst* callInst = new CallInst(dest, _context->createExternFunction("gcAllocate"), {_context->getConstantInt(size)});
             callInst->regpass = true;
@@ -507,6 +526,8 @@ void TACCodeGen::visit(AssertNode* node)
     // HACK
     Value* dieFunction = getValue(node->dieSymbol);
 
+    // die is externally-defined, so we don't need to add to _functions
+
     BasicBlock* falseBranch = createBlock();
     BasicBlock* continueAt = createBlock();
 
@@ -563,8 +584,28 @@ void TACCodeGen::visit(ForeachNode* node)
 {
     // HACK
     Value* headFunction = getValue(node->headSymbol);
+    std::cerr << node->headSymbol->name << ":" << std::endl;
+    for (auto& item : node->headTypeAssignment)
+    {
+        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
+    }
+    _functions.push_back(node->headSymbol->definition);
+
     Value* tailFunction = getValue(node->tailSymbol);
+    std::cerr << node->tailSymbol->name << ":" << std::endl;
+    for (auto& item : node->tailTypeAssignment)
+    {
+        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
+    }
+    _functions.push_back(node->tailSymbol->definition);
+
     Value* emptyFunction = getValue(node->emptySymbol);
+    std::cerr << node->emptySymbol->name << ":" << std::endl;
+    for (auto& item : node->emptyTypeAssignment)
+    {
+        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
+    }
+    _functions.push_back(node->emptySymbol->definition);
 
 
     BasicBlock* loopInit = createBlock();
@@ -887,6 +928,17 @@ void TACCodeGen::visit(FunctionCallNode* node)
         inst->ccall = functionSymbol->isExternal;
         inst->regpass = inst->ccall;
         emit(inst);
+
+        if (!functionSymbol->isConstructor && !functionSymbol->isExternal)
+        {
+            std::cerr << node->symbol->name << ":" << std::endl;
+            for (auto& item : node->typeAssignment)
+            {
+                std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
+            }
+
+            _functions.push_back(functionSymbol->definition);
+        }
     }
     else /* node->symbol->kind == kVariable */
     {
@@ -924,6 +976,14 @@ void TACCodeGen::visit(MethodCallNode* node)
     assert(node->symbol->kind == kMethod);
 
     emit(new CallInst(result, getValue(node->symbol), arguments));
+
+    MethodSymbol* methodSymbol = dynamic_cast<MethodSymbol*>(node->symbol);
+    std::cerr << node->symbol->name << ":" << std::endl;
+    for (auto& item : node->typeAssignment)
+    {
+        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
+    }
+    _functions.push_back(methodSymbol->definition);
 }
 
 void TACCodeGen::visit(ReturnNode* node)

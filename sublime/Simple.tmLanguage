@@ -35,12 +35,6 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\(\)</string>
-			<key>name</key>
-			<string>constant.language.unit.simple</string>
-		</dict>
-		<dict>
-			<key>match</key>
 			<string>\[\]</string>
 			<key>name</key>
 			<string>constant.language.empty-list.simple</string>
@@ -476,13 +470,13 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>^\s*\b(def)\b\s*([a-z][a-zA-Z0-9.']*)</string>
+			<string>^\s*\b(def)\b\s*([a-z][a-zA-Z0-9.']+)</string>
 			<key>captures</key>
 			<dict>
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.source.simple</string>
+					<string>support.function.builtin.simple</string>
 				</dict>
 				<key>2</key>
 				<dict>
@@ -524,7 +518,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b([|!%$?~+:\-=&lt;/&gt;\\^]+|mod|@)\b</string>
+			<string>(\+|-|\*|/|&gt;|&lt;|:|=|:=|\$|\||\^|mod|->|=&gt;|&lt;=|&gt;=|==|!=|::|and|or|\+=|-=|\*=|\/=|\+\+)</string>
 			<key>name</key>
 			<string>keyword.operator.simple</string>
 		</dict>

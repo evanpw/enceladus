@@ -825,7 +825,7 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 	node->symbol = symbol;
 
     Type* returnType = _typeTable->createTypeVariable();
-    Type* functionType = instantiate(symbol->type);
+    Type* functionType = instantiate(symbol->type, node->typeAssignment);
 
     unify(functionType, _typeTable->createFunctionType(paramTypes, returnType), node);
 
@@ -849,7 +849,7 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 	else /* symbol->kind == kFunction */
 	{
 		node->symbol = symbol;
-        Type* functionType = instantiate(symbol->type);
+        Type* functionType = instantiate(symbol->type, node->typeAssignment);
 
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(symbol);
         if (functionType->get<FunctionType>()->inputs().empty())
@@ -949,7 +949,7 @@ void SemanticAnalyzer::visit(AssertNode* node)
     unify(node->condition->type, _typeTable->Bool, node);
 
     // HACK: Give the code generator access to these symbols
-    node->dieSymbol = resolveSymbol("die");
+    node->dieSymbol = dynamic_cast<FunctionSymbol*>(resolveSymbol("die"));
 
     node->type = _typeTable->Unit;
 }
@@ -1001,16 +1001,19 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     // HACK: Give the code generator access to these symbols
     std::vector<MemberSymbol*> symbols;
     resolveMemberSymbol("head", iteratorType, symbols);
-    node->headSymbol = symbols.front();
-    unify(instantiate(node->headSymbol->type), _typeTable->createFunctionType({iteratorType}, varType), node);
+    node->headSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
+    Type* headType = instantiate(node->headSymbol->type, node->headTypeAssignment);
+    unify(headType, _typeTable->createFunctionType({iteratorType}, varType), node);
 
     resolveMemberSymbol("tail", iteratorType, symbols);
-    node->tailSymbol = symbols.front();
-    unify(instantiate(node->tailSymbol->type), _typeTable->createFunctionType({iteratorType}, iteratorType), node);
+    node->tailSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
+    Type* tailType = instantiate(node->tailSymbol->type, node->tailTypeAssignment);
+    unify(tailType, _typeTable->createFunctionType({iteratorType}, iteratorType), node);
 
     resolveMemberSymbol("empty", iteratorType, symbols);
-    node->emptySymbol = symbols.front();
-    unify(instantiate(node->emptySymbol->type), _typeTable->createFunctionType({iteratorType}, _typeTable->Bool), node);
+    node->emptySymbol = dynamic_cast<MethodSymbol*>(symbols.front());
+    Type* emptyType = instantiate(node->emptySymbol->type, node->emptyTypeAssignment);
+    unify(emptyType, _typeTable->createFunctionType({iteratorType}, _typeTable->Bool), node);
 
     node->body->accept(this);
     unify(node->body->type, _typeTable->Unit, node);
@@ -1499,7 +1502,7 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     node->symbol = symbol;
 
     Type* returnType = _typeTable->createTypeVariable();
-    Type* functionType = instantiate(symbol->type);
+    Type* functionType = instantiate(symbol->type, node->typeAssignment);
 
     unify(functionType, _typeTable->createFunctionType(paramTypes, returnType), node);
 

@@ -156,6 +156,9 @@ private:
     std::vector<ConstructorSymbol*> _constructors;
     void createConstructor(ValueConstructor* constructor);
 
+    // Current assignment of type variables to types
+    std::unordered_map<TypeVariable*, Type*> _typeContext;
+
     TACContext* _context;
     Function* _currentFunction;
     Value* _currentSwitchExpr = nullptr;
