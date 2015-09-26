@@ -240,7 +240,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(and|or|in|to)\b</string>
+			<string>\b(and|or|in|to|mod)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>
@@ -470,7 +470,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>^\s*\b(def)\b\s*([a-z][a-zA-Z0-9.']+)</string>
+			<string>^\s*\b(def)\b\s*([a-z][a-zA-Z0-9.']*)</string>
 			<key>captures</key>
 			<dict>
 				<key>1</key>
@@ -518,7 +518,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>(\+|-|\*|/|&gt;|&lt;|:|=|:=|\$|\||\^|mod|->|=&gt;|&lt;=|&gt;=|==|!=|::|and|or|\+=|-=|\*=|\/=|\+\+)</string>
+			<string>(\+|-|\*|/|&gt;|&lt;|:|=|:=|\$|\||\^|->|=&gt;|&lt;=|&gt;=|==|!=|::|\+=|-=|\*=|\/=|\+\+)</string>
 			<key>name</key>
 			<string>keyword.operator.simple</string>
 		</dict>

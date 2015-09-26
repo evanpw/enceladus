@@ -218,6 +218,10 @@ def assertMessage(b: Bool, err: String) -> Unit
         die("*** Exception: Assertion failed: " ++ err)
 
 
+def drop<T>(x: T) -> Unit
+    pass
+
+
 def sum(xs: [Int]) -> Int
     result := 0
     for x in xs

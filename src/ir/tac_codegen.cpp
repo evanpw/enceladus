@@ -4,6 +4,7 @@
 #include "lib/library.h"
 #include "semantic/types.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <iostream>
 
@@ -14,13 +15,73 @@ TACCodeGen::TACCodeGen(TACContext* context)
 
 void TACCodeGen::codeGen(AstContext* astContext)
 {
-    astContext->root()->accept(this);
+     astContext->root()->accept(this);
 }
 
 TACConditionalCodeGen::TACConditionalCodeGen(TACCodeGen* mainCodeGen)
 : _mainCodeGen(mainCodeGen)
 {
     _context = _mainCodeGen->_context;
+}
+
+static std::string mangleTypeName(Type* type, std::vector<TypeVariable*>& variables)
+{
+    std::stringstream ss;
+
+    if (BaseType* baseType = type->get<BaseType>())
+    {
+        std::string name = baseType->name();
+        ss << name.size() << name;
+    }
+    else if (FunctionType* functionType = type->get<FunctionType>())
+    {
+        ss << "8Function" << "L";
+        for (auto& input : functionType->inputs())
+        {
+            ss << mangleTypeName(input, variables);
+        }
+        ss << mangleTypeName(functionType->output(), variables);
+        ss << "G";
+    }
+    else if (ConstructedType* constructedType = type->get<ConstructedType>())
+    {
+        std::string name = constructedType->typeConstructor()->name();
+        ss << name.size() << name << "L";
+        for (auto& param : constructedType->typeParameters())
+        {
+            ss << mangleTypeName(param, variables);
+        }
+        ss << "G";
+    }
+    else if (TypeVariable* typeVariable = type->get<TypeVariable>())
+    {
+        assert(false);
+
+        auto i = std::find(variables.begin(), variables.end(), typeVariable);
+        if (i != variables.end())
+        {
+            ss << "T" << i - variables.begin();
+        }
+        else
+        {
+            variables.push_back(typeVariable);
+            ss << "T" << variables.size();
+        }
+    }
+    else
+    {
+        assert(false);
+    }
+
+    ss << "E";
+
+    return ss.str();
+}
+
+static std::string mangleTypeName(Type* type)
+{
+    std::vector<TypeVariable*> variables;
+    return mangleTypeName(type, variables);
 }
 
 static ValueType getValueType(Type* type)
@@ -42,70 +103,263 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
         return nullptr;
     }
 
-    auto i = _names.find(symbol);
-    if (i != _names.end())
+    std::unordered_map<const Symbol*, Value*>::iterator i;
+    if ((i = _globalNames.find(symbol)) != _globalNames.end())
     {
         return i->second;
     }
+    else if ((i = _localNames.find(symbol)) != _localNames.end())
+    {
+        return i->second;
+    }
+
+    assert(symbol->kind == kVariable);
+
+    const VariableSymbol* varSymbol = dynamic_cast<const VariableSymbol*>(symbol);
+    if (varSymbol->isStatic)
+    {
+        Value* result = _context->createStaticString(symbol->name, varSymbol->contents);
+        _globalNames[symbol] = result;
+        return result;
+    }
+    else if (symbol->global)
+    {
+        ValueType type = getValueType(symbol->type);
+        Value* result = _context->createGlobal(type, symbol->name);
+        _globalNames[symbol] = result;
+        return result;
+    }
+    else if (varSymbol->isParam)
+    {
+        ValueType type = getValueType(symbol->type);
+        Value* result = _context->createArgument(type, symbol->name);
+        _localNames[symbol] = result;
+        return result;
+    }
     else
     {
-        Value* result;
-        if (symbol->kind == kVariable)
+        ValueType type = getValueType(symbol->type);
+        Value* result = _context->createLocal(type, symbol->name);
+        _currentFunction->locals.push_back(result);
+        _localNames[symbol] = result;
+        return result;
+    }
+}
+
+static bool sameAssignment(const TypeAssignment& lhs, const TypeAssignment& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (auto& assignment : lhs)
+    {
+        auto match = rhs.find(assignment.first);
+        if (match == rhs.end())
+            return false;
+
+        if (!isCompatible(assignment.second, match->second))
+            return false;
+    }
+
+    return true;
+}
+
+static Type* substitute(Type* original, const TypeAssignment& typeAssignment)
+{
+    switch (original->tag())
+    {
+        case ttBase:
+            return original;
+
+        case ttVariable:
         {
-            const VariableSymbol* varSymbol = dynamic_cast<const VariableSymbol*>(symbol);
-            if (varSymbol->isStatic)
+            TypeVariable* typeVariable = original->get<TypeVariable>();
+
+            auto i = typeAssignment.find(typeVariable);
+            if (i != typeAssignment.end())
             {
-                result = _context->createStaticString(symbol->name, varSymbol->contents);
-            }
-            else if (varSymbol->isParam)
-            {
-                ValueType type = getValueType(symbol->type);
-                result = _context->createArgument(type, symbol->name);
-            }
-            else if (symbol->global)
-            {
-                ValueType type = getValueType(symbol->type);
-                result = _context->createGlobal(type, symbol->name);
+                return i->second;
             }
             else
             {
-                ValueType type = getValueType(symbol->type);
-                result = _context->createLocal(type, symbol->name);
-                _currentFunction->locals.push_back(result);
+                return original;
             }
         }
-        else if (symbol->kind == kFunction)
+
+        case ttFunction:
         {
-            const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol);
-            if (functionSymbol->isExternal)
+            FunctionType* functionType = original->get<FunctionType>();
+
+            bool changed = false;
+            std::vector<Type*> newInputs;
+            for (auto& input : functionType->inputs())
+            {
+                Type* newInput = substitute(input, typeAssignment);
+                changed |= (newInput != input);
+                newInputs.push_back(newInput);
+            }
+
+            Type* newOutput = substitute(functionType->output(), typeAssignment);
+            changed |= (newOutput != functionType->output());
+
+            if (changed)
+            {
+                TypeTable* typeTable = original->table();
+                return typeTable->createFunctionType(newInputs, newOutput);
+            }
+            else
+            {
+                return original;
+            }
+        }
+
+        case ttConstructed:
+        {
+            ConstructedType* constructedType = original->get<ConstructedType>();
+
+            bool changed = false;
+            std::vector<Type*> newParams;
+            for (auto& param : constructedType->typeParameters())
+            {
+                Type* newParam = substitute(param, typeAssignment);
+                changed |= (newParam != param);
+                newParams.push_back(newParam);
+            }
+
+            if (changed)
+            {
+                TypeTable* typeTable = original->table();
+                return typeTable->createConstructedType(constructedType->typeConstructor(), newParams);
+            }
+            else
+            {
+                return original;
+            }
+        }
+    }
+
+    assert(false);
+}
+
+static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssignment& typeAssignment)
+{
+    TypeAssignment result = typeAssignment;
+
+    for (auto& assignment : typeAssignment)
+    {
+        result[assignment.first] = substitute(assignment.second, typeContext);
+    }
+
+    return result;
+}
+
+Value* TACCodeGen::getFunctionValue(const Symbol* symbol, const TypeAssignment& typeAssignment)
+{
+    auto& instantiations = _functionNames[symbol];
+
+    TypeAssignment realAssignment = combine(_typeContext, typeAssignment);
+
+    for (auto& instantiation : instantiations)
+    {
+        if (sameAssignment(instantiation.first, realAssignment))
+        {
+            return instantiation.second;
+        }
+    }
+
+    Value* result;
+
+    if (symbol->kind == kFunction)
+    {
+        const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol);
+        if (functionSymbol->isExternal)
+        {
+            if (!instantiations.empty())
+            {
+                return instantiations[0].second;
+            }
+            else
             {
                 result = _context->createExternFunction(symbol->name);
+                TypeAssignment empty;
+                instantiations.emplace_back(empty, result);
+                return result;
+            }
+        }
+        else if (functionSymbol->isConstructor)
+        {
+            if (!instantiations.empty())
+            {
+                return instantiations[0].second;
             }
             else
             {
                 result = _context->createFunction(symbol->name);
+                TypeAssignment empty;
+                instantiations.emplace_back(empty, result);
+                return result;
             }
         }
-        else if (symbol->kind == kMethod)
+        else
         {
-            const MethodSymbol* methodSymbol = dynamic_cast<const MethodSymbol*>(symbol);
-            assert(methodSymbol);
-
-            // We have to append a unique number to method names because several
-            // types can have a method with the same name
             std::stringstream ss;
-            ss << methodSymbol->name << "$" << methodSymbol->index;
+            ss << symbol->name;
+
+            if (!realAssignment.empty())
+            {
+                ss << "$A";
+                for (auto& assignment : realAssignment)
+                {
+                    ss << mangleTypeName(assignment.second);
+                }
+            }
 
             result = _context->createFunction(ss.str());
+            _functions.emplace_back(functionSymbol->definition, realAssignment);
+        }
+    }
+    else if (symbol->kind == kMethod)
+    {
+        const MethodSymbol* methodSymbol = dynamic_cast<const MethodSymbol*>(symbol);
+        assert(methodSymbol);
+
+        // We have to append a unique number to method names because several
+        // types can have a method with the same name
+        std::stringstream ss;
+        ss << methodSymbol->name << "$M";
+
+        if (BaseType* baseType = methodSymbol->parentType->get<BaseType>())
+        {
+            ss << baseType->name();
+        }
+        else if (ConstructedType* constructedType = methodSymbol->parentType->get<ConstructedType>())
+        {
+            ss << constructedType->typeConstructor()->name();
         }
         else
         {
             assert(false);
         }
 
-        _names[symbol] = result;
-        return result;
+        if (!realAssignment.empty())
+        {
+            ss << "$A";
+            for (auto& assignment : realAssignment)
+            {
+                ss << mangleTypeName(assignment.second);
+            }
+        }
+
+        result = _context->createFunction(ss.str());
+        _functions.emplace_back(methodSymbol->definition, realAssignment);
     }
+    else
+    {
+        assert(false);
+    }
+
+    instantiations.emplace_back(realAssignment, result);
+    return result;
 }
 
 void TACConditionalCodeGen::emit(Instruction* inst)
@@ -151,22 +405,16 @@ void TACCodeGen::visit(ProgramNode* node)
     // The previous loop will have filled in _functions with all
     // functions / methods visited from the top level. Recursively generate
     // code for all functions / methods reachable from those, and so on.
-    std::unordered_set<FunctionDefNode*> visited;
     while (!_functions.empty())
     {
-        FunctionDefNode* funcDefNode = _functions.front();
+        FunctionDefNode* funcDefNode = _functions.front().first;
+        TypeAssignment typeContext = _functions.front().second;
         _functions.pop_front();
 
-        // The same function can end up in the list twice. Avoid performing
-        // code generation again.
-        if (visited.count(funcDefNode) > 0)
-            continue;
-        else
-            visited.insert(funcDefNode);
-
-        Function* function = (Function*)getValue(funcDefNode->symbol);
+        Function* function = (Function*)getFunctionValue(funcDefNode->symbol, typeContext);
 
         _currentFunction = function;
+        _localNames.clear();
         _nextSeqNumber = 0;
         setBlock(createBlock());
 
@@ -178,6 +426,7 @@ void TACCodeGen::visit(ProgramNode* node)
         }
 
         // Generate code for the function body
+        _typeContext = typeContext;
         funcDefNode->body->accept(this);
 
         // Handle implicit return values
@@ -187,11 +436,13 @@ void TACCodeGen::visit(ProgramNode* node)
         }
     }
 
+    _typeContext.clear();
+
     for (ConstructorSymbol* constructorSymbol : _constructors)
     {
         ValueConstructor* constructor = constructorSymbol->constructor;
 
-        Function* function = (Function*)getValue(constructorSymbol);
+        Function* function = (Function*)getFunctionValue(constructorSymbol);
         _currentFunction = function;
         _nextSeqNumber = 0;
         setBlock(createBlock());
@@ -379,18 +630,8 @@ void TACCodeGen::visit(NullaryNode* node)
 
         if (node->kind == NullaryNode::FUNC_CALL)
         {
-            if (!functionSymbol->isConstructor && !functionSymbol->isExternal)
-            {
-                std::cerr << node->symbol->name << ":" << std::endl;
-                for (auto& item : node->typeAssignment)
-                {
-                    std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
-                }
-
-                _functions.push_back(functionSymbol->definition);
-            }
-
-            CallInst* inst = new CallInst(dest, getValue(node->symbol));
+            Value* fn = getFunctionValue(node->symbol, node->typeAssignment);
+            CallInst* inst = new CallInst(dest, fn);
             inst->ccall = functionSymbol->isExternal;
             inst->regpass = inst->ccall;
             emit(inst);
@@ -398,19 +639,6 @@ void TACCodeGen::visit(NullaryNode* node)
         else
         {
             assert(node->kind == NullaryNode::CLOSURE);
-
-            if (!functionSymbol->isConstructor)
-            {
-                assert(!functionSymbol->isExternal);
-
-                std::cerr << node->symbol->name << ":" << std::endl;
-                for (auto& item : node->typeAssignment)
-                {
-                    std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
-                }
-
-                _functions.push_back(functionSymbol->definition);
-            }
 
             size_t size = sizeof(SplObject) + 8;
             CallInst* callInst = new CallInst(dest, _context->createExternFunction("gcAllocate"), {_context->getConstantInt(size)});
@@ -422,7 +650,8 @@ void TACCodeGen::visit(NullaryNode* node)
             emit(new IndexedStoreInst(dest, offsetof(SplObject, sizeInWords), _context->Zero));
 
             // Address of the function as an unboxed member
-            emit(new IndexedStoreInst(dest, sizeof(SplObject), getValue(node->symbol)));
+            Value* fn = getFunctionValue(node->symbol, node->typeAssignment);
+            emit(new IndexedStoreInst(dest, sizeof(SplObject), fn));
         }
     }
 }
@@ -524,9 +753,7 @@ void TACCodeGen::visit(AssertNode* node)
     static size_t counter = 1;
 
     // HACK
-    Value* dieFunction = getValue(node->dieSymbol);
-
-    // die is externally-defined, so we don't need to add to _functions
+    Value* dieFunction = getFunctionValue(node->dieSymbol);
 
     BasicBlock* falseBranch = createBlock();
     BasicBlock* continueAt = createBlock();
@@ -583,30 +810,9 @@ void TACCodeGen::visit(WhileNode* node)
 void TACCodeGen::visit(ForeachNode* node)
 {
     // HACK
-    Value* headFunction = getValue(node->headSymbol);
-    std::cerr << node->headSymbol->name << ":" << std::endl;
-    for (auto& item : node->headTypeAssignment)
-    {
-        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
-    }
-    _functions.push_back(node->headSymbol->definition);
-
-    Value* tailFunction = getValue(node->tailSymbol);
-    std::cerr << node->tailSymbol->name << ":" << std::endl;
-    for (auto& item : node->tailTypeAssignment)
-    {
-        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
-    }
-    _functions.push_back(node->tailSymbol->definition);
-
-    Value* emptyFunction = getValue(node->emptySymbol);
-    std::cerr << node->emptySymbol->name << ":" << std::endl;
-    for (auto& item : node->emptyTypeAssignment)
-    {
-        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
-    }
-    _functions.push_back(node->emptySymbol->definition);
-
+    Value* headFunction = getFunctionValue(node->headSymbol, node->headTypeAssignment);
+    Value* tailFunction = getFunctionValue(node->tailSymbol, node->tailTypeAssignment);
+    Value* emptyFunction = getFunctionValue(node->emptySymbol, node->emptyTypeAssignment);
 
     BasicBlock* loopInit = createBlock();
     BasicBlock* loopBegin = createBlock();
@@ -922,23 +1128,13 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
     else if (node->symbol->kind == kFunction)
     {
-        CallInst* inst = new CallInst(result, getValue(node->symbol), arguments);
+        Value* fn = getFunctionValue(node->symbol, node->typeAssignment);
+        CallInst* inst = new CallInst(result, fn, arguments);
 
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
         inst->ccall = functionSymbol->isExternal;
         inst->regpass = inst->ccall;
         emit(inst);
-
-        if (!functionSymbol->isConstructor && !functionSymbol->isExternal)
-        {
-            std::cerr << node->symbol->name << ":" << std::endl;
-            for (auto& item : node->typeAssignment)
-            {
-                std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
-            }
-
-            _functions.push_back(functionSymbol->definition);
-        }
     }
     else /* node->symbol->kind == kVariable */
     {
@@ -975,15 +1171,8 @@ void TACCodeGen::visit(MethodCallNode* node)
 
     assert(node->symbol->kind == kMethod);
 
-    emit(new CallInst(result, getValue(node->symbol), arguments));
-
-    MethodSymbol* methodSymbol = dynamic_cast<MethodSymbol*>(node->symbol);
-    std::cerr << node->symbol->name << ":" << std::endl;
-    for (auto& item : node->typeAssignment)
-    {
-        std::cerr << "\t" << item.first->name() << " -> " << item.second->name() << std::endl;
-    }
-    _functions.push_back(methodSymbol->definition);
+    Value* method = getFunctionValue(node->symbol, node->typeAssignment);
+    emit(new CallInst(result, method, arguments));
 }
 
 void TACCodeGen::visit(ReturnNode* node)

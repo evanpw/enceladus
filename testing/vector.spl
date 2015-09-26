@@ -11,8 +11,8 @@ v := vector()
 for i = 1 to 10
     v.pushBack(i)
 
-v.popBack()
-v.popBack()
+drop $ v.popBack()
+drop $ v.popBack()
 
 total := 0
 for i = 0 to v.size - 1

@@ -11,9 +11,25 @@
 void Type::assign(Type* rhs)
 {
     assert(isVariable());
-    assert(!get<TypeVariable>()->quantified());
+    get<TypeVariable>()->assign(rhs);
+}
 
-    _impl = rhs->_impl;
+void TypeVariable::assign(Type* rhs)
+{
+    assert(!_quantified);
+    assert(!_references.empty());
+
+    // This is needed to keep myself alive until the end of this function,
+    // because the for-loop below will reduce the reference count down to zero
+    std::shared_ptr<TypeImpl> keepAlive = _references[0]->_impl;
+
+    for (Type* reference : _references)
+    {
+        reference->_impl = rhs->_impl;
+        rhs->_impl->addReference(reference);
+    }
+
+    _references.clear();
 }
 
 TypeTable::TypeTable()

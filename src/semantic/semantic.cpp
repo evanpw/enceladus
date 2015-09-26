@@ -295,16 +295,14 @@ Type* SemanticAnalyzer::instantiate(Type* type)
 
 Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
 {
-    Type* realType = type;
-
-    switch (realType->tag())
+    switch (type->tag())
     {
         case ttBase:
-            return realType;
+            return type;
 
         case ttVariable:
         {
-            TypeVariable* typeVariable = realType->get<TypeVariable>();
+            TypeVariable* typeVariable = type->get<TypeVariable>();
 
             auto i = replacements.find(typeVariable);
             if (i != replacements.end())
@@ -322,14 +320,14 @@ Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& 
                 }
                 else
                 {
-                    return realType;
+                    return type;
                 }
             }
         }
 
         case ttFunction:
         {
-            FunctionType* functionType = realType->get<FunctionType>();
+            FunctionType* functionType = type->get<FunctionType>();
 
             std::vector<Type*> newInputs;
             for (Type* input : functionType->inputs())
@@ -344,7 +342,7 @@ Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& 
         {
             std::vector<Type*> params;
 
-            ConstructedType* constructedType = realType->get<ConstructedType>();
+            ConstructedType* constructedType = type->get<ConstructedType>();
             for (Type* parameter : constructedType->typeParameters())
             {
                 params.push_back(instantiate(parameter, replacements));
@@ -816,10 +814,10 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 	std::vector<Type*> paramTypes;
     for (size_t i = 0; i < node->arguments.size(); ++i)
     {
-        AstNode& argument = *node->arguments[i];
-        argument.accept(this);
+        AstNode* argument = node->arguments[i];
+        argument->accept(this);
 
-        paramTypes.push_back(argument.type);
+        paramTypes.push_back(argument->type);
     }
 
 	node->symbol = symbol;

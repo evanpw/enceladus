@@ -62,6 +62,9 @@ public:
         _valueConstructors.push_back(valueConstructor);
     }
 
+    // Do nothing except for on type variables
+    virtual void addReference(Type* parent) {}
+
     template <class T>
     T* get()
     {
@@ -81,7 +84,9 @@ class Type
 public:
     Type(const std::shared_ptr<TypeImpl>& impl)
     : _impl(impl)
-    {}
+    {
+        _impl->addReference(this);
+    }
 
     std::string name() const
     {
@@ -139,6 +144,7 @@ public:
     }
 
 private:
+    friend class TypeVariable;
     std::shared_ptr<TypeImpl> _impl;
 };
 
@@ -264,6 +270,13 @@ public:
         return true;
     }
 
+    virtual void addReference(Type* parent)
+    {
+        _references.push_back(parent);
+    }
+
+    void assign(Type* rhs);
+
     int index() const
     {
         return _index;
@@ -285,6 +298,8 @@ private:
     std::string _name;
     int _index;
     bool _quantified;
+
+    std::vector<Type*> _references;
 
     static int _count;
 };

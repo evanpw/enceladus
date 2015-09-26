@@ -329,6 +329,12 @@ class TestAcceptance(object):
     def test_constructorClosure(self):
         self.run('constructorClosure', '3')
 
+    def test_genericChain2(self):
+        self.run('genericChain2', '4')
+
+    def test_genericChain3(self):
+        self.run('genericChain3', '4')
+
 
     # Medium tests (100ms-1s)
 

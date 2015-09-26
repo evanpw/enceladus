@@ -9,6 +9,8 @@
 
 #include <deque>
 
+using TypeAssignment = std::map<TypeVariable*, Type*>;
+
 #define UNSUPPORTED(T) virtual void visit(T* node) { assert(false); }
 
 class TACCodeGen;
@@ -137,8 +139,12 @@ public:
 private:
     // We cache the Value corresponding to each symbol so that the value
     // uniquely identifies a location
-    std::unordered_map<const Symbol*, Value*> _names;
+    std::unordered_map<const Symbol*, Value*> _globalNames;
+    std::unordered_map<const Symbol*, Value*> _localNames;
+    std::unordered_map<const Symbol*, std::vector<std::pair<TypeAssignment, Value*>>> _functionNames;
+
     Value* getValue(const Symbol* symbol);
+    Value* getFunctionValue(const Symbol* symbol, const TypeAssignment& typeAssignment = {});
 
     // The exit label of the current loop (used by break statements)
     BasicBlock* _currentLoopExit;
@@ -152,12 +158,12 @@ private:
 
     // We accumulate these lists while walking through the top level, and then
     // generate code for each of them after the main function is finished
-    std::deque<FunctionDefNode*> _functions;
     std::vector<ConstructorSymbol*> _constructors;
     void createConstructor(ValueConstructor* constructor);
 
     // Current assignment of type variables to types
-    std::unordered_map<TypeVariable*, Type*> _typeContext;
+    TypeAssignment _typeContext;
+    std::deque<std::pair<FunctionDefNode*, TypeAssignment>> _functions;
 
     TACContext* _context;
     Function* _currentFunction;

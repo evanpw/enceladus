@@ -1,0 +1,7 @@
+def g<T>(x: T) -> T
+    return x
+
+def f<T>(x: T) -> T
+    return g(x)
+
+print $ show $ f(4)
