@@ -67,7 +67,19 @@ int main(int argc, char* argv[])
 	// Convert the AST to IR code
 	TACContext* tacContext = new TACContext;
 	TACCodeGen tacGen(tacContext);
-	tacGen.codeGen(astContext);
+
+	try
+	{
+		tacGen.codeGen(astContext);
+	}
+	catch (CodegenError& e)
+	{
+		std::cerr << "Error: " << e.what() << std::endl;
+		delete astContext;
+		delete tacContext;
+
+		return 1;
+	}
 
 	delete astContext;
 

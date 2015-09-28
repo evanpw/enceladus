@@ -335,6 +335,9 @@ class TestAcceptance(object):
     def test_genericChain3(self):
         self.run('genericChain3', '4')
 
+    def test_cantMonomorphize(self):
+        self.run('cantMonomorphize', build_error='Error: testing/cantMonomorphize.spl:1:7: cannot infer concrete type of call to function Nil')
+
 
     # Medium tests (100ms-1s)
 

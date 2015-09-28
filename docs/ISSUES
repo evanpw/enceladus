@@ -61,8 +61,6 @@
 
 * Get rid of integer-based for loop in favor of "for x in range(...)"
 
-* Add a hash table to the library
-
 * Allow generic type aliases (e.g., type TableEntry<S, T> = Option<Pair<S, T>>)
 
 * Add a function to get the size of an array
@@ -72,3 +70,7 @@
 * Delete unreachable basic blocks before machine code generation
 
 * Allow member variables which are functions to be called directly (e.g., self.cmpFn(lhs, rhs))
+
+* Disallow global variables (make them local variables of function splmain)
+
+* Allow explicit type arguments to functions: (e.g., x := read<Int>() or x := read::<Int>())

@@ -76,8 +76,6 @@ impl BigInt
     def times(self: BigInt, rhs: BigInt) -> BigInt
         ys := rhs.digits()
 
-        partialProducts := []
-
         result := toBigInt(0)
         for n = 0 to ys.length() - 1
             y := ys.at(n)

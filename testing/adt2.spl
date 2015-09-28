@@ -13,4 +13,10 @@ x := MySome(1)
 y := MyNone
 z := MySome("Hello")
 
+# HACK
+def typeAssert(a: MyOption<Bool>) -> Unit
+    pass
+
+typeAssert(y)
+
 print $ show(isGood(x) + isGood(y) + isGood(z))

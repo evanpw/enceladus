@@ -8,12 +8,29 @@
 #include "ir/value.hpp"
 
 #include <deque>
+#include <stdexcept>
 
 using TypeAssignment = std::map<TypeVariable*, Type*>;
 
 #define UNSUPPORTED(T) virtual void visit(T* node) { assert(false); }
 
 class TACCodeGen;
+
+class CodegenError : public std::exception
+{
+public:
+    CodegenError(const std::string& description)
+    : _description(description)
+    {}
+
+    virtual ~CodegenError() throw() {}
+
+    const std::string& description() const { return _description; }
+    virtual const char* what() const throw() { return _description.c_str(); }
+
+private:
+    std::string _description;
+};
 
 class TACConditionalCodeGen : public AstVisitor
 {
@@ -144,7 +161,7 @@ private:
     std::unordered_map<const Symbol*, std::vector<std::pair<TypeAssignment, Value*>>> _functionNames;
 
     Value* getValue(const Symbol* symbol);
-    Value* getFunctionValue(const Symbol* symbol, const TypeAssignment& typeAssignment = {});
+    Value* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
     // The exit label of the current loop (used by break statements)
     BasicBlock* _currentLoopExit;

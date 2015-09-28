@@ -53,22 +53,7 @@ static std::string mangleTypeName(Type* type, std::vector<TypeVariable*>& variab
         }
         ss << "G";
     }
-    else if (TypeVariable* typeVariable = type->get<TypeVariable>())
-    {
-        assert(false);
-
-        auto i = std::find(variables.begin(), variables.end(), typeVariable);
-        if (i != variables.end())
-        {
-            ss << "T" << i - variables.begin();
-        }
-        else
-        {
-            variables.push_back(typeVariable);
-            ss << "T" << variables.size();
-        }
-    }
-    else
+    else /* TypeVariable */
     {
         assert(false);
     }
@@ -164,6 +149,49 @@ static bool sameAssignment(const TypeAssignment& lhs, const TypeAssignment& rhs)
     return true;
 }
 
+static bool isConcrete(Type* original)
+{
+    switch (original->tag())
+    {
+        case ttBase:
+            return true;
+
+        case ttVariable:
+            return false;
+
+        case ttFunction:
+        {
+            FunctionType* functionType = original->get<FunctionType>();
+
+            for (auto& input : functionType->inputs())
+            {
+                if (!isConcrete(input))
+                    return false;
+            }
+
+            if (!isConcrete(functionType->output()))
+                return false;
+
+            return true;
+        }
+
+        case ttConstructed:
+        {
+            ConstructedType* constructedType = original->get<ConstructedType>();
+
+            for (auto& param : constructedType->typeParameters())
+            {
+                if (!isConcrete(param))
+                    return false;
+            }
+
+            return true;
+        }
+    }
+
+    assert(false);
+}
+
 static Type* substitute(Type* original, const TypeAssignment& typeAssignment)
 {
     switch (original->tag())
@@ -253,11 +281,27 @@ static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssig
     return result;
 }
 
-Value* TACCodeGen::getFunctionValue(const Symbol* symbol, const TypeAssignment& typeAssignment)
+Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
 {
     auto& instantiations = _functionNames[symbol];
 
     TypeAssignment realAssignment = combine(_typeContext, typeAssignment);
+
+    for (auto& assignment : realAssignment)
+    {
+        if (!isConcrete(assignment.second))
+        {
+            assert(node);
+
+            YYLTYPE location = node->location;
+            std::stringstream ss;
+
+            ss << location.filename << ":" << location.first_line << ":" << location.first_column
+               << ": cannot infer concrete type of call to function " << symbol->name;
+
+            throw CodegenError(ss.str());
+        }
+    }
 
     for (auto& instantiation : instantiations)
     {
@@ -411,7 +455,7 @@ void TACCodeGen::visit(ProgramNode* node)
         TypeAssignment typeContext = _functions.front().second;
         _functions.pop_front();
 
-        Function* function = (Function*)getFunctionValue(funcDefNode->symbol, typeContext);
+        Function* function = (Function*)getFunctionValue(funcDefNode->symbol, nullptr, typeContext);
 
         _currentFunction = function;
         _localNames.clear();
@@ -442,7 +486,7 @@ void TACCodeGen::visit(ProgramNode* node)
     {
         ValueConstructor* constructor = constructorSymbol->constructor;
 
-        Function* function = (Function*)getFunctionValue(constructorSymbol);
+        Function* function = (Function*)getFunctionValue(constructorSymbol, node);
         _currentFunction = function;
         _nextSeqNumber = 0;
         setBlock(createBlock());
@@ -630,7 +674,7 @@ void TACCodeGen::visit(NullaryNode* node)
 
         if (node->kind == NullaryNode::FUNC_CALL)
         {
-            Value* fn = getFunctionValue(node->symbol, node->typeAssignment);
+            Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
             CallInst* inst = new CallInst(dest, fn);
             inst->ccall = functionSymbol->isExternal;
             inst->regpass = inst->ccall;
@@ -650,7 +694,7 @@ void TACCodeGen::visit(NullaryNode* node)
             emit(new IndexedStoreInst(dest, offsetof(SplObject, sizeInWords), _context->Zero));
 
             // Address of the function as an unboxed member
-            Value* fn = getFunctionValue(node->symbol, node->typeAssignment);
+            Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
             emit(new IndexedStoreInst(dest, sizeof(SplObject), fn));
         }
     }
@@ -753,7 +797,7 @@ void TACCodeGen::visit(AssertNode* node)
     static size_t counter = 1;
 
     // HACK
-    Value* dieFunction = getFunctionValue(node->dieSymbol);
+    Value* dieFunction = getFunctionValue(node->dieSymbol, node);
 
     BasicBlock* falseBranch = createBlock();
     BasicBlock* continueAt = createBlock();
@@ -810,9 +854,9 @@ void TACCodeGen::visit(WhileNode* node)
 void TACCodeGen::visit(ForeachNode* node)
 {
     // HACK
-    Value* headFunction = getFunctionValue(node->headSymbol, node->headTypeAssignment);
-    Value* tailFunction = getFunctionValue(node->tailSymbol, node->tailTypeAssignment);
-    Value* emptyFunction = getFunctionValue(node->emptySymbol, node->emptyTypeAssignment);
+    Value* headFunction = getFunctionValue(node->headSymbol, node, node->headTypeAssignment);
+    Value* tailFunction = getFunctionValue(node->tailSymbol, node, node->tailTypeAssignment);
+    Value* emptyFunction = getFunctionValue(node->emptySymbol, node, node->emptyTypeAssignment);
 
     BasicBlock* loopInit = createBlock();
     BasicBlock* loopBegin = createBlock();
@@ -1128,7 +1172,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
     else if (node->symbol->kind == kFunction)
     {
-        Value* fn = getFunctionValue(node->symbol, node->typeAssignment);
+        Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
         CallInst* inst = new CallInst(result, fn, arguments);
 
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
@@ -1171,7 +1215,7 @@ void TACCodeGen::visit(MethodCallNode* node)
 
     assert(node->symbol->kind == kMethod);
 
-    Value* method = getFunctionValue(node->symbol, node->typeAssignment);
+    Value* method = getFunctionValue(node->symbol, node, node->typeAssignment);
     emit(new CallInst(result, method, arguments));
 }
 
