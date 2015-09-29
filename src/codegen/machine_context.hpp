@@ -15,7 +15,7 @@ public:
     std::vector<MachineFunction*> functions;
     std::vector<std::string> externs;
     std::vector<std::pair<std::string, std::string>> staticStrings;
-    std::vector<std::string> globals;
+    std::vector<std::pair<std::string, OperandType>> globals;
 
     HardwareRegister* rax = new HardwareRegister("rax");
     HardwareRegister* rbx = new HardwareRegister("rbx");

@@ -495,11 +495,8 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
 
             SplObject* object = (SplObject*)*p;
             //printf("\tobject=%p\n", object);
-            if (object && IS_REFERENCE(object))
-            {
-                void* newLocation = gcCopy(object);
-                *p = (uint64_t)newLocation;
-            }
+            void* newLocation = gcCopy(object);
+            *p = (uint64_t)newLocation;
         }
 
         if (rbp == stackBottom)
@@ -524,11 +521,8 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
         for (size_t i = 0; i < numGlobals; ++i)
         {
             SplObject* object = (SplObject*)**p;
-            if (object && IS_REFERENCE(object))
-            {
-                void* newLocation = gcCopy(object);
-                **p = (uint64_t)newLocation;
-            }
+            void* newLocation = gcCopy(object);
+            **p = (uint64_t)newLocation;
 
             ++p;
         }

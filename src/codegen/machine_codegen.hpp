@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <utility>
 
+OperandType getOperandType(Value* value);
+
 class MachineCodeGen : public TACVisitor
 {
 public:

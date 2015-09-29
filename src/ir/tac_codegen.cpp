@@ -281,7 +281,67 @@ static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssig
     return result;
 }
 
-Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
+std::vector<size_t> TACCodeGen::getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
+{
+    Function* function = getFunctionValue(symbol, node, typeAssignment);
+    auto i = _constructorLayouts.find(function);
+    if (i != _constructorLayouts.end())
+    {
+        return i->second;
+    }
+
+    TypeAssignment realAssignment = combine(_typeContext, typeAssignment);
+
+    for (auto& assignment : realAssignment)
+    {
+        if (!isConcrete(assignment.second))
+        {
+            assert(node);
+
+            YYLTYPE location = node->location;
+            std::stringstream ss;
+
+            ss << location.filename << ":" << location.first_line << ":" << location.first_column
+               << ": cannot infer concrete type of call to constructor " << symbol->name;
+
+            throw CodegenError(ss.str());
+        }
+    }
+
+    ValueConstructor* constructor = symbol->constructor;
+    const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
+
+    std::vector<size_t> referenceMembers;
+    std::vector<size_t> valueMembers;
+
+    for (auto& member : members)
+    {
+        size_t index = member.location;
+
+        Type* type = substitute(member.type, realAssignment);
+        assert(isConcrete(type));
+
+        if (type->isBoxed())
+        {
+            referenceMembers.push_back(index);
+        }
+        else
+        {
+            valueMembers.push_back(index);
+        }
+    }
+
+    std::vector<size_t> memberOrder = std::move(referenceMembers);
+    for (size_t index : valueMembers)
+    {
+        memberOrder.push_back(index);
+    }
+
+    _constructorLayouts.emplace(function, memberOrder);
+    return memberOrder;
+}
+
+Function* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
 {
     auto& instantiations = _functionNames[symbol];
 
@@ -311,7 +371,7 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
         }
     }
 
-    Value* result;
+    Function* result;
 
     if (symbol->kind == kFunction)
     {
@@ -330,21 +390,7 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
                 return result;
             }
         }
-        else if (functionSymbol->isConstructor)
-        {
-            if (!instantiations.empty())
-            {
-                return instantiations[0].second;
-            }
-            else
-            {
-                result = _context->createFunction(symbol->name);
-                TypeAssignment empty;
-                instantiations.emplace_back(empty, result);
-                return result;
-            }
-        }
-        else
+        else /* regular function or constructor */
         {
             std::stringstream ss;
             ss << symbol->name;
@@ -359,7 +405,8 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
             }
 
             result = _context->createFunction(ss.str());
-            _functions.emplace_back(functionSymbol->definition, realAssignment);
+
+            _functions.emplace_back(functionSymbol, realAssignment);
         }
     }
     else if (symbol->kind == kMethod)
@@ -395,7 +442,7 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
         }
 
         result = _context->createFunction(ss.str());
-        _functions.emplace_back(methodSymbol->definition, realAssignment);
+        _functions.emplace_back(methodSymbol, realAssignment);
     }
     else
     {
@@ -432,6 +479,22 @@ BasicBlock* TACConditionalCodeGen::createBlock()
     return _mainCodeGen->createBlock();
 }
 
+static FunctionDefNode* getFunctionDefinition(const Symbol* symbol)
+{
+    if (const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol))
+    {
+        return functionSymbol->definition;
+    }
+    else if (const MethodSymbol* methodSymbol = dynamic_cast<const MethodSymbol*>(symbol))
+    {
+        return methodSymbol->definition;
+    }
+    else
+    {
+        assert(false);
+    }
+}
+
 void TACCodeGen::visit(ProgramNode* node)
 {
     Function* main = _context->createFunction("splmain");
@@ -451,48 +514,50 @@ void TACCodeGen::visit(ProgramNode* node)
     // code for all functions / methods reachable from those, and so on.
     while (!_functions.empty())
     {
-        FunctionDefNode* funcDefNode = _functions.front().first;
+        const Symbol* symbol = _functions.front().first;
+        FunctionDefNode* funcDefNode = getFunctionDefinition(symbol);
         TypeAssignment typeContext = _functions.front().second;
         _functions.pop_front();
 
-        Function* function = (Function*)getFunctionValue(funcDefNode->symbol, nullptr, typeContext);
-
-        _currentFunction = function;
-        _localNames.clear();
-        _nextSeqNumber = 0;
-        setBlock(createBlock());
-
-        // Collect all function parameters
-        for (Symbol* param : funcDefNode->parameterSymbols)
+        if (funcDefNode) /* regular function or method */
         {
-            assert(dynamic_cast<VariableSymbol*>(param)->isParam);
-            _currentFunction->params.push_back(getValue(param));
+            Function* function = getFunctionValue(funcDefNode->symbol, nullptr, typeContext);
+
+            _currentFunction = function;
+            _localNames.clear();
+            _nextSeqNumber = 0;
+            setBlock(createBlock());
+
+            // Collect all function parameters
+            for (Symbol* param : funcDefNode->parameterSymbols)
+            {
+                assert(dynamic_cast<VariableSymbol*>(param)->isParam);
+                _currentFunction->params.push_back(getValue(param));
+            }
+
+            // Generate code for the function body
+            _typeContext = typeContext;
+            funcDefNode->body->accept(this);
+
+            // Handle implicit return values
+            if (!_currentBlock->isTerminated())
+            {
+                emit(new ReturnInst(funcDefNode->body->value));
+            }
         }
-
-        // Generate code for the function body
-        _typeContext = typeContext;
-        funcDefNode->body->accept(this);
-
-        // Handle implicit return values
-        if (!_currentBlock->isTerminated())
+        else /* constructor */
         {
-            emit(new ReturnInst(funcDefNode->body->value));
+            const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
+            assert(constructorSymbol);
+
+            Function* function = getFunctionValue(constructorSymbol, nullptr, typeContext);
+            _currentFunction = function;
+            _nextSeqNumber = 0;
+            setBlock(createBlock());
+
+            _typeContext.clear();
+            createConstructor(constructorSymbol, typeContext);
         }
-    }
-
-    _typeContext.clear();
-
-    for (ConstructorSymbol* constructorSymbol : _constructors)
-    {
-        ValueConstructor* constructor = constructorSymbol->constructor;
-
-        Function* function = (Function*)getFunctionValue(constructorSymbol, node);
-        _currentFunction = function;
-        _nextSeqNumber = 0;
-        setBlock(createBlock());
-
-        createConstructor(constructor);
-        continue;
     }
 }
 
@@ -1366,8 +1431,9 @@ void TACCodeGen::visit(StringLiteralNode* node)
     node->value = getValue(node->symbol);
 }
 
-void TACCodeGen::createConstructor(ValueConstructor* constructor)
+void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAssignment& typeAssignment)
 {
+    ValueConstructor* constructor = symbol->constructor;
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
     size_t constructorTag = constructor->constructorTag();
 
@@ -1396,6 +1462,8 @@ void TACCodeGen::createConstructor(ValueConstructor* constructor)
     // SplObject header fields
     emit(new IndexedStoreInst(result, offsetof(SplObject, constructorTag), _context->getConstantInt(constructorTag)));
     emit(new IndexedStoreInst(result, offsetof(SplObject, sizeInWords), _context->getConstantInt(members.size())));
+
+    std::vector<size_t> layout = getConstructorLayout(symbol, nullptr, typeAssignment);
 
     // Individual members
     for (size_t i = 0; i < members.size(); ++i)

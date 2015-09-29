@@ -158,10 +158,13 @@ private:
     // uniquely identifies a location
     std::unordered_map<const Symbol*, Value*> _globalNames;
     std::unordered_map<const Symbol*, Value*> _localNames;
-    std::unordered_map<const Symbol*, std::vector<std::pair<TypeAssignment, Value*>>> _functionNames;
+    std::unordered_map<const Symbol*, std::vector<std::pair<TypeAssignment, Function*>>> _functionNames;
 
     Value* getValue(const Symbol* symbol);
-    Value* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
+    Function* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
+
+    std::unordered_map<Function*, std::vector<size_t>> _constructorLayouts;
+    std::vector<size_t> getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
     // The exit label of the current loop (used by break statements)
     BasicBlock* _currentLoopExit;
@@ -176,11 +179,11 @@ private:
     // We accumulate these lists while walking through the top level, and then
     // generate code for each of them after the main function is finished
     std::vector<ConstructorSymbol*> _constructors;
-    void createConstructor(ValueConstructor* constructor);
+    void createConstructor(const ConstructorSymbol* constructor, const TypeAssignment& typeAssignment);
 
     // Current assignment of type variables to types
     TypeAssignment _typeContext;
-    std::deque<std::pair<FunctionDefNode*, TypeAssignment>> _functions;
+    std::deque<std::pair<const Symbol*, TypeAssignment>> _functions;
 
     TACContext* _context;
     Function* _currentFunction;

@@ -2,7 +2,7 @@
 #include "ir/tac_instruction.hpp"
 #include "ir/value.hpp"
 
-static OperandType getOperandType(Value* value)
+OperandType getOperandType(Value* value)
 {
     if (!value || value->type != ValueType::BoxOrInt)
     {

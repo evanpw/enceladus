@@ -96,6 +96,10 @@ foreign read() -> Int
 foreign readLine() -> Option<String>
 foreign print(msg: String) -> Unit
 
+# HACK: Make sure these constructors exist for the C library to use
+neverUsed := Some("Hello")
+neverUsed = None
+
 ## List ##
 impl<T> List<T>
     def head(self: [T]) -> T

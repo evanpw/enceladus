@@ -19,9 +19,9 @@ void AsmPrinter::printProgram(MachineContext* context)
 
     _out << "section .data" << std::endl;
 
-    for (const std::string& globalName : context->globals)
+    for (auto& global : context->globals)
     {
-        _out << "$" << globalName << ": dq 0" << std::endl;
+        _out << "$" << global.first << ": dq 0" << std::endl;
     }
 
     for (auto& item : context->staticStrings)
@@ -57,13 +57,24 @@ void AsmPrinter::printProgram(MachineContext* context)
     }
 
     // Global variable table (for the GC)
+    std::vector<std::string> globalReferences;
+    for (auto& global : context->globals)
+    {
+        if (global.second == MaybeReference)
+        {
+            globalReferences.push_back(global.first);
+        }
+    }
+
     _out << "global __globalVarTable" << std::endl;
     _out << "__globalVarTable:" << std::endl;
-    _out << "\tdq " << context->globals.size() << std::endl;
-    for (const std::string& globalName : context->globals)
+    _out << "\tdq " << globalReferences.size() << std::endl;
+    for (const std::string& globalName : globalReferences)
     {
         _out << "\tdq $" << globalName << std::endl;
     }
+
+
     _out << "\tdq 0" << std::endl;
 
 }

@@ -33,11 +33,11 @@ typedef SplObject Array;
 #define TO_INT(n)   ((n << 1) + 1)
 #define FROM_INT(n) (n >> 1)
 
-// extern void* Some(void* value) asm("_Z4Some");
-// extern void* None() asm("_Z4None");
+extern void* Some(void* value) asm("Some$A6StringE");
+extern void* None() asm("None$A6StringE");
 
-extern void* Some(void* value);
-extern void* None();
+//extern void* Some(void* value);
+//extern void* None();
 
 extern void* splcall0(void* f) asm("splcall0");
 extern void* splcall1(void* f, void* p1) asm("splcall1");

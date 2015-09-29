@@ -338,6 +338,9 @@ class TestAcceptance(object):
     def test_cantMonomorphize(self):
         self.run('cantMonomorphize', build_error='Error: testing/cantMonomorphize.spl:1:7: cannot infer concrete type of call to function Nil')
 
+    def test_globalInt(self):
+        self.run('globalInt', '15')
+
 
     # Medium tests (100ms-1s)
 
