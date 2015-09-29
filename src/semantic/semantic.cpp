@@ -684,14 +684,18 @@ void SemanticAnalyzer::visit(MatchArm* node)
     node->constructorTag = result.first;
     node->valueConstructor = result.second;
 
-    Symbol* constructorSymbol = resolveSymbol(constructorName);
-    CHECK(constructorSymbol, "constructor \"{}\" is not defined", constructorName);
+    Symbol* symbol = resolveSymbol(constructorName);
+    CHECK(symbol, "constructor \"{}\" is not defined", constructorName);
+
+    ConstructorSymbol* constructorSymbol = dynamic_cast<ConstructorSymbol*>(symbol);
+    assert(constructorSymbol);
+    node->constructorSymbol = constructorSymbol;
 
     // A symbol with a capital letter should always be a constructor
     assert(constructorSymbol->kind == kFunction);
     assert(constructorSymbol->type->tag() == ttFunction);
 
-    Type* instantiatedType = instantiate(constructorSymbol->type);
+    Type* instantiatedType = instantiate(constructorSymbol->type, node->typeAssignment);
     FunctionType* functionType = instantiatedType->get<FunctionType>();
     Type* constructedType = functionType->output();
     unify(constructedType, node->matchType, node);
@@ -732,14 +736,18 @@ void SemanticAnalyzer::visit(LetNode* node)
 	AstVisitor::visit(node);
 
 	const std::string& constructor = node->constructor;
-	Symbol* constructorSymbol = resolveSymbol(constructor);
-    CHECK(constructorSymbol, "constructor \"{}\" is not defined", constructor);
+	Symbol* symbol = resolveSymbol(constructor);
+    CHECK(symbol, "constructor \"{}\" is not defined", constructor);
+
+    ConstructorSymbol* constructorSymbol = dynamic_cast<ConstructorSymbol*>(symbol);
+    CHECK(constructorSymbol, "\"{}\" is not a value constructor", constructor);
+    node->constructorSymbol = constructorSymbol;
 
 	// A symbol with a capital letter should always be a constructor
 	assert(constructorSymbol->kind == kFunction);
 
 	assert(constructorSymbol->type->tag() == ttFunction);
-    Type* instantiatedType = instantiate(constructorSymbol->type);
+    Type* instantiatedType = instantiate(constructorSymbol->type, node->typeAssignment);
 	FunctionType* functionType = instantiatedType->get<FunctionType>();
 	const Type* constructedType = functionType->output();
 
@@ -1204,10 +1212,17 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     CHECK_UNDEFINED_SYMBOL(node->name);
 
     // Resolve member types
-    for (auto& member : node->members)
+    std::vector<MemberVarSymbol*> memberSymbols;
+    for (size_t i = 0; i < node->members.size(); ++i)
     {
+        auto& member = node->members[i];
+
         resolveTypeName(member, node->typeContext);
         node->memberTypes.push_back(member->type);
+
+        MemberVarSymbol* memberSymbol = _symbolTable->createMemberVarSymbol("_", node, nullptr, node->resultType, i);
+        memberSymbol->type = _typeTable->createFunctionType({node->resultType}, member->type);
+        memberSymbols.push_back(memberSymbol);
     }
 
     ValueConstructor* valueConstructor = _typeTable->createValueConstructor(node->name, node->constructorTag, node->memberTypes);
@@ -1215,7 +1230,7 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     node->resultType->addValueConstructor(valueConstructor);
 
     // Create a symbol for the constructor
-    ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(node->name, node, valueConstructor);
+    ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(node->name, node, valueConstructor, memberSymbols);
     symbol->type = _typeTable->createFunctionType(node->memberTypes, node->resultType);
     node->symbol = symbol;
 
@@ -1266,7 +1281,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         newType->addValueConstructor(valueConstructor);
 
         // Create a symbol for the constructor
-        ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor);
+        ConstructorSymbol* symbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor, memberSymbols);
         symbol->type = _typeTable->createFunctionType(memberTypes, newType);
         node->constructorSymbol = symbol;
 
@@ -1321,7 +1336,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         typeConstructor->addValueConstructor(valueConstructor);
 
         // Create a symbol for the constructor
-        ConstructorSymbol* constructorSymbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor);
+        ConstructorSymbol* constructorSymbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor, memberSymbols);
         constructorSymbol->type = _typeTable->createFunctionType(memberTypes, newType);
         node->constructorSymbol = constructorSymbol;
 
@@ -1354,12 +1369,14 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     node->symbol = symbol;
 
     Type* returnType = _typeTable->createTypeVariable();
-    Type* functionType = instantiate(symbol->type);
+    Type* functionType = instantiate(symbol->type, node->typeAssignment);
 
     unify(functionType, _typeTable->createFunctionType({objectType}, returnType), node);
 
+    node->symbol = symbol;
     node->type = returnType;
-    node->memberLocation = symbol->location;
+    node->constructorSymbol = symbol->constructorSymbol;
+    node->memberIndex = symbol->index;
 }
 
 void SemanticAnalyzer::visit(ImplNode* node)

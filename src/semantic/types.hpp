@@ -310,13 +310,12 @@ class ValueConstructor
 public:
     struct MemberDesc
     {
-        MemberDesc(const std::string& name, Type* type, size_t location)
-        : name(name), type(type), location(location)
+        MemberDesc(const std::string& name, Type* type)
+        : name(name), type(type)
         {}
 
         std::string name;
         Type* type;
-        size_t location;
     };
 
     virtual std::string name() const

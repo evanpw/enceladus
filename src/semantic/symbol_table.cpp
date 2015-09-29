@@ -17,34 +17,32 @@ FunctionSymbol* SymbolTable::createFunctionSymbol(const std::string& name, AstNo
     return symbol;
 }
 
-ConstructorSymbol* SymbolTable::createConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor)
+ConstructorSymbol* SymbolTable::createConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor, const std::vector<MemberVarSymbol*>& memberSymbols)
 {
-    ConstructorSymbol* symbol = new ConstructorSymbol(name, node, constructor);
+    ConstructorSymbol* symbol = new ConstructorSymbol(name, node, constructor, memberSymbols);
     insert(symbol);
     return symbol;
 }
 
 MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType)
 {
-    auto& bucket = _members[name];
-    MethodSymbol* symbol = new MethodSymbol(name, node, parentType, bucket.size());
+    MethodSymbol* symbol = new MethodSymbol(name, node, parentType);
 
     if (symbol->name != "_")
     {
-        bucket.push_back(symbol);
+        _members[name].push_back(symbol);
     }
 
     return symbol;
 }
 
-MemberVarSymbol* SymbolTable::createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t location)
+MemberVarSymbol* SymbolTable::createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index)
 {
-    auto& bucket = _members[name];
-    MemberVarSymbol* symbol = new MemberVarSymbol(name, node, parentType, bucket.size(), location);
+    MemberVarSymbol* symbol = new MemberVarSymbol(name, node, parentType, index);
 
     if (symbol->name != "_")
     {
-        bucket.push_back(symbol);
+        _members[name].push_back(symbol);
     }
 
     return symbol;

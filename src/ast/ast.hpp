@@ -517,6 +517,9 @@ public:
 	ExpressionNode* body;
 
 	// Annotations
+	ConstructorSymbol* constructorSymbol;
+	std::map<TypeVariable*, Type*> typeAssignment;
+
 	std::vector<Symbol*> symbols;
 	ValueConstructor* valueConstructor;
 };
@@ -535,6 +538,9 @@ public:
 	StatementNode* body;
 
 	// Annotations
+	ConstructorSymbol* constructorSymbol;
+	std::map<TypeVariable*, Type*> typeAssignment;
+
 	Type* matchType;
 	std::vector<Symbol*> symbols;
 	size_t constructorTag;
@@ -670,7 +676,9 @@ public:
 
 	// Annotations
 	MemberVarSymbol* symbol;
-	size_t memberLocation;
+	ConstructorSymbol* constructorSymbol;
+	size_t memberIndex;
+	std::map<TypeVariable*, Type*> typeAssignment;
 };
 
 

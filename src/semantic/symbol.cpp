@@ -12,11 +12,17 @@ FunctionSymbol::FunctionSymbol(const std::string& name, AstNode* node, FunctionD
 {
 }
 
-ConstructorSymbol::ConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor)
+ConstructorSymbol::ConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor, const std::vector<MemberVarSymbol*>& memberSymbols)
 : FunctionSymbol(name, node, nullptr)
 , constructor(constructor)
+, memberSymbols(memberSymbols)
 {
     isConstructor = true;
+
+    for (MemberVarSymbol* member : memberSymbols)
+    {
+        member->constructorSymbol = this;
+    }
 }
 
 TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)
@@ -31,21 +37,20 @@ TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* n
 {
 }
 
-MemberSymbol::MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType, size_t index)
+MemberSymbol::MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType)
 : Symbol(name, kind, node, nullptr, true)
 , parentType(parentType)
-, index(index)
 {
 }
 
-MethodSymbol::MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType, size_t index)
-: MemberSymbol(name, kMethod, node, parentType, index)
+MethodSymbol::MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType)
+: MemberSymbol(name, kMethod, node, parentType)
 , definition(node)
 {
 }
 
-MemberVarSymbol::MemberVarSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index, size_t location)
-: MemberSymbol(name, kMemberVar, node, parentType, index)
-, location(location)
+MemberVarSymbol::MemberVarSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index)
+: MemberSymbol(name, kMemberVar, node, parentType)
+, index(index)
 {
 }

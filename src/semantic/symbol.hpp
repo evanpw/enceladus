@@ -82,14 +82,17 @@ protected:
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
 };
 
+struct MemberVarSymbol;
+
 class ConstructorSymbol : public FunctionSymbol
 {
 public:
     ValueConstructor* constructor;
+    std::vector<MemberVarSymbol*> memberSymbols;
 
 private:
     friend class SymbolTable;
-    ConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor);
+    ConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor, const std::vector<MemberVarSymbol*>& memberSymbols);
 };
 
 class TypeSymbol : public Symbol
@@ -117,12 +120,9 @@ public:
     virtual bool isMethod() { return false; }
     virtual bool isMemberVar() { return false; }
 
-    // A number which is unique among members with the same name (for different types)
-    size_t index;
-
 protected:
     friend class SymbolTable;
-    MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType, size_t index);
+    MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType);
 };
 
 class MethodSymbol : public MemberSymbol
@@ -134,19 +134,20 @@ public:
 
 protected:
     friend class SymbolTable;
-    MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType, size_t index);
+    MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType);
 };
 
 struct MemberVarSymbol : public MemberSymbol
 {
 public:
-    size_t location;
+    ConstructorSymbol* constructorSymbol = nullptr;
+    size_t index;
 
     virtual bool isMemberVar() { return true; }
 
 private:
     friend class SymbolTable;
-    MemberVarSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index, size_t location);
+    MemberVarSymbol(const std::string& name, AstNode* node, Type* parentType, size_t index);
 };
 
 #endif

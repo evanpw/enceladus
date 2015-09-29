@@ -314,20 +314,20 @@ std::vector<size_t> TACCodeGen::getConstructorLayout(const ConstructorSymbol* sy
     std::vector<size_t> referenceMembers;
     std::vector<size_t> valueMembers;
 
-    for (auto& member : members)
+    for (size_t i = 0; i < members.size(); ++i)
     {
-        size_t index = member.location;
+        auto& member = members[i];
 
         Type* type = substitute(member.type, realAssignment);
         assert(isConcrete(type));
 
         if (type->isBoxed())
         {
-            referenceMembers.push_back(index);
+            referenceMembers.push_back(i);
         }
         else
         {
-            valueMembers.push_back(index);
+            valueMembers.push_back(i);
         }
     }
 
@@ -1076,7 +1076,9 @@ void TACCodeGen::visit(AssignNode* node)
         lhs->object->accept(this);
 
         Value* structure = lhs->object->value;
-        emit(new IndexedStoreInst(structure, sizeof(SplObject) + 8 * lhs->memberLocation, value));
+
+        std::vector<size_t> layout = getConstructorLayout(lhs->constructorSymbol, lhs, lhs->typeAssignment);
+        emit(new IndexedStoreInst(structure, sizeof(SplObject) + 8 * layout[lhs->memberIndex], value));
     }
     else
     {
@@ -1104,6 +1106,8 @@ void TACCodeGen::visit(LetNode* node)
     Value* body = visitAndGet(node->body);
     ValueConstructor* constructor = node->valueConstructor;
 
+    std::vector<size_t> layout = getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
+
     // Copy over each of the members of the constructor pattern
     for (size_t i = 0; i < node->symbols.size(); ++i)
     {
@@ -1112,9 +1116,8 @@ void TACCodeGen::visit(LetNode* node)
         {
             ValueType type = getValueType(member->type);
 
-            size_t location = constructor->members().at(i).location;
             Value* tmp = createTemp(type);
-            emit(new IndexedLoadInst(tmp, body, sizeof(SplObject) + 8 * location));
+            emit(new IndexedLoadInst(tmp, body, sizeof(SplObject) + 8 * layout[i]));
             emit(new StoreInst(getValue(member), tmp));
         }
     }
@@ -1303,8 +1306,10 @@ void TACCodeGen::visit(MemberAccessNode* node)
 
     node->object->accept(this);
 
+    std::vector<size_t> layout = getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
+
     Value* structure = node->object->value;
-    emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * node->memberLocation));
+    emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * layout[node->memberIndex]));
 }
 
 void TACCodeGen::visit(DataDeclaration* node)
@@ -1409,16 +1414,16 @@ void TACCodeGen::visit(MatchArm* node)
 {
     ValueConstructor* constructor = node->valueConstructor;
 
+    std::vector<size_t> layout = getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
+
     // Copy over each of the members of the constructor pattern
     for (size_t i = 0; i < node->symbols.size(); ++i)
     {
         const Symbol* member = node->symbols.at(i);
         if (member)
         {
-            size_t location = constructor->members().at(i).location;
-
             Value* tmp = createTemp(getValueType(member->type));
-            emit(new IndexedLoadInst(tmp, _currentSwitchExpr, sizeof(SplObject) + 8 * location));
+            emit(new IndexedLoadInst(tmp, _currentSwitchExpr, sizeof(SplObject) + 8 * layout[i]));
             emit(new StoreInst(getValue(member), tmp));
         }
     }
@@ -1469,7 +1474,7 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
     for (size_t i = 0; i < members.size(); ++i)
     {
         auto& member = members[i];
-        size_t location = member.location;
+        size_t location = layout[i];
 
         std::string name = member.name;
         if (name.empty()) name = std::to_string(i);

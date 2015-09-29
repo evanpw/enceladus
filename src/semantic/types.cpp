@@ -152,7 +152,7 @@ ValueConstructor::ValueConstructor(const std::string& name,
     {
         std::string memberName = memberNames.empty() ? "" : memberNames[i];
         Type* type = memberTypes[i];
-        _members.emplace_back(memberName, type, i);
+        _members.emplace_back(memberName, type);
     }
 }
 

@@ -17,11 +17,12 @@ typedef struct SplObject
     SplObject_HEAD
 } SplObject;
 
+// WARNING: This layout is only valid for structures with T an unboxed type
 typedef struct List
 {
     SplObject_HEAD
-    void* value;
     struct List* next;
+    void* value;
 } List;
 
 typedef SplObject String;
