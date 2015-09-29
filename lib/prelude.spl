@@ -1,3 +1,14 @@
+## Unsafe functions ##
+# foreign unsafeAllocate<T>(size: Int, tag: Int, numPointers: Int) -> Ptr<T>
+# foreign unsafeSet<T>(ptr: Ptr<T>, offset: Int, value: T) -> Unit
+ #foreign unsafeGet<T>(ptr: Ptr<T>, offset: Int) -> T
+## Compile-time introspection ##
+
+# Built-in functions
+# builtin makeArray<T>(n: Int, value: T) -> Array<T>
+# builtin isBoxed<T>(value: T) -> Bool
+
+## List ##
 data List<T> = Cons(T, List<T>) | Nil
 
 ## String ##
@@ -44,7 +55,6 @@ impl StringIterator
 
 ## Array ##
 foreign emptyArray<T>() -> Array<T>
-foreign makeArray<T>(n: Int, value: T) -> Array<T>
 foreign arrayAt<T>(arr: Array<T>, n: Int) -> T
 foreign arraySet<T>(arr: Array<T>, n: Int, value: T) -> Unit
 

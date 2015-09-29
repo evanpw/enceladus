@@ -163,8 +163,9 @@ private:
     Value* getValue(const Symbol* symbol);
     Function* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
-    std::unordered_map<Function*, std::vector<size_t>> _constructorLayouts;
+    std::unordered_map<Function*, std::pair<size_t, std::vector<size_t>>> _constructorLayouts;
     std::vector<size_t> getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
+    size_t getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment);
 
     // The exit label of the current loop (used by break statements)
     BasicBlock* _currentLoopExit;
@@ -192,7 +193,6 @@ private:
     TACConditionalCodeGen _conditionalCodeGen;
     friend class TACConditionalCodeGen;
 
-    int64_t _nextSeqNumber = 0;
     Value* createTemp(ValueType type)
     {
         return _currentFunction->createTemp(type);
@@ -207,6 +207,9 @@ private:
     BasicBlock* _currentBlock = nullptr;
 
     void emit(Instruction* inst);
+
+    // Built-in functions
+    void builtin_makeArray(const FunctionSymbol* symbol, const TypeAssignment& typeAssignment);
 };
 
 #endif

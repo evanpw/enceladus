@@ -163,6 +163,15 @@ void SemanticAnalyzer::injectSymbols()
 	FunctionSymbol* modulus = createBuiltin("%");
 	modulus->type = arithmeticType;
 
+    //// Array functions ///////////////////////////////////////////////////////
+    Type* typeVar = _typeTable->createTypeVariable("T", true);
+    Type* arrayType = _typeTable->createConstructedType(_typeTable->Array, {typeVar});
+
+    // foreign makeArray<T>(n: Int, value: T) -> Array<T>
+    Type* makeArrayType = _typeTable->createFunctionType({_typeTable->Int, typeVar}, arrayType);
+    FunctionSymbol* makeArray = createBuiltin("makeArray");
+    makeArray->type = makeArrayType;
+
 
 	//// These definitions are only needed so that we list them as external
 	//// symbols in the output assembly file. They can't be called from

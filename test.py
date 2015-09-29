@@ -209,6 +209,9 @@ class TestAcceptance(object):
     def test_array3(self):
         self.run('array3', result='')
 
+    def test_array4(self):
+        self.run('array4', result='Hello')
+
     def test_intOutOfRange1(self):
         self.run('intOutOfRange1', build_error='Error: testing/intOutOfRange1.spl:2:6: error: integer literal out of range: 9223372036854775808')
 

@@ -414,7 +414,7 @@ void MachineCodeGen::visit(LoadInst* inst)
 void MachineCodeGen::visit(IndexedStoreInst* inst)
 {
     MachineOperand* base = getOperand(inst->lhs);
-    MachineOperand* offset = _context->createImmediate(inst->offset);
+    MachineOperand* offset = getOperand(inst->offset); //_context->createImmediate(inst->offset);
     MachineOperand* src = getOperand(inst->rhs);
     assert(base->isAddress() || base->isRegister());
 

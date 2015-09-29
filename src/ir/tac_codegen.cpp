@@ -281,13 +281,22 @@ static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssig
     return result;
 }
 
+size_t TACCodeGen::getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
+{
+    // Perform the layout
+    getConstructorLayout(symbol, node, typeAssignment);
+
+    Function* function = getFunctionValue(symbol, node, typeAssignment);
+    return _constructorLayouts.at(function).first;
+}
+
 std::vector<size_t> TACCodeGen::getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
 {
     Function* function = getFunctionValue(symbol, node, typeAssignment);
     auto i = _constructorLayouts.find(function);
     if (i != _constructorLayouts.end())
     {
-        return i->second;
+        return i->second.second;
     }
 
     TypeAssignment realAssignment = combine(_typeContext, typeAssignment);
@@ -331,13 +340,13 @@ std::vector<size_t> TACCodeGen::getConstructorLayout(const ConstructorSymbol* sy
         }
     }
 
-    std::vector<size_t> memberOrder = std::move(referenceMembers);
+    std::vector<size_t> memberOrder = referenceMembers;
     for (size_t index : valueMembers)
     {
         memberOrder.push_back(index);
     }
 
-    _constructorLayouts.emplace(function, memberOrder);
+    _constructorLayouts.emplace(function, std::make_pair(referenceMembers.size(), memberOrder));
     return memberOrder;
 }
 
@@ -499,7 +508,6 @@ void TACCodeGen::visit(ProgramNode* node)
 {
     Function* main = _context->createFunction("splmain");
     _currentFunction = main;
-    _nextSeqNumber = 0;
     setBlock(createBlock());
 
     for (auto& child : node->children)
@@ -525,7 +533,6 @@ void TACCodeGen::visit(ProgramNode* node)
 
             _currentFunction = function;
             _localNames.clear();
-            _nextSeqNumber = 0;
             setBlock(createBlock());
 
             // Collect all function parameters
@@ -545,18 +552,44 @@ void TACCodeGen::visit(ProgramNode* node)
                 emit(new ReturnInst(funcDefNode->body->value));
             }
         }
-        else /* constructor */
+        else
         {
-            const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
-            assert(constructorSymbol);
+            const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol);
+            assert(functionSymbol);
 
-            Function* function = getFunctionValue(constructorSymbol, nullptr, typeContext);
-            _currentFunction = function;
-            _nextSeqNumber = 0;
-            setBlock(createBlock());
+            if (functionSymbol->isConstructor)
+            {
+                const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
+                assert(constructorSymbol);
 
-            _typeContext.clear();
-            createConstructor(constructorSymbol, typeContext);
+                Function* function = getFunctionValue(constructorSymbol, nullptr, typeContext);
+                _currentFunction = function;
+                setBlock(createBlock());
+
+                _typeContext.clear();
+                createConstructor(constructorSymbol, typeContext);
+            }
+            else
+            {
+                assert(functionSymbol->isBuiltin);
+
+                Function* function = getFunctionValue(functionSymbol, nullptr, typeContext);
+
+                _currentFunction = function;
+                _localNames.clear();
+                _typeContext = typeContext;
+                setBlock(createBlock());
+
+                if (functionSymbol->name == "makeArray")
+                {
+                    builtin_makeArray(functionSymbol, typeContext);
+                }
+                else
+                {
+                    std::cerr << functionSymbol->name << std::endl;
+                    assert(false);
+                }
+            }
         }
     }
 }
@@ -755,12 +788,12 @@ void TACCodeGen::visit(NullaryNode* node)
             emit(callInst);
 
             // SplObject header fields
-            emit(new IndexedStoreInst(dest, offsetof(SplObject, constructorTag), _context->Zero));
-            emit(new IndexedStoreInst(dest, offsetof(SplObject, sizeInWords), _context->Zero));
+            emit(new IndexedStoreInst(dest, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->Zero));
+            emit(new IndexedStoreInst(dest, _context->getConstantInt(offsetof(SplObject, numPointers)), _context->Zero));
 
             // Address of the function as an unboxed member
             Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
-            emit(new IndexedStoreInst(dest, sizeof(SplObject), fn));
+            emit(new IndexedStoreInst(dest, _context->getConstantInt(sizeof(SplObject)), fn));
         }
     }
 }
@@ -1078,7 +1111,7 @@ void TACCodeGen::visit(AssignNode* node)
         Value* structure = lhs->object->value;
 
         std::vector<size_t> layout = getConstructorLayout(lhs->constructorSymbol, lhs, lhs->typeAssignment);
-        emit(new IndexedStoreInst(structure, sizeof(SplObject) + 8 * layout[lhs->memberIndex], value));
+        emit(new IndexedStoreInst(structure, _context->getConstantInt(sizeof(SplObject) + 8 * layout[lhs->memberIndex]), value));
     }
     else
     {
@@ -1175,6 +1208,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
             phi->addSource(trueBranch, _context->False);
             phi->addSource(falseBranch, _context->True);
             emit(phi);
+            return;
 
         }
         else if (node->target == "+")
@@ -1187,6 +1221,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::ADD, rhs));
             emit(new TagInst(result, tempResult));
+            return;
 
         }
         else if (node->target == "-")
@@ -1199,6 +1234,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::SUB, rhs));
             emit(new TagInst(result, tempResult));
+            return;
         }
         else if (node->target == "*")
         {
@@ -1210,6 +1246,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MUL, rhs));
             emit(new TagInst(result, tempResult));
+            return;
         }
         else if (node->target == "/")
         {
@@ -1221,6 +1258,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::DIV, rhs));
             emit(new TagInst(result, tempResult));
+            return;
         }
         else if (node->target == "%")
         {
@@ -1232,13 +1270,11 @@ void TACCodeGen::visit(FunctionCallNode* node)
             emit(new UntagInst(rhs, arguments[1]));
             emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MOD, rhs));
             emit(new TagInst(result, tempResult));
-        }
-        else
-        {
-            assert(false);
+            return;
         }
     }
-    else if (node->symbol->kind == kFunction)
+
+    if (node->symbol->kind == kFunction)
     {
         Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
         CallInst* inst = new CallInst(result, fn, arguments);
@@ -1436,6 +1472,106 @@ void TACCodeGen::visit(StringLiteralNode* node)
     node->value = getValue(node->symbol);
 }
 
+void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssignment& typeAssignment)
+{
+    FunctionType* functionType = symbol->type->get<FunctionType>();
+    assert(functionType);
+    assert(functionType->inputs().size() == 2);
+
+    // foreign makeArray<T>(n: Int, value: T) -> Array<T>
+    Value* param_n = _context->createArgument(getValueType(functionType->inputs()[0]), "n");
+    _currentFunction->params.push_back(param_n);
+
+    Value* param_value = _context->createArgument(getValueType(functionType->inputs()[1]), "value");
+    _currentFunction->params.push_back(param_value);
+
+    Value* n = createTemp(ValueType::Integer);
+    Value* size = createTemp(ValueType::Integer);
+    emit(new LoadInst(n, param_n));
+    emit(new UntagInst(size, n));
+
+    Value* value = createTemp(ValueType::BoxOrInt);
+    emit(new LoadInst(value, param_value));
+
+    // TODO: Check for negative size
+
+    // Allocate room for the object (allocSize = sizeof(SplObject) + 8 * n)
+    Value* tmp = createTemp(ValueType::Integer);
+    Value* allocSize = createTemp(ValueType::Integer);
+    emit(new BinaryOperationInst(tmp, n, BinaryOperation::MUL, _context->getConstantInt(8)));
+    emit(new BinaryOperationInst(allocSize, tmp, BinaryOperation::ADD, _context->getConstantInt(sizeof(SplObject))));
+
+    Value* result = createTemp(ValueType::BoxOrInt);
+    CallInst* inst = new CallInst(
+        result,
+        _context->createExternFunction("gcAllocate"), // TODO: Fix this
+        {allocSize});
+    inst->regpass = true;
+    emit(inst);
+
+    ConstructedType* arrayType = functionType->output()->get<ConstructedType>();
+    assert(arrayType);
+    assert(arrayType->typeParameters().size() == 1);
+
+    // For the type Array<T>, determine if T is boxed or unboxed
+    Type* underlyingType = arrayType->typeParameters()[0];
+    Value* numPointers;
+    if (underlyingType->isBoxed())
+    {
+        numPointers = size;
+    }
+    else
+    {
+        numPointers = _context->Zero;
+    }
+
+    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->Zero));
+    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, numPointers)), numPointers));
+
+    // Get a pointer to the actual array data, just past the SplObject header
+    Value* arrayContent = createTemp(ValueType::Integer);
+    emit(new BinaryOperationInst(arrayContent, result, BinaryOperation::ADD, _context->getConstantInt(2 * 8)));
+
+    Value* counter = _context->createLocal(ValueType::Integer, "i");
+    _currentFunction->locals.push_back(counter);
+
+    BasicBlock* startLoop = createBlock();
+    BasicBlock* loopBody = createBlock();
+    BasicBlock* endLoop = createBlock();
+
+    // i := 0
+    emit(new StoreInst(counter, _context->Zero));
+    emit(new JumpInst(startLoop));
+
+
+    // if !(i < size) break
+    setBlock(startLoop);
+    Value* i = createTemp(ValueType::Integer);
+    emit(new LoadInst(i, counter));
+    emit(new ConditionalJumpInst(i, "<", size, loopBody, endLoop));
+
+    // result[i] = value
+    setBlock(loopBody);
+    Value* tmp2 = createTemp(ValueType::Integer);
+    Value* offset = createTemp(ValueType::Integer);
+    emit(new BinaryOperationInst(tmp2, i, BinaryOperation::MUL, _context->getConstantInt(8)));
+    emit(new BinaryOperationInst(offset, tmp2, BinaryOperation::ADD, _context->getConstantInt(2 * 8)));
+    emit(new IndexedStoreInst(result, offset, value));
+
+    // i += 1
+    Value* currentCounter = createTemp(ValueType::Integer);
+    Value* nextCounter = createTemp(ValueType::Integer);
+    emit(new LoadInst(currentCounter, counter));
+    emit(new BinaryOperationInst(nextCounter, currentCounter, BinaryOperation::ADD, _context->One));
+    emit(new StoreInst(counter, nextCounter));
+
+    emit(new JumpInst(startLoop));
+
+
+    setBlock(endLoop);
+    emit(new ReturnInst(result));
+}
+
 void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAssignment& typeAssignment)
 {
     ValueConstructor* constructor = symbol->constructor;
@@ -1465,10 +1601,11 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
     //// Fill in the members with the constructor arguments
 
     // SplObject header fields
-    emit(new IndexedStoreInst(result, offsetof(SplObject, constructorTag), _context->getConstantInt(constructorTag)));
-    emit(new IndexedStoreInst(result, offsetof(SplObject, sizeInWords), _context->getConstantInt(members.size())));
-
     std::vector<size_t> layout = getConstructorLayout(symbol, nullptr, typeAssignment);
+    size_t numPointers = getNumPointers(symbol, nullptr, typeAssignment);
+
+    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->getConstantInt(constructorTag)));
+    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, numPointers)), _context->getConstantInt(numPointers)));
 
     // Individual members
     for (size_t i = 0; i < members.size(); ++i)
@@ -1484,7 +1621,7 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
 
         Value* temp = createTemp(getValueType(member.type));
         emit(new LoadInst(temp, param));
-        emit(new IndexedStoreInst(result, sizeof(SplObject) + 8 * location, temp));
+        emit(new IndexedStoreInst(result, _context->getConstantInt(sizeof(SplObject) + 8 * location), temp));
     }
 
     emit(new ReturnInst(result));

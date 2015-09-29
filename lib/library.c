@@ -17,6 +17,46 @@ void fail(const char* str)
     exit(1);
 }
 
+//// Unsafe ////////////////////////////////////////////////////////////////////
+uint64_t* unsafeAllocate(int64_t size, int64_t constructorTag, int64_t numPointers)
+{
+    size = FROM_INT(size);
+    constructorTag = FROM_INT(constructorTag);
+    numPointers = FROM_INT(numPointers);
+
+    if (size < 0)
+        fail("*** Exception: unsafeAllocate: size < 0");
+
+    if (numPointers < 0)
+        fail("*** Exception: unsafeAllocate: numPointers < 0");
+
+    SplObject* result = gcAllocate(sizeof(SplObject) + size * 8);
+    result->constructorTag = constructorTag;
+    result->numPointers = numPointers;
+
+    return (uint64_t*)(result + 1);
+}
+
+void unsafeSet(uint64_t* ptr, int64_t offset, uint64_t value)
+{
+    offset = FROM_INT(offset);
+
+    if (offset < 0)
+        fail("*** Exception: unsafeSet: offset < 0");
+
+    *(ptr + offset) = value;
+}
+
+uint64_t unsafeGet(uint64_t* ptr, int64_t offset)
+{
+    offset = FROM_INT(offset);
+
+    if (offset < 0)
+        fail("*** Exception: unsafeGet: offset < 0");
+
+    return *(ptr + offset);
+}
+
 //// Arrays ////////////////////////////////////////////////////////////////////
 
 uint64_t* arrayContent(Array* s)
@@ -28,7 +68,7 @@ Array* emptyArray()
 {
     Array* result = gcAllocate(sizeof(SplObject));
     result->constructorTag = ARRAY_TAG;
-    result->sizeInWords = 0;
+    result->numPointers = 0;
 
     return result;
 }
@@ -41,7 +81,7 @@ Array* makeArray(int64_t n, uint64_t value)
 
     Array* result = gcAllocate(sizeof(SplObject) + size * 8);
     result->constructorTag = ARRAY_TAG;
-    result->sizeInWords = size;
+    result->numPointers = size;
 
     uint64_t* p = arrayContent(result);
     for (size_t i = 0; i < (size_t)size; ++i)
@@ -56,7 +96,7 @@ uint64_t arrayAt(Array* arr, int64_t n)
 {
     int64_t index = FROM_INT(n);
 
-    if (index < 0 || index >= arr->sizeInWords)
+    if (index < 0 || index >= arr->numPointers)
     {
         fail("*** Exception: Out-of-bounds array access");
     }
@@ -69,7 +109,7 @@ void arraySet(Array* arr, int64_t n, uint64_t value)
 {
     int64_t index = FROM_INT(n);
 
-    if (index < 0 || index > arr->sizeInWords)
+    if (index < 0 || index > arr->numPointers)
     {
         fail("*** Exception: Out-of-bounds array access");
     }
@@ -89,7 +129,7 @@ String* makeStr(const char* data)
 {
     String* result = gcAllocate(sizeof(SplObject) + strlen(data) + 1);
     result->constructorTag = STRING_TAG;
-    result->sizeInWords = 0; // Unstructured data
+    result->numPointers = 0; // Unstructured data
     strcpy(strContent(result), data);
 
     return result;
@@ -116,7 +156,7 @@ String* strSlice(String* s, int64_t tPos, int64_t tLength)
 
     String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->sizeInWords = 0;
+    result->numPointers = 0;
 
     strncpy(strContent(result), strContent(s) + pos, length);
     strContent(result)[length] = '\0';
@@ -131,7 +171,7 @@ String* strCat(String* lhs, String* rhs)
 
     String* result = gcAllocate(sizeof(SplObject) + n1 + n2 + 1);
     result->constructorTag = STRING_TAG;
-    result->sizeInWords = 0;
+    result->numPointers = 0;
 
     char* dest = strContent(result);
     strncpy(dest, strContent(lhs), n1);
@@ -168,7 +208,7 @@ String* strFromList(List* list)
 
     String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->sizeInWords = 0;
+    result->numPointers = 0;
 
     char* out = strContent(result);
     while (!IS_EMPTY(list))
@@ -194,7 +234,7 @@ String* show(int64_t x)
 
     String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
     result->constructorTag = STRING_TAG;
-    result->sizeInWords = 0;
+    result->numPointers = 0;
 
     sprintf(strContent(result), "%" PRId64, value);
     return result;
@@ -416,7 +456,7 @@ void gcScan()
 
         // Iterate over the children, and copy them to the new heap
         SplObject** p = (SplObject**)(object + 1);
-        SplObject** pend = p + object->sizeInWords;
+        SplObject** pend = p + object->numPointers;
         while (p < pend)
         {
             if (IS_REFERENCE(*p))

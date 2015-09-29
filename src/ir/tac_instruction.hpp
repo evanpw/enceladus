@@ -599,22 +599,25 @@ struct IndexedLoadInst : public Instruction
 
 struct IndexedStoreInst : public Instruction
 {
-    IndexedStoreInst(Value* lhs, size_t offset, Value* rhs)
+    IndexedStoreInst(Value* lhs, Value* offset, Value* rhs)
     : lhs(lhs), offset(offset), rhs(rhs)
     {
         lhs->uses.insert(this);
+        offset->uses.insert(this);
         rhs->uses.insert(this);
     }
 
     virtual void dropReferences()
     {
         lhs->uses.erase(this);
+        offset->uses.erase(this);
         rhs->uses.erase(this);
     }
 
     virtual void replaceReferences(Value* from, Value* to)
     {
         replaceReference(lhs, from, to);
+        replaceReference(offset, from, to);
         replaceReference(rhs, from, to);
     }
 
@@ -623,12 +626,12 @@ struct IndexedStoreInst : public Instruction
     virtual std::string str() const override
     {
         std::stringstream ss;
-        ss << "[" << lhs->str() << " + " << offset << "] = " << rhs->str();
+        ss << "[" << lhs->str() << " + " << offset->str() << "] = " << rhs->str();
         return ss.str();
     }
 
     Value* lhs;
-    size_t offset;
+    Value* offset;
     Value* rhs;
 };
 

@@ -10,7 +10,7 @@
 
 #define SplObject_HEAD \
     size_t constructorTag; \
-    uint64_t sizeInWords;
+    uint64_t numPointers;
 
 typedef struct SplObject
 {
