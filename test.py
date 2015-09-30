@@ -347,6 +347,9 @@ class TestAcceptance(object):
     def test_goodStackMap(self):
         self.run('goodStackMap', '4')
 
+    def test_intRange(self):
+        self.run('intRange', '-9223372036854775808\n9223372036854775807')
+
 
     # Medium tests (100ms-1s)
 
