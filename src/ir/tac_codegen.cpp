@@ -69,18 +69,6 @@ static std::string mangleTypeName(Type* type)
     return mangleTypeName(type, variables);
 }
 
-static ValueType getValueType(Type* type)
-{
-    if (type->isBoxed())
-    {
-        return ValueType::ReferenceType;
-    }
-    else
-    {
-        return ValueType::Integer;
-    }
-}
-
 Value* TACCodeGen::getValue(const Symbol* symbol)
 {
     if (!symbol)
@@ -279,6 +267,35 @@ static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssig
     }
 
     return result;
+}
+
+ValueType TACCodeGen::getValueType(Type* type, const TypeAssignment& typeAssignment)
+{
+    TypeAssignment fullAssignment = combine(_typeContext, typeAssignment);
+    Type* realType = substitute(type, fullAssignment);
+
+    if (realType->isBoxed())
+    {
+        return ValueType::ReferenceType;
+    }
+    else
+    {
+        return ValueType::Integer;
+    }
+}
+
+ValueType TACCodeGen::getValueType(Type* type)
+{
+    Type* realType = substitute(type, _typeContext);
+
+    if (realType->isBoxed())
+    {
+        return ValueType::ReferenceType;
+    }
+    else
+    {
+        return ValueType::Integer;
+    }
 }
 
 size_t TACCodeGen::getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
@@ -533,6 +550,7 @@ void TACCodeGen::visit(ProgramNode* node)
 
             _currentFunction = function;
             _localNames.clear();
+            _typeContext = typeContext;
             setBlock(createBlock());
 
             // Collect all function parameters
@@ -543,7 +561,6 @@ void TACCodeGen::visit(ProgramNode* node)
             }
 
             // Generate code for the function body
-            _typeContext = typeContext;
             funcDefNode->body->accept(this);
 
             // Handle implicit return values
@@ -765,7 +782,7 @@ void TACCodeGen::visit(NullaryNode* node)
     }
     else
     {
-        ValueType type = getValueType(node->type);
+        ValueType type = getValueType(node->type, node->typeAssignment);
         Value* dest = node->value = createTemp(type);
 
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
@@ -990,7 +1007,7 @@ void TACCodeGen::visit(ForeachNode* node)
     // Assign the head of the list to the induction variable
     currentList = createTemp(ValueType::ReferenceType);
     emit(new LoadInst(currentList, listVar));
-    Value* currentHead = createTemp(getValueType(substitute(node->varType, _typeContext)));
+    Value* currentHead = createTemp(getValueType(node->varType, _typeContext));
     emit(new CallInst(currentHead, headFunction, {currentList}));
     emit(new StoreInst(getValue(node->symbol), currentHead));
 
@@ -1448,10 +1465,10 @@ void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssig
     assert(functionType->inputs().size() == 2);
 
     // foreign makeArray<T>(n: Int, value: T) -> Array<T>
-    Value* param_n = _context->createArgument(getValueType(substitute(functionType->inputs()[0], typeAssignment)), "n");
+    Value* param_n = _context->createArgument(getValueType(functionType->inputs()[0], typeAssignment), "n");
     _currentFunction->params.push_back(param_n);
 
-    Value* param_value = _context->createArgument(getValueType(substitute(functionType->inputs()[1], typeAssignment)), "value");
+    Value* param_value = _context->createArgument(getValueType(functionType->inputs()[1], typeAssignment), "value");
     _currentFunction->params.push_back(param_value);
 
     Value* size = createTemp(ValueType::Integer);
@@ -1576,7 +1593,7 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
         std::string name = member.name;
         if (name.empty()) name = std::to_string(i);
 
-        Value* param = _context->createArgument(getValueType(substitute(member.type, typeAssignment)), name);
+        Value* param = _context->createArgument(getValueType(member.type, typeAssignment), name);
         _currentFunction->params.push_back(param);
 
         Value* temp = createTemp(getValueType(member.type));

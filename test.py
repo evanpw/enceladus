@@ -344,6 +344,9 @@ class TestAcceptance(object):
     def test_globalInt(self):
         self.run('globalInt', '15')
 
+    def test_goodStackMap(self):
+        self.run('goodStackMap', '4')
+
 
     # Medium tests (100ms-1s)
 

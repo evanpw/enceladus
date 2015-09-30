@@ -163,6 +163,9 @@ private:
     Value* getValue(const Symbol* symbol);
     Function* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
+    ValueType getValueType(Type* type);
+    ValueType getValueType(Type* type, const TypeAssignment& typeAssignment);
+
     std::unordered_map<Function*, std::pair<size_t, std::vector<size_t>>> _constructorLayouts;
     std::vector<size_t> getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
     size_t getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment);
