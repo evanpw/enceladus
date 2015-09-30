@@ -800,7 +800,7 @@ void TACCodeGen::visit(NullaryNode* node)
 
 void TACCodeGen::visit(IntNode* node)
 {
-    node->value = _context->getConstantInt(TO_INT(node->intValue));
+    node->value = _context->getConstantInt(node->intValue);
 }
 
 void TACCodeGen::visit(BoolNode* node)
@@ -1048,9 +1048,8 @@ void TACCodeGen::visit(ForNode* node)
         // Increment the induction variable
         Value* current = createTemp(ValueType::Integer);
         emit(new LoadInst(current, inductionVar));
-        // Add 2 directly to the tagged integer: equivalent to untagging, adding 1, and re-tagging
         Value* next = createTemp(ValueType::Integer);
-        emit(new BinaryOperationInst(next, current, BinaryOperation::ADD, _context->getConstantInt(2)));
+        emit(new BinaryOperationInst(next, current, BinaryOperation::ADD, _context->One));
         emit(new StoreInst(inductionVar, next));
 
         emit(new JumpInst(loopBegin));
@@ -1214,62 +1213,32 @@ void TACCodeGen::visit(FunctionCallNode* node)
         else if (node->target == "+")
         {
             assert(arguments.size() == 2);
-            Value* lhs = createTemp(ValueType::Integer);
-            Value* rhs = createTemp(ValueType::Integer);
-            Value* tempResult = createTemp(ValueType::Integer);
-            emit(new UntagInst(lhs, arguments[0]));
-            emit(new UntagInst(rhs, arguments[1]));
-            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::ADD, rhs));
-            emit(new TagInst(result, tempResult));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::ADD, arguments[1]));
             return;
 
         }
         else if (node->target == "-")
         {
             assert(arguments.size() == 2);
-            Value* lhs = createTemp(ValueType::Integer);
-            Value* rhs = createTemp(ValueType::Integer);
-            Value* tempResult = createTemp(ValueType::Integer);
-            emit(new UntagInst(lhs, arguments[0]));
-            emit(new UntagInst(rhs, arguments[1]));
-            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::SUB, rhs));
-            emit(new TagInst(result, tempResult));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::SUB, arguments[1]));
             return;
         }
         else if (node->target == "*")
         {
             assert(arguments.size() == 2);
-            Value* lhs = createTemp(ValueType::Integer);
-            Value* rhs = createTemp(ValueType::Integer);
-            Value* tempResult = createTemp(ValueType::Integer);
-            emit(new UntagInst(lhs, arguments[0]));
-            emit(new UntagInst(rhs, arguments[1]));
-            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MUL, rhs));
-            emit(new TagInst(result, tempResult));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::MUL, arguments[1]));
             return;
         }
         else if (node->target == "/")
         {
             assert(arguments.size() == 2);
-            Value* lhs = createTemp(ValueType::Integer);
-            Value* rhs = createTemp(ValueType::Integer);
-            Value* tempResult = createTemp(ValueType::Integer);
-            emit(new UntagInst(lhs, arguments[0]));
-            emit(new UntagInst(rhs, arguments[1]));
-            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::DIV, rhs));
-            emit(new TagInst(result, tempResult));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::DIV, arguments[1]));
             return;
         }
         else if (node->target == "%")
         {
             assert(arguments.size() == 2);
-            Value* lhs = createTemp(ValueType::Integer);
-            Value* rhs = createTemp(ValueType::Integer);
-            Value* tempResult = createTemp(ValueType::Integer);
-            emit(new UntagInst(lhs, arguments[0]));
-            emit(new UntagInst(rhs, arguments[1]));
-            emit(new BinaryOperationInst(tempResult, lhs, BinaryOperation::MOD, rhs));
-            emit(new TagInst(result, tempResult));
+            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::MOD, arguments[1]));
             return;
         }
     }
@@ -1485,10 +1454,8 @@ void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssig
     Value* param_value = _context->createArgument(getValueType(substitute(functionType->inputs()[1], typeAssignment)), "value");
     _currentFunction->params.push_back(param_value);
 
-    Value* n = createTemp(ValueType::Integer);
     Value* size = createTemp(ValueType::Integer);
-    emit(new LoadInst(n, param_n));
-    emit(new UntagInst(size, n));
+    emit(new LoadInst(size, param_n));
 
     Value* value = createTemp(param_value->type);
     emit(new LoadInst(value, param_value));
@@ -1498,7 +1465,7 @@ void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssig
     // Allocate room for the object (allocSize = sizeof(SplObject) + 8 * n)
     Value* tmp = createTemp(ValueType::Integer);
     Value* allocSize = createTemp(ValueType::Integer);
-    emit(new BinaryOperationInst(tmp, n, BinaryOperation::MUL, _context->getConstantInt(8)));
+    emit(new BinaryOperationInst(tmp, size, BinaryOperation::MUL, _context->getConstantInt(8)));
     emit(new BinaryOperationInst(allocSize, tmp, BinaryOperation::ADD, _context->getConstantInt(sizeof(SplObject))));
 
     Value* result = createTemp(ValueType::ReferenceType);

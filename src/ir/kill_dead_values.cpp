@@ -72,21 +72,3 @@ void KillDeadValues::visit(PhiInst* inst)
         _changed = true;
     }
 }
-
-void KillDeadValues::visit(TagInst* inst)
-{
-    if (inst->dest->uses.empty())
-    {
-        inst->removeFromParent();
-        _changed = true;
-    }
-}
-
-void KillDeadValues::visit(UntagInst* inst)
-{
-    if (inst->dest->uses.empty())
-    {
-        inst->removeFromParent();
-        _changed = true;
-    }
-}

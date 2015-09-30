@@ -467,7 +467,7 @@ void MachineCodeGen::visit(JumpIfInst* inst)
     if (condition->isImmediate())
     {
         int64_t value = dynamic_cast<Immediate*>(condition)->value;
-        if (value == 3)
+        if (value == 1)
         {
             emit(Opcode::JMP, {}, {ifTrue});
         }
@@ -478,7 +478,7 @@ void MachineCodeGen::visit(JumpIfInst* inst)
     }
     else
     {
-        emit(Opcode::CMP, {}, {condition, _context->createImmediate(3)});
+        emit(Opcode::CMP, {}, {condition, _context->createImmediate(1)});
         emit(Opcode::JE, {}, {ifTrue});
         emit(Opcode::JMP, {}, {ifFalse});
     }
@@ -518,29 +518,6 @@ void MachineCodeGen::visit(ReturnInst* inst)
         emit(Opcode::POP, {vrbp}, {});
         emit(Opcode::RET, {}, {});
     }
-}
-
-void MachineCodeGen::visit(TagInst* inst)
-{
-    MachineOperand* dest = getOperand(inst->dest);
-    MachineOperand* src = getOperand(inst->src);
-    assert(dest->isRegister());
-    assert(src->isRegister() || src->isImmediate());
-
-    emit(Opcode::MOVrd, {dest}, {src});
-    emit(Opcode::SAL, {dest}, {dest, _context->createImmediate(1)});
-    emit(Opcode::INC, {dest}, {dest});
-}
-
-void MachineCodeGen::visit(UntagInst* inst)
-{
-    MachineOperand* dest = getOperand(inst->dest);
-    MachineOperand* src = getOperand(inst->src);
-    assert(dest->isRegister());
-    assert(src->isRegister() || src->isImmediate());
-
-    emit(Opcode::MOVrd, {dest}, {src});
-    emit(Opcode::SAR, {dest}, {dest, _context->createImmediate(1)});
 }
 
 void MachineCodeGen::visit(UnreachableInst* inst)

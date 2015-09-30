@@ -2,8 +2,8 @@
 
 TACContext::TACContext()
 {
-    True = getConstantInt(3);
-    False = getConstantInt(1);
+    True = getConstantInt(1);
+    False = getConstantInt(0);
     One = getConstantInt(1);
     Zero = getConstantInt(0);
 }

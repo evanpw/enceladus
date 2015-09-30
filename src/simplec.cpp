@@ -14,7 +14,6 @@
 #include "ir/kill_dead_values.hpp"
 #include "ir/tac_codegen.hpp"
 #include "ir/tac_validator.hpp"
-#include "ir/tag_elision.hpp"
 #include "ir/to_ssa.hpp"
 #include "parser/parser.hpp"
 #include "semantic/semantic.hpp"
@@ -120,9 +119,6 @@ int main(int argc, char* argv[])
 		//     }
 		// }
 		// std::cerr << std::endl;
-
-		TagElision tagElision(function);
-		tagElision.run();
 
 		KillDeadValues killDeadValues(function);
 		killDeadValues.run();

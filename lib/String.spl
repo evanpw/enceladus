@@ -57,14 +57,14 @@ impl String
         start := 0
 
         len := s.length()
-        for i = 0 to len
+        for i = 0 to len - 1
             if isSpace(s.at(i))
                 len := i - start
                 result = s.slice(start, len) :: result
                 start = i + 1
 
         if start < len
-            result = s.slice(start, len) :: result
+            result = s.slice(start, len - start) :: result
 
         return result.reverse()
 
@@ -73,14 +73,14 @@ impl String
         start := 0
 
         len := s.length()
-        for i = 0 to s.length()
+        for i = 0 to len - 1
             if s.at(i) == sep
                 len := i - start
                 result = s.slice(start, len) :: result
                 start = i + 1
 
-        if start < s.length()
-            result = s.slice(start, len) :: result
+        if start < len
+            result = s.slice(start, len - start) :: result
 
         return result.reverse()
 

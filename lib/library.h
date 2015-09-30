@@ -28,9 +28,6 @@ typedef struct List
 typedef SplObject String;
 typedef SplObject Array;
 
-#define TO_INT(n)   ((n << 1) + 1)
-#define FROM_INT(n) (n >> 1)
-
 extern void* Some(void* value) asm("Some$A6StringE");
 extern void* None() asm("None$A6StringE");
 

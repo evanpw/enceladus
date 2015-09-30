@@ -33,9 +33,7 @@ public:
     virtual void visit(PhiInst* inst);
     virtual void visit(ReturnInst* inst);
     virtual void visit(StoreInst* inst);
-    virtual void visit(TagInst* inst);
     virtual void visit(UnreachableInst* inst);
-    virtual void visit(UntagInst* inst);
 
 private:
     MachineContext* _context;

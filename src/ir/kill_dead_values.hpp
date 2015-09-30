@@ -17,8 +17,6 @@ public:
     virtual void visit(IndexedLoadInst* inst);
     virtual void visit(LoadInst* inst);
     virtual void visit(PhiInst* inst);
-    virtual void visit(TagInst* inst);
-    virtual void visit(UntagInst* inst);
 
 private:
     Function* _function;

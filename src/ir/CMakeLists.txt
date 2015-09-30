@@ -1,1 +1,1 @@
-add_library(ir basic_block.cpp constant_folding.cpp context.cpp demote_globals.cpp from_ssa.cpp function.cpp kill_dead_values.cpp tac_codegen.cpp tac_instruction.cpp tac_validator.cpp tag_elision.cpp to_ssa.cpp value.cpp)
+add_library(ir basic_block.cpp constant_folding.cpp context.cpp demote_globals.cpp from_ssa.cpp function.cpp kill_dead_values.cpp tac_codegen.cpp tac_instruction.cpp tac_validator.cpp to_ssa.cpp value.cpp)

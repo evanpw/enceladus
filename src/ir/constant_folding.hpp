@@ -13,8 +13,6 @@ public:
 
     virtual void visit(CopyInst* inst);
     virtual void visit(BinaryOperationInst* inst);
-    virtual void visit(TagInst* inst);
-    virtual void visit(UntagInst* inst);
 
 private:
     Function* _function;

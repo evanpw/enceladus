@@ -90,25 +90,3 @@ void ConstantFolding::visit(BinaryOperationInst* inst)
     inst->removeFromParent();
     _function->replaceReferences(inst->dest, result);
 }
-
-void ConstantFolding::visit(TagInst* inst)
-{
-    int64_t value;
-    if (getConstant(inst->src, value))
-    {
-        Value* taggedInt = _context->getConstantInt((value << 1) + 1);
-        inst->removeFromParent();
-        _function->replaceReferences(inst->dest, taggedInt);
-    }
-}
-
-void ConstantFolding::visit(UntagInst* inst)
-{
-    int64_t value;
-    if (getConstant(inst->src, value))
-    {
-        Value* untaggedInt = _context->getConstantInt(value >> 1);
-        inst->removeFromParent();
-        _function->replaceReferences(inst->dest, untaggedInt);
-    }
-}

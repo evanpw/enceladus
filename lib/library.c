@@ -20,10 +20,6 @@ void fail(const char* str)
 //// Unsafe ////////////////////////////////////////////////////////////////////
 uint64_t* unsafeAllocate(int64_t size, int64_t constructorTag, int64_t numPointers)
 {
-    size = FROM_INT(size);
-    constructorTag = FROM_INT(constructorTag);
-    numPointers = FROM_INT(numPointers);
-
     if (size < 0)
         fail("*** Exception: unsafeAllocate: size < 0");
 
@@ -39,8 +35,6 @@ uint64_t* unsafeAllocate(int64_t size, int64_t constructorTag, int64_t numPointe
 
 void unsafeSet(uint64_t* ptr, int64_t offset, uint64_t value)
 {
-    offset = FROM_INT(offset);
-
     if (offset < 0)
         fail("*** Exception: unsafeSet: offset < 0");
 
@@ -49,8 +43,6 @@ void unsafeSet(uint64_t* ptr, int64_t offset, uint64_t value)
 
 uint64_t unsafeGet(uint64_t* ptr, int64_t offset)
 {
-    offset = FROM_INT(offset);
-
     if (offset < 0)
         fail("*** Exception: unsafeGet: offset < 0");
 
@@ -73,10 +65,8 @@ Array* emptyArray()
     return result;
 }
 
-uint64_t arrayAt(Array* arr, int64_t n)
+uint64_t arrayAt(Array* arr, int64_t index)
 {
-    int64_t index = FROM_INT(n);
-
     // TODO: Check top bound
     if (index < 0)
     {
@@ -87,10 +77,8 @@ uint64_t arrayAt(Array* arr, int64_t n)
     return p[index];
 }
 
-void arraySet(Array* arr, int64_t n, uint64_t value)
+void arraySet(Array* arr, int64_t index, uint64_t value)
 {
-    int64_t index = FROM_INT(n);
-
     // TODO: Check top bound
     if (index < 0)
     {
@@ -120,19 +108,16 @@ String* makeStr(const char* data)
 
 int64_t strLength(String* s)
 {
-    return TO_INT(strlen(strContent(s)));
+    return strlen(strContent(s));
 }
 
-String* strSlice(String* s, int64_t tPos, int64_t tLength)
+String* strSlice(String* s, int64_t pos, int64_t length)
 {
-    int64_t pos = FROM_INT(tPos);
-    int64_t length = FROM_INT(tLength);
-
     if (pos < 0 || pos >= strLength(s))
     {
         fail("*** Exception: String slice position out of range");
     }
-    else if (length < 0 || pos + length >= strLength(s))
+    else if (length < 0 || pos + length > strLength(s))
     {
         fail("*** Exception: String slice length out of range");
     }
@@ -164,16 +149,14 @@ String* strCat(String* lhs, String* rhs)
     return result;
 }
 
-int64_t strAt(String* s, int64_t n)
+int64_t strAt(String* s, int64_t idx)
 {
-    int64_t idx = FROM_INT(n);
-
     if (idx < 0 || idx >= strLength(s))
     {
         fail("*** Exception: String index out of range");
     }
 
-    return TO_INT(strContent(s)[idx]);
+    return strContent(s)[idx];
 }
 
 #define IS_EMPTY(xs) ((xs)->constructorTag == 1)
@@ -196,7 +179,7 @@ String* strFromList(List* list)
     char* out = strContent(result);
     while (!IS_EMPTY(list))
     {
-        int64_t c = FROM_INT((int64_t)list->value);
+        int64_t c = (int64_t)list->value;
         if (c < 0 || c > 255)
         {
             fail("*** Exception: Char value out of range");
@@ -211,10 +194,8 @@ String* strFromList(List* list)
     return result;
 }
 
-String* show(int64_t x)
+String* show(int64_t value)
 {
-    int64_t value = FROM_INT(x);
-
     String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
     result->constructorTag = STRING_TAG;
     result->numPointers = 0;
@@ -235,7 +216,7 @@ int64_t strHash(String* s)
         hash *= 1099511628211;
     }
 
-    return TO_INT(hash);
+    return hash;
 }
 
 //// I/O ///////////////////////////////////////////////////////////////////////
@@ -249,7 +230,7 @@ int64_t read()
         fail("*** Exception: Invalid input");
     }
 
-    return TO_INT(result);
+    return result;
 }
 
 void* readLine()
