@@ -10,14 +10,14 @@
 struct Instruction;
 struct TACContext;
 
-enum class ValueType { BoxOrInt, Integer, CodeAddress };
+enum class ValueType { ReferenceType, Integer, CodeAddress };
 
 static inline const char* valueTypeString(ValueType type)
 {
     switch (type)
     {
-        case ValueType::BoxOrInt:
-            return "BoxOrInt";
+        case ValueType::ReferenceType:
+            return "ReferenceType";
 
         case ValueType::Integer:
             return "Integer";

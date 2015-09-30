@@ -28,9 +28,6 @@ typedef struct List
 typedef SplObject String;
 typedef SplObject Array;
 
-#define IS_IMMEDIATE(p) ((int64_t)p & 0x3)
-#define IS_REFERENCE(p) !((int64_t)p & 0x3)
-
 #define TO_INT(n)   ((n << 1) + 1)
 #define FROM_INT(n) (n >> 1)
 

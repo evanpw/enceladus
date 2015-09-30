@@ -4,7 +4,7 @@
 
 OperandType getOperandType(Value* value)
 {
-    if (!value || value->type != ValueType::BoxOrInt)
+    if (!value || value->type != ValueType::ReferenceType)
     {
         return NotReference;
     }

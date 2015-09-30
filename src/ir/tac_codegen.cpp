@@ -73,7 +73,7 @@ static ValueType getValueType(Type* type)
 {
     if (type->isBoxed())
     {
-        return ValueType::BoxOrInt;
+        return ValueType::ReferenceType;
     }
     else
     {
@@ -962,7 +962,7 @@ void TACCodeGen::visit(ForeachNode* node)
     BasicBlock* loopBody = createBlock();
 
     // Create an unnamed local variable to hold the list being iterated over
-    Value* listVar = _context->createLocal(ValueType::BoxOrInt, "");
+    Value* listVar = _context->createLocal(ValueType::ReferenceType, "");
     _currentFunction->locals.push_back(listVar);
 
     emit(new JumpInst(loopInit));
@@ -975,7 +975,7 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopBegin);
 
     // Loop while list variable is not null
-    Value* currentList = createTemp(ValueType::BoxOrInt);
+    Value* currentList = createTemp(ValueType::ReferenceType);
     emit(new LoadInst(currentList, listVar));
     Value* isNull = createTemp(ValueType::Integer);
     emit(new CallInst(isNull, emptyFunction, {currentList}));
@@ -988,14 +988,14 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopBody);
 
     // Assign the head of the list to the induction variable
-    currentList = createTemp(ValueType::BoxOrInt);
+    currentList = createTemp(ValueType::ReferenceType);
     emit(new LoadInst(currentList, listVar));
-    Value* currentHead = createTemp(ValueType::BoxOrInt); // TODO: Check for list of value types
+    Value* currentHead = createTemp(getValueType(substitute(node->varType, _typeContext)));
     emit(new CallInst(currentHead, headFunction, {currentList}));
     emit(new StoreInst(getValue(node->symbol), currentHead));
 
     // Pop the head off the current list
-    Value* currentTail = createTemp(ValueType::BoxOrInt);
+    Value* currentTail = createTemp(ValueType::ReferenceType);
     emit(new CallInst(currentTail, tailFunction, {currentList}));
     emit(new StoreInst(listVar, currentTail));
 
@@ -1289,7 +1289,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         // The variable represents a closure, so extract the actual function
         // address
         Value* functionAddress = createTemp(ValueType::CodeAddress);
-        Value* closure = createTemp(ValueType::BoxOrInt);
+        Value* closure = createTemp(ValueType::ReferenceType);
         emit(new LoadInst(closure, getValue(node->symbol)));
         emit(new IndexedLoadInst(functionAddress, closure, sizeof(SplObject)));
 
@@ -1479,10 +1479,10 @@ void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssig
     assert(functionType->inputs().size() == 2);
 
     // foreign makeArray<T>(n: Int, value: T) -> Array<T>
-    Value* param_n = _context->createArgument(getValueType(functionType->inputs()[0]), "n");
+    Value* param_n = _context->createArgument(getValueType(substitute(functionType->inputs()[0], typeAssignment)), "n");
     _currentFunction->params.push_back(param_n);
 
-    Value* param_value = _context->createArgument(getValueType(functionType->inputs()[1]), "value");
+    Value* param_value = _context->createArgument(getValueType(substitute(functionType->inputs()[1], typeAssignment)), "value");
     _currentFunction->params.push_back(param_value);
 
     Value* n = createTemp(ValueType::Integer);
@@ -1490,7 +1490,7 @@ void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssig
     emit(new LoadInst(n, param_n));
     emit(new UntagInst(size, n));
 
-    Value* value = createTemp(ValueType::BoxOrInt);
+    Value* value = createTemp(param_value->type);
     emit(new LoadInst(value, param_value));
 
     // TODO: Check for negative size
@@ -1501,7 +1501,7 @@ void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssig
     emit(new BinaryOperationInst(tmp, n, BinaryOperation::MUL, _context->getConstantInt(8)));
     emit(new BinaryOperationInst(allocSize, tmp, BinaryOperation::ADD, _context->getConstantInt(sizeof(SplObject))));
 
-    Value* result = createTemp(ValueType::BoxOrInt);
+    Value* result = createTemp(ValueType::ReferenceType);
     CallInst* inst = new CallInst(
         result,
         _context->createExternFunction("gcAllocate"), // TODO: Fix this
@@ -1514,7 +1514,7 @@ void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssig
     assert(arrayType->typeParameters().size() == 1);
 
     // For the type Array<T>, determine if T is boxed or unboxed
-    Type* underlyingType = arrayType->typeParameters()[0];
+    Type* underlyingType = substitute(arrayType->typeParameters()[0], typeAssignment);
     Value* numPointers;
     if (underlyingType->isBoxed())
     {
@@ -1578,14 +1578,7 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
     size_t constructorTag = constructor->constructorTag();
 
-    // Value constructors with no parameters are represented as immediates
-    if (members.size() == 0)
-    {
-        emit(new ReturnInst(_context->getConstantInt(TO_INT(constructorTag))));
-        return;
-    }
-
-    Value* result = createTemp(ValueType::BoxOrInt);
+    Value* result = createTemp(ValueType::ReferenceType);
 
     // For now, every member takes up exactly 8 bytes (either directly or as a pointer).
     size_t size = sizeof(SplObject) + 8 * members.size();
@@ -1616,7 +1609,7 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
         std::string name = member.name;
         if (name.empty()) name = std::to_string(i);
 
-        Value* param = _context->createArgument(getValueType(member.type), name);
+        Value* param = _context->createArgument(getValueType(substitute(member.type, typeAssignment)), name);
         _currentFunction->params.push_back(param);
 
         Value* temp = createTemp(getValueType(member.type));

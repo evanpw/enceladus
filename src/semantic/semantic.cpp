@@ -996,6 +996,7 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     node->listExpression->accept(this);
     Type* iteratorType = node->listExpression->type;
     Type* varType = _typeTable->createTypeVariable();
+    node->varType = varType;
 
     // Save the current inner-most loop so that we can restore it after
     // visiting the children of this loop.

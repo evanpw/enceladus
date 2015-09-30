@@ -368,6 +368,7 @@ public:
 
 	// Annotations
 	Symbol* symbol;
+	Type* varType;
 
 	// HACK: give the code generator to these functions
 	MethodSymbol* headSymbol;

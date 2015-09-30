@@ -73,30 +73,12 @@ Array* emptyArray()
     return result;
 }
 
-Array* makeArray(int64_t n, uint64_t value)
-{
-    int64_t size = FROM_INT(n);
-
-    if (size < 0) fail("*** Exception: Cannot create array of negative size");
-
-    Array* result = gcAllocate(sizeof(SplObject) + size * 8);
-    result->constructorTag = ARRAY_TAG;
-    result->numPointers = size;
-
-    uint64_t* p = arrayContent(result);
-    for (size_t i = 0; i < (size_t)size; ++i)
-    {
-        *p++ = value;
-    }
-
-    return result;
-}
-
 uint64_t arrayAt(Array* arr, int64_t n)
 {
     int64_t index = FROM_INT(n);
 
-    if (index < 0 || index >= arr->numPointers)
+    // TODO: Check top bound
+    if (index < 0)
     {
         fail("*** Exception: Out-of-bounds array access");
     }
@@ -109,7 +91,8 @@ void arraySet(Array* arr, int64_t n, uint64_t value)
 {
     int64_t index = FROM_INT(n);
 
-    if (index < 0 || index > arr->numPointers)
+    // TODO: Check top bound
+    if (index < 0)
     {
         fail("*** Exception: Out-of-bounds array access");
     }
@@ -193,7 +176,7 @@ int64_t strAt(String* s, int64_t n)
     return TO_INT(strContent(s)[idx]);
 }
 
-#define IS_EMPTY(xs) ((int64_t)(xs) == 3)
+#define IS_EMPTY(xs) ((xs)->constructorTag == 1)
 
 String* strFromList(List* list)
 {
@@ -424,7 +407,14 @@ void* gcCopy(void* object)
     // It's possible for heap objects to contain references to non-heap memory,
     // like static strings
     if (block < heapStart || block >= heapEnd)
+    {
+        // For testing purposes: this will segfault if we accidently treat
+        // a small integer as a pointer
+        //printf("object: %p\n", object);
+        volatile uint64_t x = *(uint64_t*)object;
+
         return object;
+    }
 
     uint64_t header = *block;
     if (!(header & 1))
@@ -459,13 +449,8 @@ void gcScan()
         SplObject** pend = p + object->numPointers;
         while (p < pend)
         {
-            if (IS_REFERENCE(*p))
-            {
-                void* newLocation = gcCopy(*p);
-                *p = (SplObject*)newLocation;
-            }
-
-            ++p;
+            void* newLocation = gcCopy(*p);
+            *p++ = (SplObject*)newLocation;
         }
 
         size_t sizeInWords = *scanPtr >> 1;
@@ -521,20 +506,20 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
         uint64_t* stackMapEntry = findInStackMap(callSite);
         assert(stackMapEntry);
 
-        //printf("\tstackMapEntry=%p\n", stackMapEntry);
+        // printf("\tstackMapEntry=%p\n", stackMapEntry);
 
         uint64_t n = *stackMapEntry;
 
-        //printf("\tn=%ld\n", n);
+        // printf("\tn=%ld\n", n);
         for (size_t i = 0; i < n; ++i)
         {
             int64_t offset = (int64_t)stackMapEntry[i + 1];
             uint64_t* p = rbp + offset / 8;
 
-            //printf("\toffset=%ld, p=%p\n", offset, p);
+            // printf("\toffset=%ld, p=%p\n", offset, p);
 
             SplObject* object = (SplObject*)*p;
-            //printf("\tobject=%p\n", object);
+            // printf("\tobject=%p\n", object);
             void* newLocation = gcCopy(object);
             *p = (uint64_t)newLocation;
         }
@@ -550,9 +535,8 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
         callSite = (void*)*rsp++;
     }
 
-    //printf("\n");
-
-    //printf("Finished with stack roots\n");
+    // printf("\n");
+    // printf("Finished with stack roots\n");
 
     while (additionalRoots)
     {
@@ -570,7 +554,7 @@ void gcCopyRoots(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additional
         additionalRoots = *p;
     }
 
-    //printf("Finished with additional roots\n");
+    // printf("Finished with additional roots\n");
 }
 
 void gcCollect(uint64_t* stackTop, uint64_t* stackBottom, uint64_t* additionalRoots)

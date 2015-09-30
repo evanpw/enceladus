@@ -71,7 +71,7 @@ GlobalValue* TACContext::createGlobal(ValueType type, const std::string& name)
 
 GlobalValue* TACContext::createStaticString(const std::string& name, const std::string& contents)
 {
-    GlobalValue* result = new GlobalValue(this, ValueType::BoxOrInt, name, GlobalTag::Static);
+    GlobalValue* result = new GlobalValue(this, ValueType::ReferenceType, name, GlobalTag::Static);
     _values.push_back(result);
     staticStrings.emplace_back(result, contents);
     return result;
