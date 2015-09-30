@@ -74,3 +74,7 @@
 * Disallow global variables (make them local variables of function splmain)
 
 * Allow explicit type arguments to functions: (e.g., x := read<Int>() or x := read::<Int>())
+
+* Implement assert and foreach AST nodes using AST rewriting
+
+* Make sure only the last basic block in a function contains a return instruction

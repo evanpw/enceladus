@@ -5,7 +5,6 @@
 # LANG: Add bit operations to the language
 # LIB: Create a string that consists of a repeated character
 # LIB: Replace a specific slice of a string
-# LANG: Iterator that generalizes String and List and can be looped over
 # TST: Add tests for library functions
 # LANG: Make destructuring look more like a normal variable definition?
 # LIB: Deque data structure

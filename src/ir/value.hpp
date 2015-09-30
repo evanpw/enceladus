@@ -10,19 +10,19 @@
 struct Instruction;
 struct TACContext;
 
-enum class ValueType { ReferenceType, Integer, CodeAddress };
+enum class ValueKind { ReferenceType, ValueType, CodeAddress };
 
-static inline const char* valueTypeString(ValueType type)
+static inline const char* valueTypeString(ValueKind type)
 {
     switch (type)
     {
-        case ValueType::ReferenceType:
+        case ValueKind::ReferenceType:
             return "ReferenceType";
 
-        case ValueType::Integer:
+        case ValueKind::ValueType:
             return "Integer";
 
-        case ValueType::CodeAddress:
+        case ValueKind::CodeAddress:
             return "CodeAddress";
     }
 
@@ -37,7 +37,7 @@ struct Value
 
     std::unordered_set<Instruction*> uses;
 
-    ValueType type;
+    ValueKind type;
 
     // Optional
     std::string name;
@@ -50,11 +50,11 @@ struct Value
 protected:
     friend struct TACContext;
 
-    Value(TACContext* context, ValueType type, const std::string& name)
+    Value(TACContext* context, ValueKind type, const std::string& name)
     : type(type), name(name), _context(context)
     {}
 
-    Value(TACContext* context, ValueType type, int64_t seqNumber = -1)
+    Value(TACContext* context, ValueKind type, int64_t seqNumber = -1)
     : type(type), seqNumber(seqNumber), _context(context)
     {}
 
@@ -66,11 +66,11 @@ struct Constant : public Value
 protected:
     friend struct TACContext;
 
-    Constant(TACContext* context, ValueType type)
+    Constant(TACContext* context, ValueKind type)
     : Value(context, type)
     {}
 
-    Constant(TACContext* context, ValueType type, const std::string& name)
+    Constant(TACContext* context, ValueKind type, const std::string& name)
     : Value(context, type, name)
     {}
 };
@@ -85,7 +85,7 @@ protected:
     friend struct TACContext;
 
     ConstantInt(TACContext* context, int64_t value)
-    : Constant(context, ValueType::Integer)
+    : Constant(context, ValueKind::ValueType)
     , value(value)
     {}
 };
@@ -101,7 +101,7 @@ struct GlobalValue : public Constant
 protected:
     friend struct TACContext;
 
-    GlobalValue(TACContext* context, ValueType type, const std::string& name, GlobalTag tag);
+    GlobalValue(TACContext* context, ValueKind type, const std::string& name, GlobalTag tag);
 };
 
 struct LocalValue : public Constant
@@ -111,7 +111,7 @@ struct LocalValue : public Constant
 protected:
     friend struct TACContext;
 
-    LocalValue(TACContext* context, ValueType type, const std::string& name);
+    LocalValue(TACContext* context, ValueKind type, const std::string& name);
 };
 
 struct Argument : public Constant
@@ -121,7 +121,7 @@ struct Argument : public Constant
 protected:
     friend struct TACContext;
 
-    Argument(TACContext* context, ValueType type, const std::string& name)
+    Argument(TACContext* context, ValueKind type, const std::string& name)
     : Constant(context, type, name)
     {}
 };

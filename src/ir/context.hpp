@@ -18,15 +18,15 @@ struct TACContext
     TACContext();
     ~TACContext();
 
-    Argument* createArgument(ValueType type, const std::string& name);
+    Argument* createArgument(ValueKind type, const std::string& name);
     ConstantInt* getConstantInt(int64_t value);
     Function* createExternFunction(const std::string& name);
     Function* createFunction(const std::string& name);
-    GlobalValue* createGlobal(ValueType type, const std::string& name);
+    GlobalValue* createGlobal(ValueKind type, const std::string& name);
     GlobalValue* createStaticString(const std::string& name, const std::string& contents);
-    LocalValue* createLocal(ValueType type, const std::string& name);
-    Value* createTemp(ValueType type, int64_t number);
-    Value* createTemp(ValueType type, const std::string& name);
+    LocalValue* createLocal(ValueKind type, const std::string& name);
+    Value* createTemp(ValueKind type, int64_t number);
+    Value* createTemp(ValueKind type, const std::string& name);
     BasicBlock* createBlock(Function* parent, int64_t number);
 
     // Convenience references
