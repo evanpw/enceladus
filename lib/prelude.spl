@@ -1,12 +1,4 @@
-## Unsafe functions ##
-# foreign unsafeAllocate<T>(size: Int, tag: Int, numPointers: Int) -> Ptr<T>
-# foreign unsafeSet<T>(ptr: Ptr<T>, offset: Int, value: T) -> Unit
- #foreign unsafeGet<T>(ptr: Ptr<T>, offset: Int) -> T
-## Compile-time introspection ##
-
-# Built-in functions
-# builtin makeArray<T>(n: Int, value: T) -> Array<T>
-# builtin isBoxed<T>(value: T) -> Bool
+foreign die<T>(msg: String) -> T
 
 ## List ##
 data List<T> = Cons(T, List<T>) | Nil
@@ -66,8 +58,6 @@ impl<T> Array<T>
     def set(self: Array<T>, n: Int, value: T) -> Unit
         arraySet(self, n, value)
 
-
-foreign die<T>(msg: String) -> T
 
 ## Option ##
 data Option<T> = Some(T) | None

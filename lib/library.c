@@ -17,37 +17,6 @@ void fail(const char* str)
     exit(1);
 }
 
-//// Unsafe ////////////////////////////////////////////////////////////////////
-uint64_t* unsafeAllocate(int64_t size, int64_t constructorTag, int64_t numPointers)
-{
-    if (size < 0)
-        fail("*** Exception: unsafeAllocate: size < 0");
-
-    if (numPointers < 0)
-        fail("*** Exception: unsafeAllocate: numPointers < 0");
-
-    SplObject* result = gcAllocate(sizeof(SplObject) + size * 8);
-    result->constructorTag = constructorTag;
-    result->numPointers = numPointers;
-
-    return (uint64_t*)(result + 1);
-}
-
-void unsafeSet(uint64_t* ptr, int64_t offset, uint64_t value)
-{
-    if (offset < 0)
-        fail("*** Exception: unsafeSet: offset < 0");
-
-    *(ptr + offset) = value;
-}
-
-uint64_t unsafeGet(uint64_t* ptr, int64_t offset)
-{
-    if (offset < 0)
-        fail("*** Exception: unsafeGet: offset < 0");
-
-    return *(ptr + offset);
-}
 
 //// Arrays ////////////////////////////////////////////////////////////////////
 

@@ -350,6 +350,9 @@ class TestAcceptance(object):
     def test_intRange(self):
         self.run('intRange', '-9223372036854775808\n9223372036854775807')
 
+    def test_stringIterator(self):
+        self.run('stringIterator', '1052')
+
 
     # Medium tests (100ms-1s)
 
