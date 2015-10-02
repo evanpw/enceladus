@@ -571,42 +571,15 @@ void TACCodeGen::visit(ProgramNode* node)
         }
         else
         {
-            const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol);
-            assert(functionSymbol);
+            const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
+            assert(constructorSymbol);
 
-            if (functionSymbol->isConstructor)
-            {
-                const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
-                assert(constructorSymbol);
+            Function* function = getFunctionValue(constructorSymbol, nullptr, typeContext);
+            _currentFunction = function;
+            setBlock(createBlock());
 
-                Function* function = getFunctionValue(constructorSymbol, nullptr, typeContext);
-                _currentFunction = function;
-                setBlock(createBlock());
-
-                _typeContext.clear();
-                createConstructor(constructorSymbol, typeContext);
-            }
-            else
-            {
-                assert(functionSymbol->isBuiltin);
-
-                Function* function = getFunctionValue(functionSymbol, nullptr, typeContext);
-
-                _currentFunction = function;
-                _localNames.clear();
-                _typeContext = typeContext;
-                setBlock(createBlock());
-
-                if (functionSymbol->name == "makeArray")
-                {
-                    builtin_makeArray(functionSymbol, typeContext);
-                }
-                else
-                {
-                    std::cerr << functionSymbol->name << std::endl;
-                    assert(false);
-                }
-            }
+            _typeContext.clear();
+            createConstructor(constructorSymbol, typeContext);
         }
     }
 }
@@ -806,7 +779,7 @@ void TACCodeGen::visit(NullaryNode* node)
 
             // SplObject header fields
             emit(new IndexedStoreInst(dest, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->Zero));
-            emit(new IndexedStoreInst(dest, _context->getConstantInt(offsetof(SplObject, numPointers)), _context->Zero));
+            emit(new IndexedStoreInst(dest, _context->getConstantInt(offsetof(SplObject, numReferences)), _context->Zero));
 
             // Address of the function as an unboxed member
             Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
@@ -1260,6 +1233,32 @@ void TACCodeGen::visit(FunctionCallNode* node)
         }
     }
 
+    if (node->target == "unsafeMakeArray") // TODO: Identify this better
+    {
+        assert(node->symbol->kind == kFunction);
+        assert(dynamic_cast<FunctionSymbol*>(node->symbol)->isExternal);
+
+        Type* arrayType = node->type;
+        ConstructedType* constructedType = arrayType->get<ConstructedType>();
+        assert(constructedType);
+        assert(constructedType->typeConstructor()->name() == "Array");
+
+        Type* internalType = constructedType->typeParameters()[0];
+
+        // unsafeMakeArray has an implicit final argument that tells the function
+        // whether the underlying type is boxed or unboxed
+        if (getValueKind(internalType) == ValueKind::ReferenceType)
+        {
+            arguments.push_back(_context->getConstantInt(BOXED_ARRAY_TAG));
+        }
+        else
+        {
+            arguments.push_back(_context->getConstantInt(UNBOXED_ARRAY_TAG));
+        }
+
+        // Fall through
+    }
+
     if (node->symbol->kind == kFunction)
     {
         Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
@@ -1458,104 +1457,6 @@ void TACCodeGen::visit(StringLiteralNode* node)
     node->value = getValue(node->symbol);
 }
 
-void TACCodeGen::builtin_makeArray(const FunctionSymbol* symbol, const TypeAssignment& typeAssignment)
-{
-    FunctionType* functionType = symbol->type->get<FunctionType>();
-    assert(functionType);
-    assert(functionType->inputs().size() == 2);
-
-    // foreign makeArray<T>(n: Int, value: T) -> Array<T>
-    Value* param_n = _context->createArgument(getValueKind(functionType->inputs()[0], typeAssignment), "n");
-    _currentFunction->params.push_back(param_n);
-
-    Value* param_value = _context->createArgument(getValueKind(functionType->inputs()[1], typeAssignment), "value");
-    _currentFunction->params.push_back(param_value);
-
-    Value* size = createTemp(ValueKind::ValueType);
-    emit(new LoadInst(size, param_n));
-
-    Value* value = createTemp(param_value->type);
-    emit(new LoadInst(value, param_value));
-
-    // TODO: Check for negative size
-
-    // Allocate room for the object (allocSize = sizeof(SplObject) + 8 * n)
-    Value* tmp = createTemp(ValueKind::ValueType);
-    Value* allocSize = createTemp(ValueKind::ValueType);
-    emit(new BinaryOperationInst(tmp, size, BinaryOperation::MUL, _context->getConstantInt(8)));
-    emit(new BinaryOperationInst(allocSize, tmp, BinaryOperation::ADD, _context->getConstantInt(sizeof(SplObject))));
-
-    Value* result = createTemp(ValueKind::ReferenceType);
-    CallInst* inst = new CallInst(
-        result,
-        _context->createExternFunction("gcAllocate"), // TODO: Fix this
-        {allocSize});
-    inst->regpass = true;
-    emit(inst);
-
-    ConstructedType* arrayType = functionType->output()->get<ConstructedType>();
-    assert(arrayType);
-    assert(arrayType->typeParameters().size() == 1);
-
-    // For the type Array<T>, determine if T is boxed or unboxed
-    Type* underlyingType = substitute(arrayType->typeParameters()[0], typeAssignment);
-    Value* numPointers;
-    if (underlyingType->isBoxed())
-    {
-        numPointers = size;
-    }
-    else
-    {
-        numPointers = _context->Zero;
-    }
-
-    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->Zero));
-    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, numPointers)), numPointers));
-
-    // Get a pointer to the actual array data, just past the SplObject header
-    Value* arrayContent = createTemp(ValueKind::ValueType);
-    emit(new BinaryOperationInst(arrayContent, result, BinaryOperation::ADD, _context->getConstantInt(2 * 8)));
-
-    Value* counter = _context->createLocal(ValueKind::ValueType, "i");
-    _currentFunction->locals.push_back(counter);
-
-    BasicBlock* startLoop = createBlock();
-    BasicBlock* loopBody = createBlock();
-    BasicBlock* endLoop = createBlock();
-
-    // i := 0
-    emit(new StoreInst(counter, _context->Zero));
-    emit(new JumpInst(startLoop));
-
-
-    // if !(i < size) break
-    setBlock(startLoop);
-    Value* i = createTemp(ValueKind::ValueType);
-    emit(new LoadInst(i, counter));
-    emit(new ConditionalJumpInst(i, "<", size, loopBody, endLoop));
-
-    // result[i] = value
-    setBlock(loopBody);
-    Value* tmp2 = createTemp(ValueKind::ValueType);
-    Value* offset = createTemp(ValueKind::ValueType);
-    emit(new BinaryOperationInst(tmp2, i, BinaryOperation::MUL, _context->getConstantInt(8)));
-    emit(new BinaryOperationInst(offset, tmp2, BinaryOperation::ADD, _context->getConstantInt(2 * 8)));
-    emit(new IndexedStoreInst(result, offset, value));
-
-    // i += 1
-    Value* currentCounter = createTemp(ValueKind::ValueType);
-    Value* nextCounter = createTemp(ValueKind::ValueType);
-    emit(new LoadInst(currentCounter, counter));
-    emit(new BinaryOperationInst(nextCounter, currentCounter, BinaryOperation::ADD, _context->One));
-    emit(new StoreInst(counter, nextCounter));
-
-    emit(new JumpInst(startLoop));
-
-
-    setBlock(endLoop);
-    emit(new ReturnInst(result));
-}
-
 void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAssignment& typeAssignment)
 {
     ValueConstructor* constructor = symbol->constructor;
@@ -1579,10 +1480,10 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
 
     // SplObject header fields
     std::vector<size_t> layout = getConstructorLayout(symbol, nullptr, typeAssignment);
-    size_t numPointers = getNumPointers(symbol, nullptr, typeAssignment);
+    size_t numReferences = getNumPointers(symbol, nullptr, typeAssignment);
 
     emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->getConstantInt(constructorTag)));
-    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, numPointers)), _context->getConstantInt(numPointers)));
+    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, numReferences)), _context->getConstantInt(numReferences)));
 
     // Individual members
     for (size_t i = 0; i < members.size(); ++i)

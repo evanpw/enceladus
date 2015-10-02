@@ -210,9 +210,6 @@ private:
     BasicBlock* _currentBlock = nullptr;
 
     void emit(Instruction* inst);
-
-    // Built-in functions
-    void builtin_makeArray(const FunctionSymbol* symbol, const TypeAssignment& typeAssignment);
 };
 
 #endif

@@ -46,17 +46,38 @@ impl StringIterator
         return self.offset >= self.str.length()
 
 ## Array ##
-foreign emptyArray<T>() -> Array<T>
-foreign arrayAt<T>(arr: Array<T>, n: Int) -> T
-foreign arraySet<T>(arr: Array<T>, n: Int, value: T) -> Unit
+# FOR INTERNAL USE ONLY: Does not initialize the array
+foreign unsafeMakeArray<T>(size: Int) -> Array<T>
+foreign unsafeArrayAt<T>(arr: Array<T>, n: Int) -> T
+foreign unsafeArraySet<T>(arr: Array<T>, n: Int, value: T) -> Unit
+foreign arrayLength<T>(arr: Array<T>) -> Int
+
+def emptyArray<T>() -> Array<T>
+    return unsafeMakeArray(0)
+
+def makeArray<T>(size: Int, value: T) -> Array<T>
+    arr := unsafeMakeArray(size)
+
+    # MUST NOT collect garbage in between allocation and initialization
+    # if T is boxed
+
+    for i = 0 to size - 1
+        unsafeArraySet(arr, i, value)
+
+    return arr
 
 # Method wrappers (methods can't be implemented in C)
 impl<T> Array<T>
     def at(self: Array<T>, n: Int) -> T
-        return arrayAt(self, n)
+        assert n >= 0 and n < arrayLength(self)
+        return unsafeArrayAt(self, n)
 
     def set(self: Array<T>, n: Int, value: T) -> Unit
-        arraySet(self, n, value)
+        assert n >= 0 and n < arrayLength(self)
+        unsafeArraySet(self, n, value)
+
+    def length(self: Array<T>) -> Int
+        return arrayLength(self)
 
 
 ## Option ##

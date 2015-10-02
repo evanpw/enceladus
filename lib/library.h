@@ -6,11 +6,12 @@
 
 #define MAX_STRUCTURED_TAG      ((1L << 32) - 1)
 #define STRING_TAG              (MAX_STRUCTURED_TAG + 1)
-#define ARRAY_TAG               (MAX_STRUCTURED_TAG + 2)
+#define UNBOXED_ARRAY_TAG       (MAX_STRUCTURED_TAG + 2)
+#define BOXED_ARRAY_TAG         (MAX_STRUCTURED_TAG + 2)
 
 #define SplObject_HEAD \
-    size_t constructorTag; \
-    uint64_t numPointers;
+    uint64_t constructorTag; \
+    uint64_t numReferences;
 
 typedef struct SplObject
 {
@@ -25,14 +26,16 @@ typedef struct List
     void* value;
 } List;
 
+typedef struct Array
+{
+    uint64_t constructorTag;    // Either BOXED_ARRAY_TAG or UNBOXED_ARRAY_TAG
+    uint64_t numElements;       // Number of elements in the array (instead of numReferences)
+} Array;
+
 typedef SplObject String;
-typedef SplObject Array;
 
 extern void* Some(void* value) asm("Some$A6StringE");
 extern void* None() asm("None$A6StringE");
-
-//extern void* Some(void* value);
-//extern void* None();
 
 extern void* splcall0(void* f) asm("splcall0");
 extern void* splcall1(void* f, void* p1) asm("splcall1");
@@ -47,3 +50,4 @@ extern void removeRoots(uint64_t* array) asm("removeRoots");
 extern void* gcAllocate(size_t) asm("gcAllocateFromC");
 
 #endif
+

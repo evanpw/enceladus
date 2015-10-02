@@ -20,40 +20,36 @@ void fail(const char* str)
 
 //// Arrays ////////////////////////////////////////////////////////////////////
 
-uint64_t* arrayContent(Array* s)
+Array* unsafeMakeArray(int64_t size, uint64_t tag)
 {
-    return (uint64_t*)(s + 1);
-}
+    if (size < 0)
+        fail("*** Exception: Cannot create array of negative size");
 
-Array* emptyArray()
-{
-    Array* result = gcAllocate(sizeof(SplObject));
-    result->constructorTag = ARRAY_TAG;
-    result->numPointers = 0;
+    Array* result = gcAllocate(sizeof(Array) + size * 8);
+    result->constructorTag = tag;
+    result->numElements = size;
 
     return result;
 }
 
-uint64_t arrayAt(Array* arr, int64_t index)
+int64_t arrayLength(Array* array)
 {
-    // TODO: Check top bound
-    if (index < 0)
-    {
-        fail("*** Exception: Out-of-bounds array access");
-    }
+    return array->numElements;
+}
 
+inline uint64_t* arrayContent(Array* s)
+{
+    return (uint64_t*)(s + 1);
+}
+
+uint64_t unsafeArrayAt(Array* arr, int64_t index)
+{
     uint64_t* p = arrayContent(arr);
     return p[index];
 }
 
-void arraySet(Array* arr, int64_t index, uint64_t value)
+void unsafeArraySet(Array* arr, int64_t index, uint64_t value)
 {
-    // TODO: Check top bound
-    if (index < 0)
-    {
-        fail("*** Exception: Out-of-bounds array access");
-    }
-
     uint64_t* p = arrayContent(arr);
     p[index] = value;
 }
@@ -69,7 +65,7 @@ String* makeStr(const char* data)
 {
     String* result = gcAllocate(sizeof(SplObject) + strlen(data) + 1);
     result->constructorTag = STRING_TAG;
-    result->numPointers = 0; // Unstructured data
+    result->numReferences = 0; // Unstructured data
     strcpy(strContent(result), data);
 
     return result;
@@ -93,7 +89,7 @@ String* strSlice(String* s, int64_t pos, int64_t length)
 
     String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->numPointers = 0;
+    result->numReferences = 0;
 
     strncpy(strContent(result), strContent(s) + pos, length);
     strContent(result)[length] = '\0';
@@ -108,7 +104,7 @@ String* strCat(String* lhs, String* rhs)
 
     String* result = gcAllocate(sizeof(SplObject) + n1 + n2 + 1);
     result->constructorTag = STRING_TAG;
-    result->numPointers = 0;
+    result->numReferences = 0;
 
     char* dest = strContent(result);
     strncpy(dest, strContent(lhs), n1);
@@ -143,7 +139,7 @@ String* strFromList(List* list)
 
     String* result = gcAllocate(sizeof(SplObject) + length + 1);
     result->constructorTag = STRING_TAG;
-    result->numPointers = 0;
+    result->numReferences = 0;
 
     char* out = strContent(result);
     while (!IS_EMPTY(list))
@@ -167,7 +163,7 @@ String* show(int64_t value)
 {
     String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
     result->constructorTag = STRING_TAG;
-    result->numPointers = 0;
+    result->numReferences = 0;
 
     sprintf(strContent(result), "%" PRId64, value);
     return result;
@@ -396,11 +392,14 @@ void gcScan()
 
         // Iterate over the children, and copy them to the new heap
         SplObject** p = (SplObject**)(object + 1);
-        SplObject** pend = p + object->numPointers;
-        while (p < pend)
+        if (object->constructorTag != UNBOXED_ARRAY_TAG)
         {
-            void* newLocation = gcCopy(*p);
-            *p++ = (SplObject*)newLocation;
+            SplObject** pend = p + object->numReferences;
+            while (p < pend)
+            {
+                void* newLocation = gcCopy(*p);
+                *p++ = (SplObject*)newLocation;
+            }
         }
 
         size_t sizeInWords = *scanPtr >> 1;
