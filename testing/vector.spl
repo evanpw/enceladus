@@ -8,14 +8,14 @@ import Vector
 # Int vector
 v := vector()
 
-for i = 1 to 10
+for i in range(1, 11)
     v.pushBack(i)
 
 drop $ v.popBack()
 drop $ v.popBack()
 
 total := 0
-for i = 0 to v.size - 1
+for i in range(0, v.size)
     total += v[i]
 
 # Boolean vector

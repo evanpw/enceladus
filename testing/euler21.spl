@@ -26,7 +26,7 @@ def isAmicable(n: Int) -> Bool
     return n == n''
 
 total := 0
-for n = 1 to 9999
+for n in range(1, 10000)
     if isAmicable(n)
         total += n
 

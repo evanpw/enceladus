@@ -17,7 +17,6 @@ class ExternalFunctionCallNode;
 class ForeachNode;
 class ForeignDeclNode;
 class ForeverNode;
-class ForNode;
 class FunctionCallNode;
 class FunctionDefNode;
 class IfElseNode;
@@ -58,7 +57,6 @@ public:
 	virtual void visit(DataDeclaration* node);
 	virtual void visit(ForeachNode* node);
 	virtual void visit(ForeverNode* node);
-	virtual void visit(ForNode* node);
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(IfElseNode* node);

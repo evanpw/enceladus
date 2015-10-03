@@ -1,7 +1,7 @@
 struct Vector<T>
     content: Array<Option<T>>
-    capacity: Int
-    size: Int
+    capacity: UInt
+    size: UInt
 
 def vector<T>() -> Vector<T>
     return Vector(emptyArray(), 0, 0)
@@ -14,7 +14,7 @@ impl<T> Vector<T>
         else
             newCapacity := self.capacity * 2 + 1
             newContent := makeArray(newCapacity, None)
-            for i = 0 to self.size - 1
+            for i in urange(0, self.size)
                 newContent.set(i, self.content[i])
 
             newContent.set(self.size, Some(x))
@@ -30,5 +30,5 @@ impl<T> Vector<T>
 
         return value.unwrap()
 
-    def at(self: Vector<T>, n: Int) -> T
+    def at(self: Vector<T>, n: UInt) -> T
         return self.content.at(n).unwrap()

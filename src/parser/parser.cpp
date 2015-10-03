@@ -299,23 +299,11 @@ StatementNode* Parser::for_statement()
     expect(tFOR);
     Token loopVar = expect(tLIDENT);
 
-    if (accept(tIN))
-    {
-        ExpressionNode* listExpression = expression();
-        StatementNode* body = suite();
+    expect(tIN);
+    ExpressionNode* listExpression = expression();
+    StatementNode* body = suite();
 
-        return new ForeachNode(_context, location, loopVar.value.str, listExpression, body);
-    }
-    else
-    {
-        expect('=');
-        ExpressionNode* fromExpression = expression();
-        expect(tTO);
-        ExpressionNode* toExpression = expression();
-        StatementNode* body = suite();
-
-        return new ForNode(_context, location, loopVar.value.str, fromExpression, toExpression, body);
-    }
+    return new ForeachNode(_context, location, loopVar.value.str, listExpression, body);
 }
 
 StatementNode* Parser::forever_statement()

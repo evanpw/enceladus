@@ -68,7 +68,7 @@ impl BigInt
             return self
         else
             newDigits := self.digits()
-            for i = 1 to n
+            for i in range(0, n)
                 newDigits = 0 :: newDigits
 
             return BigInt(newDigits)
@@ -98,7 +98,7 @@ def bigPower(a: Int, b: Int) -> BigInt
     bigA := toBigInt(a)
     result := toBigInt(1)
 
-    for i = 1 to b
+    for i in range(0, b)
         result = result.times(bigA)
 
     return result

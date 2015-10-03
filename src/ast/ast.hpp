@@ -405,23 +405,6 @@ public:
 	std::map<TypeVariable*, Type*> emptyTypeAssignment;
 };
 
-class ForNode : public LoopNode
-{
-public:
-	ForNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* fromExpression, ExpressionNode* toExpression, StatementNode* body)
-	: LoopNode(context, location), varName(varName), fromExpression(fromExpression), toExpression(toExpression), body(body)
-	{}
-
-	AST_VISITABLE();
-
-	std::string varName;
-	ExpressionNode* fromExpression;
-	ExpressionNode* toExpression;
-	StatementNode* body;
-
-	// Annotations
-	Symbol* symbol;
-};
 
 class ForeverNode : public LoopNode
 {

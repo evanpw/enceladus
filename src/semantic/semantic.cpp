@@ -1099,39 +1099,6 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     node->type = _typeTable->Unit;
 }
 
-void SemanticAnalyzer::visit(ForNode* node)
-{
-    node->fromExpression->accept(this);
-    unify(node->fromExpression->type, _typeTable->Int, node);
-
-    node->toExpression->accept(this);
-    unify(node->toExpression->type, _typeTable->Int, node);
-
-    // Save the current inner-most loop so that we can restore it after
-    // visiting the children of this loop.
-    LoopNode* outerLoop = _enclosingLoop;
-
-    node->type = _typeTable->Unit;
-
-    _enclosingLoop = node;
-    _symbolTable->pushScope();
-
-    CHECK(node->varName != "_", "for-loop induction variable cannot be unnamed");
-    CHECK_UNDEFINED_IN_SCOPE(node->varName);
-
-    VariableSymbol* symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
-    symbol->type = _typeTable->Int;
-    node->symbol = symbol;
-
-    node->type = _typeTable->Unit;
-    node->body->accept(this);
-
-    _symbolTable->popScope();
-    _enclosingLoop = outerLoop;
-
-    unify(node->body->type, _typeTable->Unit, node);
-}
-
 void SemanticAnalyzer::visit(ForeverNode* node)
 {
     // Save the current inner-most loop so that we can restore it after

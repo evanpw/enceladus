@@ -5,13 +5,13 @@ import BigInt
 def readNumber() -> BigInt
     ys := []
 
-    for j = 1 to 50
+    for j in range(0, 50)
         ys = read :: ys
 
     return BigInt(ys)
 
 xs := toBigInt(0)
-for i = 1 to 100
+for i in urange(0, 100)
     xs = xs.plus(readNumber())
 
 n := 0

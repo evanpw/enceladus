@@ -4,7 +4,7 @@ import BigInt
 
 x := toBigInt(1)
 
-for i = 1 to 1000
+for i in range(0, 1000)
     x = x.plus(x)
 
 print $ show $ sum(x.digits())

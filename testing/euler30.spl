@@ -15,7 +15,7 @@ def digitPowerSum(n: Int) -> Int
 top := 6 * pow(9, 6)
 
 total := 0
-for i = 2 to top
+for i in range(2, top + 1)
     if i == digitPowerSum(i)
         total += i
 

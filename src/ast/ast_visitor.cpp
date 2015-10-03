@@ -69,13 +69,6 @@ void AstVisitor::visit(ForeachNode* node)
 	node->body->accept(this);
 }
 
-void AstVisitor::visit(ForNode* node)
-{
-	node->fromExpression->accept(this);
-	node->toExpression->accept(this);
-	node->body->accept(this);
-}
-
 void AstVisitor::visit(ForeverNode* node)
 {
 	node->body->accept(this);
