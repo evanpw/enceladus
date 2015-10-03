@@ -43,6 +43,6 @@ def permutationAt(n: Int, digits: [Int]) -> [Int]
             subDigits := delete(digit, digits)
             return digit :: permutationAt(n, subDigits)
 
-    die("Unreachable")
+    panic $ "Unreachable"
 
 print $ show $ toInt $ permutationAt(999999, range(0, 10).toList())

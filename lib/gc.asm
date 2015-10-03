@@ -3,7 +3,7 @@ section .text
 global main, _main, stackBottom, gcAllocate, gcAllocateFromC, ccall
 global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
 global addRoot, removeRoots
-extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _die, die, splmain
+extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _panic, panic, splmain
 extern initializeHeap
 extern _malloc, _free, malloc, free
 
@@ -32,7 +32,7 @@ _main:
     ; The actual program
     call splmain
 
-    ; If we reach here without calling die, then exit code = 0
+    ; If we reach here without calling panic, then exit code = 0
     xor rax, rax
     leave
     ret
@@ -340,9 +340,9 @@ gcAllocate:
     ; If all of this fails, the we're out of memory
     mov rdi, outOfMemoryMessage
 %ifdef __APPLE__
-    call _die
+    call _panic
 %else
-    call die
+    call panic
 %endif
 
 .finish:
@@ -376,9 +376,9 @@ gcAllocateFromC:
     ; If all of this fails, the we're out of memory
     mov rdi, outOfMemoryMessage
 %ifdef __APPLE__
-    call _die
+    call _panic
 %else
-    call die
+    call panic
 %endif
 
 .finish:

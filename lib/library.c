@@ -13,7 +13,7 @@
 
 void fail(const char* str)
 {
-    puts(str);
+    fprintf(stderr, str);
     exit(1);
 }
 
@@ -230,9 +230,9 @@ void print(String* s)
     printf("%s\n", strContent(s));
 }
 
-void die(String* s)
+void panic(String* s)
 {
-    fprintf(stderr, "%s\n", strContent(s));
+    fprintf(stderr, "*** Exception: %s\n", strContent(s));
     exit(1);
 }
 

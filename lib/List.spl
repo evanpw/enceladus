@@ -52,7 +52,7 @@ def cmpString(xs: String, ys: String) -> Int
             elif xs.at(n) > ys.at(n)
                 return 1
 
-    die("Unreachable")
+    panic $ "Unreachable"
 
 
 # List operations

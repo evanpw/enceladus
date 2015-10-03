@@ -902,7 +902,7 @@ void TACCodeGen::visit(AssertNode* node)
     static size_t counter = 1;
 
     // HACK
-    Value* dieFunction = getFunctionValue(node->dieSymbol, node);
+    Value* panicFunction = getFunctionValue(node->panicSymbol, node);
 
     BasicBlock* falseBranch = createBlock();
     BasicBlock* continueAt = createBlock();
@@ -921,7 +921,7 @@ void TACCodeGen::visit(AssertNode* node)
              << location.first_column;
 
     Value* message = _context->createStaticString(name, contents.str());
-    CallInst* inst = new CallInst(nullptr, dieFunction, {message});
+    CallInst* inst = new CallInst(nullptr, panicFunction, {message});
     inst->ccall = true;
     inst->regpass = true;
     emit(inst);

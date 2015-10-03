@@ -363,7 +363,7 @@ public:
 	ExpressionNode* condition;
 
 	// Annotations
-	FunctionSymbol* dieSymbol; // HACK
+	FunctionSymbol* panicSymbol; // HACK
 };
 
 class WhileNode : public LoopNode

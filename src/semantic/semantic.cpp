@@ -982,7 +982,7 @@ void SemanticAnalyzer::visit(AssertNode* node)
     unify(node->condition->type, _typeTable->Bool, node);
 
     // HACK: Give the code generator access to these symbols
-    node->dieSymbol = dynamic_cast<FunctionSymbol*>(resolveSymbol("die"));
+    node->panicSymbol = dynamic_cast<FunctionSymbol*>(resolveSymbol("panic"));
 
     node->type = _typeTable->Unit;
 }
