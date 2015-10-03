@@ -39,6 +39,7 @@ public:
 
     UNSUPPORTED(AssertNode);
     UNSUPPORTED(AssignNode);
+    UNSUPPORTED(BinopNode);
     UNSUPPORTED(BlockNode);
     UNSUPPORTED(BreakNode);
     UNSUPPORTED(DataDeclaration);
@@ -118,6 +119,7 @@ public:
 
     virtual void visit(AssertNode* node);
     virtual void visit(AssignNode* node);
+    virtual void visit(BinopNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(BoolNode* node);
     virtual void visit(BreakNode* node);
@@ -163,8 +165,8 @@ private:
     Value* getValue(const Symbol* symbol);
     Function* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
-    ValueKind getValueKind(Type* type);
-    ValueKind getValueKind(Type* type, const TypeAssignment& typeAssignment);
+    ValueType getValueType(Type* type);
+    ValueType getValueType(Type* type, const TypeAssignment& typeAssignment);
 
     std::unordered_map<Function*, std::pair<size_t, std::vector<size_t>>> _constructorLayouts;
     std::vector<size_t> getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
@@ -196,7 +198,7 @@ private:
     TACConditionalCodeGen _conditionalCodeGen;
     friend class TACConditionalCodeGen;
 
-    Value* createTemp(ValueKind type)
+    Value* createTemp(ValueType type)
     {
         return _currentFunction->createTemp(type);
     }

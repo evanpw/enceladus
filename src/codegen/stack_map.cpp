@@ -75,7 +75,7 @@ void StackMap::run()
                 if (inst->inputs[0]->isStackLocation())
                 {
                     StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
-                    if (stackLocation->type == NotReference)
+                    if (stackLocation->type != ValueType::Reference)
                         continue;
 
                     assert(inst->inputs.size() == 2);
@@ -89,7 +89,7 @@ void StackMap::run()
                 if (inst->inputs[0]->isStackLocation())
                 {
                     StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
-                    if (stackLocation->type == NotReference)
+                    if (stackLocation->type != ValueType::Reference)
                         continue;
 
                     assert(inst->inputs.size() == 1);
@@ -167,7 +167,7 @@ void StackMap::run()
                 if (inst->inputs[0]->isStackLocation())
                 {
                     StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
-                    if (stackLocation->type == NotReference)
+                    if (stackLocation->type != ValueType::Reference)
                         continue;
 
                     assert(inst->inputs.size() == 2);
@@ -181,7 +181,7 @@ void StackMap::run()
                 if (inst->inputs[0]->isStackLocation())
                 {
                     StackLocation* stackLocation = dynamic_cast<StackLocation*>(inst->inputs[0]);
-                    if (stackLocation->type == NotReference)
+                    if (stackLocation->type != ValueType::Reference)
                         continue;
 
                     assert(inst->inputs.size() == 1);

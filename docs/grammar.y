@@ -208,6 +208,7 @@ unary_expression
     | FALSE
     | inline_list
     | INT_LIT
+    | UINT_LIT
     | STRING_LIT
 
 inline_list

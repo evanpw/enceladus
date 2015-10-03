@@ -2,10 +2,10 @@
 
 TACContext::TACContext()
 {
-    True = getConstantInt(1);
-    False = getConstantInt(0);
-    One = getConstantInt(1);
-    Zero = getConstantInt(0);
+    True = createConstantInt(ValueType::U64, 1);
+    False = createConstantInt(ValueType::U64, 0);
+    One = createConstantInt(ValueType::U64, 1);
+    Zero = createConstantInt(ValueType::U64, 0);
 }
 
 TACContext::~TACContext()
@@ -16,31 +16,16 @@ TACContext::~TACContext()
     }
 }
 
-Argument* TACContext::createArgument(ValueKind type, const std::string& name)
+Argument* TACContext::createArgument(ValueType type, const std::string& name)
 {
     Argument* result = new Argument(this, type, name);
     _values.push_back(result);
     return result;
 }
 
-ConstantInt* TACContext::getConstantInt(int64_t value)
+ConstantInt* TACContext::createConstantInt(ValueType type, int64_t value)
 {
-    auto i = _constants.find(value);
-    if (i != _constants.end())
-    {
-        return i->second;
-    }
-    else
-    {
-        ConstantInt* result = createConstantInt(value);
-        _constants[value] = result;
-        return result;
-    }
-}
-
-ConstantInt* TACContext::createConstantInt(int64_t value)
-{
-    ConstantInt* result = new ConstantInt(this, value);
+    ConstantInt* result = new ConstantInt(this, type, value);
     _values.push_back(result);
     return result;
 }
@@ -61,7 +46,7 @@ Function* TACContext::createFunction(const std::string& name)
     return result;
 }
 
-GlobalValue* TACContext::createGlobal(ValueKind type, const std::string& name)
+GlobalValue* TACContext::createGlobal(ValueType type, const std::string& name)
 {
     GlobalValue* result = new GlobalValue(this, type, name, GlobalTag::Variable);
     _values.push_back(result);
@@ -71,27 +56,27 @@ GlobalValue* TACContext::createGlobal(ValueKind type, const std::string& name)
 
 GlobalValue* TACContext::createStaticString(const std::string& name, const std::string& contents)
 {
-    GlobalValue* result = new GlobalValue(this, ValueKind::ReferenceType, name, GlobalTag::Static);
+    GlobalValue* result = new GlobalValue(this, ValueType::Reference, name, GlobalTag::Static);
     _values.push_back(result);
     staticStrings.emplace_back(result, contents);
     return result;
 }
 
-LocalValue* TACContext::createLocal(ValueKind type, const std::string& name)
+LocalValue* TACContext::createLocal(ValueType type, const std::string& name)
 {
     LocalValue* result = new LocalValue(this, type, name);
     _values.push_back(result);
     return result;
 }
 
-Value* TACContext::createTemp(ValueKind type, int64_t number)
+Value* TACContext::createTemp(ValueType type, int64_t number)
 {
     Value* result = new Value(this, type, number);
     _values.push_back(result);
     return result;
 }
 
-Value* TACContext::createTemp(ValueKind type, const std::string& name)
+Value* TACContext::createTemp(ValueType type, const std::string& name)
 {
     Value* result = new Value(this, type, name);
     _values.push_back(result);

@@ -26,7 +26,7 @@ std::string ConstantInt::str() const
     return std::to_string(value);
 }
 
-GlobalValue::GlobalValue(TACContext* context, ValueKind type, const std::string& name, GlobalTag tag)
+GlobalValue::GlobalValue(TACContext* context, ValueType type, const std::string& name, GlobalTag tag)
 : Constant(context, type, name), tag(tag)
 {}
 
@@ -37,7 +37,7 @@ std::string GlobalValue::str() const
     return ss.str();
 }
 
-LocalValue::LocalValue(TACContext* context, ValueKind type, const std::string& name)
+LocalValue::LocalValue(TACContext* context, ValueType type, const std::string& name)
 : Constant(context, type, name)
 {}
 

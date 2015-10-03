@@ -1,6 +1,8 @@
 #ifndef MACHINE_INST_HPP
 #define MACHINE_INST_HPP
 
+#include "ir/value_type.hpp"
+
 #include <cassert>
 #include <cstdint>
 #include <initializer_list>
@@ -25,6 +27,7 @@ enum class Opcode {
     CALL,
     CMP,
     CQO,
+    DIV,
     IDIV,
     IMUL,
     INC,
@@ -49,25 +52,16 @@ enum class Opcode {
 
 extern const char* opcodeNames[];
 
-enum OperandType {MaybeReference, NotReference};
-
-static inline const char* operandTypeString(OperandType type)
-{
-    switch(type)
-    {
-        case MaybeReference:
-            return "MaybeReference";
-
-        case NotReference:
-            return "NotReference";
-    }
-
-    assert(false);
-}
-
 struct MachineOperand
 {
+    MachineOperand(ValueType type)
+    : type(type)
+    {
+    }
+
     virtual ~MachineOperand() {}
+
+    const ValueType type;
 
     virtual void print(std::ostream& out) const = 0;
 
@@ -109,7 +103,6 @@ struct VirtualRegister : public MachineOperand
         out << "%vreg" << id;
     }
 
-    const OperandType type;
     const int64_t id;
 
     // Filled in by the register allocator
@@ -118,8 +111,8 @@ struct VirtualRegister : public MachineOperand
 private:
     friend class MachineFunction;
 
-    VirtualRegister(OperandType type, int64_t id)
-    : type(type), id(id)
+    VirtualRegister(ValueType type, int64_t id)
+    : MachineOperand(type), id(id)
     {}
 };
 
@@ -129,6 +122,7 @@ static inline HardwareRegister* getAssignment(MachineOperand* operand)
     return dynamic_cast<VirtualRegister*>(operand)->assignment;
 }
 
+// Constant address, like that of a global variable or function
 struct Address : public MachineOperand
 {
     virtual bool isAddress() const { return true; }
@@ -144,7 +138,7 @@ private:
     friend class MachineContext;
 
     Address(const std::string& name)
-    : name(name)
+    : MachineOperand(ValueType::NonHeapAddress), name(name)
     {}
 };
 
@@ -160,8 +154,6 @@ struct StackLocation : public MachineOperand
             out << "$" << id;
     }
 
-    const OperandType type;
-
     std::string name;
     int64_t id = -1;
 
@@ -171,12 +163,12 @@ struct StackLocation : public MachineOperand
 protected:
     friend class MachineFunction;
 
-    StackLocation(OperandType type, const std::string& name)
-    : type(type), name(name)
+    StackLocation(ValueType type, const std::string& name)
+    : MachineOperand(type), name(name)
     {}
 
-    StackLocation(OperandType type, int64_t id)
-    : type(type), id(id)
+    StackLocation(ValueType type, int64_t id)
+    : MachineOperand(type), id(id)
     {}
 };
 
@@ -189,7 +181,7 @@ struct StackParameter : public StackLocation
 private:
     friend class MachineFunction;
 
-    StackParameter(OperandType type, const std::string& name, size_t index)
+    StackParameter(ValueType type, const std::string& name, size_t index)
     : StackLocation(type, name), index(index)
     {
         offset = 16 + 8 * index;
@@ -205,13 +197,13 @@ struct Immediate : public MachineOperand
         out << value;
     }
 
-    int64_t value;
+    const int64_t value;
 
 private:
     friend class MachineContext;
 
-    Immediate(int64_t value)
-    : value(value)
+    Immediate(int64_t value, ValueType type)
+    : MachineOperand(type), value(value)
     {}
 };
 
@@ -236,7 +228,7 @@ private:
     friend class MachineFunction;
 
     MachineBB(int64_t id)
-    : id(id)
+    : MachineOperand(ValueType::NonHeapAddress), id(id)
     {}
 };
 
@@ -286,14 +278,14 @@ struct MachineFunction
 
     size_t parameterCount() const { return _stackParameters.size(); }
     StackParameter* getParameter(size_t i) { return _stackParameters.at(i).get(); }
-    StackParameter* createStackParameter(OperandType type, const std::string& name, size_t index);
+    StackParameter* createStackParameter(ValueType type, const std::string& name, size_t index);
 
-    VirtualRegister* createPrecoloredReg(HardwareRegister* hreg, OperandType type);
-    VirtualRegister* createVreg(OperandType type);
+    VirtualRegister* createPrecoloredReg(HardwareRegister* hreg, ValueType type);
+    VirtualRegister* createVreg(ValueType type);
     MachineBB* createBlock(int64_t seqNumber);
 
-    StackLocation* createStackVariable(OperandType type);
-    StackLocation* createStackVariable(OperandType type, const std::string& name);
+    StackLocation* createStackVariable(ValueType type);
+    StackLocation* createStackVariable(ValueType type, const std::string& name);
     size_t stackVariableCount() const { return _stackVariables.size(); }
     StackLocation* getStackVariable(size_t i) { return _stackVariables.at(i).get(); }
 

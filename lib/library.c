@@ -169,6 +169,16 @@ String* show(int64_t value)
     return result;
 }
 
+String* showUInt(uint64_t value)
+{
+    String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
+    result->constructorTag = STRING_TAG;
+    result->numReferences = 0;
+
+    sprintf(strContent(result), "%" PRIu64, value);
+    return result;
+}
+
 // FNV-1a 64-bit
 int64_t strHash(String* s)
 {

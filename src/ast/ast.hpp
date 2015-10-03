@@ -187,13 +187,14 @@ public:
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(AstContext* context, const YYLTYPE& location, int64_t intValue)
-	: ExpressionNode(context, location), intValue(intValue)
+	IntNode(AstContext* context, const YYLTYPE& location, int64_t intValue, bool isSigned = true)
+	: ExpressionNode(context, location), intValue(intValue), isSigned(isSigned)
 	{}
 
 	AST_VISITABLE();
 
 	int64_t intValue;
+	bool isSigned;
 };
 
 class BoolNode : public ExpressionNode
@@ -284,6 +285,23 @@ public:
 
 	// Annotations
 	Symbol* symbol = nullptr;
+};
+
+class BinopNode : public ExpressionNode
+{
+public:
+	enum Op {kAdd, kSub, kMul, kDiv, kMod};
+
+	BinopNode(AstContext* context, const YYLTYPE& location, ExpressionNode* lhs, Op op, ExpressionNode* rhs)
+	: ExpressionNode(context, location), lhs(lhs), op(op), rhs(rhs)
+	{
+	}
+
+	AST_VISITABLE();
+
+	ExpressionNode* lhs;
+	Op op;
+	ExpressionNode* rhs;
 };
 
 ////// Statement nodes /////////////////////////////////////////////////////////

@@ -188,3 +188,9 @@ void AstVisitor::visit(MemberAccessNode* node)
 {
 	node->object->accept(this);
 }
+
+void AstVisitor::visit(BinopNode* node)
+{
+	node->lhs->accept(this);
+	node->rhs->accept(this);
+}

@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 
 	for (Value* global : tacContext->globals)
 	{
-		machineContext->globals.emplace_back(global->name, getOperandType(global));
+		machineContext->globals.emplace_back(global->name, global->type);
 	}
 
 	delete tacContext;

@@ -168,7 +168,7 @@ class TestAcceptance(object):
         self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
 
     def test_overrideType(self):
-        self.run('overrideType', build_error='Error: testing/overrideType.spl:2:16: cannot unify types Int and T')
+        self.run('overrideType', build_error='Error: testing/overrideType.spl:2:16: cannot unify types T and Int')
 
     def test_noReturn(self):
         self.run('noReturn', result='1')
@@ -352,6 +352,18 @@ class TestAcceptance(object):
 
     def test_stringIterator(self):
         self.run('stringIterator', '1052')
+
+    def test_uint1(self):
+        self.run('uint1', '18446744073709551615')
+
+    def test_uint2(self):
+        self.run('uint2', '1')
+
+    def test_uint3(self):
+        self.run('uint3', '0')
+
+    def test_uint4(self):
+        self.run('uint4', '')
 
 
     # Medium tests (100ms-1s)

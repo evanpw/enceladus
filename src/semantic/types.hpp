@@ -167,16 +167,32 @@ public:
         return !_primitive;
     }
 
+    // Size of underlying representation, in bits (only valid for unboxed types)
+    size_t size() const
+    {
+        assert(!isBoxed());
+        return 64;
+    }
+
+    // Always false except for integer types
+    bool isSigned() const
+    {
+        assert(!isBoxed());
+        return _signed;
+    }
+
 private:
     friend TypeTable;
 
-    BaseType(TypeTable* table, const std::string& name, bool primitive)
-    : TypeImpl(table, ttBase), _name(name), _primitive(primitive)
+    BaseType(TypeTable* table, const std::string& name, bool primitive, size_t size, bool isSigned)
+    : TypeImpl(table, ttBase), _name(name), _primitive(primitive), _size(size), _signed(isSigned)
     {
     }
 
     std::string _name;
     bool _primitive;
+    size_t _size;
+    bool _signed;
 };
 
 
@@ -185,7 +201,11 @@ class FunctionType : public TypeImpl
 {
 public:
     virtual std::string name() const;
-    virtual bool isBoxed() const { return true; }
+
+    virtual bool isBoxed() const
+    {
+        return true;
+    }
 
     const std::vector<Type*>& inputs() const
     {
@@ -260,14 +280,14 @@ public:
         }
     }
 
-    virtual bool isBoxed() const
+    virtual bool isVariable() const
     {
         return true;
     }
 
-    virtual bool isVariable() const
+    virtual bool isBoxed() const
     {
-        return true;
+        assert(false);
     }
 
     virtual void addReference(Type* parent)
@@ -385,6 +405,25 @@ private:
     std::vector<ValueConstructor*> _valueConstructors;
 };
 
+class Trait
+{
+public:
+    const std::string& name() const
+    {
+        return _name;
+    }
+
+private:
+    friend TypeTable;
+
+    Trait(TypeTable* table, const std::string& name)
+    : _table(table), _name(name)
+    {}
+
+    TypeTable* _table;
+    std::string _name;
+};
+
 
 // Exists only to own all type-related objects
 class TypeTable
@@ -392,9 +431,9 @@ class TypeTable
 public:
     TypeTable();
 
-    Type* createBaseType(const std::string& name, bool primitive = false)
+    Type* createBaseType(const std::string& name, bool primitive = false, size_t size = 64, bool isSigned = true)
     {
-        std::shared_ptr<BaseType> typeImpl(new BaseType(this, name, primitive));
+        std::shared_ptr<BaseType> typeImpl(new BaseType(this, name, primitive, size, isSigned));
         Type* type = new Type(typeImpl);
         _types.emplace_back(type);
 
@@ -453,8 +492,17 @@ public:
         return valueConstructor;
     }
 
+    Trait* createTrait(const std::string& name)
+    {
+        Trait* trait = new Trait(this, name);
+        _traits.emplace_back(trait);
+
+        return trait;
+    }
+
     // For easy access to commonly-used types
     Type* Int;
+    Type* UInt;
     Type* Bool;
     Type* Unit;
     Type* String;
@@ -466,6 +514,7 @@ private:
     std::vector<std::unique_ptr<Type>> _types;
     std::vector<std::unique_ptr<TypeConstructor>> _typeConstructors;
     std::vector<std::unique_ptr<ValueConstructor>> _valueConstructors;
+    std::vector<std::unique_ptr<Trait>> _traits;
 };
 
 #endif

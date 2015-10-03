@@ -53,6 +53,7 @@ enum TokenType : int
     tTRUE,
     tTYPE,
     tUIDENT,
+    tUINT_LIT,
     tVAR,
     tWHILE,
     tWHITESPACE,
@@ -74,7 +75,8 @@ extern YYLTYPE yylloc;
 union YYSTYPE
 {
     const char* str;
-    long number;
+    int64_t signedInt;
+    uint64_t unsignedInt;
 };
 
 extern YYSTYPE yylval;

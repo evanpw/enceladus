@@ -35,8 +35,8 @@ void StackAlloc::run()
         ++itr;
         ++itr;
 
-        VirtualRegister* rsp = _function->createPrecoloredReg(_context->rsp, NotReference);
-        MachineInst* allocInst = new MachineInst(Opcode::ADD, {rsp}, {rsp, _context->createImmediate(-neededRoom)});
+        VirtualRegister* rsp = _function->createPrecoloredReg(_context->rsp, ValueType::U64);
+        MachineInst* allocInst = new MachineInst(Opcode::ADD, {rsp}, {rsp, _context->createImmediate(-neededRoom, ValueType::I64)});
         entryBlock->instructions.insert(itr, allocInst);
     }
 }

@@ -140,20 +140,41 @@ extern "C" int yywrap()
  /* It's easier to get rid of blank lines here than in the grammar. */
 ^[ \t]*("#".*)?\n  { yycolumn = 1; }
 
--?[0-9][0-9]* {
-    try
+-?[0-9][0-9]*u? {
+    if (yytext[yyleng - 1] == 'u')
     {
-            yylval.number = boost::lexical_cast<long>(yytext);
-            return tINT_LIT;
-    }
-    catch (boost::bad_lexical_cast&)
-    {
-        std::stringstream ss;
-        ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
-           << ": error: integer literal out of range: " << yytext;
+        yytext[yyleng - 1] = '\0';
 
-        throw LexerError(ss.str());
-     }
+        try
+        {
+            yylval.unsignedInt = boost::lexical_cast<uint64_t>(yytext);
+            return tUINT_LIT;
+        }
+        catch (boost::bad_lexical_cast&)
+        {
+            std::stringstream ss;
+            ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
+               << ": error: unsigned integer literal out of range: " << yytext;
+
+            throw LexerError(ss.str());
+         }
+    }
+    else
+    {
+        try
+        {
+            yylval.signedInt = boost::lexical_cast<int64_t>(yytext);
+            return tINT_LIT;
+        }
+        catch (boost::bad_lexical_cast&)
+        {
+            std::stringstream ss;
+            ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
+               << ": error: integer literal out of range: " << yytext;
+
+            throw LexerError(ss.str());
+         }
+    }
 }
 
  /* Python-style comments */
@@ -262,14 +283,14 @@ extern "C" int yywrap()
 
  /* String and char literals */
 \"[^"]*\"                { yylval.str = StringTable::add(trim_quotes(yytext)); return tSTRING_LIT; }
-\'([^']|\\[nrt])\'       { yylval.number = char_literal(yytext); return tINT_LIT; }
+\'([^']|\\[nrt])\'       { yylval.signedInt = char_literal(yytext); return tINT_LIT; }
 
 [a-z][a-zA-Z0-9']*       { yylval.str = StringTable::add(yytext); return tLIDENT; }
 "_"                      { yylval.str = StringTable::add(yytext); return tLIDENT; }
 [A-Z][a-zA-Z0-9']*       { yylval.str = StringTable::add(yytext); return tUIDENT; }
 \\\n                     { yycolumn = 1; }
 \n                       { yycolumn = 1; if (unclosedBrackets == 0) return tEOL; }
-[ \t]+                   { yylval.number = count_whitespace(yytext, yyleng); return tWHITESPACE; }
+[ \t]+                   { yylval.unsignedInt = count_whitespace(yytext, yyleng); return tWHITESPACE; }
 
 .                        {
                             std::stringstream ss;

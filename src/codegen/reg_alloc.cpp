@@ -129,7 +129,7 @@ void RegAlloc::spillAroundCalls()
                     if (!inst->outputs.empty() && dynamic_cast<VirtualRegister*>(liveReg)->assignment == _context->rax)
                         continue;
 
-                    OperandType type = dynamic_cast<VirtualRegister*>(liveReg)->type;
+                    ValueType type = dynamic_cast<VirtualRegister*>(liveReg)->type;
                     StackLocation* stackVar = _function->createStackVariable(type);
 
                     // std::cerr << *stackVar << ": " << operandTypeString(type) << std::endl;

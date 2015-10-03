@@ -449,30 +449,27 @@ StatementNode* Parser::assign_or_expr()
              peekType() == tTIMES_EQUAL ||
              peekType() == tDIV_EQUAL)
     {
-        std::vector<ExpressionNode*> argList;
-        argList.push_back(lhs);
-
-        std::string functionName;
+        BinopNode::Op op;
         switch (peekType())
         {
         case tPLUS_EQUAL:
             expect(tPLUS_EQUAL);
-            functionName = '+';
+            op = BinopNode::kAdd;
             break;
 
         case tMINUS_EQUAL:
             expect(tMINUS_EQUAL);
-            functionName = '-';
+            op = BinopNode::kSub;
             break;
 
         case tTIMES_EQUAL:
             expect(tTIMES_EQUAL);
-            functionName = '*';
+            op = BinopNode::kMul;
             break;
 
         case tDIV_EQUAL:
             expect(tDIV_EQUAL);
-            functionName = '/';
+            op = BinopNode::kDiv;
             break;
 
         default:
@@ -480,11 +477,11 @@ StatementNode* Parser::assign_or_expr()
         }
 
         ExpressionNode* rhs = expression();
-        argList.push_back(rhs);
 
         expect(tEOL);
 
-        return new AssignNode(_context, location, lhs, new FunctionCallNode(_context, location, functionName, std::move(argList)));
+        BinopNode* result = new BinopNode(_context, location, lhs, op, rhs);
+        return new AssignNode(_context, location, lhs, result);
     }
     else
     {
@@ -986,12 +983,12 @@ ExpressionNode* Parser::additive_expression()
     {
         if (accept('+'))
         {
-            result = new FunctionCallNode(_context, getLocation(), "+", {result, multiplicative_expression()});
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kAdd, multiplicative_expression());
         }
         else
         {
             expect('-');
-            result = new FunctionCallNode(_context, getLocation(), "-", {result, multiplicative_expression()});
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kSub, multiplicative_expression());
         }
     }
 
@@ -1006,16 +1003,16 @@ ExpressionNode* Parser::multiplicative_expression()
     {
         if (accept('*'))
         {
-            result = new FunctionCallNode(_context, getLocation(), "*", {result, concat_expression()});
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kMul, concat_expression());
         }
         else if (accept('/'))
         {
-            result = new FunctionCallNode(_context, getLocation(), "/", {result, concat_expression()});
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kDiv, concat_expression());
         }
         else
         {
             expect(tMOD);
-            result = new FunctionCallNode(_context, getLocation(), "%", {result, concat_expression()});
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kMod, concat_expression());
         }
     }
 
@@ -1046,7 +1043,7 @@ ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
-        return new FunctionCallNode(_context, getLocation(), "-", {new IntNode(_context, getLocation(), 0), method_member_idx_expression()});
+        return new BinopNode(_context, getLocation(), new IntNode(_context, getLocation(), 0), BinopNode::kSub, method_member_idx_expression());
     }
     else if (accept(tNOT))
     {
@@ -1201,7 +1198,13 @@ ExpressionNode* Parser::unary_expression()
     case tINT_LIT:
     {
         Token token = expect(tINT_LIT);
-        return new IntNode(_context, location, token.value.number);
+        return new IntNode(_context, location, token.value.signedInt, true);
+    }
+
+    case tUINT_LIT:
+    {
+        Token token = expect(tUINT_LIT);
+        return new IntNode(_context, location, token.value.unsignedInt, false);
     }
 
     case tSTRING_LIT:

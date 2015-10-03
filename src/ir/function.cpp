@@ -4,14 +4,14 @@
 #include <algorithm>
 #include <sstream>
 
-Value* Function::createTemp(ValueKind type)
+Value* Function::createTemp(ValueType type)
 {
     Value* tmp = _context->createTemp(type, _nextSeqNumber++);
     temps.push_back(tmp);
     return tmp;
 }
 
-Value* Function::createTemp(ValueKind type, const std::string& name)
+Value* Function::createTemp(ValueType type, const std::string& name)
 {
     Value* tmp = _context->createTemp(type, name);
     temps.push_back(tmp);

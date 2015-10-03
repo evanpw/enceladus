@@ -9,6 +9,7 @@ const char* opcodeNames[] = {
     "CALL",
     "CMP",
     "CQO",
+    "DIV",
     "IDIV",
     "IMUL",
     "INC",
@@ -118,14 +119,14 @@ MachineBB* MachineFunction::createBlock(int64_t seqNumber)
     return block;
 }
 
-StackParameter* MachineFunction::createStackParameter(OperandType type, const std::string& name, size_t index)
+StackParameter* MachineFunction::createStackParameter(ValueType type, const std::string& name, size_t index)
 {
     StackParameter* param = new StackParameter(type, name, index);
     _stackParameters.emplace_back(param);
     return param;
 }
 
-VirtualRegister* MachineFunction::createPrecoloredReg(HardwareRegister* hreg, OperandType type)
+VirtualRegister* MachineFunction::createPrecoloredReg(HardwareRegister* hreg, ValueType type)
 {
     VirtualRegister* vreg = new VirtualRegister(type, _nextVregNumber++);
     vreg->assignment = hreg;
@@ -133,21 +134,21 @@ VirtualRegister* MachineFunction::createPrecoloredReg(HardwareRegister* hreg, Op
     return vreg;
 }
 
-VirtualRegister* MachineFunction::createVreg(OperandType type)
+VirtualRegister* MachineFunction::createVreg(ValueType type)
 {
     VirtualRegister* vreg = new VirtualRegister(type, _nextVregNumber++);
     _vregs.emplace_back(vreg);
     return vreg;
 }
 
-StackLocation* MachineFunction::createStackVariable(OperandType type)
+StackLocation* MachineFunction::createStackVariable(ValueType type)
 {
     StackLocation* location = new StackLocation(type, _nextStackVar++);
     _stackVariables.emplace_back(location);
     return location;
 }
 
-StackLocation* MachineFunction::createStackVariable(OperandType type, const std::string& name)
+StackLocation* MachineFunction::createStackVariable(ValueType type, const std::string& name)
 {
     StackLocation* location = new StackLocation(type, name);
     _stackVariables.emplace_back(location);

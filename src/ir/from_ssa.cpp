@@ -24,7 +24,7 @@ void FromSSA::run()
         {
             if (PhiInst* phi = dynamic_cast<PhiInst*>(inst))
             {
-                ValueKind type = phi->dest->type;
+                ValueType type = phi->dest->type;
 
                 // Each predecessor will copy into this variable, and then the
                 // phi node will be replaced with a copy from this variable to

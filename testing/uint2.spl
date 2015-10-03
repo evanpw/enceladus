@@ -1,0 +1,8 @@
+x := 1u
+x += 10u
+x -= 3u
+x *= 4u
+x /= 2u
+x = x mod 5u
+
+print $ showUInt(x)

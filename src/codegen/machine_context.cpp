@@ -13,19 +13,12 @@ MachineContext::~MachineContext()
     }
 }
 
-Immediate* MachineContext::createImmediate(int64_t value)
+Immediate* MachineContext::createImmediate(int64_t value, ValueType type)
 {
-    auto i = _immediates.find(value);
-    if (i != _immediates.end())
-    {
-        return i->second.get();
-    }
-    else
-    {
-        Immediate* immediate = new Immediate(value);
-        _immediates.emplace(value, std::unique_ptr<Immediate>(immediate));
-        return immediate;
-    }
+    Immediate* immediate = new Immediate(value, type);
+    _immediates.emplace_back(immediate);
+
+    return immediate;
 }
 
 Address* MachineContext::createGlobal(const std::string& name)

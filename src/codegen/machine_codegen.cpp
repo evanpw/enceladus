@@ -2,26 +2,14 @@
 #include "ir/tac_instruction.hpp"
 #include "ir/value.hpp"
 
-OperandType getOperandType(Value* value)
-{
-    if (!value || value->type != ValueKind::ReferenceType)
-    {
-        return NotReference;
-    }
-    else
-    {
-        return MaybeReference;
-    }
-}
-
 MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
 {
     _context = context;
     _function = new MachineFunction(_context, function->name);
     _context->functions.push_back(_function);
 
-    vrsp = _function->createPrecoloredReg(_context->rsp, NotReference);
-    vrbp = _function->createPrecoloredReg(_context->rbp, NotReference);
+    vrsp = _function->createPrecoloredReg(_context->rsp, ValueType::NonHeapAddress);
+    vrbp = _function->createPrecoloredReg(_context->rbp, ValueType::NonHeapAddress);
     hrax = _context->rax;
     hrdx = _context->rdx;
 
@@ -29,7 +17,7 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
     for (size_t i = 0; i < function->params.size(); ++i)
     {
         Argument* arg = dynamic_cast<Argument*>(function->params[i]);
-        OperandType argType = getOperandType(function->params[i]);
+        ValueType argType = function->params[i]->type;
 
         _params[arg] = _function->createStackParameter(argType, arg->name, i);
     }
@@ -57,7 +45,7 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
 {
     if (ConstantInt* constInt = dynamic_cast<ConstantInt*>(value))
     {
-        return _context->createImmediate(constInt->value);
+        return _context->createImmediate(constInt->value, constInt->type);
     }
     else if (GlobalValue* global = dynamic_cast<GlobalValue*>(value))
     {
@@ -84,7 +72,8 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
             return i->second;
         }
 
-        VirtualRegister* vreg = _function->createVreg(getOperandType(value));
+        ValueType type = value ? value->type : ValueType::U64;
+        VirtualRegister* vreg = _function->createVreg(type);
         _vregs[value] = vreg;
 
         return vreg;
@@ -145,6 +134,9 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
     }
     else if (inst->op == BinaryOperation::SHR)
     {
+        // TODO: Add support for unsigned right shift
+        assert(lhs->type == ValueType::U64);
+
         assert(rhs->isImmediate());
         int64_t value = dynamic_cast<Immediate*>(rhs)->value;
         assert(value < 32);
@@ -154,38 +146,66 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
     }
     else if (inst->op == BinaryOperation::DIV)
     {
-        // No IDIV imm instruction
+        assert(lhs->type == rhs->type && rhs->type == dest->type && isInteger(dest->type));
+        ValueType type = dest->type;
+
+        // No DIV/IDIV imm instruction
         if (rhs->isImmediate())
         {
-            VirtualRegister* vreg = _function->createVreg(NotReference);
+            VirtualRegister* vreg = _function->createVreg(type);
             emit(Opcode::MOVrd, {vreg}, {rhs});
             rhs = vreg;
         }
 
-        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, NotReference);
-        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, NotReference);
+        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, type);
+        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, type);
 
         emit(Opcode::MOVrd, {vrax}, {lhs});
-        emit(Opcode::CQO, {vrdx}, {vrax});
-        emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+
+        if (isSigned(type))
+        {
+            emit(Opcode::CQO, {vrdx}, {vrax});
+            emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+        else
+        {
+            MachineOperand* zero = _context->createImmediate(0, ValueType::U64);
+            emit(Opcode::MOVrd, {vrdx}, {zero});
+            emit(Opcode::DIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+
         emit(Opcode::MOVrd, {dest}, {vrax});
     }
     else if (inst->op == BinaryOperation::MOD)
     {
-        // No IDIV imm instruction
+        assert(lhs->type == rhs->type && rhs->type == dest->type && isInteger(dest->type));
+        ValueType type = dest->type;
+
+        // No DIV/IDIV imm instruction
         if (rhs->isImmediate())
         {
-            VirtualRegister* vreg = _function->createVreg(NotReference);
+            VirtualRegister* vreg = _function->createVreg(type);
             emit(Opcode::MOVrd, {vreg}, {rhs});
             rhs = vreg;
         }
 
-        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, NotReference);
-        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, NotReference);
+        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, type);
+        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, type);
 
         emit(Opcode::MOVrd, {vrax}, {lhs});
-        emit(Opcode::CQO, {vrdx}, {vrax});
-        emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+
+        if (isSigned(type))
+        {
+            emit(Opcode::CQO, {vrdx}, {vrax});
+            emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+        else
+        {
+            MachineOperand* zero = _context->createImmediate(0, ValueType::U64);
+            emit(Opcode::MOVrd, {vrdx}, {zero});
+            emit(Opcode::DIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+
         emit(Opcode::MOVrd, {dest}, {vrdx});
     }
     else
@@ -205,11 +225,10 @@ static bool is32Bit(int64_t x)
 void MachineCodeGen::visit(CallInst* inst)
 {
     MachineOperand* dest = getOperand(inst->dest);
-    OperandType destType = getOperandType(inst->dest);
     MachineOperand* target = getOperand(inst->function);
     assert(dest->isRegister());
 
-    VirtualRegister* vrax = _function->createPrecoloredReg(hrax, destType);
+    VirtualRegister* vrax = _function->createPrecoloredReg(hrax, dest->type);
 
     // ccall: pass arguments in registers, indirectly through ccall
     if (inst->regpass)
@@ -234,14 +253,14 @@ void MachineCodeGen::visit(CallInst* inst)
             MachineOperand* param = getOperand(inst->params[i]);
             assert(param->isAddress() || param->isImmediate() || param->isRegister());
 
-            VirtualRegister* arg = _function->createPrecoloredReg(registerArgs[i], getOperandType(inst->params[i]));
+            VirtualRegister* arg = _function->createPrecoloredReg(registerArgs[i], param->type);
             emit(Opcode::MOVrd, {arg}, {param});
             uses.push_back(arg);
         }
 
         if (inst->ccall)
         {
-            VirtualRegister* vrax2 = _function->createPrecoloredReg(hrax, NotReference);
+            VirtualRegister* vrax2 = _function->createPrecoloredReg(hrax, ValueType::NonHeapAddress);
 
             // Indirect call so that we can switch to the C stack
             emit(Opcode::MOVrd, {vrax2}, {target});
@@ -266,7 +285,7 @@ void MachineCodeGen::visit(CallInst* inst)
         // Keep 16-byte alignment
         if (paramsOnStack % 2)
         {
-            emit(Opcode::PUSH, {}, {_context->createImmediate(0)});
+            emit(Opcode::PUSH, {}, {_context->createImmediate(0, ValueType::U64)});
             ++paramsOnStack;
         }
 
@@ -278,7 +297,7 @@ void MachineCodeGen::visit(CallInst* inst)
             if (param->isAddress() ||
                 (param->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(param)->value)))
             {
-                VirtualRegister* vreg = _function->createVreg(getOperandType(*i));
+                VirtualRegister* vreg = _function->createVreg(param->type);
                 emit(Opcode::MOVrd, {vreg}, {param});
                 emit(Opcode::PUSH, {}, {vreg});
             }
@@ -303,7 +322,7 @@ void MachineCodeGen::visit(CallInst* inst)
         // Remove the function parameters from the stack
         if (paramsOnStack > 0)
         {
-            emit(Opcode::ADD, {vrsp}, {vrsp, _context->createImmediate(8 * paramsOnStack)});
+            emit(Opcode::ADD, {vrsp}, {vrsp, _context->createImmediate(8 * paramsOnStack, ValueType::U64)});
         }
     }
 }
@@ -318,7 +337,7 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     // cmp imm, imm is illegal (this should really be optimized away)
     if (lhs->isImmediate() && rhs->isImmediate())
     {
-        VirtualRegister* newLhs = _function->createVreg(NotReference);
+        VirtualRegister* newLhs = _function->createVreg(lhs->type);
         emit(Opcode::MOVrd, {newLhs}, {lhs});
         lhs = newLhs;
     }
@@ -329,7 +348,7 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
 
     if (rhs->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(rhs)->value))
     {
-        VirtualRegister* newRhs = _function->createVreg(NotReference);
+        VirtualRegister* newRhs = _function->createVreg(rhs->type);
         emit(Opcode::MOVrd, {newRhs}, {rhs});
         rhs = newRhs;
     }
@@ -393,7 +412,7 @@ void MachineCodeGen::visit(IndexedLoadInst* inst)
 {
     MachineOperand* dest = getOperand(inst->lhs);
     MachineOperand* base = getOperand(inst->rhs);
-    MachineOperand* offset = _context->createImmediate(inst->offset);
+    MachineOperand* offset = _context->createImmediate(inst->offset, ValueType::I64);
 
     assert(dest->isRegister());
     assert(base->isAddress() || base->isRegister());
@@ -414,7 +433,7 @@ void MachineCodeGen::visit(LoadInst* inst)
 void MachineCodeGen::visit(IndexedStoreInst* inst)
 {
     MachineOperand* base = getOperand(inst->lhs);
-    MachineOperand* offset = getOperand(inst->offset); //_context->createImmediate(inst->offset);
+    MachineOperand* offset = getOperand(inst->offset);
     MachineOperand* src = getOperand(inst->rhs);
     assert(base->isAddress() || base->isRegister());
 
@@ -439,7 +458,7 @@ void MachineCodeGen::visit(StoreInst* inst)
         // MOV [mem], imm64 is illegal
         if (src->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(src)->value))
         {
-            VirtualRegister* vreg = _function->createVreg(NotReference);
+            VirtualRegister* vreg = _function->createVreg(src->type);
             emit(Opcode::MOVrd, {vreg}, {src});
             emit(Opcode::MOVmd, {}, {base, vreg});
         }
@@ -478,7 +497,7 @@ void MachineCodeGen::visit(JumpIfInst* inst)
     }
     else
     {
-        emit(Opcode::CMP, {}, {condition, _context->createImmediate(1)});
+        emit(Opcode::CMP, {}, {condition, _context->createImmediate(1, ValueType::U64)});
         emit(Opcode::JE, {}, {ifTrue});
         emit(Opcode::JMP, {}, {ifFalse});
     }
@@ -501,8 +520,7 @@ void MachineCodeGen::visit(ReturnInst* inst)
 {
     if (inst->value)
     {
-        OperandType destType = getOperandType(inst->value);
-        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, destType);
+        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, inst->value->type);
 
         MachineOperand* value = getOperand(inst->value);
         assert(value->isRegister() || value->isImmediate() || value->isAddress());

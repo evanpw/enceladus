@@ -12,6 +12,7 @@ foreign strFromList(s: [Char]) -> String
 foreign strCat(lhs: String, rhs: String) -> String
 foreign strHash(s: String) -> Int
 foreign show(x: Int) -> String
+foreign showUInt(x: UInt) -> String
 
 struct StringIterator
     str: String

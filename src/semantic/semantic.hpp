@@ -33,6 +33,7 @@ public:
     // Internal nodes
     virtual void visit(AssertNode* node);
     virtual void visit(AssignNode* node);
+    virtual void visit(BinopNode* node);
     virtual void visit(BlockNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(ConstructorSpec* node);
@@ -84,9 +85,6 @@ private:
     Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements);
 
     //// General semantic analysis /////////////////////////////////////////////
-    template<typename... Args>
-    void semanticError(const YYLTYPE& location, const std::string& str, Args... args);
-
     FunctionSymbol* createBuiltin(const std::string& name);
     FunctionSymbol* createExternal(const std::string& name);
     void injectSymbols();
@@ -107,6 +105,20 @@ private:
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;
     ImplNode* _enclosingImplNode;
+};
+
+class SemanticPass2 : public AstVisitor
+{
+public:
+    SemanticPass2(AstContext* context);
+    bool analyze();
+
+    virtual void visit(BinopNode* node);
+    virtual void visit(ComparisonNode* node);
+
+private:
+    AstContext* _context;
+    TypeTable* _typeTable;
 };
 
 class TypeInferenceError : public std::exception

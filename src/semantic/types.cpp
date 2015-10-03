@@ -34,7 +34,9 @@ void TypeVariable::assign(Type* rhs)
 
 TypeTable::TypeTable()
 {
-    Int = createBaseType("Int", true);
+    Int = createBaseType("Int", true, 64, true);
+    UInt = createBaseType("UInt", true, 64, false);
+
     Bool = createBaseType("Bool", true);
     Unit = createBaseType("Unit", true);
     String = createBaseType("String", false);

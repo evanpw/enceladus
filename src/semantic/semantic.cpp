@@ -44,7 +44,7 @@
     CHECK(!_enclosingFunction, "{} must be at top level", name)
 
 template<typename... Args>
-void SemanticAnalyzer::semanticError(const YYLTYPE& location, const std::string& str, Args... args)
+void semanticError(const YYLTYPE& location, const std::string& str, Args... args)
 {
     std::stringstream ss;
 
@@ -109,7 +109,8 @@ bool SemanticAnalyzer::analyze()
 		return false;
 	}
 
-	return true;
+    SemanticPass2 pass2(_context);
+    return pass2.analyze();
 }
 
 FunctionSymbol* SemanticAnalyzer::createBuiltin(const std::string& name)
@@ -132,6 +133,8 @@ void SemanticAnalyzer::injectSymbols()
 {
     //// Built-in types ////////////////////////////////////////////////////////
     _symbolTable->createTypeSymbol("Int", _root, _typeTable->Int);
+    _symbolTable->createTypeSymbol("UInt", _root, _typeTable->UInt);
+
     _symbolTable->createTypeSymbol("Bool", _root, _typeTable->Bool);
     _symbolTable->createTypeSymbol("Unit", _root, _typeTable->Unit);
     _symbolTable->createTypeSymbol("String", _root, _typeTable->String);
@@ -144,24 +147,6 @@ void SemanticAnalyzer::injectSymbols()
     FunctionSymbol* notFn = createBuiltin("not");
 	notFn->type = _typeTable->createFunctionType({_typeTable->Bool}, _typeTable->Bool);
 
-	//// Integer arithmetic functions //////////////////////////////////////////
-
-    Type* arithmeticType = _typeTable->createFunctionType({_typeTable->Int, _typeTable->Int}, _typeTable->Int);
-
-	FunctionSymbol* add = createBuiltin("+");
-	add->type = arithmeticType;
-
-	FunctionSymbol* subtract = createBuiltin("-");
-	subtract->type = arithmeticType;
-
-	FunctionSymbol* multiply = createBuiltin("*");
-	multiply->type = arithmeticType;
-
-	FunctionSymbol* divide = createBuiltin("/");
-	divide->type = arithmeticType;
-
-	FunctionSymbol* modulus = createBuiltin("%");
-	modulus->type = arithmeticType;
 
 	//// These definitions are only needed so that we list them as external
 	//// symbols in the output assembly file. They can't be called from
@@ -837,6 +822,17 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
     node->type = returnType;
 }
 
+void SemanticAnalyzer::visit(BinopNode* node)
+{
+    node->lhs->accept(this);
+    node->rhs->accept(this);
+    unify(node->lhs->type, node->rhs->type, node);
+
+    // Don't check for Int / Uint in the first pass. Let the type inference
+    // continue.
+    node->type = node->lhs->type;
+}
+
 void SemanticAnalyzer::visit(NullaryNode* node)
 {
 	const std::string& name = node->name;
@@ -878,10 +874,11 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 void SemanticAnalyzer::visit(ComparisonNode* node)
 {
     node->lhs->accept(this);
-    unify(node->lhs->type, _typeTable->Int, node);
-
     node->rhs->accept(this);
-    unify(node->rhs->type, _typeTable->Int, node);
+    unify(node->lhs->type, node->rhs->type, node);
+
+    // Don't check for Int / Uint in the first pass. Let the type inference
+    // continue.
 
     node->type = _typeTable->Bool;
 }
@@ -1095,7 +1092,14 @@ void SemanticAnalyzer::visit(BreakNode* node)
 
 void SemanticAnalyzer::visit(IntNode* node)
 {
-    node->type = _typeTable->Int;
+    if (node->isSigned)
+    {
+        node->type = _typeTable->Int;
+    }
+    else
+    {
+        node->type = _typeTable->UInt;
+    }
 }
 
 void SemanticAnalyzer::visit(BoolNode* node)
@@ -1527,4 +1531,60 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
 void SemanticAnalyzer::visit(PassNode* node)
 {
     node->type = _typeTable->Unit;
+}
+
+
+//// SemanticPass2 /////////////////////////////////////////////////////////////
+
+SemanticPass2::SemanticPass2(AstContext* context)
+: _context(context)
+, _typeTable(context->typeTable())
+{
+}
+
+bool SemanticPass2::analyze()
+{
+    try
+    {
+        _context->root()->accept(this);
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+void SemanticPass2::visit(BinopNode* node)
+{
+    if (node->type->equals(_typeTable->Int) || node->type->equals(_typeTable->UInt))
+        return;
+
+    if (node->type->isVariable())
+    {
+        semanticError(node->location, "Cannot infer the type of arguments to binary operator");
+    }
+    else
+    {
+        semanticError(node->location, "Arguments to binary operator must be Int or UInt");
+    }
+}
+
+void SemanticPass2::visit(ComparisonNode* node)
+{
+    Type* type = node->lhs->type;
+
+    if (type->equals(_typeTable->Int) || type->equals(_typeTable->UInt))
+        return;
+
+    if (type->isVariable())
+    {
+        semanticError(node->location, "Cannot infer the type of arguments to comparison operator");
+    }
+    else
+    {
+        semanticError(node->location, "Arguments to comparison operator must be Int or UInt");
+    }
 }

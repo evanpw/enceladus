@@ -1,0 +1,7 @@
+def f(x: UInt) -> UInt
+    return x
+
+x := 18446744073709551615u
+drop $ f(x)
+
+print $ showUInt(x)

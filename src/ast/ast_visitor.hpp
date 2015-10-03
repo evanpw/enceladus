@@ -5,6 +5,7 @@
 
 class AssertNode;
 class AssignNode;
+class BinopNode;
 class BlockNode;
 class BoolNode;
 class BreakNode;
@@ -49,6 +50,7 @@ public:
 	// Default implementations do nothing but visit each child
 	virtual void visit(AssertNode* node);
 	virtual void visit(AssignNode* node);
+	virtual void visit(BinopNode* node);
 	virtual void visit(BlockNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(ConstructorSpec* node);

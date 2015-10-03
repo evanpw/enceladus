@@ -1,0 +1,6 @@
+assert 1u < 2u
+assert 2u <= 2u
+assert 3u == 3u
+assert 4u > 3u
+assert 5u >= 4u
+assert 6u != 7u

@@ -62,7 +62,7 @@ Token yylex()
             int new_level = 0;
             if (token.type == tWHITESPACE)
             {
-                new_level = token.value.number;
+                new_level = token.value.unsignedInt;
             }
 
             if (new_level > indentation.top())

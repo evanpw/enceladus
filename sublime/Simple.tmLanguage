@@ -257,16 +257,8 @@
 			<string>keyword.control.simple</string>
 		</dict>
 		<dict>
-			<key>comment</key>
-			<string>Floats are always decimal</string>
 			<key>match</key>
-			<string>\b([0-9]+\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)\b</string>
-			<key>name</key>
-			<string>constant.numeric.float.simple</string>
-		</dict>
-		<dict>
-			<key>match</key>
-			<string>\b([0-9]+|0([xX][0-9a-fA-F]+|[oO][0-7]+))\b</string>
+			<string>\b([0-9]+|0([xX][0-9a-fA-F]+|[oO][0-7]+))u?\b</string>
 			<key>name</key>
 			<string>constant.numeric.simple</string>
 		</dict>

@@ -60,7 +60,7 @@ void AsmPrinter::printProgram(MachineContext* context)
     std::vector<std::string> globalReferences;
     for (auto& global : context->globals)
     {
-        if (global.second == MaybeReference)
+        if (global.second == ValueType::Reference)
         {
             globalReferences.push_back(global.first);
         }
@@ -441,6 +441,16 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             assert(getAssignment(inst->inputs[0]) == _context->rdx);
             assert(getAssignment(inst->inputs[1]) == _context->rax);
             printSimpleInstruction("idiv", {inst->inputs[2]});
+            break;
+
+        case Opcode::DIV:
+            assert(inst->outputs.size() == 2);
+            assert(inst->inputs.size() == 3);
+            assert(getAssignment(inst->outputs[0]) == _context->rdx);
+            assert(getAssignment(inst->outputs[1]) == _context->rax);
+            assert(getAssignment(inst->inputs[0]) == _context->rdx);
+            assert(getAssignment(inst->inputs[1]) == _context->rax);
+            printSimpleInstruction("div", {inst->inputs[2]});
             break;
 
         case Opcode::POP:

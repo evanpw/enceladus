@@ -20,11 +20,12 @@ void ConstantFolding::run()
     }
 }
 
-static bool getConstant(Value* value, int64_t& out)
+static bool getConstant(Value* value, uint64_t& out, ValueType& type)
 {
     if (ConstantInt* constInt = dynamic_cast<ConstantInt*>(value))
     {
         out = constInt->value;
+        type = constInt->type;
         return true;
     }
     else
@@ -39,11 +40,16 @@ void ConstantFolding::visit(CopyInst* inst)
 
 void ConstantFolding::visit(BinaryOperationInst* inst)
 {
-    int64_t lhs, rhs;
-    if (!getConstant(inst->lhs, lhs) || !getConstant(inst->rhs, rhs))
+    uint64_t lhs, rhs;
+    ValueType lhsType, rhsType;
+
+    if (!getConstant(inst->lhs, lhs, lhsType) || !getConstant(inst->rhs, rhs, rhsType))
         return;
 
-    int64_t resultValue;
+    assert(lhsType == rhsType && isInteger(lhsType));
+    ValueType type = lhsType;
+
+    uint64_t resultValue;
 
     if (inst->op == BinaryOperation::ADD)
     {
@@ -73,20 +79,38 @@ void ConstantFolding::visit(BinaryOperationInst* inst)
     }
     else if (inst->op == BinaryOperation::DIV)
     {
+        // TODO: Throw exception and explain
         assert(rhs != 0);
-        resultValue = lhs / rhs;
+
+        if (isSigned(type))
+        {
+            resultValue = int64_t(lhs) / int64_t(rhs);
+        }
+        else
+        {
+            resultValue = lhs / rhs;
+        }
     }
     else if (inst->op == BinaryOperation::MOD)
     {
+        // TODO: Throw exception and explain
         assert(rhs != 0);
-        resultValue = lhs % rhs;
+
+        if (isSigned(type))
+        {
+            resultValue = int64_t(lhs) % int64_t(rhs);
+        }
+        else
+        {
+            resultValue = lhs % rhs;
+        }
     }
     else
     {
         assert(false);
     }
 
-    Value* result = _context->getConstantInt(resultValue);
+    Value* result = _context->createConstantInt(type, resultValue);
     inst->removeFromParent();
     _function->replaceReferences(inst->dest, result);
 }

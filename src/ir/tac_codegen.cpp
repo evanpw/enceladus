@@ -97,21 +97,21 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
     }
     else if (symbol->global)
     {
-        ValueKind type = getValueKind(symbol->type);
+        ValueType type = getValueType(symbol->type);
         Value* result = _context->createGlobal(type, symbol->name);
         _globalNames[symbol] = result;
         return result;
     }
     else if (varSymbol->isParam)
     {
-        ValueKind type = getValueKind(symbol->type);
+        ValueType type = getValueType(symbol->type);
         Value* result = _context->createArgument(type, symbol->name);
         _localNames[symbol] = result;
         return result;
     }
     else
     {
-        ValueKind type = getValueKind(symbol->type);
+        ValueType type = getValueType(symbol->type);
         Value* result = _context->createLocal(type, symbol->name);
         _currentFunction->locals.push_back(result);
         _localNames[symbol] = result;
@@ -269,33 +269,41 @@ static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssig
     return result;
 }
 
-ValueKind TACCodeGen::getValueKind(Type* type, const TypeAssignment& typeAssignment)
+static ValueType getRealValueType(Type* type)
+{
+    if (type->isBoxed())
+    {
+        return ValueType::Reference;
+    }
+    else
+    {
+        BaseType* baseType = type->get<BaseType>();
+        assert(baseType);
+        assert(baseType->size() == 64);
+
+        if (baseType->isSigned())
+        {
+            return ValueType::I64;
+        }
+        else
+        {
+            return ValueType::U64;
+        }
+    }
+}
+
+ValueType TACCodeGen::getValueType(Type* type, const TypeAssignment& typeAssignment)
 {
     TypeAssignment fullAssignment = combine(_typeContext, typeAssignment);
     Type* realType = substitute(type, fullAssignment);
 
-    if (realType->isBoxed())
-    {
-        return ValueKind::ReferenceType;
-    }
-    else
-    {
-        return ValueKind::ValueType;
-    }
+    return getRealValueType(realType);
 }
 
-ValueKind TACCodeGen::getValueKind(Type* type)
+ValueType TACCodeGen::getValueType(Type* type)
 {
     Type* realType = substitute(type, _typeContext);
-
-    if (realType->isBoxed())
-    {
-        return ValueKind::ReferenceType;
-    }
-    else
-    {
-        return ValueKind::ValueType;
-    }
+    return getRealValueType(realType);
 }
 
 size_t TACCodeGen::getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
@@ -669,7 +677,7 @@ void TACCodeGen::visit(ComparisonNode* node)
     emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
-    node->value = createTemp(ValueKind::ValueType);
+    node->value = createTemp(ValueType::U64);
     PhiInst* phi = new PhiInst(node->value);
     phi->addSource(falseBranch, _context->False);
     phi->addSource(trueBranch, _context->True);
@@ -737,7 +745,7 @@ void TACCodeGen::visit(LogicalNode* node)
     emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
-    node->value = createTemp(ValueKind::ValueType);
+    node->value = createTemp(ValueType::U64);
     PhiInst* phi = new PhiInst(node->value);
     phi->addSource(falseBranch, _context->False);
     phi->addSource(trueBranch, _context->True);
@@ -755,7 +763,7 @@ void TACCodeGen::visit(NullaryNode* node)
     }
     else
     {
-        ValueKind type = getValueKind(node->type, node->typeAssignment);
+        ValueType type = getValueType(node->type, node->typeAssignment);
         Value* dest = node->value = createTemp(type);
 
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
@@ -773,24 +781,25 @@ void TACCodeGen::visit(NullaryNode* node)
             assert(node->kind == NullaryNode::CLOSURE);
 
             size_t size = sizeof(SplObject) + 8;
-            CallInst* callInst = new CallInst(dest, _context->createExternFunction("gcAllocate"), {_context->getConstantInt(size)});
+            CallInst* callInst = new CallInst(dest, _context->createExternFunction("gcAllocate"), {_context->createConstantInt(ValueType::U64, size)});
             callInst->regpass = true;
             emit(callInst);
 
             // SplObject header fields
-            emit(new IndexedStoreInst(dest, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->Zero));
-            emit(new IndexedStoreInst(dest, _context->getConstantInt(offsetof(SplObject, numReferences)), _context->Zero));
+            emit(new IndexedStoreInst(dest, _context->createConstantInt(ValueType::U64, offsetof(SplObject, constructorTag)), _context->Zero));
+            emit(new IndexedStoreInst(dest, _context->createConstantInt(ValueType::U64, offsetof(SplObject, numReferences)), _context->Zero));
 
             // Address of the function as an unboxed member
             Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
-            emit(new IndexedStoreInst(dest, _context->getConstantInt(sizeof(SplObject)), fn));
+            emit(new IndexedStoreInst(dest, _context->createConstantInt(ValueType::U64, sizeof(SplObject)), fn));
         }
     }
 }
 
 void TACCodeGen::visit(IntNode* node)
 {
-    node->value = _context->getConstantInt(node->intValue);
+    ValueType type = getValueType(node->type);
+    node->value = _context->createConstantInt(type, node->intValue);
 }
 
 void TACCodeGen::visit(BoolNode* node)
@@ -952,7 +961,7 @@ void TACCodeGen::visit(ForeachNode* node)
     BasicBlock* loopBody = createBlock();
 
     // Create an unnamed local variable to hold the list being iterated over
-    Value* listVar = _context->createLocal(ValueKind::ReferenceType, "");
+    Value* listVar = _context->createLocal(ValueType::Reference, "");
     _currentFunction->locals.push_back(listVar);
 
     emit(new JumpInst(loopInit));
@@ -965,9 +974,9 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopBegin);
 
     // Loop while list variable is not null
-    Value* currentList = createTemp(ValueKind::ReferenceType);
+    Value* currentList = createTemp(ValueType::Reference);
     emit(new LoadInst(currentList, listVar));
-    Value* isNull = createTemp(ValueKind::ValueType);
+    Value* isNull = createTemp(ValueType::U64);
     emit(new CallInst(isNull, emptyFunction, {currentList}));
     emit(new JumpIfInst(isNull, loopExit, loopBody));
 
@@ -978,14 +987,14 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopBody);
 
     // Assign the head of the list to the induction variable
-    currentList = createTemp(ValueKind::ReferenceType);
+    currentList = createTemp(ValueType::Reference);
     emit(new LoadInst(currentList, listVar));
-    Value* currentHead = createTemp(getValueKind(node->varType, _typeContext));
+    Value* currentHead = createTemp(getValueType(node->varType, _typeContext));
     emit(new CallInst(currentHead, headFunction, {currentList}));
     emit(new StoreInst(getValue(node->symbol), currentHead));
 
     // Pop the head off the current list
-    Value* currentTail = createTemp(ValueKind::ReferenceType);
+    Value* currentTail = createTemp(ValueType::Reference);
     emit(new CallInst(currentTail, tailFunction, {currentList}));
     emit(new StoreInst(listVar, currentTail));
 
@@ -1021,7 +1030,7 @@ void TACCodeGen::visit(ForNode* node)
     setBlock(loopBegin);
 
     // Loop while current <= to
-    Value* current = createTemp(ValueKind::ValueType);
+    Value* current = createTemp(ValueType::I64);
     emit(new LoadInst(current, inductionVar));
     emit(new ConditionalJumpInst(current, ">", to, loopExit, loopBody));
 
@@ -1036,9 +1045,9 @@ void TACCodeGen::visit(ForNode* node)
     if (!_currentBlock->isTerminated())
     {
         // Increment the induction variable
-        Value* current = createTemp(ValueKind::ValueType);
+        Value* current = createTemp(ValueType::I64);
         emit(new LoadInst(current, inductionVar));
-        Value* next = createTemp(ValueKind::ValueType);
+        Value* next = createTemp(ValueType::I64);
         emit(new BinaryOperationInst(next, current, BinaryOperation::ADD, _context->One));
         emit(new StoreInst(inductionVar, next));
 
@@ -1100,7 +1109,7 @@ void TACCodeGen::visit(AssignNode* node)
         Value* structure = lhs->object->value;
 
         std::vector<size_t> layout = getConstructorLayout(lhs->constructorSymbol, lhs, lhs->typeAssignment);
-        emit(new IndexedStoreInst(structure, _context->getConstantInt(sizeof(SplObject) + 8 * layout[lhs->memberIndex]), value));
+        emit(new IndexedStoreInst(structure, _context->createConstantInt(ValueType::U64, sizeof(SplObject) + 8 * layout[lhs->memberIndex]), value));
     }
     else
     {
@@ -1136,7 +1145,7 @@ void TACCodeGen::visit(LetNode* node)
         const Symbol* member = node->symbols.at(i);
         if (member)
         {
-            ValueKind type = getValueKind(member->type);
+            ValueType type = getValueType(member->type);
 
             Value* tmp = createTemp(type);
             emit(new IndexedLoadInst(tmp, body, sizeof(SplObject) + 8 * layout[i]));
@@ -1170,7 +1179,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
 
     if (!node->type->equals(node->type->table()->Unit))
-        node->value = createTemp(getValueKind(node->type));
+        node->value = createTemp(getValueType(node->type));
 
     Value* result = node->value;
 
@@ -1200,36 +1209,9 @@ void TACCodeGen::visit(FunctionCallNode* node)
             return;
 
         }
-        else if (node->target == "+")
+        else
         {
-            assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::ADD, arguments[1]));
-            return;
-
-        }
-        else if (node->target == "-")
-        {
-            assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::SUB, arguments[1]));
-            return;
-        }
-        else if (node->target == "*")
-        {
-            assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::MUL, arguments[1]));
-            return;
-        }
-        else if (node->target == "/")
-        {
-            assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::DIV, arguments[1]));
-            return;
-        }
-        else if (node->target == "%")
-        {
-            assert(arguments.size() == 2);
-            emit(new BinaryOperationInst(result, arguments[0], BinaryOperation::MOD, arguments[1]));
-            return;
+            assert(false);
         }
     }
 
@@ -1247,13 +1229,13 @@ void TACCodeGen::visit(FunctionCallNode* node)
 
         // unsafeMakeArray has an implicit final argument that tells the function
         // whether the underlying type is boxed or unboxed
-        if (getValueKind(internalType) == ValueKind::ReferenceType)
+        if (getValueType(internalType) == ValueType::Reference)
         {
-            arguments.push_back(_context->getConstantInt(BOXED_ARRAY_TAG));
+            arguments.push_back(_context->createConstantInt(ValueType::U64, BOXED_ARRAY_TAG));
         }
         else
         {
-            arguments.push_back(_context->getConstantInt(UNBOXED_ARRAY_TAG));
+            arguments.push_back(_context->createConstantInt(ValueType::U64, UNBOXED_ARRAY_TAG));
         }
 
         // Fall through
@@ -1273,13 +1255,54 @@ void TACCodeGen::visit(FunctionCallNode* node)
     {
         // The variable represents a closure, so extract the actual function
         // address
-        Value* functionAddress = createTemp(ValueKind::CodeAddress);
-        Value* closure = createTemp(ValueKind::ReferenceType);
+        Value* functionAddress = createTemp(ValueType::NonHeapAddress);
+        Value* closure = createTemp(ValueType::Reference);
         emit(new LoadInst(closure, getValue(node->symbol)));
         emit(new IndexedLoadInst(functionAddress, closure, sizeof(SplObject)));
 
         CallInst* inst = new CallInst(result, functionAddress, arguments);
         emit(inst);
+    }
+}
+
+void TACCodeGen::visit(BinopNode* node)
+{
+    Value* lhs = visitAndGet(node->lhs);
+    Value* rhs = visitAndGet(node->rhs);
+
+    node->value = createTemp(getValueType(node->type));
+
+    switch(node->op)
+    {
+    case BinopNode::kAdd:
+        {
+            emit(new BinaryOperationInst(node->value, lhs, BinaryOperation::ADD, rhs));
+            break;
+        }
+
+    case BinopNode::kSub:
+        {
+            emit(new BinaryOperationInst(node->value, lhs, BinaryOperation::SUB, rhs));
+            break;
+        }
+
+    case BinopNode::kMul:
+        {
+            emit(new BinaryOperationInst(node->value, lhs, BinaryOperation::MUL, rhs));
+            break;
+        }
+
+    case BinopNode::kDiv:
+        {
+            emit(new BinaryOperationInst(node->value, lhs, BinaryOperation::DIV, rhs));
+            break;
+        }
+
+    case BinopNode::kMod:
+        {
+            emit(new BinaryOperationInst(node->value, lhs, BinaryOperation::MOD, rhs));
+            break;
+        }
     }
 }
 
@@ -1298,7 +1321,7 @@ void TACCodeGen::visit(MethodCallNode* node)
     }
 
     if (!node->type->equals(node->type->table()->Unit))
-        node->value = createTemp(getValueKind(node->type));
+        node->value = createTemp(getValueType(node->type));
 
     Value* result = node->value;
 
@@ -1317,13 +1340,13 @@ void TACCodeGen::visit(ReturnNode* node)
 void TACCodeGen::visit(VariableNode* node)
 {
     assert(node->symbol->kind == kVariable);
-    node->value = createTemp(getValueKind(node->symbol->type));
+    node->value = createTemp(getValueType(node->symbol->type));
     emit(new LoadInst(node->value, getValue(node->symbol)));
 }
 
 void TACCodeGen::visit(MemberAccessNode* node)
 {
-    node->value = createTemp(getValueKind(node->type));
+    node->value = createTemp(getValueType(node->type));
 
     node->object->accept(this);
 
@@ -1357,36 +1380,10 @@ void TACCodeGen::visit(MatchNode* node)
 
     Value* expr = visitAndGet(node->expr);
 
-    // Get constructor tag of expr (either as a immediate, or from the object
-    // header)
-    BasicBlock* gotTag = createBlock();
-    BasicBlock* isImmediate = createBlock();
-    BasicBlock* isObject = createBlock();
-
     // TODO: Handle case where all constructors are parameter-less
 
-    // Check for immediate, and remove tag bit
-    Value* checked = createTemp(ValueKind::ValueType);
-    emit(new BinaryOperationInst(checked, expr, BinaryOperation::AND, _context->One));
-    emit(new ConditionalJumpInst(checked, "==", _context->Zero, isObject, isImmediate));
-
-    setBlock(isImmediate);
-    Value* tag1 = createTemp(ValueKind::ValueType);
-    emit(new BinaryOperationInst(tag1, expr, BinaryOperation::SHR, _context->One));
-    emit(new JumpInst(gotTag));
-
-    // Otherwise, extract tag from object header
-    setBlock(isObject);
-    Value* tag2 = createTemp(ValueKind::ValueType);
-    emit(new IndexedLoadInst(tag2, expr, offsetof(SplObject, constructorTag)));
-    emit(new JumpInst(gotTag));
-
-    setBlock(gotTag);
-    Value* tag = createTemp(ValueKind::ValueType);
-    PhiInst* phi = new PhiInst(tag);
-    phi->addSource(isImmediate, tag1);
-    phi->addSource(isObject, tag2);
-    emit(phi);
+    Value* tag = createTemp(ValueType::U64);
+    emit(new IndexedLoadInst(tag, expr, offsetof(SplObject, constructorTag)));
 
     // Jump to the appropriate case based on the tag
     BasicBlock* nextTest = _currentBlock;
@@ -1397,7 +1394,7 @@ void TACCodeGen::visit(MatchNode* node)
 
         setBlock(nextTest);
         nextTest = createBlock();
-        emit(new ConditionalJumpInst(tag, "==", _context->getConstantInt(armTag), caseLabels[i], nextTest));
+        emit(new ConditionalJumpInst(tag, "==", _context->createConstantInt(ValueType::U64, armTag), caseLabels[i], nextTest));
     }
 
     // Match must be exhaustive, so we should never fail all tests
@@ -1443,7 +1440,7 @@ void TACCodeGen::visit(MatchArm* node)
         const Symbol* member = node->symbols.at(i);
         if (member)
         {
-            Value* tmp = createTemp(getValueKind(member->type));
+            Value* tmp = createTemp(getValueType(member->type));
             emit(new IndexedLoadInst(tmp, _currentSwitchExpr, sizeof(SplObject) + 8 * layout[i]));
             emit(new StoreInst(getValue(member), tmp));
         }
@@ -1463,7 +1460,7 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
     const std::vector<ValueConstructor::MemberDesc> members = constructor->members();
     size_t constructorTag = constructor->constructorTag();
 
-    Value* result = createTemp(ValueKind::ReferenceType);
+    Value* result = createTemp(ValueType::Reference);
 
     // For now, every member takes up exactly 8 bytes (either directly or as a pointer).
     size_t size = sizeof(SplObject) + 8 * members.size();
@@ -1472,7 +1469,7 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
     CallInst* inst = new CallInst(
         result,
         _context->createExternFunction("gcAllocate"), // TODO: Fix this
-        {_context->getConstantInt(size)});
+        {_context->createConstantInt(ValueType::U64, size)});
     inst->regpass = true;
     emit(inst);
 
@@ -1482,8 +1479,8 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
     std::vector<size_t> layout = getConstructorLayout(symbol, nullptr, typeAssignment);
     size_t numReferences = getNumPointers(symbol, nullptr, typeAssignment);
 
-    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, constructorTag)), _context->getConstantInt(constructorTag)));
-    emit(new IndexedStoreInst(result, _context->getConstantInt(offsetof(SplObject, numReferences)), _context->getConstantInt(numReferences)));
+    emit(new IndexedStoreInst(result, _context->createConstantInt(ValueType::U64, offsetof(SplObject, constructorTag)), _context->createConstantInt(ValueType::U64, constructorTag)));
+    emit(new IndexedStoreInst(result, _context->createConstantInt(ValueType::U64, offsetof(SplObject, numReferences)), _context->createConstantInt(ValueType::U64, numReferences)));
 
     // Individual members
     for (size_t i = 0; i < members.size(); ++i)
@@ -1494,12 +1491,12 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
         std::string name = member.name;
         if (name.empty()) name = std::to_string(i);
 
-        Value* param = _context->createArgument(getValueKind(member.type, typeAssignment), name);
+        Value* param = _context->createArgument(getValueType(member.type, typeAssignment), name);
         _currentFunction->params.push_back(param);
 
-        Value* temp = createTemp(getValueKind(member.type));
+        Value* temp = createTemp(getValueType(substitute(member.type, typeAssignment)));
         emit(new LoadInst(temp, param));
-        emit(new IndexedStoreInst(result, _context->getConstantInt(sizeof(SplObject) + 8 * location), temp));
+        emit(new IndexedStoreInst(result, _context->createConstantInt(ValueType::U64, sizeof(SplObject) + 8 * location), temp));
     }
 
     emit(new ReturnInst(result));

@@ -15,7 +15,7 @@ public:
     std::vector<MachineFunction*> functions;
     std::vector<std::string> externs;
     std::vector<std::pair<std::string, std::string>> staticStrings;
-    std::vector<std::pair<std::string, OperandType>> globals;
+    std::vector<std::pair<std::string, ValueType>> globals;
 
     HardwareRegister* rax = new HardwareRegister("rax");
     HardwareRegister* rbx = new HardwareRegister("rbx");
@@ -39,11 +39,11 @@ public:
         r10, r11, r12, r13, r14, r15, rbp, rsp
     };
 
-    Immediate* createImmediate(int64_t value);
+    Immediate* createImmediate(int64_t value, ValueType type);
     Address* createGlobal(const std::string& name);
 
 private:
-    std::unordered_map<int64_t, std::unique_ptr<Immediate>> _immediates;
+    std::vector<std::unique_ptr<Immediate>> _immediates;
     std::unordered_map<std::string, std::unique_ptr<Address>> _globals;
 };
 
