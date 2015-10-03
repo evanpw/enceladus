@@ -55,10 +55,8 @@ public:
 	virtual void visit(BlockNode* node);
 	virtual void visit(CastNode* node);
 	virtual void visit(ComparisonNode* node);
-	virtual void visit(ConstructorSpec* node);
 	virtual void visit(DataDeclaration* node);
 	virtual void visit(ForeachNode* node);
-	virtual void visit(ForeignDeclNode* node);
 	virtual void visit(ForeverNode* node);
 	virtual void visit(ForNode* node);
 	virtual void visit(FunctionCallNode* node);
@@ -71,7 +69,6 @@ public:
 	virtual void visit(MatchArm* node);
 	virtual void visit(MatchNode* node);
 	virtual void visit(MemberAccessNode* node);
-	virtual void visit(MemberDefNode* node);
 	virtual void visit(MethodCallNode* node);
 	virtual void visit(MethodDefNode* node);
 	virtual void visit(ProgramNode* node);
@@ -83,7 +80,10 @@ public:
 	// Leaf nodes
 	virtual void visit(BoolNode* node) {}
 	virtual void visit(BreakNode* node) {}
+	virtual void visit(ConstructorSpec* node) {}
+	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}
+	virtual void visit(MemberDefNode* node) {}
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(PassNode* node) {}
 	virtual void visit(StringLiteralNode* node) {}

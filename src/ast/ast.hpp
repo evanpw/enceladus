@@ -36,6 +36,7 @@ public:
 };
 
 #define AST_VISITABLE() virtual void accept(AstVisitor* visitor) { visitor->visit(this); }
+#define AST_UNVISITABLE() virtual void accept(AstVisitor* visitor) { assert(false); }
 
 class StatementNode : public AstNode
 {
@@ -70,19 +71,12 @@ public:
     : AstNode(context, location), name(name)
     {}
 
-    TypeName(AstContext* context, const YYLTYPE& location, const char* name)
-    : AstNode(context, location), name(name)
-    {}
-
     std::string str() const;
 
-    AST_VISITABLE();
+    AST_UNVISITABLE();
 
     std::string name;
     std::vector<TypeName*> parameters;
-
-    // Annotations
-    Type* type;
 };
 
 class ConstructorSpec : public AstNode
