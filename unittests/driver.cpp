@@ -126,21 +126,16 @@ TEST_CASE("constrained generic-type compatibility checks", "[isCompatible-constr
     REQUIRE(isCompatible(type2a, type1a));
     REQUIRE(!isCompatible(type3a, type1a));
 
-    /*
     TypeConstructor* P3 = table->createTypeConstructor("P3", 3);
     Type* type1b = table->createConstructedType(P3, {var1, var1, var1});
     Type* varSigned = table->createTypeVariable();
-    varSignedNum->get<TypeVariable>()->addConstraint(Signed);
+    varSigned->get<TypeVariable>()->addConstraint(Signed);
     Type* type2b = table->createConstructedType(P3, {varNum, varSigned, table->Int});
     Type* type3b = table->createConstructedType(P3, {varNum, varSigned, table->UInt});
     REQUIRE(isCompatible(type1b, type2b));
     REQUIRE(!isCompatible(type1b, type3b));
     REQUIRE(isCompatible(type2b, type1b));
     REQUIRE(!isCompatible(type3b, type1b));
-    */
-
-
-    // TODO: Combining constraints when unify variables
 
     delete table;
 }
