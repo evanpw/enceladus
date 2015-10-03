@@ -134,6 +134,7 @@ void SemanticAnalyzer::injectSymbols()
     //// Built-in types ////////////////////////////////////////////////////////
     _symbolTable->createTypeSymbol("Int", _root, _typeTable->Int);
     _symbolTable->createTypeSymbol("UInt", _root, _typeTable->UInt);
+    _symbolTable->createTraitSymbol("Num", _root, _typeTable->Num);
 
     _symbolTable->createTypeSymbol("Bool", _root, _typeTable->Bool);
     _symbolTable->createTypeSymbol("Unit", _root, _typeTable->Unit);
@@ -292,25 +293,38 @@ static bool occurs(TypeVariable* variable, Type* value)
 static void bindVariable(Type* variable, Type* value, AstNode* node)
 {
     assert(variable->tag() == ttVariable);
-
-    Type* rhs = value;
+    TypeVariable* lhs = variable->get<TypeVariable>();
 
     // Check to see if the value is actually the same type variable, and don't
     // rebind
-    if (rhs->tag() == ttVariable)
+    if (value->tag() == ttVariable)
     {
-        if (variable->get<TypeVariable>() == rhs->get<TypeVariable>()) return;
+        if (variable->get<TypeVariable>() == value->get<TypeVariable>()) return;
+    }
+    else
+    {
+        // Otherwise, check that the rhs type meets all of the constraints on
+        // the lhs variable
+        for (Trait* constraint : lhs->constraints())
+        {
+            if (!isInstance(value, constraint))
+            {
+                std::stringstream ss;
+                ss << "Can't bind variable " << variable->name() << " to type " << value->name()
+                   << " because it isn't an instance of trait " << constraint->name();
+                inferenceError(node, ss.str());
+            }
+        }
+
+        if (occurs(lhs, value))
+        {
+            std::stringstream ss;
+            ss << "variable " << variable->name() << " already occurs in " << value->name();
+            inferenceError(node, ss.str());
+        }
     }
 
-    // Make sure that the variable actually occurs in the type
-    if (occurs(variable->get<TypeVariable>(), rhs))
-    {
-        std::stringstream ss;
-        ss << "variable " << variable->name() << " already occurs in " << rhs->name();
-        inferenceError(node, ss.str());
-    }
-
-    variable->assign(rhs);
+    variable->assign(value);
 }
 
 Type* SemanticAnalyzer::instantiate(Type* type)
@@ -340,6 +354,14 @@ Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& 
                 if (typeVariable->quantified())
                 {
                     Type* replacement = _typeTable->createTypeVariable();
+
+                    // Inherit type constraints
+                    TypeVariable* newVar = replacement->get<TypeVariable>();
+                    for (Trait* constraint : typeVariable->constraints())
+                    {
+                        newVar->addConstraint(constraint);
+                    }
+
                     replacements[typeVariable] = replacement;
 
                     return replacement;
@@ -471,6 +493,22 @@ static void unify(Type* lhs, Type* rhs, AstNode* node)
         // Can't be unified
         std::stringstream ss;
         ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
+        inferenceError(node, ss.str());
+    }
+}
+
+static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
+{
+    if (type->isVariable())
+    {
+        type->get<TypeVariable>()->addConstraint(trait);
+        return;
+    }
+
+    if (!isInstance(type, trait))
+    {
+        std::stringstream ss;
+        ss << "Type " << type->name() << " is not an instance of trait " << trait->name();
         inferenceError(node, ss.str());
     }
 }
@@ -833,11 +871,13 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 void SemanticAnalyzer::visit(BinopNode* node)
 {
     node->lhs->accept(this);
+    imposeConstraint(node->lhs->type, _typeTable->Num, node->lhs);
+
     node->rhs->accept(this);
+    imposeConstraint(node->rhs->type, _typeTable->Num, node->rhs);
+
     unify(node->lhs->type, node->rhs->type, node);
 
-    // Don't check for Int / Uint in the first pass. Let the type inference
-    // continue.
     node->type = node->lhs->type;
 }
 
@@ -905,11 +945,12 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 void SemanticAnalyzer::visit(ComparisonNode* node)
 {
     node->lhs->accept(this);
-    node->rhs->accept(this);
-    unify(node->lhs->type, node->rhs->type, node);
+    imposeConstraint(node->lhs->type, _typeTable->Num, node->lhs);
 
-    // Don't check for Int / Uint in the first pass. Let the type inference
-    // continue.
+    node->rhs->accept(this);
+    imposeConstraint(node->rhs->type, _typeTable->Num, node->rhs);
+
+    unify(node->lhs->type, node->rhs->type, node);
 
     node->type = _typeTable->Bool;
 }
@@ -1136,6 +1177,7 @@ void SemanticAnalyzer::visit(IntNode* node)
         // The signedness of integers without a suffix is inferred. This will
         // be checked in the second pass
         node->type = _typeTable->createTypeVariable();
+        imposeConstraint(node->type, _typeTable->Num, node);
     }
 }
 
@@ -1596,16 +1638,16 @@ bool SemanticPass2::analyze()
 
 void SemanticPass2::visit(BinopNode* node)
 {
-    if (node->type->equals(_typeTable->Int) || node->type->equals(_typeTable->UInt))
-        return;
+    Type* type = node->type;
 
-    if (node->type->isVariable())
+    if (type->isVariable())
     {
         semanticError(node->location, "Cannot infer the type of arguments to binary operator");
     }
     else
     {
-        semanticError(node->location, "Arguments to binary operator must be Int or UInt");
+        // Shouldn't have been possible to unify with anything else
+        assert(type->equals(_typeTable->Int) || type->equals(_typeTable->UInt));
     }
 }
 
@@ -1613,25 +1655,20 @@ void SemanticPass2::visit(ComparisonNode* node)
 {
     Type* type = node->lhs->type;
 
-    if (type->equals(_typeTable->Int) || type->equals(_typeTable->UInt))
-        return;
-
     if (type->isVariable())
     {
         semanticError(node->location, "Cannot infer the type of arguments to comparison operator");
     }
     else
     {
-        semanticError(node->location, "Arguments to comparison operator must be Int or UInt");
+        // Shouldn't have been possible to unify with anything else
+        assert(type->equals(_typeTable->Int) || type->equals(_typeTable->UInt));
     }
 }
 
 void SemanticPass2::visit(IntNode* node)
 {
     Type* type = node->type;
-
-    if (type->equals(_typeTable->Int) || type->equals(_typeTable->UInt))
-        return;
 
     if (type->isVariable())
     {
@@ -1640,6 +1677,7 @@ void SemanticPass2::visit(IntNode* node)
     }
     else
     {
-        semanticError(node->location, "Expected type {}, but got an integer", type->name());
+        // Shouldn't have been possible to unify with anything else
+        assert(type->equals(_typeTable->Int) || type->equals(_typeTable->UInt));
     }
 }

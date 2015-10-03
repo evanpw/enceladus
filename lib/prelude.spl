@@ -115,7 +115,7 @@ impl<T> Option<T>
             None
                 return other
 
-# I/O functions
+## I/O functions
 foreign read() -> Int
 foreign readLine() -> Option<String>
 foreign print(msg: String) -> Unit

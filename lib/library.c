@@ -13,7 +13,7 @@
 
 void fail(const char* str)
 {
-    fprintf(stderr, str);
+    fprintf(stderr, "%s\n", str);
     exit(1);
 }
 

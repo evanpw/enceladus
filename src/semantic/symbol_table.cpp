@@ -55,6 +55,13 @@ TypeSymbol* SymbolTable::createTypeSymbol(const std::string& name, AstNode* node
     return symbol;
 }
 
+TraitSymbol* SymbolTable::createTraitSymbol(const std::string& name, AstNode* node, Trait* trait)
+{
+    TraitSymbol* symbol = new TraitSymbol(name, node, trait);
+    insert(symbol, SymbolTable::TYPE);
+    return symbol;
+}
+
 TypeConstructorSymbol* SymbolTable::createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
 {
     TypeConstructorSymbol* symbol = new TypeConstructorSymbol(name, node, typeConstructor);

@@ -1,0 +1,5 @@
+def f(s: String) -> Unit
+    print $ s
+
+x := 4
+f(x)

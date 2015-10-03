@@ -31,6 +31,12 @@ TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)
     this->type = type;
 }
 
+TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait)
+: Symbol(name, kTrait, node, nullptr, true)
+{
+    this->trait = trait;
+}
+
 TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
 : Symbol(name, kTypeConstructor, node, nullptr, true)
 , typeConstructor(typeConstructor)

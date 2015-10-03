@@ -159,7 +159,7 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error='Error: testing/importSemantic.spl:3:6: Expected type Bool, but got an integer')
+        self.run('importSemantic', build_error=Regex('Error: testing/importSemantic.spl:4:1: Can\'t bind variable T\d+: Num to type Bool because it isn\'t an instance of trait Num'))
 
     def test_syntaxError(self):
         self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:1: left-hand side of assignment statement is not an lvalue')
@@ -372,7 +372,10 @@ class TestAcceptance(object):
         self.run('badCast1', build_error='Error: testing/badCast1.spl:2:20: Cannot cast from type UInt to String')
 
     def test_badCast2(self):
-        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:2:16: Cannot cast from type T\d+ to Int'))
+        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:2:16: Cannot cast from type T\d+: Num to Int'))
+
+    def test_typeConstraint(self):
+        self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:1: Can\'t bind variable T\d+: Num to type String because it isn\'t an instance of trait Num'))
 
 
     # Medium tests (100ms-1s)

@@ -16,6 +16,7 @@ public:
     MethodSymbol* createMethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType);
     MemberVarSymbol* createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index);
 
+    TraitSymbol* createTraitSymbol(const std::string& name, AstNode* node, Trait* trait);
     TypeSymbol* createTypeSymbol(const std::string& name, AstNode* node, Type* type);
     TypeConstructorSymbol* createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 

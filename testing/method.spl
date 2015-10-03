@@ -6,7 +6,7 @@ impl [Int]
     def eq(self: [Int], other: [Int]) -> Bool
         return self.head() == other.head()
 
-x := 1i
+x := 1
 y := 2
 
 if x.eq(y)

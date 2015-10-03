@@ -13,6 +13,7 @@
 class BaseType;
 class ConstructedType;
 class FunctionType;
+class Trait;
 class Type;
 class TypeConstructor;
 class TypeTable;
@@ -148,10 +149,11 @@ private:
     std::shared_ptr<TypeImpl> _impl;
 };
 
+bool isInstance(Type* type, Trait* trait);
+
 // Two (possibly polymorphic) types are compatible iff there is at least one
 // monomorphic type which unifies with both
 bool isCompatible(Type* lhs, Type* rhs);
-bool isCompatible(Type* lhs, Type* rhs, std::unordered_map<TypeVariable*, Type*>& context);
 
 // Represents a bottom-level basic types (Int, Bool, ...)
 class BaseType : public TypeImpl
@@ -261,24 +263,11 @@ private:
     std::vector<Type*> _typeParameters;
 };
 
-
 // A variable which can be substituted with a type. Used for polymorphism.
 class TypeVariable : public TypeImpl
 {
 public:
-    virtual std::string name() const
-    {
-        if (!_name.empty())
-        {
-            return _name;
-        }
-        else
-        {
-            std::stringstream ss;
-            ss << "T" << _index;
-            return ss.str();
-        }
-    }
+    virtual std::string name() const;
 
     virtual bool isVariable() const
     {
@@ -307,6 +296,16 @@ public:
         return _quantified;
     }
 
+    const std::set<Trait*> constraints() const
+    {
+        return _constraints;
+    }
+
+    void addConstraint(Trait* trait)
+    {
+        _constraints.insert(trait);
+    }
+
 private:
     friend TypeTable;
 
@@ -318,6 +317,7 @@ private:
     std::string _name;
     int _index;
     bool _quantified;
+    std::set<Trait*> _constraints;
 
     std::vector<Type*> _references;
 
@@ -413,6 +413,16 @@ public:
         return _name;
     }
 
+    const std::vector<Type*> instances() const
+    {
+        return _instances;
+    }
+
+    void addInstance(Type* type)
+    {
+        _instances.push_back(type);
+    }
+
 private:
     friend TypeTable;
 
@@ -422,6 +432,7 @@ private:
 
     TypeTable* _table;
     std::string _name;
+    std::vector<Type*> _instances;
 };
 
 
@@ -506,6 +517,8 @@ public:
     Type* Bool;
     Type* Unit;
     Type* String;
+
+    Trait* Num;
 
     TypeConstructor* Function;
     TypeConstructor* Array;
