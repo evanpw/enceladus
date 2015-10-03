@@ -45,4 +45,4 @@ def permutationAt(n: Int, digits: [Int]) -> [Int]
 
     die("Unreachable")
 
-print $ show $ toInt $ permutationAt(999999, range(0, 9).toList())
+print $ show $ toInt $ permutationAt(999999, range(0, 10).toList())

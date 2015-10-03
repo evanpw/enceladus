@@ -16,7 +16,7 @@ def collatzLength(n: Int) -> Int
 best := 1
 longest := 0
 
-for n in range(2, 1000000)
+for n in range(2, 1000001)
     newLength := collatzLength(n)
 
     if newLength > longest

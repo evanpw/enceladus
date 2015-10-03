@@ -57,7 +57,7 @@ impl String
         start := 0
 
         len := s.length()
-        for i in urange(0, len - 1)
+        for i in urange(0, len)
             if isSpace(s.at(i))
                 len := i - start
                 result = s.slice(start, len) :: result
@@ -73,7 +73,7 @@ impl String
         start := 0
 
         len := s.length()
-        for i in urange(0, len - 1)
+        for i in urange(0, len)
             if s.at(i) == sep
                 len := i - start
                 result = s.slice(start, len) :: result
@@ -94,7 +94,7 @@ impl String
 
     def toInt(s: String) -> Option<Int>
         x := 0
-        for i in urange(0, s.length() - 1)
+        for i in urange(0, s.length())
             digit := s.at(i)
 
             if digit < '0' or digit > '9'

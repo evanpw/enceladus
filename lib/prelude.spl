@@ -219,20 +219,23 @@ def range(start: Int, end: Int) -> Range
 
 impl Range
     def head(self: Range) -> Int
-        assert self.start <= self.end
+        assert self.start < self.end
         return self.start
 
     def tail(self: Range) -> Range
-        assert self.start <= self.end
+        assert self.start < self.end
         return Range(self.start + 1, self.end)
 
     def empty(self: Range) -> Bool
-        return self.start > self.end
+        return self.start >= self.end
 
     def toList(self: Range) -> [Int]
         result := []
 
-        i := self.end
+        if self.empty()
+            return result
+
+        i := self.end - 1
         while i >= self.start
             result = i :: result
             i -= 1
@@ -251,23 +254,26 @@ def urange(start: UInt, end: UInt) -> URange
 
 impl URange
     def head(self: URange) -> UInt
-        assert self.start <= self.end
+        assert self.start < self.end
         return self.start
 
     def tail(self: URange) -> URange
-        assert self.start <= self.end
+        assert self.start < self.end
         return URange(self.start + 1, self.end)
 
     def empty(self: URange) -> Bool
-        return self.start > self.end
+        return self.start >= self.end
 
     def toList(self: URange) -> [UInt]
         result := []
 
-        i := self.end
+        if self.empty()
+            return result
+
+        i := self.end - 1
         while i >= self.start
             result = i :: result
-            i -= 1u
+            i -= 1
 
         return result
 

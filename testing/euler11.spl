@@ -42,9 +42,9 @@ def allRuns(xrange: Range, yrange: Range, dx: Int, dy: Int) -> [Int]
 
     return xs
 
-horizontal := allRuns(range(0, 16), range(0, 19), 1, 0)
-vertical := allRuns(range(0, 19), range(0, 16), 0, 1)
-diagonal1 := allRuns(range(0, 16), range(0, 16), 1, 1)
-diagonal2 := allRuns(range(0, 16), range(3, 19), 1, -1)
+horizontal := allRuns(range(0, 17), range(0, 20), 1, 0)
+vertical := allRuns(range(0, 20), range(0, 17), 0, 1)
+diagonal1 := allRuns(range(0, 17), range(0, 17), 1, 1)
+diagonal2 := allRuns(range(0, 17), range(3, 20), 1, -1)
 
 print $ show $ maximum $ horizontal ++ vertical ++ diagonal1 ++ diagonal2

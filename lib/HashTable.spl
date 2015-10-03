@@ -82,7 +82,7 @@ impl<S, T> HashTable<S, T>
         self.contents = makeArray(newCapacity, None)
         self.size = 0
 
-        for idx in range(0, oldCapacity - 1)
+        for idx in range(0, oldCapacity)
             match oldContents[idx]
                 Some(item)
                     let Pair(k, v) := item
@@ -106,7 +106,7 @@ def eqString(lhs: String, rhs: String) -> Bool
     if n1 != n2
         return False
 
-    for i in urange(0, n1 - 1)
+    for i in urange(0, n1)
         if lhs.at(i) != rhs.at(i)
             return False
 

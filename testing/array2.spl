@@ -1,6 +1,6 @@
 arr := makeArray(100, 0)
 
-for i in urange(0, 99)
+for i in urange(0, 100)
     arr.set(i, i)
 
 print $ showUInt(arr[15])

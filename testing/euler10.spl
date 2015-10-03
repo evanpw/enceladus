@@ -4,7 +4,7 @@ n := 2000000
 
 maybePrime := makeArray(n, True)
 
-for i in urange(2, n - 1)
+for i in urange(2, n)
     if maybePrime[i]
         # i is a prime
         primeSum += i

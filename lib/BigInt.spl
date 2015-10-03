@@ -77,7 +77,7 @@ impl BigInt
         ys := rhs.digits()
 
         result := toBigInt(0)
-        for n in urange(0, ys.length() - 1)
+        for n in urange(0, ys.length())
             y := ys.at(n)
             z1 := self.timesInt(y)
             z2 := z1.shift(n)
