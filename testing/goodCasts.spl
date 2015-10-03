@@ -1,0 +1,4 @@
+print $ show(1u as Int)
+print $ showUInt(2i as UInt)
+print $ showUInt(3u as UInt)
+print $ "hello" as String

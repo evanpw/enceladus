@@ -802,6 +802,14 @@ void TACCodeGen::visit(IntNode* node)
     node->value = _context->createConstantInt(type, node->intValue);
 }
 
+void TACCodeGen::visit(CastNode* node)
+{
+    Value* src = visitAndGet(node->lhs);
+    node->value = createTemp(getValueType(node->type));
+
+    emit(new CopyInst(node->value, src));
+}
+
 void TACCodeGen::visit(BoolNode* node)
 {
     if (node->boolValue)

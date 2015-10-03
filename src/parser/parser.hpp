@@ -63,10 +63,12 @@ private:
     ExpressionNode* multiplicative_expression();
     ExpressionNode* concat_expression();
     ExpressionNode* negation_expression();
+    ExpressionNode* cast_expression();
     ExpressionNode* method_member_idx_expression();
     ExpressionNode* func_call_expression();
     ExpressionNode* unary_expression();
     std::string ident();
+    ExpressionNode* integer_literal();
 };
 
 #endif

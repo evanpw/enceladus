@@ -1036,22 +1036,41 @@ ExpressionNode* Parser::concat_expression()
 }
 
 /// negation_expression
-///     : method_member_idx_expression
-///     | '-' method_member_idx_expression
-///     | NOT method_member_idx_expression
+///     : cast_expression
+///     | '-' cast_expression
+///     | NOT cast_expression
 ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
-        return new BinopNode(_context, getLocation(), new IntNode(_context, getLocation(), 0), BinopNode::kSub, method_member_idx_expression());
+        return new BinopNode(_context, getLocation(), new IntNode(_context, getLocation(), 0, '\0'), BinopNode::kSub, cast_expression());
     }
     else if (accept(tNOT))
     {
-        return new FunctionCallNode(_context, getLocation(), "not", {method_member_idx_expression()});
+        return new FunctionCallNode(_context, getLocation(), "not", {cast_expression()});
     }
     else
     {
-        return method_member_idx_expression();
+        return cast_expression();
+    }
+}
+
+/// cast_expression
+///     : method_member_idx_expression AS type
+///     | method_member_idx_expression
+ExpressionNode* Parser::cast_expression()
+{
+    YYLTYPE location = getLocation();
+
+    ExpressionNode* expr = method_member_idx_expression();
+    if (accept(tAS))
+    {
+        TypeName* typeName = type();
+        return new CastNode(_context, getLocation(), expr, typeName);
+    }
+    else
+    {
+        return expr;
     }
 }
 
@@ -1197,14 +1216,7 @@ ExpressionNode* Parser::unary_expression()
 
     case tINT_LIT:
     {
-        Token token = expect(tINT_LIT);
-        return new IntNode(_context, location, token.value.signedInt, true);
-    }
-
-    case tUINT_LIT:
-    {
-        Token token = expect(tUINT_LIT);
-        return new IntNode(_context, location, token.value.unsignedInt, false);
+        return integer_literal();
     }
 
     case tSTRING_LIT:
@@ -1230,3 +1242,53 @@ ExpressionNode* Parser::unary_expression()
     }
 }
 
+ExpressionNode* Parser::integer_literal()
+{
+    YYLTYPE location = getLocation();
+    Token token = expect(tINT_LIT);
+
+    std::string text = token.value.str;
+    assert(!text.empty());
+
+    // Extract type suffixes
+    size_t n = text.length();
+    char suffix = 0;
+    if (text[n - 1] == 'i' || text[n - 1] == 'u')
+    {
+        suffix = text[n - 1];
+        text = text.substr(0, n - 1);
+    }
+
+    assert(!text.empty());
+
+    // Parse the integer, check for out-of-range errors
+    int64_t value;
+    try
+    {
+        if (text[0] == '-' || suffix == 'i')
+        {
+            value = boost::lexical_cast<int64_t>(text);
+        }
+        else
+        {
+            uint64_t uvalue = boost::lexical_cast<uint64_t>(text);
+
+            // Integers out of the int64 range have an implicit 'u' suffix
+            if (uvalue > std::numeric_limits<int64_t>::max())
+                suffix = 'u';
+
+            value = uvalue;
+        }
+    }
+    catch (boost::bad_lexical_cast&)
+    {
+        std::stringstream ss;
+
+        ss << location.filename << ":" << location.first_line << ":" << location.first_column
+           << ": error: integer literal out of range: " << token.value.str;
+
+        throw LexerError(ss.str());
+     }
+
+     return new IntNode(_context, location, value, suffix);
+}

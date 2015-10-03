@@ -8,6 +8,8 @@ std::string tokenToString(TokenType t)
         return "NONE";
     case tAND:
         return "AND";
+    case tAS:
+        return "tAS";
     case tASSERT:
         return "ASSERT";
     case tBREAK:
@@ -96,8 +98,6 @@ std::string tokenToString(TokenType t)
         return "TYPE";
     case tUIDENT:
         return "UIDENT";
-    case tUINT_LIT:
-        return "UINT_LIT";
     case tVAR:
         return "VAR";
     case tWHILE:

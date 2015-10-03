@@ -1,14 +1,14 @@
 n := 10000
 arr := makeArray(n, 0)
 
-for i = 0 to n - 1
+for i in urange(0, n - 1)
     arr.set(i, i)
 
 # Trigger GC
 xs := range(1, 1000000).toList()
 
 total := 0
-for i = 0 to n - 1
+for i in urange(0, n - 1)
     total += arr[i]
 
 assert total == n * (n - 1) / 2

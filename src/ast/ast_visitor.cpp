@@ -194,3 +194,8 @@ void AstVisitor::visit(BinopNode* node)
 	node->lhs->accept(this);
 	node->rhs->accept(this);
 }
+
+void AstVisitor::visit(CastNode* node)
+{
+	node->lhs->accept(this);
+}

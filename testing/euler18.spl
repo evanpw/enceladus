@@ -23,7 +23,7 @@ def readInput() -> [[Int]]
 
     return pyramid.reverse()
 
-def bestRouteFrom(x: Int, y: Int, pyramid: [[Int]]) -> Int
+def bestRouteFrom(x: UInt, y: UInt, pyramid: [[Int]]) -> Int
     row := pyramid.at(y)
     here := row.at(x)
 

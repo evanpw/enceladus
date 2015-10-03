@@ -4,7 +4,7 @@ n := 2000000
 
 maybePrime := makeArray(n, True)
 
-for i = 2 to n - 1
+for i in urange(2, n - 1)
     if maybePrime[i]
         # i is a prime
         primeSum += i
@@ -16,4 +16,4 @@ for i = 2 to n - 1
             maybePrime.set(j, False)
             j += i
 
-print $ show(primeSum)
+print $ showUInt(primeSum)

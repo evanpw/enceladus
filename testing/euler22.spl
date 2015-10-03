@@ -16,7 +16,7 @@ def readNames() -> [String]
 
 def score(name: String) -> Int
     total := 0
-    for i = 0 to name.length() - 1
+    for i in urange(0, name.length() - 1)
         c := name.at(i)
         total += (c - 'A') + 1
 
@@ -26,9 +26,9 @@ names := readNames()
 names = sort(cmpString, names)
 
 total := 0
-for i = 1 to names.length()
+for i in urange(1, names.length())
     name := names.at(i - 1)
 
-    total += i * score(name)
+    total += (i as Int) * score(name)
 
 print $ show(total)

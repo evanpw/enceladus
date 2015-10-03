@@ -9,6 +9,7 @@ class BinopNode;
 class BlockNode;
 class BoolNode;
 class BreakNode;
+class CastNode;
 class ComparisonNode;
 class ConstructorSpec;
 class DataDeclaration;
@@ -52,6 +53,7 @@ public:
 	virtual void visit(AssignNode* node);
 	virtual void visit(BinopNode* node);
 	virtual void visit(BlockNode* node);
+	virtual void visit(CastNode* node);
 	virtual void visit(ComparisonNode* node);
 	virtual void visit(ConstructorSpec* node);
 	virtual void visit(DataDeclaration* node);

@@ -159,7 +159,7 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error='Error: testing/importSemantic.spl:4:1: cannot unify types Int and Bool')
+        self.run('importSemantic', build_error='Error: testing/importSemantic.spl:3:6: Expected type Bool, but got an integer')
 
     def test_syntaxError(self):
         self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:1: left-hand side of assignment statement is not an lvalue')
@@ -168,7 +168,7 @@ class TestAcceptance(object):
         self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
 
     def test_overrideType(self):
-        self.run('overrideType', build_error='Error: testing/overrideType.spl:2:16: cannot unify types T and Int')
+        self.run('overrideType', build_error='Error: testing/overrideType.spl:2:16: Cannot infer the type of arguments to binary operator')
 
     def test_noReturn(self):
         self.run('noReturn', result='1')
@@ -213,7 +213,7 @@ class TestAcceptance(object):
         self.run('array4', result='Hello')
 
     def test_intOutOfRange1(self):
-        self.run('intOutOfRange1', build_error='Error: testing/intOutOfRange1.spl:2:6: error: integer literal out of range: 9223372036854775808')
+        self.run('intOutOfRange1', build_error='Error: testing/intOutOfRange1.spl:2:6: error: integer literal out of range: 9223372036854775808i')
 
     def test_intOutOfRange2(self):
         self.run('intOutOfRange2', build_error='Error: testing/intOutOfRange2.spl:2:6: error: integer literal out of range: -9223372036854775809')
@@ -364,6 +364,15 @@ class TestAcceptance(object):
 
     def test_uint4(self):
         self.run('uint4', '')
+
+    def test_goodCasts(self):
+        self.run('goodCasts', '1\n2\n3\nhello')
+
+    def test_badCast1(self):
+        self.run('badCast1', build_error='Error: testing/badCast1.spl:2:20: Cannot cast from type UInt to String')
+
+    def test_badCast2(self):
+        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:2:16: Cannot cast from type T\d+ to Int'))
 
 
     # Medium tests (100ms-1s)

@@ -35,6 +35,7 @@ public:
     virtual void visit(AssignNode* node);
     virtual void visit(BinopNode* node);
     virtual void visit(BlockNode* node);
+    virtual void visit(CastNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(ConstructorSpec* node);
     virtual void visit(DataDeclaration* node);
@@ -74,13 +75,6 @@ public:
 private:
     //// Type Inference ////////////////////////////////////////////////////////
     Type* newVariable();
-
-    static void inferenceError(AstNode* node, const std::string& msg);
-
-    static bool occurs(TypeVariable* variable, Type* value);
-    void unify(Type* lhs, Type* rhs, AstNode* node);
-    void bindVariable(Type* variable, Type* value, AstNode* node);
-
     Type* instantiate(Type* type);
     Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements);
 
@@ -115,6 +109,7 @@ public:
 
     virtual void visit(BinopNode* node);
     virtual void visit(ComparisonNode* node);
+    virtual void visit(IntNode* node);
 
 private:
     AstContext* _context;

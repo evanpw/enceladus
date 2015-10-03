@@ -235,7 +235,61 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, const std::unordered_
 
 //// Type inference functions //////////////////////////////////////////////////
 
-void SemanticAnalyzer::bindVariable(Type* variable, Type* value, AstNode* node)
+static void inferenceError(AstNode* node, const std::string& msg)
+{
+    std::stringstream ss;
+
+    auto location = node->location;
+
+    ss << location.filename << ":" << location.first_line <<  ":" << location.first_column
+       << ": " << msg;
+
+    throw TypeInferenceError(ss.str());
+}
+
+static bool occurs(TypeVariable* variable, Type* value)
+{
+    Type* rhs = value;
+
+    switch (rhs->tag())
+    {
+        case ttBase:
+            return false;
+
+        case ttVariable:
+        {
+            TypeVariable* typeVariable = rhs->get<TypeVariable>();
+            return typeVariable == variable;
+        }
+
+        case ttFunction:
+        {
+            FunctionType* functionType = rhs->get<FunctionType>();
+
+            for (auto& input : functionType->inputs())
+            {
+                if (occurs(variable, input)) return true;
+            }
+
+            return occurs(variable, functionType->output());
+        }
+
+        case ttConstructed:
+        {
+            ConstructedType* constructedType = rhs->get<ConstructedType>();
+            for (Type* parameter : constructedType->typeParameters())
+            {
+                if (occurs(variable, parameter)) return true;
+            }
+
+            return false;
+        }
+    }
+
+    assert(false);
+}
+
+static void bindVariable(Type* variable, Type* value, AstNode* node)
 {
     assert(variable->tag() == ttVariable);
 
@@ -257,18 +311,6 @@ void SemanticAnalyzer::bindVariable(Type* variable, Type* value, AstNode* node)
     }
 
     variable->assign(rhs);
-}
-
-void SemanticAnalyzer::inferenceError(AstNode* node, const std::string& msg)
-{
-    std::stringstream ss;
-
-    auto location = node->location;
-
-    ss << location.filename << ":" << location.first_line <<  ":" << location.first_column
-       << ": " << msg;
-
-    throw TypeInferenceError(ss.str());
 }
 
 Type* SemanticAnalyzer::instantiate(Type* type)
@@ -340,49 +382,7 @@ Type* SemanticAnalyzer::instantiate(Type* type, std::map<TypeVariable*, Type*>& 
     return nullptr;
 }
 
-bool SemanticAnalyzer::occurs(TypeVariable* variable, Type* value)
-{
-    Type* rhs = value;
-
-    switch (rhs->tag())
-    {
-        case ttBase:
-            return false;
-
-        case ttVariable:
-        {
-            TypeVariable* typeVariable = rhs->get<TypeVariable>();
-            return typeVariable == variable;
-        }
-
-        case ttFunction:
-        {
-            FunctionType* functionType = rhs->get<FunctionType>();
-
-            for (auto& input : functionType->inputs())
-            {
-                if (occurs(variable, input)) return true;
-            }
-
-            return occurs(variable, functionType->output());
-        }
-
-        case ttConstructed:
-        {
-            ConstructedType* constructedType = rhs->get<ConstructedType>();
-            for (Type* parameter : constructedType->typeParameters())
-            {
-                if (occurs(variable, parameter)) return true;
-            }
-
-            return false;
-        }
-    }
-
-    assert(false);
-}
-
-void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
+static bool tryUnify(Type* lhs, Type* rhs, AstNode* node)
 {
     assert(lhs && rhs && node);
 
@@ -390,7 +390,7 @@ void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
     {
         // Two base types can be unified only if equal (we don't have inheritance)
         if (lhs->equals(rhs))
-            return;
+            return true;
     }
     else if (lhs->tag() == ttVariable)
     {
@@ -398,7 +398,7 @@ void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
         if (!lhs->get<TypeVariable>()->quantified())
         {
             bindVariable(lhs, rhs, node);
-            return;
+            return true;
         }
         else
         {
@@ -409,14 +409,14 @@ void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
                 // A quantified type variable unifies with itself
                 if (lhs->equals(rhs))
                 {
-                    return;
+                    return true;
                 }
 
                 // And non-quantified type variables can be bound to quantified ones
                 else if (!rhs->get<TypeVariable>()->quantified())
                 {
                     bindVariable(rhs, lhs, node);
-                    return;
+                    return true;
                 }
              }
         }
@@ -424,7 +424,7 @@ void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
     else if (rhs->tag() == ttVariable && !rhs->get<TypeVariable>()->quantified())
     {
         bindVariable(rhs, lhs, node);
-        return;
+        return true;
     }
     else if (lhs->tag() == ttFunction && rhs->tag() == ttFunction)
     {
@@ -435,12 +435,12 @@ void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
         {
             for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
             {
-                unify(lhsFunction->inputs().at(i), rhsFunction->inputs().at(i), node);
+                tryUnify(lhsFunction->inputs().at(i), rhsFunction->inputs().at(i), node);
             }
 
-            unify(lhsFunction->output(), rhsFunction->output(), node);
+            tryUnify(lhsFunction->output(), rhsFunction->output(), node);
 
-            return;
+            return true;
         }
     }
     else if (lhs->tag() == ttConstructed && rhs->tag() == ttConstructed)
@@ -454,17 +454,25 @@ void SemanticAnalyzer::unify(Type* lhs, Type* rhs, AstNode* node)
 
             for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
             {
-                unify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node);
+                tryUnify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node);
             }
 
-            return;
+            return true;
         }
     }
 
-    // Can't be unified
-    std::stringstream ss;
-    ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
-    inferenceError(node, ss.str());
+    return false;
+}
+
+static void unify(Type* lhs, Type* rhs, AstNode* node)
+{
+    if (!tryUnify(lhs, rhs, node))
+    {
+        // Can't be unified
+        std::stringstream ss;
+        ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
+        inferenceError(node, ss.str());
+    }
 }
 
 
@@ -833,6 +841,29 @@ void SemanticAnalyzer::visit(BinopNode* node)
     node->type = node->lhs->type;
 }
 
+void SemanticAnalyzer::visit(CastNode* node)
+{
+    node->lhs->accept(this);
+    resolveTypeName(node->typeName);
+
+    if (node->typeName->type->isVariable())
+    {
+        semanticError(node->location, "Cannot cast to generic type");
+    }
+
+    node->type = node->typeName->type;
+
+    Type* srcType = node->lhs->type;
+    Type* destType = node->type;
+
+    // Only supported casts are Int -> UInt, UInt -> Int, and anything to itself
+    if (srcType->equals(destType)) return;
+    if (srcType->equals(_typeTable->Int) && destType->equals(_typeTable->UInt)) return;
+    if (srcType->equals(_typeTable->UInt) && destType->equals(_typeTable->Int)) return;
+
+    semanticError(node->location, "Cannot cast from type {} to {}", srcType->name(), destType->name());
+}
+
 void SemanticAnalyzer::visit(NullaryNode* node)
 {
 	const std::string& name = node->name;
@@ -1092,13 +1123,19 @@ void SemanticAnalyzer::visit(BreakNode* node)
 
 void SemanticAnalyzer::visit(IntNode* node)
 {
-    if (node->isSigned)
+    if (node->suffix == 'u')
+    {
+        node->type = _typeTable->UInt;
+    }
+    else if (node->suffix == 'i')
     {
         node->type = _typeTable->Int;
     }
     else
     {
-        node->type = _typeTable->UInt;
+        // The signedness of integers without a suffix is inferred. This will
+        // be checked in the second pass
+        node->type = _typeTable->createTypeVariable();
     }
 }
 
@@ -1586,5 +1623,23 @@ void SemanticPass2::visit(ComparisonNode* node)
     else
     {
         semanticError(node->location, "Arguments to comparison operator must be Int or UInt");
+    }
+}
+
+void SemanticPass2::visit(IntNode* node)
+{
+    Type* type = node->type;
+
+    if (type->equals(_typeTable->Int) || type->equals(_typeTable->UInt))
+        return;
+
+    if (type->isVariable())
+    {
+        // If no specific type was inferred, then assume Int
+        unify(type, _typeTable->Int, node);
+    }
+    else
+    {
+        semanticError(node->location, "Expected type {}, but got an integer", type->name());
     }
 }

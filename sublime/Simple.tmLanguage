@@ -240,7 +240,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(and|or|in|to|mod)\b</string>
+			<string>\b(and|or|in|to|mod|as)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>
@@ -258,7 +258,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b([0-9]+|0([xX][0-9a-fA-F]+|[oO][0-7]+))u?\b</string>
+			<string>\b([0-9]+|0([xX][0-9a-fA-F]+|[oO][0-7]+))[iu]?\b</string>
 			<key>name</key>
 			<string>constant.numeric.simple</string>
 		</dict>

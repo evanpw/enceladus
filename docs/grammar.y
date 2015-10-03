@@ -186,9 +186,13 @@ concat_expression
     : negation_expression [ '++' concat_expression ]
 
 negation_expression
-    : method_member_idx_expression
-    | '-' method_member_idx_expression
-    | NOT method_member_idx_expression
+    : cast_expression
+    | '-' cast_expression
+    | NOT cast_expression
+
+cast_expression
+    : method_member_idx_expression AS type
+    | method_member_idx_expression
 
 method_member_idx_expression
     : func_call_expression
@@ -208,7 +212,6 @@ unary_expression
     | FALSE
     | inline_list
     | INT_LIT
-    | UINT_LIT
     | STRING_LIT
 
 inline_list

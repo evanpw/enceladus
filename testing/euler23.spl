@@ -46,7 +46,7 @@ for i = 1 to 28123
 n := reversedList.length()
 abundants := makeArray(n, 0)
 
-for j = 0 to n - 1
+for j in urange(0, n - 1)
     x := reversedList.head()
     reversedList = reversedList.tail()
 

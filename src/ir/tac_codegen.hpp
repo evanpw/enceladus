@@ -42,6 +42,7 @@ public:
     UNSUPPORTED(BinopNode);
     UNSUPPORTED(BlockNode);
     UNSUPPORTED(BreakNode);
+    UNSUPPORTED(CastNode);
     UNSUPPORTED(DataDeclaration);
     UNSUPPORTED(ForeachNode);
     UNSUPPORTED(ForeverNode);
@@ -123,6 +124,7 @@ public:
     virtual void visit(BlockNode* node);
     virtual void visit(BoolNode* node);
     virtual void visit(BreakNode* node);
+    virtual void visit(CastNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(DataDeclaration* node);
     virtual void visit(ForeachNode* node);

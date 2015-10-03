@@ -187,14 +187,14 @@ public:
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(AstContext* context, const YYLTYPE& location, int64_t intValue, bool isSigned = true)
-	: ExpressionNode(context, location), intValue(intValue), isSigned(isSigned)
+	IntNode(AstContext* context, const YYLTYPE& location, int64_t intValue, char suffix)
+	: ExpressionNode(context, location), intValue(intValue), suffix(suffix)
 	{}
 
 	AST_VISITABLE();
 
 	int64_t intValue;
-	bool isSigned;
+	char suffix;
 };
 
 class BoolNode : public ExpressionNode
@@ -302,6 +302,20 @@ public:
 	ExpressionNode* lhs;
 	Op op;
 	ExpressionNode* rhs;
+};
+
+class CastNode : public ExpressionNode
+{
+public:
+	CastNode(AstContext* context, const YYLTYPE& location, ExpressionNode* lhs, TypeName* typeName)
+	: ExpressionNode(context, location), lhs(lhs), typeName(typeName)
+	{
+	}
+
+	AST_VISITABLE();
+
+	ExpressionNode* lhs;
+	TypeName* typeName;
 };
 
 ////// Statement nodes /////////////////////////////////////////////////////////

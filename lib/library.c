@@ -20,11 +20,8 @@ void fail(const char* str)
 
 //// Arrays ////////////////////////////////////////////////////////////////////
 
-Array* unsafeMakeArray(int64_t size, uint64_t tag)
+Array* unsafeMakeArray(uint64_t size, uint64_t tag)
 {
-    if (size < 0)
-        fail("*** Exception: Cannot create array of negative size");
-
     Array* result = gcAllocate(sizeof(Array) + size * 8);
     result->constructorTag = tag;
     result->numElements = size;
@@ -32,7 +29,7 @@ Array* unsafeMakeArray(int64_t size, uint64_t tag)
     return result;
 }
 
-int64_t arrayLength(Array* array)
+uint64_t arrayLength(Array* array)
 {
     return array->numElements;
 }
@@ -42,13 +39,13 @@ inline uint64_t* arrayContent(Array* s)
     return (uint64_t*)(s + 1);
 }
 
-uint64_t unsafeArrayAt(Array* arr, int64_t index)
+uint64_t unsafeArrayAt(Array* arr, uint64_t index)
 {
     uint64_t* p = arrayContent(arr);
     return p[index];
 }
 
-void unsafeArraySet(Array* arr, int64_t index, uint64_t value)
+void unsafeArraySet(Array* arr, uint64_t index, uint64_t value)
 {
     uint64_t* p = arrayContent(arr);
     p[index] = value;
@@ -71,18 +68,18 @@ String* makeStr(const char* data)
     return result;
 }
 
-int64_t strLength(String* s)
+uint64_t strLength(String* s)
 {
     return strlen(strContent(s));
 }
 
-String* strSlice(String* s, int64_t pos, int64_t length)
+String* strSlice(String* s, uint64_t pos, uint64_t length)
 {
-    if (pos < 0 || pos >= strLength(s))
+    if (pos >= strLength(s))
     {
         fail("*** Exception: String slice position out of range");
     }
-    else if (length < 0 || pos + length > strLength(s))
+    else if (pos + length > strLength(s)) // TODO: Check for overflow
     {
         fail("*** Exception: String slice length out of range");
     }
@@ -114,9 +111,9 @@ String* strCat(String* lhs, String* rhs)
     return result;
 }
 
-int64_t strAt(String* s, int64_t idx)
+int64_t strAt(String* s, uint64_t idx)
 {
-    if (idx < 0 || idx >= strLength(s))
+    if (idx >= strLength(s))
     {
         fail("*** Exception: String index out of range");
     }
@@ -180,7 +177,7 @@ String* showUInt(uint64_t value)
 }
 
 // FNV-1a 64-bit
-int64_t strHash(String* s)
+uint64_t strHash(String* s)
 {
     uint64_t hash = 14695981039346656037ULL;
 

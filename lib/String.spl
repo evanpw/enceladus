@@ -29,7 +29,7 @@ impl String
             n2 -= 1
 
         pos := 1
-        n := max(0, n2 - n1 + 1)
+        n := umax(0, n2 - n1 + 1)
 
         return s.slice(pos, n)
 
@@ -48,7 +48,7 @@ impl String
             n2 -= 1
 
         pos := 1
-        n := max(0, n2 - n1 + 1)
+        n := umax(0, n2 - n1 + 1)
 
         return s.slice(pos, n)
 
@@ -57,7 +57,7 @@ impl String
         start := 0
 
         len := s.length()
-        for i = 0 to len - 1
+        for i in urange(0, len - 1)
             if isSpace(s.at(i))
                 len := i - start
                 result = s.slice(start, len) :: result
@@ -73,7 +73,7 @@ impl String
         start := 0
 
         len := s.length()
-        for i = 0 to len - 1
+        for i in urange(0, len - 1)
             if s.at(i) == sep
                 len := i - start
                 result = s.slice(start, len) :: result
@@ -94,7 +94,7 @@ impl String
 
     def toInt(s: String) -> Option<Int>
         x := 0
-        for i = 0 to s.length() - 1
+        for i in urange(0, s.length() - 1)
             digit := s.at(i)
 
             if digit < '0' or digit > '9'

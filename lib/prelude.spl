@@ -5,35 +5,35 @@ data List<T> = Cons(T, List<T>) | Nil
 
 ## String ##
 type Char = Int
-foreign strLength(s: String) -> Int
-foreign strSlice(s: String, pos: Int, len: Int) -> String
-foreign strAt(s: String, n: Int) -> Char
+foreign strLength(s: String) -> UInt
+foreign strSlice(s: String, pos: UInt, len: UInt) -> String
+foreign strAt(s: String, n: UInt) -> Char
 foreign strFromList(s: [Char]) -> String
 foreign strCat(lhs: String, rhs: String) -> String
-foreign strHash(s: String) -> Int
+foreign strHash(s: String) -> UInt
 foreign show(x: Int) -> String
 foreign showUInt(x: UInt) -> String
 
 struct StringIterator
     str: String
-    offset: Int
+    offset: UInt
 
 # Method wrappers (methods can't be implemented in C)
 impl String
-    def length(self: String) -> Int
+    def length(self: String) -> UInt
         return strLength(self)
 
-    def slice(self: String, pos: Int, len: Int) -> String
+    def slice(self: String, pos: UInt, len: UInt) -> String
         return strSlice(self, pos, len)
 
-    def at(self: String, n: Int) -> Int
+    def at(self: String, n: UInt) -> Int
         return strAt(self, n)
 
     def concat(self: String, other: String) -> String
         return strCat(self, other)
 
     def iter(self: String) -> StringIterator
-        return StringIterator(self, 0)
+        return StringIterator(self, 0u)
 
 impl StringIterator
     def head(self: StringIterator) -> Char
@@ -41,43 +41,45 @@ impl StringIterator
 
     def tail(self: StringIterator) -> StringIterator
         assert self.offset < self.str.length()
-        return StringIterator(self.str, self.offset + 1)
+        return StringIterator(self.str, self.offset + 1u)
 
     def empty(self: StringIterator) -> Bool
         return self.offset >= self.str.length()
 
 ## Array ##
 # FOR INTERNAL USE ONLY: Does not initialize the array
-foreign unsafeMakeArray<T>(size: Int) -> Array<T>
-foreign unsafeArrayAt<T>(arr: Array<T>, n: Int) -> T
-foreign unsafeArraySet<T>(arr: Array<T>, n: Int, value: T) -> Unit
-foreign arrayLength<T>(arr: Array<T>) -> Int
+foreign unsafeMakeArray<T>(size: UInt) -> Array<T>
+foreign unsafeArrayAt<T>(arr: Array<T>, n: UInt) -> T
+foreign unsafeArraySet<T>(arr: Array<T>, n: UInt, value: T) -> Unit
+foreign arrayLength<T>(arr: Array<T>) -> UInt
 
 def emptyArray<T>() -> Array<T>
     return unsafeMakeArray(0)
 
-def makeArray<T>(size: Int, value: T) -> Array<T>
+def makeArray<T>(size: UInt, value: T) -> Array<T>
     arr := unsafeMakeArray(size)
 
     # MUST NOT collect garbage in between allocation and initialization
     # if T is boxed
 
-    for i = 0 to size - 1
+    i := 0
+    while i < size
         unsafeArraySet(arr, i, value)
+        i += 1
 
     return arr
 
 # Method wrappers (methods can't be implemented in C)
 impl<T> Array<T>
-    def at(self: Array<T>, n: Int) -> T
-        assert n >= 0 and n < arrayLength(self)
+    def at(self: Array<T>, n: UInt) -> T
+        assert n < arrayLength(self)
         return unsafeArrayAt(self, n)
 
-    def set(self: Array<T>, n: Int, value: T) -> Unit
-        assert n >= 0 and n < arrayLength(self)
+    def set(self: Array<T>, n: UInt, value: T) -> Unit
+        assert n < arrayLength(self)
         unsafeArraySet(self, n, value)
 
-    def length(self: Array<T>) -> Int
+    def length(self: Array<T>) -> UInt
         return arrayLength(self)
 
 
@@ -145,7 +147,7 @@ impl<T> List<T>
             Nil
                 return True
 
-    def length(self: [T]) -> Int
+    def length(self: [T]) -> UInt
         result := 0
         xs := self
 
@@ -155,19 +157,19 @@ impl<T> List<T>
 
         return result
 
-    def take(self: [T], n: Int) -> [T]
+    def take(self: [T], n: UInt) -> [T]
         if n == 0
             return []
         else
             return self.head() :: self.tail().take(n - 1)
 
-    def drop(self: [T], n: Int) -> [T]
+    def drop(self: [T], n: UInt) -> [T]
         if n == 0
             return self
         else
             return self.tail().drop(n - 1)
 
-    def at(self: [T], n: Int) -> T
+    def at(self: [T], n: UInt) -> T
         xs := self
 
         while n > 0
@@ -238,6 +240,38 @@ impl Range
         return result
 
 
+## URange ##
+# TODO: Max Range generic over Int and UInt (needs traits)
+struct URange
+    start: UInt
+    end: UInt
+
+def urange(start: UInt, end: UInt) -> URange
+    return URange(start, end)
+
+impl URange
+    def head(self: URange) -> UInt
+        assert self.start <= self.end
+        return self.start
+
+    def tail(self: URange) -> URange
+        assert self.start <= self.end
+        return URange(self.start + 1, self.end)
+
+    def empty(self: URange) -> Bool
+        return self.start > self.end
+
+    def toList(self: URange) -> [UInt]
+        result := []
+
+        i := self.end
+        while i >= self.start
+            result = i :: result
+            i -= 1u
+
+        return result
+
+
 ## Native-language standard library
 def assertMessage(b: Bool, err: String) -> Unit
     if not b
@@ -270,7 +304,23 @@ def max(a: Int, b: Int) -> Int
         return b
 
 
+# TODO: Generic version with traits
+def umax(a: UInt, b: UInt) -> UInt
+    if a > b
+        return a
+    else
+        return b
+
+
 def min(a: Int, b: Int) -> Int
+    if a < b
+        return a
+    else
+        return b
+
+
+# TODO: Generic version with traits
+def umin(a: UInt, b: UInt) -> UInt
     if a < b
         return a
     else
@@ -320,16 +370,6 @@ def pow(a: Int, b: Int) -> Int
 
     return r
 
-# Modulo operator with b > 0 that satisfies 0 <= imod(a, b) < b even if a < 0
-def imod(a: Int, b: Int) -> Int
-    assert b > 0
-
-    result := a mod b
-    if result < 0
-        result += b
-
-    return result
-
 
 ## Pair ##
 data Pair<S, T> = Pair(S, T)
@@ -344,5 +384,5 @@ impl<S, T> Pair<S, T>
             Pair(_, x) => return x
 
 
-def splitAt<T>(n: Int, xs: [T]) -> Pair<[T], [T]>
+def splitAt<T>(n: UInt, xs: [T]) -> Pair<[T], [T]>
     return Pair(xs.take(n), xs.drop(n))

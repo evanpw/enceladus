@@ -1,17 +1,17 @@
 struct HashTable<S, T>
     contents: Array<Option<Pair<S, T>>>
-    hashFn: |S| -> Int
+    hashFn: |S| -> UInt
     cmpFn: |S, S| -> Bool
-    size: Int
-    capacity: Int
+    size: UInt
+    capacity: UInt
 
 
-def hashTable<S, T>(hashFn: |S| -> Int, cmpFn: |S, S| -> Bool) -> HashTable<S, T>
+def hashTable<S, T>(hashFn: |S| -> UInt, cmpFn: |S, S| -> Bool) -> HashTable<S, T>
     return HashTable(makeArray(0, None), hashFn, cmpFn, 0, 0)
 
 
 impl<S, T> HashTable<S, T>
-    def hash(self: HashTable<S, T>, key: S) -> Int
+    def hash(self: HashTable<S, T>, key: S) -> UInt
         hashFn := self.hashFn
         return hashFn(key)
 
@@ -25,7 +25,7 @@ impl<S, T> HashTable<S, T>
             newCapacity := max(1, 3 * self.size)
             self.resize(newCapacity)
 
-        startIdx := imod(self.hash(key), self.capacity)
+        startIdx := self.hash(key) mod self.capacity
 
         # Linear probing
         idx := startIdx
@@ -50,7 +50,7 @@ impl<S, T> HashTable<S, T>
         if self.capacity == 0
             return None
 
-        startIdx := imod(self.hash(key), self.capacity)
+        startIdx := self.hash(key) mod self.capacity
 
         idx := startIdx
         forever
@@ -72,7 +72,7 @@ impl<S, T> HashTable<S, T>
     def at(self: HashTable<S, T>, key: S) -> Option<T>
         return self.get(key)
 
-    def resize(self: HashTable<S, T>, newCapacity: Int) -> Unit
+    def resize(self: HashTable<S, T>, newCapacity: UInt) -> Unit
         assert newCapacity >= self.size
 
         oldContents := self.contents
@@ -90,13 +90,13 @@ impl<S, T> HashTable<S, T>
                 None
                     pass
 
-def hashInt(x: Int) -> Int
-    return x
+def hashInt(x: Int) -> UInt
+    return x as UInt
 
 def eqInt(lhs: Int, rhs: Int) -> Bool
     return lhs == rhs
 
-def hashString(x: String) -> Int
+def hashString(x: String) -> UInt
     return strHash(x)
 
 def eqString(lhs: String, rhs: String) -> Bool
@@ -106,7 +106,7 @@ def eqString(lhs: String, rhs: String) -> Bool
     if n1 != n2
         return False
 
-    for i in range(0, n1 - 1)
+    for i in urange(0, n1 - 1)
         if lhs.at(i) != rhs.at(i)
             return False
 

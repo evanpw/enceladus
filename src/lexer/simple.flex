@@ -33,28 +33,34 @@ int count_whitespace(const char* s, int length)
     return count;
 }
 
-int char_literal(const char* s)
+const char* char_literal(const char* s)
 {
+    static char result[16];
+    int c;
+
     if (s[1] != '\\')
     {
-        return s[1];
+        c = s[1];
     }
     else if (s[2] == 'n')
     {
-        return '\n';
+        c = '\n';
     }
     else if (s[2] == 'r')
     {
-        return '\r';
+        c = '\r';
     }
     else if (s[2] == 't')
     {
-        return '\t';
+        c = '\t';
     }
     else
     {
-        return '\0';
+        assert(false);
     }
+
+    sprintf(result, "%d", c);
+    return result;
 }
 
 int unclosedBrackets = 0;
@@ -140,42 +146,7 @@ extern "C" int yywrap()
  /* It's easier to get rid of blank lines here than in the grammar. */
 ^[ \t]*("#".*)?\n  { yycolumn = 1; }
 
--?[0-9][0-9]*u? {
-    if (yytext[yyleng - 1] == 'u')
-    {
-        yytext[yyleng - 1] = '\0';
-
-        try
-        {
-            yylval.unsignedInt = boost::lexical_cast<uint64_t>(yytext);
-            return tUINT_LIT;
-        }
-        catch (boost::bad_lexical_cast&)
-        {
-            std::stringstream ss;
-            ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
-               << ": error: unsigned integer literal out of range: " << yytext;
-
-            throw LexerError(ss.str());
-         }
-    }
-    else
-    {
-        try
-        {
-            yylval.signedInt = boost::lexical_cast<int64_t>(yytext);
-            return tINT_LIT;
-        }
-        catch (boost::bad_lexical_cast&)
-        {
-            std::stringstream ss;
-            ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
-               << ": error: integer literal out of range: " << yytext;
-
-            throw LexerError(ss.str());
-         }
-    }
-}
+-?[0-9][0-9]*[ui]? { yylval.str = StringTable::add(yytext); return tINT_LIT; }
 
  /* Python-style comments */
 "#".*
@@ -221,6 +192,7 @@ extern "C" int yywrap()
 
  /* Keywords */
 "assert"    { return tASSERT; }
+"as"        { return tAS; }
 "break"     { return tBREAK; }
 "data"      { return tDATA; }
 "def"       { return tDEF; }
@@ -283,7 +255,7 @@ extern "C" int yywrap()
 
  /* String and char literals */
 \"[^"]*\"                { yylval.str = StringTable::add(trim_quotes(yytext)); return tSTRING_LIT; }
-\'([^']|\\[nrt])\'       { yylval.signedInt = char_literal(yytext); return tINT_LIT; }
+\'([^']|\\[nrt])\'       { yylval.str = StringTable::add(char_literal(yytext)); return tINT_LIT; }    /* character literal */
 
 [a-z][a-zA-Z0-9']*       { yylval.str = StringTable::add(yytext); return tLIDENT; }
 "_"                      { yylval.str = StringTable::add(yytext); return tLIDENT; }

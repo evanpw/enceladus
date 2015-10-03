@@ -40,4 +40,4 @@ for i = 1 to 1000
     s := numInWords(i)
     totalLength += s.length()
 
-print $ show(totalLength)
+print $ showUInt(totalLength)
