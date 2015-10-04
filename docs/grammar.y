@@ -83,7 +83,7 @@ return_statement
     : RETURN expression EOL
 
 struct_declaration
-    : STRUCT UIDENT type_params '=' members
+    : STRUCT UIDENT constrained_type_params '=' members
 
 variable_declaration
     : LIDENT [ ':' type ] COLON_EQUAL expression EOL
@@ -96,7 +96,7 @@ break_statement
     : BREAK EOL
 
 implementation_block
-    : IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
+    : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
 
 method_definition
     : DEF ident constrained_type_params params_and_types suite

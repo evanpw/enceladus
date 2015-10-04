@@ -11,7 +11,7 @@ def readNumber() -> BigInt
     return BigInt(ys)
 
 xs := toBigInt(0)
-for i in urange(0, 100)
+for i in range(0, 100)
     xs = xs.plus(readNumber())
 
 n := 0

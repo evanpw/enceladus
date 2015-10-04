@@ -19,7 +19,7 @@ def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
     newCache := []
     k := 0
 
-    for i in urange(0, cache.length())
+    for i in range(0, cache.length())
         c := cache[i]
         x := inst[i]
 
@@ -33,7 +33,7 @@ def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
 
 def zeroCache(m: UInt) -> String
     result := ""
-    for i in urange(0, m)
+    for i in range(0, m)
         result = result ++ "0"
 
     return result

@@ -500,13 +500,13 @@ public:
 class ImplNode : public StatementNode
 {
 public:
-	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::string>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
+	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::pair<std::string, std::string>>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
 	: StatementNode(context, location), typeParams(typeParams), typeName(typeName), methods(methods)
 	{}
 
 	AST_VISITABLE();
 
-	std::vector<std::string> typeParams;
+	std::vector<std::pair<std::string, std::string>> typeParams;
 	TypeName* typeName;
 	std::vector<MethodDefNode*> methods;
 
@@ -656,7 +656,7 @@ public:
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<std::string>&& typeParameters)
+	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<std::pair<std::string, std::string>>&& typeParameters)
 	: StatementNode(context, location), name(name), members(members), typeParameters(typeParameters)
 	{}
 
@@ -664,7 +664,7 @@ public:
 
 	std::string name;
 	std::vector<MemberDefNode*> members;
-	std::vector<std::string> typeParameters;
+	std::vector<std::pair<std::string, std::string>> typeParameters;
 
 	// Annotations
 	Type* structType;

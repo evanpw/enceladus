@@ -392,7 +392,7 @@ StatementNode* Parser::return_statement()
 }
 
 /// struct_declaration
-///     : STRUCT UIDENT type_params '=' members
+///     : STRUCT UIDENT constrained_type_params '=' members
 StatementNode* Parser::struct_declaration()
 {
     YYLTYPE location = getLocation();
@@ -400,7 +400,7 @@ StatementNode* Parser::struct_declaration()
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
 
-    std::vector<std::string> typeParams = type_params();
+    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
 
     std::vector<MemberDefNode*> memberList = members();
 
@@ -516,14 +516,14 @@ StatementNode* Parser::break_statement()
 }
 
 /// implementation_block
-///     : IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
+///     : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
 StatementNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
 
     expect(tIMPL);
 
-    std::vector<std::string> typeParams = type_params();
+    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
     TypeName* typeName = type();
 
     expect(tEOL);

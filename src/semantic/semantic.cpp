@@ -1393,14 +1393,28 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         // Create type variables for each type parameter
         std::vector<Type*> variables;
         std::unordered_map<std::string, Type*> typeContext;
-        for (auto& typeParameter : node->typeParameters)
+        for (auto& item : node->typeParameters)
         {
+            std::string& typeParameter = item.first;
+            std::string& constraint = item.second;
+
             CHECK_UNDEFINED(typeParameter);
             CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
-
             Type* var = _typeTable->createTypeVariable(typeParameter, true);
-            variables.push_back(var);
 
+            if (!constraint.empty())
+            {
+                Symbol* constraintSymbol = resolveTypeSymbol(constraint);
+                CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
+                CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+
+                TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
+                assert(traitSymbol);
+
+                var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
+            }
+
+            variables.push_back(var);
             typeContext.emplace(typeParameter, var);
         }
 
@@ -1487,12 +1501,27 @@ void SemanticAnalyzer::visit(ImplNode* node)
 
     // Create type variables for each type parameter
     std::unordered_map<std::string, Type*> typeContext;
-    for (auto& typeParameter : node->typeParams)
+    for (auto& item : node->typeParams)
     {
+        std::string& typeParameter = item.first;
+        std::string& constraint = item.second;
+
         CHECK_UNDEFINED(typeParameter);
         CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
-
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
+
+        if (!constraint.empty())
+        {
+            Symbol* constraintSymbol = resolveTypeSymbol(constraint);
+            CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
+            CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+
+            TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
+            assert(traitSymbol);
+
+            var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
+        }
+
         typeContext.emplace(typeParameter, var);
     }
 

@@ -106,7 +106,7 @@ def eqString(lhs: String, rhs: String) -> Bool
     if n1 != n2
         return False
 
-    for i in urange(0, n1)
+    for i in range(0, n1)
         if lhs.at(i) != rhs.at(i)
             return False
 

@@ -210,61 +210,26 @@ impl<T> List<T>
 
 
 ## Range ##
-struct Range
-    start: Int
-    end: Int
+struct Range<T: Num>
+    start: T
+    end: T
 
-def range(start: Int, end: Int) -> Range
+def range<T: Num>(start: T, end: T) -> Range<T>
     return Range(start, end)
 
-impl Range
-    def head(self: Range) -> Int
+impl<T: Num> Range<T>
+    def head(self: Range<T>) -> T
         assert self.start < self.end
         return self.start
 
-    def tail(self: Range) -> Range
+    def tail(self: Range<T>) -> Range<T>
         assert self.start < self.end
         return Range(self.start + 1, self.end)
 
-    def empty(self: Range) -> Bool
+    def empty(self: Range<T>) -> Bool
         return self.start >= self.end
 
-    def toList(self: Range) -> [Int]
-        result := []
-
-        if self.empty()
-            return result
-
-        i := self.end - 1
-        while i >= self.start
-            result = i :: result
-            i -= 1
-
-        return result
-
-
-## URange ##
-# TODO: Max Range generic over Int and UInt (needs traits)
-struct URange
-    start: UInt
-    end: UInt
-
-def urange(start: UInt, end: UInt) -> URange
-    return URange(start, end)
-
-impl URange
-    def head(self: URange) -> UInt
-        assert self.start < self.end
-        return self.start
-
-    def tail(self: URange) -> URange
-        assert self.start < self.end
-        return URange(self.start + 1, self.end)
-
-    def empty(self: URange) -> Bool
-        return self.start >= self.end
-
-    def toList(self: URange) -> [UInt]
+    def toList(self: Range<T>) -> [T]
         result := []
 
         if self.empty()

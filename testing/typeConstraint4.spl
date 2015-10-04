@@ -1,0 +1,9 @@
+struct Test<T>
+    x: T
+
+impl<T: Num> Test<T>
+    def f(self: Test<T>, val: T) -> T
+        return self.x + val
+
+drop $ Test(1).f(2)
+drop $ Test("Hello").f("World")
