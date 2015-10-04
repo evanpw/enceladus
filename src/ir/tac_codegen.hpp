@@ -55,7 +55,6 @@ public:
     UNSUPPORTED(MatchArm);
     UNSUPPORTED(MatchNode);
     UNSUPPORTED(MemberDefNode);
-    UNSUPPORTED(MethodDeclNode);
     UNSUPPORTED(MethodDefNode);
     UNSUPPORTED(PassNode);
     UNSUPPORTED(ProgramNode);
@@ -160,10 +159,11 @@ private:
     // uniquely identifies a location
     std::unordered_map<const Symbol*, Value*> _globalNames;
     std::unordered_map<const Symbol*, Value*> _localNames;
+    std::unordered_map<const Symbol*, Value*> _externFunctions;
     std::unordered_map<const Symbol*, std::vector<std::pair<TypeAssignment, Function*>>> _functionNames;
 
     Value* getValue(const Symbol* symbol);
-    Function* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
+    Value* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
     ValueType getValueType(Type* type);
     ValueType getValueType(Type* type, const TypeAssignment& typeAssignment);

@@ -28,8 +28,9 @@ private:
     void printMovrm(MachineOperand* dest, MachineOperand* base, MachineOperand* offset);
     void printMovmd(MachineOperand* base, MachineOperand* src);
     void printMovmd(MachineOperand* base, MachineOperand* offset, MachineOperand* src);
+    void printLea(MachineOperand* dest, MachineOperand* src);
 
-    void printSimpleOperand(MachineOperand* operand);
+    void printSimpleOperand(MachineOperand* operand, bool inBrackets = false);
 
     MachineContext* _context = nullptr;
     MachineFunction* _function = nullptr;

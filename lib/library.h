@@ -7,7 +7,7 @@
 #define MAX_STRUCTURED_TAG      ((1L << 32) - 1)
 #define STRING_TAG              (MAX_STRUCTURED_TAG + 1)
 #define UNBOXED_ARRAY_TAG       (MAX_STRUCTURED_TAG + 2)
-#define BOXED_ARRAY_TAG         (MAX_STRUCTURED_TAG + 2)
+#define BOXED_ARRAY_TAG         (MAX_STRUCTURED_TAG + 3)
 
 #define SplObject_HEAD \
     uint64_t constructorTag; \

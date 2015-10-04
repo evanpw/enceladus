@@ -73,7 +73,7 @@ protected:
     {}
 };
 
-enum class GlobalTag {Variable, Function, Static};
+enum class GlobalTag {Variable, Function, Static, ExternFunction};
 
 struct GlobalValue : public Constant
 {

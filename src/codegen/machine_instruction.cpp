@@ -20,6 +20,7 @@ const char* opcodeNames[] = {
     "JLE",
     "JMP",
     "JNE",
+    "LEA",
     "MOVrd",
     "MOVrm",
     "MOVmd",

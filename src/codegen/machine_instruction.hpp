@@ -38,6 +38,7 @@ enum class Opcode {
     JLE,
     JMP,
     JNE,
+    LEA,
     MOVrd,
     MOVrm,
     MOVmd,
@@ -109,7 +110,7 @@ struct VirtualRegister : public MachineOperand
     HardwareRegister* assignment = nullptr;
 
 private:
-    friend class MachineFunction;
+    friend struct MachineFunction;
 
     VirtualRegister(ValueType type, int64_t id)
     : MachineOperand(type), id(id)
@@ -133,12 +134,13 @@ struct Address : public MachineOperand
     }
 
     std::string name;
+    bool clinkage;
 
 private:
     friend class MachineContext;
 
-    Address(const std::string& name)
-    : MachineOperand(ValueType::NonHeapAddress), name(name)
+    Address(const std::string& name, bool clinkage)
+    : MachineOperand(ValueType::NonHeapAddress), name(name), clinkage(clinkage)
     {}
 };
 
@@ -161,7 +163,7 @@ struct StackLocation : public MachineOperand
     int64_t offset = 0;
 
 protected:
-    friend class MachineFunction;
+    friend struct MachineFunction;
 
     StackLocation(ValueType type, const std::string& name)
     : MachineOperand(type), name(name)
@@ -179,7 +181,7 @@ struct StackParameter : public StackLocation
     size_t index;
 
 private:
-    friend class MachineFunction;
+    friend struct MachineFunction;
 
     StackParameter(ValueType type, const std::string& name, size_t index)
     : StackLocation(type, name), index(index)
@@ -225,7 +227,7 @@ struct MachineBB : public MachineOperand
     std::list<MachineInst*> instructions;
 
 private:
-    friend class MachineFunction;
+    friend struct MachineFunction;
 
     MachineBB(int64_t id)
     : MachineOperand(ValueType::NonHeapAddress), id(id)

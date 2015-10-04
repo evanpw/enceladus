@@ -30,9 +30,9 @@ ConstantInt* TACContext::createConstantInt(ValueType type, int64_t value)
     return result;
 }
 
-Function* TACContext::createExternFunction(const std::string& name)
+GlobalValue* TACContext::createExternFunction(const std::string& name)
 {
-    Function* result = new Function(this, name);
+    GlobalValue* result = new GlobalValue(this, ValueType::NonHeapAddress, name, GlobalTag::ExternFunction);
     _values.push_back(result);
     externs.push_back(result);
     return result;

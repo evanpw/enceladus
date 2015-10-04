@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 StackMap::StackMap(MachineFunction* function)
-: _function(function), _context(function->context)
+: _function(function)
 {
 }
 

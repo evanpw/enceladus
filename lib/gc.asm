@@ -1,6 +1,6 @@
 bits 64
 section .text
-global main, _main, stackBottom, gcAllocate, gcAllocateFromC, ccall
+global main, _main, stackBottom, gcAllocate, _gcAllocate, gcAllocateFromC, ccall, _ccall
 global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
 global addRoot, removeRoots
 extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _panic, panic, splmain
@@ -69,6 +69,7 @@ removeRoots:
     ret
 
 
+_ccall:
 ccall:
     push rbp
     mov rbp, rsp
@@ -314,6 +315,7 @@ splcall5:
     ret
 
 
+_gcAllocate:
 gcAllocate:
     push rbp
     mov rbp, rsp

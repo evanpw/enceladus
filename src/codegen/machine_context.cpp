@@ -21,7 +21,7 @@ Immediate* MachineContext::createImmediate(int64_t value, ValueType type)
     return immediate;
 }
 
-Address* MachineContext::createGlobal(const std::string& name)
+Address* MachineContext::createGlobal(const std::string& name, bool clinkage)
 {
     auto i = _globals.find(name);
     if (i != _globals.end())
@@ -30,7 +30,7 @@ Address* MachineContext::createGlobal(const std::string& name)
     }
     else
     {
-        Address* address = new Address(name);
+        Address* address = new Address(name, clinkage);
         _globals.emplace(name, std::unique_ptr<Address>(address));
         return address;
     }

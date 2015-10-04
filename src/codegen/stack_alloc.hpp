@@ -1,5 +1,5 @@
 #ifndef STACK_ALLOC_HPP
-#define STACK_ALLOC_CPP
+#define STACK_ALLOC_HPP
 
 #include "codegen/machine_instruction.hpp"
 

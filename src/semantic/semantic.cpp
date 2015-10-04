@@ -829,7 +829,8 @@ void SemanticAnalyzer::visit(AssignNode* node)
     }
     else
     {
-        CHECK(false, "left-hand side of assignment statement is not an lvalue");
+        semanticError(node->location, "left-hand side of assignment statement is not an lvalue");
+        return;
     }
 
     CHECK(symbol->kind == kVariable || symbol->kind == kMemberVar, "symbol \"{}\" is not a variable", symbol->name);

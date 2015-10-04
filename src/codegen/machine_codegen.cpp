@@ -30,7 +30,7 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
         if (entry)
         {
             emit(Opcode::PUSH, {}, {vrbp});
-            emit(Opcode::MOVrd, {vrbp}, {vrsp});
+            emitMovrd(vrbp, vrsp);
             entry = false;
         }
 
@@ -49,7 +49,8 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
     }
     else if (GlobalValue* global = dynamic_cast<GlobalValue*>(value))
     {
-        return _context->createGlobal(global->name);
+        bool clinkage = global->tag == GlobalTag::ExternFunction;
+        return _context->createGlobal(global->name, clinkage);
     }
     else if (dynamic_cast<LocalValue*>(value))
     {
@@ -94,119 +95,18 @@ MachineBB* MachineCodeGen::getBlock(BasicBlock* block)
     return mbb;
 }
 
-void MachineCodeGen::visit(BinaryOperationInst* inst)
+void MachineCodeGen::emitMovrd(MachineOperand* dest, MachineOperand* src)
 {
-    MachineOperand* dest = getOperand(inst->dest);
-    MachineOperand* lhs = getOperand(inst->lhs);
-    MachineOperand* rhs = getOperand(inst->rhs);
     assert(dest->isRegister());
-    assert(lhs->isRegister() || lhs->isImmediate());
-    assert(rhs->isRegister() || rhs->isImmediate());
 
-    if (inst->op == BinaryOperation::ADD)
+    if (src->isRegister() || src->isImmediate())
     {
-        emit(Opcode::MOVrd, {dest}, {lhs});
-        emit(Opcode::ADD, {dest}, {dest, rhs});
+        emit(Opcode::MOVrd, {dest}, {src});
     }
-    else if (inst->op == BinaryOperation::SUB)
+    else if (src->isAddress())
     {
-        emit(Opcode::MOVrd, {dest}, {lhs});
-        emit(Opcode::SUB, {dest}, {dest, rhs});
-    }
-    else if (inst->op == BinaryOperation::MUL)
-    {
-        emit(Opcode::MOVrd, {dest}, {lhs});
-        emit(Opcode::IMUL, {dest}, {dest, rhs});
-    }
-    else if (inst->op == BinaryOperation::AND)
-    {
-        emit(Opcode::MOVrd, {dest}, {lhs});
-        emit(Opcode::AND, {dest}, {dest, rhs});
-    }
-    else if (inst->op == BinaryOperation::SHL)
-    {
-        assert(rhs->isImmediate());
-        int64_t value = dynamic_cast<Immediate*>(rhs)->value;
-        assert(value < 32);
-
-        emit(Opcode::MOVrd, {dest}, {lhs});
-        emit(Opcode::SAL, {dest}, {dest, rhs});
-    }
-    else if (inst->op == BinaryOperation::SHR)
-    {
-        // TODO: Add support for unsigned right shift
-        assert(lhs->type == ValueType::U64);
-
-        assert(rhs->isImmediate());
-        int64_t value = dynamic_cast<Immediate*>(rhs)->value;
-        assert(value < 32);
-
-        emit(Opcode::MOVrd, {dest}, {lhs});
-        emit(Opcode::SAR, {dest}, {dest, rhs});
-    }
-    else if (inst->op == BinaryOperation::DIV)
-    {
-        assert(lhs->type == rhs->type && rhs->type == dest->type && isInteger(dest->type));
-        ValueType type = dest->type;
-
-        // No DIV/IDIV imm instruction
-        if (rhs->isImmediate())
-        {
-            VirtualRegister* vreg = _function->createVreg(type);
-            emit(Opcode::MOVrd, {vreg}, {rhs});
-            rhs = vreg;
-        }
-
-        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, type);
-        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, type);
-
-        emit(Opcode::MOVrd, {vrax}, {lhs});
-
-        if (isSigned(type))
-        {
-            emit(Opcode::CQO, {vrdx}, {vrax});
-            emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
-        }
-        else
-        {
-            MachineOperand* zero = _context->createImmediate(0, ValueType::U64);
-            emit(Opcode::MOVrd, {vrdx}, {zero});
-            emit(Opcode::DIV, {vrdx, vrax}, {vrdx, vrax, rhs});
-        }
-
-        emit(Opcode::MOVrd, {dest}, {vrax});
-    }
-    else if (inst->op == BinaryOperation::MOD)
-    {
-        assert(lhs->type == rhs->type && rhs->type == dest->type && isInteger(dest->type));
-        ValueType type = dest->type;
-
-        // No DIV/IDIV imm instruction
-        if (rhs->isImmediate())
-        {
-            VirtualRegister* vreg = _function->createVreg(type);
-            emit(Opcode::MOVrd, {vreg}, {rhs});
-            rhs = vreg;
-        }
-
-        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, type);
-        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, type);
-
-        emit(Opcode::MOVrd, {vrax}, {lhs});
-
-        if (isSigned(type))
-        {
-            emit(Opcode::CQO, {vrdx}, {vrax});
-            emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
-        }
-        else
-        {
-            MachineOperand* zero = _context->createImmediate(0, ValueType::U64);
-            emit(Opcode::MOVrd, {vrdx}, {zero});
-            emit(Opcode::DIV, {vrdx, vrax}, {vrdx, vrax, rhs});
-        }
-
-        emit(Opcode::MOVrd, {dest}, {vrdx});
+        // MOV reg, addr is illegal on mac
+        emit(Opcode::LEA, {dest}, {src});
     }
     else
     {
@@ -220,6 +120,151 @@ static bool is32Bit(int64_t x)
     int64_t signExtended = static_cast<int64_t>(truncated);;
 
     return x == signExtended;
+}
+
+void MachineCodeGen::emitMovmd(MachineOperand* base, MachineOperand* src, MachineOperand* offset)
+{
+    assert(base->isAddress() || base->isRegister());
+    assert(src->isRegister() || src->isImmediate() || src->isAddress());
+
+    // MOV [mem], imm64 is illegal on x86-64
+    // MOV [mem], addr64 is illegal on Mac
+    if (src->isAddress() ||
+        (src->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(src)->value)))
+    {
+        VirtualRegister* tmp = _function->createVreg(src->type);
+        emitMovrd(tmp, src);
+        src = tmp;
+    }
+
+    if (offset)
+    {
+        emit(Opcode::MOVmd, {}, {base, src, offset});
+    }
+    else
+    {
+        emit(Opcode::MOVmd, {}, {base, src});
+    }
+}
+
+void MachineCodeGen::visit(BinaryOperationInst* inst)
+{
+    MachineOperand* dest = getOperand(inst->dest);
+    MachineOperand* lhs = getOperand(inst->lhs);
+    MachineOperand* rhs = getOperand(inst->rhs);
+    assert(dest->isRegister());
+    assert(lhs->isRegister() || lhs->isImmediate());
+    assert(rhs->isRegister() || rhs->isImmediate());
+
+    if (inst->op == BinaryOperation::ADD)
+    {
+        emitMovrd(dest, lhs);
+        emit(Opcode::ADD, {dest}, {dest, rhs});
+    }
+    else if (inst->op == BinaryOperation::SUB)
+    {
+        emitMovrd(dest, lhs);
+        emit(Opcode::SUB, {dest}, {dest, rhs});
+    }
+    else if (inst->op == BinaryOperation::MUL)
+    {
+        emitMovrd(dest, lhs);
+        emit(Opcode::IMUL, {dest}, {dest, rhs});
+    }
+    else if (inst->op == BinaryOperation::AND)
+    {
+        emitMovrd(dest, lhs);
+        emit(Opcode::AND, {dest}, {dest, rhs});
+    }
+    else if (inst->op == BinaryOperation::SHL)
+    {
+        assert(rhs->isImmediate());
+        int64_t value = dynamic_cast<Immediate*>(rhs)->value;
+        assert(value < 32);
+
+        emitMovrd(dest, lhs);
+        emit(Opcode::SAL, {dest}, {dest, rhs});
+    }
+    else if (inst->op == BinaryOperation::SHR)
+    {
+        // TODO: Add support for unsigned right shift
+        assert(lhs->type == ValueType::U64);
+
+        assert(rhs->isImmediate());
+        int64_t value = dynamic_cast<Immediate*>(rhs)->value;
+        assert(value < 32);
+
+        emitMovrd(dest, lhs);
+        emit(Opcode::SAR, {dest}, {dest, rhs});
+    }
+    else if (inst->op == BinaryOperation::DIV)
+    {
+        assert(lhs->type == rhs->type && rhs->type == dest->type && isInteger(dest->type));
+        ValueType type = dest->type;
+
+        // No DIV/IDIV imm instruction
+        if (rhs->isImmediate())
+        {
+            VirtualRegister* vreg = _function->createVreg(type);
+            emitMovrd(vreg, rhs);
+            rhs = vreg;
+        }
+
+        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, type);
+        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, type);
+
+        emitMovrd(vrax, lhs);
+
+        if (isSigned(type))
+        {
+            emit(Opcode::CQO, {vrdx}, {vrax});
+            emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+        else
+        {
+            MachineOperand* zero = _context->createImmediate(0, ValueType::U64);
+            emitMovrd(vrdx, zero);
+            emit(Opcode::DIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+
+        emitMovrd(dest, vrax);
+    }
+    else if (inst->op == BinaryOperation::MOD)
+    {
+        assert(lhs->type == rhs->type && rhs->type == dest->type && isInteger(dest->type));
+        ValueType type = dest->type;
+
+        // No DIV/IDIV imm instruction
+        if (rhs->isImmediate())
+        {
+            VirtualRegister* vreg = _function->createVreg(type);
+            emitMovrd(vreg, rhs);
+            rhs = vreg;
+        }
+
+        VirtualRegister* vrax = _function->createPrecoloredReg(hrax, type);
+        VirtualRegister* vrdx = _function->createPrecoloredReg(hrdx, type);
+
+        emitMovrd(vrax, lhs);
+
+        if (isSigned(type))
+        {
+            emit(Opcode::CQO, {vrdx}, {vrax});
+            emit(Opcode::IDIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+        else
+        {
+            MachineOperand* zero = _context->createImmediate(0, ValueType::U64);
+            emitMovrd(vrdx, zero);
+            emit(Opcode::DIV, {vrdx, vrax}, {vrdx, vrax, rhs});
+        }
+
+        emitMovrd(dest, vrdx);
+    }
+    else
+    {
+        assert(false);
+    }
 }
 
 void MachineCodeGen::visit(CallInst* inst)
@@ -254,7 +299,7 @@ void MachineCodeGen::visit(CallInst* inst)
             assert(param->isAddress() || param->isImmediate() || param->isRegister());
 
             VirtualRegister* arg = _function->createPrecoloredReg(registerArgs[i], param->type);
-            emit(Opcode::MOVrd, {arg}, {param});
+            emitMovrd(arg, param);
             uses.push_back(arg);
         }
 
@@ -263,8 +308,8 @@ void MachineCodeGen::visit(CallInst* inst)
             VirtualRegister* vrax2 = _function->createPrecoloredReg(hrax, ValueType::NonHeapAddress);
 
             // Indirect call so that we can switch to the C stack
-            emit(Opcode::MOVrd, {vrax2}, {target});
-            uses[0] = _context->createGlobal("ccall");
+            emitMovrd(vrax2, target);
+            uses[0] = _context->createGlobal("ccall", true);
             emit(Opcode::CALL, {vrax}, std::move(uses));
         }
         else
@@ -273,7 +318,7 @@ void MachineCodeGen::visit(CallInst* inst)
             emit(Opcode::CALL, {vrax}, std::move(uses));
         }
 
-        emit(Opcode::MOVrd, {dest}, {vrax});
+        emitMovrd(dest, vrax);
     }
     else // native call convention: all arguments on the stack
     {
@@ -298,7 +343,7 @@ void MachineCodeGen::visit(CallInst* inst)
                 (param->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(param)->value)))
             {
                 VirtualRegister* vreg = _function->createVreg(param->type);
-                emit(Opcode::MOVrd, {vreg}, {param});
+                emitMovrd(vreg, param);
                 emit(Opcode::PUSH, {}, {vreg});
             }
             else if (param->isRegister())
@@ -317,7 +362,7 @@ void MachineCodeGen::visit(CallInst* inst)
         }
 
         emit(Opcode::CALL, {vrax}, {target});
-        emit(Opcode::MOVrd, {dest}, {vrax});
+        emitMovrd(dest, vrax);
 
         // Remove the function parameters from the stack
         if (paramsOnStack > 0)
@@ -338,7 +383,7 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     if (lhs->isImmediate() && rhs->isImmediate())
     {
         VirtualRegister* newLhs = _function->createVreg(lhs->type);
-        emit(Opcode::MOVrd, {newLhs}, {lhs});
+        emitMovrd(newLhs, lhs);
         lhs = newLhs;
     }
 
@@ -349,7 +394,7 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     if (rhs->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(rhs)->value))
     {
         VirtualRegister* newRhs = _function->createVreg(rhs->type);
-        emit(Opcode::MOVrd, {newRhs}, {rhs});
+        emitMovrd(newRhs, rhs);
         rhs = newRhs;
     }
 
@@ -395,17 +440,8 @@ void MachineCodeGen::visit(CopyInst* inst)
 {
     MachineOperand* dest = getOperand(inst->dest);
     MachineOperand* src = getOperand(inst->src);
-    assert(dest->isRegister());
 
-    if (src->isRegister() || src->isImmediate() || src->isAddress())
-    {
-        emit(Opcode::MOVrd, {dest}, {src});
-    }
-    else
-    {
-        std::cerr << inst->str() << std::endl;
-        assert(false);
-    }
+    emitMovrd(dest, src);
 }
 
 void MachineCodeGen::visit(IndexedLoadInst* inst)
@@ -435,42 +471,16 @@ void MachineCodeGen::visit(IndexedStoreInst* inst)
     MachineOperand* base = getOperand(inst->lhs);
     MachineOperand* offset = getOperand(inst->offset);
     MachineOperand* src = getOperand(inst->rhs);
-    assert(base->isAddress() || base->isRegister());
 
-    if (src->isRegister() || src->isImmediate() || src->isAddress())
-    {
-        emit(Opcode::MOVmd, {}, {base, src, offset});
-    }
-    else
-    {
-        assert(false);
-    }
+    emitMovmd(base, src, offset);
 }
 
 void MachineCodeGen::visit(StoreInst* inst)
 {
     MachineOperand* base = getOperand(inst->dest);
     MachineOperand* src = getOperand(inst->src);
-    assert(base->isAddress() || base->isRegister());
 
-    if (src->isRegister() || src->isImmediate() || src->isAddress())
-    {
-        // MOV [mem], imm64 is illegal
-        if (src->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(src)->value))
-        {
-            VirtualRegister* vreg = _function->createVreg(src->type);
-            emit(Opcode::MOVrd, {vreg}, {src});
-            emit(Opcode::MOVmd, {}, {base, vreg});
-        }
-        else
-        {
-            emit(Opcode::MOVmd, {}, {base, src});
-        }
-    }
-    else
-    {
-        assert(false);
-    }
+    emitMovmd(base, src);
 }
 
 void MachineCodeGen::visit(JumpIfInst* inst)
@@ -525,14 +535,14 @@ void MachineCodeGen::visit(ReturnInst* inst)
         MachineOperand* value = getOperand(inst->value);
         assert(value->isRegister() || value->isImmediate() || value->isAddress());
 
-        emit(Opcode::MOVrd, {vrax}, {value});
-        emit(Opcode::MOVrd, {vrsp}, {vrbp});
+        emitMovrd(vrax, value);
+        emitMovrd(vrsp, vrbp);
         emit(Opcode::POP, {vrbp}, {});
         emit(Opcode::RET, {}, {vrax});
     }
     else
     {
-        emit(Opcode::MOVrd, {vrsp}, {vrbp});
+        emitMovrd(vrsp, vrbp);
         emit(Opcode::POP, {vrbp}, {});
         emit(Opcode::RET, {}, {});
     }

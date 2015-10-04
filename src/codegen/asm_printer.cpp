@@ -1,6 +1,13 @@
 #include "codegen/asm_printer.hpp"
 #include "lib/library.h"
 
+#ifdef __APPLE__
+    // On OSX, C functions are prefixed with an underscore
+    #define EXTERN(s) (std::string("_") + (s))
+#else
+    #define EXTERN(s) (s)
+#endif
+
 void AsmPrinter::printProgram(MachineContext* context)
 {
     _out << "bits 64" << std::endl;
@@ -8,7 +15,7 @@ void AsmPrinter::printProgram(MachineContext* context)
 
     for (const std::string externName : context->externs)
     {
-        _out << "extern $" << externName << std::endl;
+        _out << "extern $" << EXTERN(externName) << std::endl;
     }
     _out << std::endl;
 
@@ -35,8 +42,8 @@ void AsmPrinter::printProgram(MachineContext* context)
     }
 
     // Stack map (for the GC)
-    _out << "global __stackMap" << std::endl;
-    _out << "__stackMap:" << std::endl;
+    _out << "global " << EXTERN("__stackMap") << std::endl;
+    _out << EXTERN("__stackMap") << ":" << std::endl;
     _out << "\tdq " << _stackMap.size() << std::endl;
     for (size_t i = 0; i < _stackMap.size(); ++i)
     {
@@ -106,7 +113,7 @@ void AsmPrinter::printBlock(MachineBB* block)
     }
 }
 
-void AsmPrinter::printSimpleOperand(MachineOperand* operand)
+void AsmPrinter::printSimpleOperand(MachineOperand* operand, bool inBrackets)
 {
     if (operand->isVreg())
     {
@@ -121,8 +128,19 @@ void AsmPrinter::printSimpleOperand(MachineOperand* operand)
     }
     else if (operand->isAddress())
     {
-        // TODO: Name mangling
-        _out << "$" << dynamic_cast<Address*>(operand)->name;
+        Address* address = dynamic_cast<Address*>(operand);
+
+        if (inBrackets)
+            _out << "rel ";
+
+        if (address->clinkage)
+        {
+            _out << "$" << EXTERN(address->name);
+        }
+        else
+        {
+            _out << "$" << address->name;
+        }
     }
     else
     {
@@ -173,7 +191,7 @@ void AsmPrinter::printJump(const std::string& opcode, MachineOperand* target)
 void AsmPrinter::printCallm(MachineOperand* target)
 {
     _out << "\tcall qword [";
-    printSimpleOperand(target);
+    printSimpleOperand(target, true);
     _out << "]" << std::endl;
 }
 
@@ -192,7 +210,7 @@ void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base)
     }
     else
     {
-        printSimpleOperand(base);
+        printSimpleOperand(base, true);
     }
     _out << "]" << std::endl;
 }
@@ -204,7 +222,7 @@ void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base, MachineO
     _out << "\tmov ";
     printSimpleOperand(dest);
     _out << ", qword [";
-    printSimpleOperand(base);
+    printSimpleOperand(base, true);
     _out << " + ";
     printSimpleOperand(offset);
     _out << "]" << std::endl;
@@ -224,7 +242,7 @@ void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* src)
     else
     {
         _out << "\tmov qword [";
-        printSimpleOperand(base);
+        printSimpleOperand(base, true);
         _out << "], ";
         printSimpleOperand(src);
         _out << std::endl;
@@ -236,11 +254,23 @@ void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* offset, Machin
     assert(offset->isImmediate() || offset->isVreg());
 
     _out << "\tmov qword [";
-    printSimpleOperand(base);
+    printSimpleOperand(base, true);
     _out << " + ";
     printSimpleOperand(offset);
     _out << "], ";
     printSimpleOperand(src);
+    _out << std::endl;
+}
+
+void AsmPrinter::printLea(MachineOperand* dest, MachineOperand* src)
+{
+    assert(src->isAddress());
+
+    _out << "\tlea ";
+    printSimpleOperand(dest);
+    _out << ", [";
+    printSimpleOperand(src, true);
+    _out << "]";
     _out << std::endl;
 }
 
@@ -388,6 +418,12 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 1);
             printBinary("mov", inst->outputs[0], inst->inputs[0]);
+            break;
+
+        case Opcode::LEA:
+            assert(inst->outputs.size() == 1);
+            assert(inst->inputs.size() == 1);
+            printLea(inst->outputs[0], inst->inputs[0]);
             break;
 
         case Opcode::CALL:

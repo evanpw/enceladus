@@ -16,7 +16,6 @@ public:
 
 private:
     MachineFunction* _function;
-    MachineContext* _context;
 };
 
 #endif

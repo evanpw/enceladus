@@ -30,7 +30,6 @@ class MatchNode;
 class MemberAccessNode;
 class MemberDefNode;
 class MethodCallNode;
-class MethodDeclNode;
 class MethodDefNode;
 class NullaryNode;
 class PassNode;

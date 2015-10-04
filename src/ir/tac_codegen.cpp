@@ -311,13 +311,13 @@ size_t TACCodeGen::getNumPointers(const ConstructorSymbol* symbol, AstNode* node
     // Perform the layout
     getConstructorLayout(symbol, node, typeAssignment);
 
-    Function* function = getFunctionValue(symbol, node, typeAssignment);
+    Function* function = (Function*)getFunctionValue(symbol, node, typeAssignment);
     return _constructorLayouts.at(function).first;
 }
 
 std::vector<size_t> TACCodeGen::getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
 {
-    Function* function = getFunctionValue(symbol, node, typeAssignment);
+    Function* function = (Function*)getFunctionValue(symbol, node, typeAssignment);
     auto i = _constructorLayouts.find(function);
     if (i != _constructorLayouts.end())
     {
@@ -375,7 +375,7 @@ std::vector<size_t> TACCodeGen::getConstructorLayout(const ConstructorSymbol* sy
     return memberOrder;
 }
 
-Function* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
+Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
 {
     auto& instantiations = _functionNames[symbol];
 
@@ -412,15 +412,17 @@ Function* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, cons
         const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol);
         if (functionSymbol->isExternal)
         {
-            if (!instantiations.empty())
+            assert(instantiations.empty());
+
+            auto i = _externFunctions.find(symbol);
+            if (i != _externFunctions.end())
             {
-                return instantiations[0].second;
+                return i->second;
             }
             else
             {
-                result = _context->createExternFunction(symbol->name);
-                TypeAssignment empty;
-                instantiations.emplace_back(empty, result);
+                GlobalValue* result = _context->createExternFunction(symbol->name);
+                _externFunctions.emplace(symbol, result);
                 return result;
             }
         }
@@ -554,7 +556,7 @@ void TACCodeGen::visit(ProgramNode* node)
 
         if (funcDefNode) /* regular function or method */
         {
-            Function* function = getFunctionValue(funcDefNode->symbol, nullptr, typeContext);
+            Function* function = (Function*)getFunctionValue(funcDefNode->symbol, nullptr, typeContext);
 
             _currentFunction = function;
             _localNames.clear();
@@ -582,7 +584,7 @@ void TACCodeGen::visit(ProgramNode* node)
             const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
             assert(constructorSymbol);
 
-            Function* function = getFunctionValue(constructorSymbol, nullptr, typeContext);
+            Function* function = (Function*)getFunctionValue(constructorSymbol, nullptr, typeContext);
             _currentFunction = function;
             setBlock(createBlock());
 

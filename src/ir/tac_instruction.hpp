@@ -171,7 +171,7 @@ struct ConditionalJumpInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << "br " << lhs->str() << " " << op << " " << rhs->str() << ", " << ifTrue->str() << ", " << ifFalse->str();
@@ -205,7 +205,7 @@ struct JumpIfInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << "br " << lhs->str() << ", " << ifTrue->str() << ", " << ifFalse->str();
@@ -239,7 +239,7 @@ struct ReturnInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         if (value)
         {
@@ -267,7 +267,7 @@ struct JumpInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << "jump " << target->str();
@@ -302,7 +302,7 @@ struct CopyInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << dest->str() << " = " << src->str();
@@ -385,7 +385,7 @@ struct CallInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
 
@@ -441,7 +441,7 @@ struct LoadInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << dest->str() << " = [" << src->str() << "]";
@@ -475,7 +475,7 @@ struct StoreInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << "[" << dest->str() << "] = " << src->str();
@@ -513,7 +513,7 @@ struct IndexedLoadInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << lhs->str() << " = " << "[" << rhs->str() << " + " << offset << "]";
@@ -551,7 +551,7 @@ struct IndexedStoreInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << "[" << lhs->str() << " + " << offset->str() << "] = " << rhs->str();
@@ -595,7 +595,7 @@ struct BinaryOperationInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << dest->str()
@@ -623,7 +623,7 @@ struct UnreachableInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         return "unreachable";
     }
@@ -661,7 +661,7 @@ struct PhiInst : public Instruction
 
     MAKE_VISITABLE();
 
-    virtual std::string str() const override
+    virtual std::string str() const
     {
         std::stringstream ss;
         ss << dest->str() << " = phi";

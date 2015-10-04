@@ -8,7 +8,6 @@
 
 class AstNode;
 class FunctionDefNode;
-class MethodDeclNode;
 class TraitDefNode;
 class SymbolTable;
 

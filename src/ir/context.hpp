@@ -20,7 +20,7 @@ struct TACContext
 
     Argument* createArgument(ValueType type, const std::string& name);
     ConstantInt* createConstantInt(ValueType type, int64_t value);
-    Function* createExternFunction(const std::string& name);
+    GlobalValue* createExternFunction(const std::string& name);
     Function* createFunction(const std::string& name);
     GlobalValue* createGlobal(ValueType type, const std::string& name);
     GlobalValue* createStaticString(const std::string& name, const std::string& contents);

@@ -54,6 +54,11 @@ private:
         _currentBlock->instructions.push_back(inst);
     }
 
+    // Chooses the right instruction or sequence of instructions depending
+    // on whether or not src is a global address
+    void emitMovrd(MachineOperand* dest, MachineOperand* src);
+    void emitMovmd(MachineOperand* base, MachineOperand* src, MachineOperand* offset = nullptr);
+
     // Convert an IR Value to a machine operand
     MachineOperand* getOperand(Value* value);
 
