@@ -45,8 +45,16 @@ class TestAcceptance(object):
             assert_matches(run_proc.stdout.read(), result)
             assert run_proc.wait() == 0
 
-    # Fast tests ( < 100ms)
+    # C++ unit tests
+    def test_unittests(self):
+        proc = subprocess.Popen('build/unittests/runtests --force-colour', shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        result = proc.wait()
+        if result != 0:
+            for line in proc.stdout:
+                print line,
+            assert result == 0
 
+    # Fast tests ( < 100ms)
     def test_euler1(self):
         self.run('euler1', result='233168')
 
@@ -168,7 +176,7 @@ class TestAcceptance(object):
         self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
 
     def test_overrideType(self):
-        self.run('overrideType', build_error='Error: testing/overrideType.spl:2:16: Cannot infer the type of arguments to binary operator')
+        self.run('overrideType', build_error='Error: testing/overrideType.spl:2:12: Type variable T does not satisfy constraint Num')
 
     def test_noReturn(self):
         self.run('noReturn', result='1')
@@ -376,6 +384,12 @@ class TestAcceptance(object):
 
     def test_typeConstraint(self):
         self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:1: Can\'t bind variable T\d+: Num to type String because it isn\'t an instance of trait Num'))
+
+    def test_typeConstraint2(self):
+        self.run('typeConstraint2', '3\n7\n11\n15')
+
+    def test_typeConstraint3(self):
+        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:12: Can\'t bind variable T to quantified type variable T\d+: Num, because the latter isn\'t constrained by trait Num'))
 
 
     # Medium tests (100ms-1s)

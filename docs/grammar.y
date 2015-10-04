@@ -99,7 +99,7 @@ implementation_block
     : IMPL type_params type EOL INDENT method_definition { method_definition } DEDENT
 
 method_definition
-    : DEF ident type_params params_and_types suite
+    : DEF ident constrained_type_params params_and_types suite
 
 
 //// Types /////////////////////////////////////////////////////////////////////
@@ -146,6 +146,10 @@ params_and_types
 
 type_params
     : '<' UIDENT { ',' UIDENT } '>'
+    | /* empty */
+
+constrained_type_params
+    : '<' UIDENT [':' UIDENT ] { ',' UIDENT [':' UIDENT ] } '>'
     | /* empty */
 
  //// Structures ///////////////////////////////////////////////////////////////

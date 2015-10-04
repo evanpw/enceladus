@@ -29,7 +29,7 @@ impl String
             n2 -= 1
 
         pos := 1
-        n := umax(0, n2 - n1 + 1)
+        n := max(0, n2 - n1 + 1)
 
         return s.slice(pos, n)
 
@@ -48,7 +48,7 @@ impl String
             n2 -= 1
 
         pos := 1
-        n := umax(0, n2 - n1 + 1)
+        n := max(0, n2 - n1 + 1)
 
         return s.slice(pos, n)
 

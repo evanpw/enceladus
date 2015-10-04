@@ -1,0 +1,5 @@
+def f<T: Num>(x: T) -> T
+    return x
+
+def g<T>(x: T) -> T
+    return f(x)

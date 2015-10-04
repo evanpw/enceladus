@@ -299,7 +299,27 @@ static void bindVariable(Type* variable, Type* value, AstNode* node)
     // rebind
     if (value->tag() == ttVariable)
     {
-        if (variable->get<TypeVariable>() == value->get<TypeVariable>()) return;
+        TypeVariable* rhs = value->get<TypeVariable>();
+        if (lhs == rhs) return;
+
+        // A quantified type variable can't acquire any new constraints in the
+        // process of unification (see overrideType test)
+        if (rhs->quantified())
+        {
+            auto& rhsConstraints = rhs->constraints();
+
+            for (Trait* constraint : lhs->constraints())
+            {
+                if (rhsConstraints.find(constraint) == rhsConstraints.end())
+                {
+                    std::stringstream ss;
+                    ss << "Can't bind variable " << value->name()
+                       << " to quantified type variable " << variable->name()
+                       << ", because the latter isn't constrained by trait " << constraint->name();
+                    inferenceError(node, ss.str());
+                }
+            }
+        }
     }
     else
     {
@@ -501,7 +521,22 @@ static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
 {
     if (type->isVariable())
     {
-        type->get<TypeVariable>()->addConstraint(trait);
+        TypeVariable* var = type->get<TypeVariable>();
+
+        // A quantified type variable can't acquire any new constraints in the
+        // process of unification (see overrideType test)
+        if (var->quantified())
+        {
+            auto& constraints = var->constraints();
+            if (constraints.find(trait) == constraints.end())
+            {
+                std::stringstream ss;
+                ss << "Type variable " << type->name() << " does not satisfy constraint " << trait->name();
+                inferenceError(node, ss.str());
+            }
+        }
+
+        var->addConstraint(trait);
         return;
     }
 
@@ -562,12 +597,27 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
     // Create type variables for each type parameter
     std::unordered_map<std::string, Type*> typeContext;
-    for (auto& typeParameter : node->typeParams)
+    for (auto& item : node->typeParams)
     {
+        std::string& typeParameter = item.first;
+        std::string& constraint = item.second;
+
         CHECK_UNDEFINED(typeParameter);
         CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
-
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
+
+        if (!constraint.empty())
+        {
+            Symbol* constraintSymbol = resolveTypeSymbol(constraint);
+            CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
+            CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+
+            TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
+            assert(traitSymbol);
+
+            var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
+        }
+
         typeContext.emplace(typeParameter, var);
     }
 
@@ -1482,12 +1532,27 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
 
         // Create type variables for each type parameter
         std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
-        for (auto& typeParameter : node->typeParams)
+        for (auto& item : node->typeParams)
         {
+            std::string& typeParameter = item.first;
+            std::string constraint = item.second;
+
             CHECK_UNDEFINED(typeParameter);
             CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
-
             Type* var = _typeTable->createTypeVariable(typeParameter, true);
+
+            if (!constraint.empty())
+            {
+                Symbol* constraintSymbol = resolveTypeSymbol(constraint);
+                CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
+                CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+
+                TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
+                assert(traitSymbol);
+
+                var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
+            }
+
             typeContext.emplace(typeParameter, var);
         }
 
@@ -1608,14 +1673,9 @@ void SemanticPass2::visit(BinopNode* node)
 {
     Type* type = node->type;
 
-    if (type->isVariable())
+    if (type->isVariable() && !type->get<TypeVariable>()->quantified())
     {
         semanticError(node->location, "Cannot infer the type of arguments to binary operator");
-    }
-    else
-    {
-        // Shouldn't have been possible to unify with anything else
-        assert(type->equals(_typeTable->Int) || type->equals(_typeTable->UInt));
     }
 }
 
@@ -1623,14 +1683,10 @@ void SemanticPass2::visit(ComparisonNode* node)
 {
     Type* type = node->lhs->type;
 
-    if (type->isVariable())
+    // Quantified variables will be replaced with concrete types during monomorphisation
+    if (type->isVariable() && !type->get<TypeVariable>()->quantified())
     {
         semanticError(node->location, "Cannot infer the type of arguments to comparison operator");
-    }
-    else
-    {
-        // Shouldn't have been possible to unify with anything else
-        assert(type->equals(_typeTable->Int) || type->equals(_typeTable->UInt));
     }
 }
 
@@ -1638,14 +1694,9 @@ void SemanticPass2::visit(IntNode* node)
 {
     Type* type = node->type;
 
-    if (type->isVariable())
+    if (type->isVariable() && !type->get<TypeVariable>()->quantified())
     {
         // If no specific type was inferred, then assume Int
         unify(type, _typeTable->Int, node);
-    }
-    else
-    {
-        // Shouldn't have been possible to unify with anything else
-        assert(type->equals(_typeTable->Int) || type->equals(_typeTable->UInt));
     }
 }

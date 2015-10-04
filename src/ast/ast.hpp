@@ -465,7 +465,7 @@ public:
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& typeParams, const std::vector<std::string>& params, TypeName* typeName)
+	FunctionDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, std::vector<std::pair<std::string, std::string>>&& typeParams, const std::vector<std::string>& params, TypeName* typeName)
 	: StatementNode(context, location), name(name), body(body), typeParams(typeParams), params(params), typeName(typeName)
 	{}
 
@@ -473,7 +473,7 @@ public:
 
 	std::string name;
 	StatementNode* body;
-	std::vector<std::string> typeParams;
+	std::vector<std::pair<std::string, std::string>> typeParams;
 	std::vector<std::string> params;
 	TypeName* typeName;
 
@@ -486,9 +486,10 @@ public:
 class MethodDefNode : public FunctionDefNode
 {
 public:
-	MethodDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, const std::vector<std::string>& typeParams, const std::vector<std::string>& params, TypeName* typeName)
-	: FunctionDefNode(context, location, name, body, typeParams, params, typeName)
-	{}
+	MethodDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, std::vector<std::pair<std::string, std::string>>&& typeParams, const std::vector<std::string>& params, TypeName* typeName)
+	: FunctionDefNode(context, location, name, body, std::move(typeParams), params, typeName)
+	{
+	}
 
 	AST_VISITABLE();
 

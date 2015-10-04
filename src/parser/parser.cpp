@@ -272,11 +272,11 @@ StatementNode* Parser::function_definition()
 
     expect(tDEF);
     std::string name = ident();
-    std::vector<std::string> typeParams = type_params();
+    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
     std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
 
     StatementNode* body = suite();
-    return new FunctionDefNode(_context, location, name, body, typeParams, paramsAndTypes.first, paramsAndTypes.second);
+    return new FunctionDefNode(_context, location, name, body, std::move(typeParams), paramsAndTypes.first, paramsAndTypes.second);
 }
 
 StatementNode* Parser::foreign_declaration()
@@ -549,11 +549,11 @@ StatementNode* Parser::method_definition()
 
     expect(tDEF);
     std::string name = ident();
-    std::vector<std::string> typeParams = type_params();
+    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
     std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
 
     StatementNode* body = suite();
-    return new MethodDefNode(_context, location, name, body, typeParams, paramsAndTypes.first, paramsAndTypes.second);
+    return new MethodDefNode(_context, location, name, body, std::move(typeParams), paramsAndTypes.first, paramsAndTypes.second);
 }
 
 
@@ -837,6 +837,48 @@ std::vector<std::string> Parser::type_params()
     {
         Token typeVar = expect(tUIDENT);
         result.push_back(typeVar.value.str);
+    }
+
+    expect('>');
+
+    return result;
+}
+
+/// constrained_type_params
+///     : '<' UIDENT [':' UIDENT ] { ',' UIDENT [':' UIDENT ] } '>'
+///     | /* empty */
+std::vector<std::pair<std::string, std::string>> Parser::constrained_type_params()
+{
+    if (peekType() != '<')
+        return {};
+
+    std::vector<std::pair<std::string, std::string>> result;
+
+    expect('<');
+
+    Token typeVar = expect(tUIDENT);
+    if (accept(':'))
+    {
+        Token constraint = expect(tUIDENT);
+        result.emplace_back(typeVar.value.str, constraint.value.str);
+    }
+    else
+    {
+        result.emplace_back(typeVar.value.str, "");
+    }
+
+    while (accept(','))
+    {
+        Token typeVar = expect(tUIDENT);
+        if (accept(':'))
+        {
+            Token constraint = expect(tUIDENT);
+            result.emplace_back(typeVar.value.str, constraint.value.str);
+        }
+        else
+        {
+            result.emplace_back(typeVar.value.str, "");
+        }
     }
 
     expect('>');

@@ -38,7 +38,7 @@ def cmpString(xs: String, ys: String) -> Int
     n1 := xs.length()
     n2 := ys.length()
 
-    for n in urange(0, umin(n1, n2) + 1)
+    for n in urange(0, min(n1, n2) + 1)
         if xs.length() <= n
             if ys.length() <= n
                 return 0

@@ -47,6 +47,7 @@ private:
     std::pair<std::string, TypeName*> param_and_type();
     std::pair<std::vector<std::string>, TypeName*> params_and_types();
     std::vector<std::string> type_params();
+    std::vector<std::pair<std::string, std::string>> constrained_type_params();
     TypeName* type();
     TypeName* arrow_type();
     TypeName* constructed_type();
