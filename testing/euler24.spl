@@ -1,13 +1,13 @@
 # Solves Project Euler #24
 
-def toInt(xs: [Int]) -> Int
+def toUInt(xs: [UInt]) -> UInt
     result := 0
     for x in xs
         result = (result * 10) + x
 
     return result
 
-def delete(x: Int, xs: [Int]) -> [Int]
+def delete(x: UInt, xs: [UInt]) -> [UInt]
     initial := []
     xs' := xs
 
@@ -21,7 +21,7 @@ def delete(x: Int, xs: [Int]) -> [Int]
 
     return xs
 
-def factorial(n: Int) -> Int
+def factorial(n: UInt) -> UInt
     result := 1
     while n > 1
         result *= n
@@ -29,7 +29,7 @@ def factorial(n: Int) -> Int
 
     return result
 
-def permutationAt(n: Int, digits: [Int]) -> [Int]
+def permutationAt(n: UInt, digits: [UInt]) -> [UInt]
     if digits.length() == 1
         assert n == 0
         return [digits.head()]
@@ -45,4 +45,4 @@ def permutationAt(n: Int, digits: [Int]) -> [Int]
 
     panic $ "Unreachable"
 
-print $ show $ toInt $ permutationAt(999999, range(0, 10).toList())
+print $ showUInt $ toUInt $ permutationAt(999999, range(0, 10).toList())

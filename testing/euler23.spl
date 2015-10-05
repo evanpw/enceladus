@@ -19,9 +19,9 @@ def divisors(n: Int) -> [Int]
 def isAbundant(n: Int) -> Bool
     return sum(divisors(n)) > n
 
-def isSumOfTwo(y: Int, xs: Array<Int>, n: Int) -> Bool
+def isSumOfTwo(y: Int, xs: Array<Int>) -> Bool
     i := 0
-    j := n - 1
+    j := xs.length() - 1
 
     while i <= j
         s := xs[i] + xs[j]
@@ -55,7 +55,7 @@ for j in range(0, n)
 # Find all numbers in the range which are the sum of two abundants
 total := 0
 for k in range(1, 28124)
-    if not isSumOfTwo(k, abundants, n)
+    if not isSumOfTwo(k, abundants)
         total += k
 
 print $ show(total)

@@ -37,6 +37,8 @@ class ProgramNode;
 class ReturnNode;
 class StringLiteralNode;
 class StructDefNode;
+class TraitDefNode;
+class TraitMethodNode;
 class TypeAliasNode;
 class TypeName;
 class VariableDefNode;
@@ -71,6 +73,7 @@ public:
 	virtual void visit(ProgramNode* node);
 	virtual void visit(ReturnNode* node);
 	virtual void visit(StructDefNode* node);
+	virtual void visit(TraitDefNode* node);
 	virtual void visit(VariableDefNode* node);
 	virtual void visit(WhileNode* node);
 
@@ -84,6 +87,7 @@ public:
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(PassNode* node) {}
 	virtual void visit(StringLiteralNode* node) {}
+	virtual void visit(TraitMethodNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(TypeName* node) {}
 	virtual void visit(VariableNode* node) {}

@@ -153,9 +153,6 @@ StatementNode* Parser::statement()
     case tWHILE:
         return while_statement();
 
-    case tVAR:
-        return variable_declaration();
-
     case tBREAK:
         return break_statement();
 
@@ -163,7 +160,7 @@ StatementNode* Parser::statement()
         return implementation_block();
 
     case tLIDENT:
-        if (peek2ndType() == tCOLON_EQUAL)
+        if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == ':')
         {
             return variable_declaration();
         }
@@ -175,7 +172,7 @@ StatementNode* Parser::statement()
     }
 }
 
-StatementNode* Parser::pass_statement()
+PassNode* Parser::pass_statement()
 {
     YYLTYPE location = getLocation();
     expect(tPASS);
@@ -217,7 +214,7 @@ StatementNode* Parser::if_statement()
 
 /// assert_statement
 ///     : ASSERT expression EOL
-StatementNode* Parser::assert_statement()
+AssertNode* Parser::assert_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -230,7 +227,7 @@ StatementNode* Parser::assert_statement()
 
 /// data_declaration
 ///     : DATA UIDENT type_params '=' constructor_spec { '|' constructor_spec } EOL
-StatementNode* Parser::data_declaration()
+DataDeclaration* Parser::data_declaration()
 {
     YYLTYPE location = getLocation();
 
@@ -253,7 +250,7 @@ StatementNode* Parser::data_declaration()
     return new DataDeclaration(_context, location, name.value.str, typeParameters, specs);
 }
 
-StatementNode* Parser::type_alias_declaration()
+TypeAliasNode* Parser::type_alias_declaration()
 {
     YYLTYPE location = getLocation();
 
@@ -266,7 +263,7 @@ StatementNode* Parser::type_alias_declaration()
     return new TypeAliasNode(_context, location, name.value.str, typeName);
 }
 
-StatementNode* Parser::function_definition()
+FunctionDefNode* Parser::function_definition()
 {
     YYLTYPE location = getLocation();
 
@@ -279,20 +276,7 @@ StatementNode* Parser::function_definition()
     return new FunctionDefNode(_context, location, name, body, std::move(typeParams), paramsAndTypes.first, paramsAndTypes.second);
 }
 
-StatementNode* Parser::foreign_declaration()
-{
-    YYLTYPE location = getLocation();
-
-    expect(tFOREIGN);
-    std::string name = ident();
-    std::vector<std::string> typeParams = type_params();
-    std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
-    expect(tEOL);
-
-    return new ForeignDeclNode(_context, location, name, typeParams, paramsAndTypes.first, paramsAndTypes.second);
-}
-
-StatementNode* Parser::for_statement()
+ForeachNode* Parser::for_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -306,7 +290,20 @@ StatementNode* Parser::for_statement()
     return new ForeachNode(_context, location, loopVar.value.str, listExpression, body);
 }
 
-StatementNode* Parser::forever_statement()
+ForeignDeclNode* Parser::foreign_declaration()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tFOREIGN);
+    std::string name = ident();
+    std::vector<std::string> typeParams = type_params();
+    std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
+    expect(tEOL);
+
+    return new ForeignDeclNode(_context, location, name, typeParams, paramsAndTypes.first, paramsAndTypes.second);
+}
+
+ForeverNode* Parser::forever_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -316,7 +313,7 @@ StatementNode* Parser::forever_statement()
     return new ForeverNode(_context, location, body);
 }
 
-StatementNode* Parser::let_statement()
+LetNode* Parser::let_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -332,7 +329,7 @@ StatementNode* Parser::let_statement()
 
 /// match_statement: MATCH expression EOL match_body
 /// match_body: INDENT match_arm { match_arm } DEDENT
-StatementNode* Parser::match_statement()
+MatchNode* Parser::match_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -380,7 +377,7 @@ MatchArm* Parser::match_arm()
     }
 }
 
-StatementNode* Parser::return_statement()
+ReturnNode* Parser::return_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -393,7 +390,7 @@ StatementNode* Parser::return_statement()
 
 /// struct_declaration
 ///     : STRUCT UIDENT constrained_type_params '=' members
-StatementNode* Parser::struct_declaration()
+StructDefNode* Parser::struct_declaration()
 {
     YYLTYPE location = getLocation();
 
@@ -407,7 +404,7 @@ StatementNode* Parser::struct_declaration()
     return new StructDefNode(_context, location, name.value.str, std::move(memberList), std::move(typeParams));
 }
 
-StatementNode* Parser::while_statement()
+WhileNode* Parser::while_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -478,34 +475,20 @@ StatementNode* Parser::assign_or_expr()
     }
 }
 
-StatementNode* Parser::variable_declaration()
+VariableDefNode* Parser::variable_declaration()
 {
     YYLTYPE location = getLocation();
 
-    if (peekType() == tLIDENT)
-    {
-        Token varName = expect(tLIDENT);
-        TypeName* varType = accept(':') ? type() : nullptr;
-        expect(tCOLON_EQUAL);
-        ExpressionNode* value = expression();
-        expect(tEOL);
+    Token varName = expect(tLIDENT);
+    TypeName* varType = accept(':') ? type() : nullptr;
+    expect(tCOLON_EQUAL);
+    ExpressionNode* value = expression();
+    expect(tEOL);
 
-        return new VariableDefNode(_context, location, varName.value.str, varType, value);
-    }
-    else
-    {
-        expect(tVAR);
-        Token varName = expect(tLIDENT);
-        TypeName* varType = accept(':') ? type() : nullptr;
-        expect('=');
-        ExpressionNode* value = expression();
-        expect(tEOL);
-
-        return new VariableDefNode(_context, location, varName.value.str, varType, value);
-    }
+    return new VariableDefNode(_context, location, varName.value.str, varType, value);
 }
 
-StatementNode* Parser::break_statement()
+BreakNode* Parser::break_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -517,7 +500,7 @@ StatementNode* Parser::break_statement()
 
 /// implementation_block
 ///     : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
-StatementNode* Parser::implementation_block()
+ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
 
@@ -543,19 +526,54 @@ StatementNode* Parser::implementation_block()
     return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods));
 }
 
-StatementNode* Parser::method_definition()
+MethodDefNode* Parser::method_definition()
 {
     YYLTYPE location = getLocation();
 
     expect(tDEF);
     std::string name = ident();
-    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
-    std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
+    auto typeParams = constrained_type_params();
+    auto paramsAndTypes = params_and_types();
 
     StatementNode* body = suite();
     return new MethodDefNode(_context, location, name, body, std::move(typeParams), paramsAndTypes.first, paramsAndTypes.second);
 }
 
+/// trait_definition
+///     : TRAIT UIDENT EOL INDENT trait_method { trait_method } DEDENT
+TraitDefNode* Parser::trait_definition()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tTRAIT);
+
+    Token traitName = expect(tUIDENT);
+
+    expect(tEOL);
+    expect(tINDENT);
+
+    std::vector<TraitMethodNode*> methods;
+    while (!accept(tDEDENT))
+    {
+        methods.push_back(trait_method());
+    }
+
+    return new TraitDefNode(_context, location, traitName.value.str, std::move(methods));
+}
+
+/// trait_method
+///     : DEF ident params_and_types EOL
+TraitMethodNode* Parser::trait_method()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tDEF);
+    Token methodName = expect(tLIDENT);
+    auto paramsAndTypes = params_and_types();
+    expect(tEOL);
+
+    return new TraitMethodNode(_context, location, methodName.value.str, std::move(paramsAndTypes.first), paramsAndTypes.second);
+}
 
 //// Miscellaneous /////////////////////////////////////////////////////////////
 

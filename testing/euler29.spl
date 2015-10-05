@@ -11,4 +11,4 @@ for a in range(2, 101)
         values = n.digits() :: values
 
 values = uniquify(cmpList, values)
-print $ show $ values.length()
+print $ showUInt $ values.length()

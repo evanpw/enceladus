@@ -1,0 +1,4 @@
+def f(xs: [Int]) -> Unit
+    print $ show $ xs.head()
+
+f(["a", "b", "c"])

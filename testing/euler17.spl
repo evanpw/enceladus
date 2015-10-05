@@ -9,7 +9,9 @@ smallNumbers := ["zero", "one", "two", "three", "four", "five", "six", "seven",
 multiplesOfTen := ["zero", "ten", "twenty", "thirty", "forty", "fifty",
     "sixty", "seventy", "eighty", "ninety"]
 
-def numInWords(x: Int) -> String
+def numInWords(x: UInt) -> String
+    assert x >= 0
+
     if x < 20
         return smallNumbers.at(x)
     elif x < 100

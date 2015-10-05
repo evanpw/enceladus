@@ -22,10 +22,10 @@ grid := [8, 2, 22, 97, 38, 15, 0, 40, 0, 75, 4, 5, 7, 78, 52, 12, 50, 77, 91,
     29, 78, 31, 90, 1, 74, 31, 49, 71, 48, 86, 81, 16, 23, 57, 5, 54, 1, 70,
     54, 71, 83, 51, 54, 69, 16, 92, 33, 48, 61, 43, 52, 1, 89, 19, 67, 48]
 
-def get(x: Int, y: Int) -> Int
+def get(x: UInt, y: UInt) -> UInt
     return grid.at(y * 20 + x)
 
-def makeRun(x: Int, y: Int, dx: Int, dy: Int) -> Int
+def makeRun(x: UInt, y: UInt, dx: UInt, dy: UInt) -> UInt
     x1 := get(x, y)
     x2 := get(x + dx, y + dy)
     x3 := get(x + 2 * dx, y + 2 * dy)
@@ -33,7 +33,7 @@ def makeRun(x: Int, y: Int, dx: Int, dy: Int) -> Int
 
     return x1 * x2 * x3 * x4
 
-def allRuns(xrange: Range<Int>, yrange: Range<Int>, dx: Int, dy: Int) -> [Int]
+def allRuns(xrange: Range<UInt>, yrange: Range<UInt>, dx: UInt, dy: UInt) -> [UInt]
     xs := []
 
     for x in xrange
@@ -47,4 +47,4 @@ vertical := allRuns(range(0, 20), range(0, 17), 0, 1)
 diagonal1 := allRuns(range(0, 17), range(0, 17), 1, 1)
 diagonal2 := allRuns(range(0, 17), range(3, 20), 1, -1)
 
-print $ show $ maximum $ horizontal ++ vertical ++ diagonal1 ++ diagonal2
+print $ showUInt $ maximum $ horizontal ++ vertical ++ diagonal1 ++ diagonal2

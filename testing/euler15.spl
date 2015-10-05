@@ -1,7 +1,8 @@
 import HashTable
 
-def hashPair(key: Pair<Int, Int>) -> Int
-    return 20 * key.first() + key.second()
+def hashPair(key: Pair<Int, Int>) -> UInt
+    result := 20 * key.first() + key.second()
+    return result as UInt
 
 def cmpPair(lhs: Pair<Int, Int>, rhs: Pair<Int, Int>) -> Bool
     let Pair(x1, y1) := lhs

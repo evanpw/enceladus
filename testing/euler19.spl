@@ -3,10 +3,10 @@
 import String
 
 struct Date
-    year: Int
-    month: Int
-    day: Int
-    dayOfWeek: Int
+    year: UInt
+    month: UInt
+    day: UInt
+    dayOfWeek: UInt
 
 impl Date
     def isLeapYear(self: Date) -> Bool
@@ -23,7 +23,7 @@ impl Date
         else
             return False
 
-    def daysInMonth(self: Date) -> Int
+    def daysInMonth(self: Date) -> UInt
         nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -55,7 +55,7 @@ impl Date
         dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
             "Friday", "Saturday"]
 
-        return "".join([monthNames.at(self.month), " ", show(self.day), ", ", show(self.year), " (", dayNames.at(self.dayOfWeek), ")"])
+        return "".join([monthNames.at(self.month), " ", showUInt(self.day), ", ", showUInt(self.year), " (", dayNames.at(self.dayOfWeek), ")"])
 
 current := Date(1900, 1, 1, 1)
 

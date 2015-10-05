@@ -514,6 +514,33 @@ public:
 	std::unordered_map<std::string, Type*> typeContext;
 };
 
+class TraitMethodNode : public StatementNode
+{
+public:
+	TraitMethodNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<std::string>&& params, TypeName* typeName)
+	: StatementNode(context, location), name(name), params(params), typeName(typeName)
+	{}
+
+	AST_VISITABLE();
+
+	std::string name;
+	std::vector<std::string> params;
+	TypeName* typeName;
+};
+
+class TraitDefNode : public StatementNode
+{
+public:
+	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<TraitMethodNode*>&& methods)
+	: StatementNode(context, location), name(name), methods(methods)
+	{}
+
+	AST_VISITABLE();
+
+	std::string name;
+	std::vector<TraitMethodNode*> methods;
+};
+
 class LetNode : public StatementNode
 {
 public:

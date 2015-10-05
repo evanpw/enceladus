@@ -214,8 +214,8 @@ extern "C" int yywrap()
 "struct"    { return tSTRUCT; }
 "to"        { return tTO; }
 "True"      { return tTRUE; }
+"trait"     { return tTRAIT; }
 "type"      { return tTYPE; }
-"var"       { return tVAR; }
 "while"     { return tWHILE; }
 
  /* Eat whitespace */

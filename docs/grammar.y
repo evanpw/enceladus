@@ -101,6 +101,12 @@ implementation_block
 method_definition
     : DEF ident constrained_type_params params_and_types suite
 
+trait_definition
+    : TRAIT UIDENT EOL INDENT trait_method { trait_method } DEDENT
+
+trait_method
+    : DEF LIDENT params_and_types EOL
+
 
 //// Types /////////////////////////////////////////////////////////////////////
 

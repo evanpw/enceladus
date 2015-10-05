@@ -51,10 +51,10 @@ enum TokenType : int
     tSTRUCT,
     tTIMES_EQUAL,
     tTO,
+    tTRAIT,
     tTRUE,
     tTYPE,
     tUIDENT,
-    tVAR,
     tWHILE,
     tWHITESPACE,
 };

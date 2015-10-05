@@ -477,10 +477,12 @@ static bool tryUnify(Type* lhs, Type* rhs, AstNode* node)
         {
             for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
             {
-                tryUnify(lhsFunction->inputs().at(i), rhsFunction->inputs().at(i), node);
+                if (!tryUnify(lhsFunction->inputs().at(i), rhsFunction->inputs().at(i), node))
+                    return false;
             }
 
-            tryUnify(lhsFunction->output(), rhsFunction->output(), node);
+            if (!tryUnify(lhsFunction->output(), rhsFunction->output(), node))
+                return false;
 
             return true;
         }
@@ -496,7 +498,8 @@ static bool tryUnify(Type* lhs, Type* rhs, AstNode* node)
 
             for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
             {
-                tryUnify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node);
+                if (!tryUnify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node))
+                    return false;
             }
 
             return true;
@@ -897,8 +900,14 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 {
 	const std::string& name = node->target;
 	Symbol* symbol = resolveSymbol(name);
-
     CHECK(symbol, "function \"{}\" is not defined", name);
+
+    Type* expectedType = instantiate(symbol->type, node->typeAssignment);
+    CHECK(expectedType->tag() == ttFunction, "\"{}\" is not a function", name);
+
+    FunctionType* functionType = expectedType->get<FunctionType>();
+    CHECK(functionType->inputs().size() >= node->arguments.size(), "function called with too many arguments")
+    CHECK(functionType->inputs().size() <= node->arguments.size(), "function called with too few arguments");
 
 	std::vector<Type*> paramTypes;
     for (size_t i = 0; i < node->arguments.size(); ++i)
@@ -906,17 +915,50 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
         AstNode* argument = node->arguments[i];
         argument->accept(this);
 
+        unify(argument->type, functionType->inputs()[i], argument);
+
         paramTypes.push_back(argument->type);
     }
 
 	node->symbol = symbol;
+    node->type = functionType->output();
+}
 
-    Type* returnType = _typeTable->createTypeVariable();
-    Type* functionType = instantiate(symbol->type, node->typeAssignment);
+void SemanticAnalyzer::visit(MethodCallNode* node)
+{
+    node->object->accept(this);
+    Type* objectType = node->object->type;
 
-    unify(functionType, _typeTable->createFunctionType(paramTypes, returnType), node);
+    std::vector<MemberSymbol*> symbols;
+    resolveMemberSymbol(node->methodName, objectType, symbols);
+    CHECK(!symbols.empty(), "no method named \"{}\" found for type \"{}\"", node->methodName, objectType->name());
+    CHECK(symbols.size() < 2, "method call is amiguous");
 
-    node->type = returnType;
+    CHECK(symbols.front()->isMethod(), "\"{}\" is a member variable, not a method", node->methodName);
+    MethodSymbol* symbol = dynamic_cast<MethodSymbol*>(symbols.front());
+
+    Type* expectedType = instantiate(symbol->type, node->typeAssignment);
+    assert(expectedType->tag() == ttFunction);
+
+    FunctionType* functionType = expectedType->get<FunctionType>();
+    CHECK(functionType->inputs().size() >= node->arguments.size() + 1, "method called with too many arguments")
+    CHECK(functionType->inputs().size() <= node->arguments.size() + 1, "method called with too few arguments");
+
+    unify(objectType, functionType->inputs()[0], node->object);
+
+    std::vector<Type*> paramTypes = {objectType};
+    for (size_t i = 0; i < node->arguments.size(); ++i)
+    {
+        AstNode* argument = node->arguments[i];
+        argument->accept(this);
+
+        unify(argument->type, functionType->inputs()[i + 1], argument);
+
+        paramTypes.push_back(argument->type);
+    }
+
+    node->symbol = symbol;
+    node->type = functionType->output();
 }
 
 void SemanticAnalyzer::visit(BinopNode* node)
@@ -1635,38 +1677,6 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         unify(node->body->type, functionType->output(), node);
         node->type = _typeTable->Unit;
     }
-}
-
-void SemanticAnalyzer::visit(MethodCallNode* node)
-{
-    node->object->accept(this);
-    Type* objectType = node->object->type;
-
-    std::vector<MemberSymbol*> symbols;
-    resolveMemberSymbol(node->methodName, objectType, symbols);
-    CHECK(!symbols.empty(), "no method named \"{}\" found for type \"{}\"", node->methodName, objectType->name());
-    CHECK(symbols.size() < 2, "method call is amiguous");
-
-    CHECK(symbols.front()->isMethod(), "\"{}\" is a member variable, not a method", node->methodName);
-    MethodSymbol* symbol = dynamic_cast<MethodSymbol*>(symbols.front());
-
-    std::vector<Type*> paramTypes = {objectType};
-    for (size_t i = 0; i < node->arguments.size(); ++i)
-    {
-        AstNode& argument = *node->arguments[i];
-        argument.accept(this);
-
-        paramTypes.push_back(argument.type);
-    }
-
-    node->symbol = symbol;
-
-    Type* returnType = _typeTable->createTypeVariable();
-    Type* functionType = instantiate(symbol->type, node->typeAssignment);
-
-    unify(functionType, _typeTable->createFunctionType(paramTypes, returnType), node);
-
-    node->type = returnType;
 }
 
 void SemanticAnalyzer::visit(PassNode* node)

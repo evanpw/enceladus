@@ -383,16 +383,16 @@ class TestAcceptance(object):
         self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:2:16: Cannot cast from type T\d+: Num to Int'))
 
     def test_typeConstraint(self):
-        self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:1: Can\'t bind variable T\d+: Num to type String because it isn\'t an instance of trait Num'))
+        self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:3: Can\'t bind variable T\d+: Num to type String because it isn\'t an instance of trait Num'))
 
     def test_typeConstraint2(self):
         self.run('typeConstraint2', '3\n7\n11\n15')
 
     def test_typeConstraint3(self):
-        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:12: Can\'t bind variable T to quantified type variable T\d+: Num, because the latter isn\'t constrained by trait Num'))
+        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable T to quantified type variable T\d+: Num, because the latter isn\'t constrained by trait Num'))
 
     def test_typeConstraint4(self):
-        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named "f" found for type "Test String"')
+        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named "f" found for type "Test<String>"')
 
     def test_typeConstraint5(self):
         self.run('typeConstraint5', '')
@@ -402,6 +402,18 @@ class TestAcceptance(object):
 
     def test_useUnit(self):
         self.run('useUnit', '')
+
+    def test_typeAnnotation(self):
+        self.run('typeAnnotation', '')
+
+    def test_typeAnnotation2(self):
+        self.run('typeAnnotation2', build_error='Error: testing/typeAnnotation2.spl:1:1: cannot unify types String and Int')
+
+    def test_callVariable(self):
+        self.run('callVariable', build_error='Error: testing/callVariable.spl:2:1: "x" is not a function')
+
+    def test_wrongList(self):
+        self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types [String] and [Int]')
 
     # Medium tests (100ms-1s)
 

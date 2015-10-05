@@ -111,11 +111,7 @@ std::string FunctionType::name() const
 
     if (_inputs.empty())
     {
-        ss << "Unit";
-    }
-    else if (_inputs.size() == 1)
-    {
-        ss << _inputs[0]->name();
+        ss << "||";
     }
     else
     {
@@ -179,10 +175,16 @@ std::string ConstructedType::name() const
     else
     {
         ss << _typeConstructor->name();
+        ss << "<";
+
+        bool first = true;
         for (const Type* type : _typeParameters)
         {
-            ss << " " << type->name();
+            if (!first) ss << ", ";
+            ss << type->name();
+            first = false;
         }
+        ss << ">";
     }
 
     return ss.str();

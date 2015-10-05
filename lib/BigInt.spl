@@ -63,7 +63,7 @@ impl BigInt
 
         return BigInt(result.reverse())
 
-    def shift(self: BigInt, n: Int) -> BigInt
+    def shift(self: BigInt, n: UInt) -> BigInt
         if n == 0
             return self
         else

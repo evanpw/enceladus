@@ -168,3 +168,11 @@ void AstVisitor::visit(CastNode* node)
 {
 	node->lhs->accept(this);
 }
+
+void AstVisitor::visit(TraitDefNode* node)
+{
+	for (auto& method : node->methods)
+	{
+		method->accept(this);
+	}
+}
