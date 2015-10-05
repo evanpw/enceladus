@@ -23,22 +23,22 @@
 #define CHECK_AT(location, p, ...) if (!(p)) { semanticError((location), __VA_ARGS__); }
 
 #define CHECK_UNDEFINED(name) \
-    CHECK(!resolveSymbol(name), "symbol \"{}\" is already defined", name); \
-    CHECK(!resolveTypeSymbol(name), "symbol \"{}\" is already defined", name)
+    CHECK(!resolveSymbol(name), "symbol `{}` is already defined", name); \
+    CHECK(!resolveTypeSymbol(name), "symbol `{}` is already defined", name)
 
 #define CHECK_UNDEFINED_SYMBOL(name) \
-    CHECK(!resolveSymbol(name), "symbol \"{}\" is already defined", name);
+    CHECK(!resolveSymbol(name), "symbol `{}` is already defined", name);
 
 #define CHECK_UNDEFINED_TYPE(name) \
-    CHECK(!resolveTypeSymbol(name), "symbol \"{}\" is already defined", name)
+    CHECK(!resolveTypeSymbol(name), "symbol `{}` is already defined", name)
 
 #define CHECK_UNDEFINED_IN(name, node) \
-    CHECK_IN((node), !resolveSymbol(name), "symbol \"{}\" is already defined", name); \
-    CHECK_IN((node), !resolveTypeSymbol(name), "symbol \"{}\" is already defined", name)
+    CHECK_IN((node), !resolveSymbol(name), "symbol `{}` is already defined", name); \
+    CHECK_IN((node), !resolveTypeSymbol(name), "symbol `{}` is already defined", name)
 
 #define CHECK_UNDEFINED_IN_SCOPE(name) \
-    CHECK(!_symbolTable->findTopScope(name), "symbol \"{}\" is already defined in this scope", name); \
-    CHECK(!_symbolTable->findTopScope(name, SymbolTable::TYPE), "symbol \"{}\" is already defined in this scope", name)
+    CHECK(!_symbolTable->findTopScope(name), "symbol `{}` is already defined in this scope", name); \
+    CHECK(!_symbolTable->findTopScope(name, SymbolTable::TYPE), "symbol `{}` is already defined in this scope", name)
 
 #define CHECK_TOP_LEVEL(name) \
     CHECK(!_enclosingFunction, "{} must be at top level", name)
@@ -170,8 +170,8 @@ void SemanticAnalyzer::resolveBaseType(TypeName* typeName, const std::unordered_
     }
 
     Symbol* symbol = resolveTypeSymbol(name);
-    CHECK_AT(typeName->location, symbol, "Base type \"{}\" is not defined", name);
-    CHECK_AT(typeName->location, symbol->kind == kType, "Symbol \"{}\" is not a base type", name);
+    CHECK_AT(typeName->location, symbol, "Base type `{}` is not defined", name);
+    CHECK_AT(typeName->location, symbol->kind == kType, "Symbol `{}` is not a base type", name);
 
     typeName->type = symbol->type;
 }
@@ -184,8 +184,8 @@ TypeConstructor* SemanticAnalyzer::getTypeConstructor(const TypeName* typeName)
 TypeConstructor* SemanticAnalyzer::getTypeConstructor(const YYLTYPE& location, const std::string& name)
 {
     Symbol* symbol = resolveTypeSymbol(name);
-    CHECK_AT(location, symbol, "Type constructor \"{}\" is not defined", name);
-    CHECK_AT(location, symbol->kind == kTypeConstructor, "Symbol \"{}\" is not a type constructor", name);
+    CHECK_AT(location, symbol, "Type constructor `{}` is not defined", name);
+    CHECK_AT(location, symbol->kind == kTypeConstructor, "Symbol `{}` is not a type constructor", name);
 
     return dynamic_cast<TypeConstructorSymbol*>(symbol)->typeConstructor;
 }
@@ -606,14 +606,14 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
         std::string& constraint = item.second;
 
         CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
 
         if (!constraint.empty())
         {
             Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-            CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
-            CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+            CHECK(constraintSymbol, "no such trait `{}`", constraint);
+            CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
 
             TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
             assert(traitSymbol);
@@ -682,7 +682,7 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
     for (auto& typeParameter : node->typeParams)
     {
         CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
 
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
         typeContext.emplace(typeParameter, var);
@@ -763,12 +763,12 @@ void SemanticAnalyzer::visit(MatchArm* node)
 {
     const std::string& constructorName = node->constructor;
     std::pair<size_t, ValueConstructor*> result = node->matchType->getValueConstructor(constructorName);
-    CHECK(result.second, "type \"{}\" has no value constructor named \"{}\"", node->matchType->name(), constructorName);
+    CHECK(result.second, "type `{}` has no value constructor named `{}`", node->matchType->name(), constructorName);
     node->constructorTag = result.first;
     node->valueConstructor = result.second;
 
     Symbol* symbol = resolveSymbol(constructorName);
-    CHECK(symbol, "constructor \"{}\" is not defined", constructorName);
+    CHECK(symbol, "constructor `{}` is not defined", constructorName);
 
     ConstructorSymbol* constructorSymbol = dynamic_cast<ConstructorSymbol*>(symbol);
     assert(constructorSymbol);
@@ -784,7 +784,7 @@ void SemanticAnalyzer::visit(MatchArm* node)
     unify(constructedType, node->matchType, node);
 
     CHECK(functionType->inputs().size() == node->params.size(),
-        "constructor pattern \"{}\" does not have the correct number of arguments", constructorName);
+        "constructor pattern `{}` does not have the correct number of arguments", constructorName);
 
     _symbolTable->pushScope();
 
@@ -820,10 +820,10 @@ void SemanticAnalyzer::visit(LetNode* node)
 
 	const std::string& constructor = node->constructor;
 	Symbol* symbol = resolveSymbol(constructor);
-    CHECK(symbol, "constructor \"{}\" is not defined", constructor);
+    CHECK(symbol, "constructor `{}` is not defined", constructor);
 
     ConstructorSymbol* constructorSymbol = dynamic_cast<ConstructorSymbol*>(symbol);
-    CHECK(constructorSymbol, "\"{}\" is not a value constructor", constructor);
+    CHECK(constructorSymbol, "`{}` is not a value constructor", constructor);
     node->constructorSymbol = constructorSymbol;
 
 	// A symbol with a capital letter should always be a constructor
@@ -835,7 +835,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 	const Type* constructedType = functionType->output();
 
     CHECK(constructedType->valueConstructors().size() == 1, "let statement pattern matching only applies to types with a single constructor");
-    CHECK(functionType->inputs().size() == node->params.size(), "constructor pattern \"{}\" does not have the correct number of arguments", constructor);
+    CHECK(functionType->inputs().size() == node->params.size(), "constructor pattern `{}` does not have the correct number of arguments", constructor);
 
     node->valueConstructor = constructedType->valueConstructors()[0];
 
@@ -886,7 +886,7 @@ void SemanticAnalyzer::visit(AssignNode* node)
         return;
     }
 
-    CHECK(symbol->kind == kVariable || symbol->kind == kMemberVar, "symbol \"{}\" is not a variable", symbol->name);
+    CHECK(symbol->kind == kVariable || symbol->kind == kMemberVar, "symbol `{}` is not a variable", symbol->name);
     node->symbol = symbol;
 
 	node->rhs->accept(this);
@@ -900,10 +900,10 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
 {
 	const std::string& name = node->target;
 	Symbol* symbol = resolveSymbol(name);
-    CHECK(symbol, "function \"{}\" is not defined", name);
+    CHECK(symbol, "function `{}` is not defined", name);
 
     Type* expectedType = instantiate(symbol->type, node->typeAssignment);
-    CHECK(expectedType->tag() == ttFunction, "\"{}\" is not a function", name);
+    CHECK(expectedType->tag() == ttFunction, "`{}` is not a function", name);
 
     FunctionType* functionType = expectedType->get<FunctionType>();
     CHECK(functionType->inputs().size() >= node->arguments.size(), "function called with too many arguments")
@@ -931,10 +931,10 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
 
     std::vector<MemberSymbol*> symbols;
     resolveMemberSymbol(node->methodName, objectType, symbols);
-    CHECK(!symbols.empty(), "no method named \"{}\" found for type \"{}\"", node->methodName, objectType->name());
+    CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", node->methodName, objectType->name());
     CHECK(symbols.size() < 2, "method call is amiguous");
 
-    CHECK(symbols.front()->isMethod(), "\"{}\" is a member variable, not a method", node->methodName);
+    CHECK(symbols.front()->isMethod(), "`{}` is a member variable, not a method", node->methodName);
     MethodSymbol* symbol = dynamic_cast<MethodSymbol*>(symbols.front());
 
     Type* expectedType = instantiate(symbol->type, node->typeAssignment);
@@ -1002,8 +1002,8 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 	const std::string& name = node->name;
 
 	Symbol* symbol = resolveSymbol(name);
-    CHECK(symbol, "symbol \"{}\" is not defined in this scope", name);
-    CHECK(symbol->kind == kVariable || symbol->kind == kFunction, "symbol \"{}\" is not a variable or a function", name);
+    CHECK(symbol, "symbol `{}` is not defined in this scope", name);
+    CHECK(symbol->kind == kVariable || symbol->kind == kFunction, "symbol `{}` is not a variable or a function", name);
 
 	if (symbol->kind == kVariable)
 	{
@@ -1027,7 +1027,7 @@ void SemanticAnalyzer::visit(NullaryNode* node)
         }
         else
         {
-            CHECK(!functionSymbol->isExternal, "Cannot put external function \"{}\" into a closure", name);
+            CHECK(!functionSymbol->isExternal, "Cannot put external function `{}` into a closure", name);
 
             node->type = functionType;
             node->kind = NullaryNode::CLOSURE;
@@ -1279,8 +1279,8 @@ void SemanticAnalyzer::visit(ReturnNode* node)
 void SemanticAnalyzer::visit(VariableNode* node)
 {
     Symbol* symbol = resolveSymbol(node->name);
-    CHECK(symbol != nullptr, "symbol \"{}\" is not defined in this scope", node->name);
-    CHECK(symbol->kind == kVariable, "symbol \"{}\" is not a variable", node->name);
+    CHECK(symbol != nullptr, "symbol `{}` is not defined in this scope", node->name);
+    CHECK(symbol->kind == kVariable, "symbol `{}` is not a variable", node->name);
 
     node->symbol = symbol;
     node->type = symbol->type;
@@ -1320,7 +1320,7 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         for (auto& typeParameter : node->typeParameters)
         {
             CHECK_UNDEFINED(typeParameter);
-            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
 
             Type* var = _typeTable->createTypeVariable(typeParameter, true);
             variables.push_back(var);
@@ -1408,7 +1408,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
             auto& member = node->members[i];
 
             // Make sure there are no repeated member names
-            CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type \"{}\" already has a member named \"{}\"", node->name, member->name);
+            CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type `{}` already has a member named `{}`", node->name, member->name);
             alreadyUsed.insert(member->name);
 
             memberTypes.push_back(member->memberType);
@@ -1441,14 +1441,14 @@ void SemanticAnalyzer::visit(StructDefNode* node)
             std::string& constraint = item.second;
 
             CHECK_UNDEFINED(typeParameter);
-            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
             Type* var = _typeTable->createTypeVariable(typeParameter, true);
 
             if (!constraint.empty())
             {
                 Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-                CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
-                CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+                CHECK(constraintSymbol, "no such trait `{}`", constraint);
+                CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
 
                 TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
                 assert(traitSymbol);
@@ -1474,7 +1474,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
             MemberDefNode* member = node->members[i];
 
             // Make sure there are no repeated member names
-            CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type \"{}\" already has a member named \"{}\"", node->name, member->name);
+            CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type `{}` already has a member named `{}`", node->name, member->name);
             alreadyUsed.insert(member->name);
 
             member->typeContext = typeContext;
@@ -1518,10 +1518,10 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
 
     std::vector<MemberSymbol*> symbols;
     resolveMemberSymbol(node->memberName, objectType, symbols);
-    CHECK(!symbols.empty(), "no member named \"{}\" found for type \"{}\"", node->memberName, objectType->name());
+    CHECK(!symbols.empty(), "no member named `{}` found for type `{}`", node->memberName, objectType->name());
     assert(symbols.size() < 2);
 
-    CHECK(symbols.front()->isMemberVar(), "\"{}\" is a method, not a member variable", node->memberName);
+    CHECK(symbols.front()->isMemberVar(), "`{}` is a method, not a member variable", node->memberName);
     MemberVarSymbol* symbol = dynamic_cast<MemberVarSymbol*>(symbols.front());
     node->symbol = symbol;
 
@@ -1549,14 +1549,14 @@ void SemanticAnalyzer::visit(ImplNode* node)
         std::string& constraint = item.second;
 
         CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
 
         if (!constraint.empty())
         {
             Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-            CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
-            CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+            CHECK(constraintSymbol, "no such trait `{}`", constraint);
+            CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
 
             TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
             assert(traitSymbol);
@@ -1568,6 +1568,16 @@ void SemanticAnalyzer::visit(ImplNode* node)
     }
 
     resolveTypeName(node->typeName, typeContext);
+
+    // Don't allow extraneous type variables, like this:
+    // impl<T> Test
+    for (auto& item : typeContext)
+    {
+        CHECK(occurs(item.second->get<TypeVariable>(), node->typeName->type),
+            "type variable `{}` doesn't occur in type `{}`",
+            item.first,
+            node->typeName->type->name());
+    }
 
     node->typeContext = typeContext;
 
@@ -1599,7 +1609,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         std::vector<MemberSymbol*> symbols;
         Type* parentType = _enclosingImplNode->typeName->type;
         resolveMemberSymbol(node->name, parentType, symbols);
-        CHECK(symbols.empty(), "type \"{}\" already has a method or member named \"{}\"", parentType->name(), node->name);
+        CHECK(symbols.empty(), "type `{}` already has a method or member named `{}`", parentType->name(), node->name);
 
         // Create type variables for each type parameter
         std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
@@ -1609,14 +1619,14 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
             std::string constraint = item.second;
 
             CHECK_UNDEFINED(typeParameter);
-            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter \"{}\" is already defined", typeParameter);
+            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
             Type* var = _typeTable->createTypeVariable(typeParameter, true);
 
             if (!constraint.empty())
             {
                 Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-                CHECK(constraintSymbol, "no such trait \"{}\"", constraint);
-                CHECK(constraintSymbol->kind == kTrait, "\"{}\" is not a trait", constraint);
+                CHECK(constraintSymbol, "no such trait `{}`", constraint);
+                CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
 
                 TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
                 assert(traitSymbol);

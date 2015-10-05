@@ -137,7 +137,7 @@ class TestAcceptance(object):
         self.run('closure', result='7')
 
     def test_structMembers1(self):
-        self.run('structMembers1', build_error='Error: testing/structMembers1.spl:1:1: type "Test" already has a member named "x"')
+        self.run('structMembers1', build_error='Error: testing/structMembers1.spl:1:1: type `Test` already has a member named `x`')
 
     def test_structMembers2(self):
         self.run('structMembers2', result='')
@@ -233,16 +233,16 @@ class TestAcceptance(object):
         self.run('mainStackRoots', result='1')
 
     def test_scopes1(self):
-        self.run('scopes1', build_error='Error: testing/scopes1.spl:4:14: symbol "x" is not defined in this scope')
+        self.run('scopes1', build_error='Error: testing/scopes1.spl:4:14: symbol `x` is not defined in this scope')
 
     def test_scopes2(self):
-        self.run('scopes2', build_error='Error: testing/scopes2.spl:6:14: symbol "x" is not defined in this scope')
+        self.run('scopes2', build_error='Error: testing/scopes2.spl:6:14: symbol `x` is not defined in this scope')
 
     def test_scopes3(self):
-        self.run('scopes3', build_error='Error: testing/scopes3.spl:4:14: symbol "x" is not defined in this scope')
+        self.run('scopes3', build_error='Error: testing/scopes3.spl:4:14: symbol `x` is not defined in this scope')
 
     def test_scopes4(self):
-        self.run('scopes4', build_error='Error: testing/scopes4.spl:5:14: symbol "x" is not defined in this scope')
+        self.run('scopes4', build_error='Error: testing/scopes4.spl:5:14: symbol `x` is not defined in this scope')
 
     def test_scopes5(self):
         self.run('scopes5', result='1')
@@ -275,37 +275,37 @@ class TestAcceptance(object):
         self.run('method4', '3')
 
     def test_method5(self):
-        self.run('method5', build_error='Error: testing/method5.spl:11:5: type "[Int]" already has a method or member named "myAt"')
+        self.run('method5', build_error='Error: testing/method5.spl:11:5: type `[Int]` already has a method or member named `myAt`')
 
     def test_map(self):
         self.run('map', result='3')
 
     def test_repeatedTypeParam(self):
-        self.run('repeatedTypeParam', build_error='Error: testing/repeatedTypeParam.spl:1:1: type parameter "T" is already defined')
+        self.run('repeatedTypeParam', build_error='Error: testing/repeatedTypeParam.spl:1:1: type parameter `T` is already defined')
 
     def test_repeatedTypeParam2(self):
-        self.run('repeatedTypeParam2', build_error='Error: testing/repeatedTypeParam2.spl:1:1: type parameter "T" is already defined')
+        self.run('repeatedTypeParam2', build_error='Error: testing/repeatedTypeParam2.spl:1:1: type parameter `T` is already defined')
 
     def test_repeatedTypeParam3(self):
-        self.run('repeatedTypeParam3', build_error='Error: testing/repeatedTypeParam3.spl:1:1: type parameter "T" is already defined')
+        self.run('repeatedTypeParam3', build_error='Error: testing/repeatedTypeParam3.spl:1:1: type parameter `T` is already defined')
 
     def test_repeatedTypeParam4(self):
-        self.run('repeatedTypeParam4', build_error='Error: testing/repeatedTypeParam4.spl:2:5: type parameter "T" is already defined')
+        self.run('repeatedTypeParam4', build_error='Error: testing/repeatedTypeParam4.spl:2:5: type parameter `T` is already defined')
 
     def test_repeatedTypeParam5(self):
-        self.run('repeatedTypeParam5', build_error='Error: testing/repeatedTypeParam5.spl:2:5: type parameter "T" is already defined')
+        self.run('repeatedTypeParam5', build_error='Error: testing/repeatedTypeParam5.spl:2:5: type parameter `T` is already defined')
 
     def test_repeatedTypeParam6(self):
-        self.run('repeatedTypeParam6', build_error='Error: testing/repeatedTypeParam6.spl:1:1: type parameter "T" is already defined')
+        self.run('repeatedTypeParam6', build_error='Error: testing/repeatedTypeParam6.spl:1:1: type parameter `T` is already defined')
 
     def test_memberMethodConflict(self):
-        self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:5:5: type "Test" already has a method or member named "f"')
+        self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:5:5: type `Test` already has a method or member named `f`')
 
     def test_memberAsMethod(self):
-        self.run('memberAsMethod', build_error='Error: testing/memberAsMethod.spl:5:1: "test" is a member variable, not a method')
+        self.run('memberAsMethod', build_error='Error: testing/memberAsMethod.spl:5:1: `test` is a member variable, not a method')
 
     def test_methodAsMember(self):
-        self.run('methodAsMember', build_error='Error: testing/methodAsMember.spl:9:1: "doSomething" is a method, not a member variable')
+        self.run('methodAsMember', build_error='Error: testing/methodAsMember.spl:9:1: `doSomething` is a method, not a member variable')
 
     def test_structMemberNames(self):
         self.run('structMemberNames', result='30\nFrance')
@@ -314,7 +314,7 @@ class TestAcceptance(object):
         self.run('vector', result='37')
 
     def test_assignToFunction(self):
-        self.run('assignToFunction', build_error='Error: testing/assignToFunction.spl:4:1: symbol "f" is not a variable')
+        self.run('assignToFunction', build_error='Error: testing/assignToFunction.spl:4:1: symbol `f` is not a variable')
 
     def test_mutateStruct(self):
         self.run('mutateStruct', result='4\n5')
@@ -335,7 +335,7 @@ class TestAcceptance(object):
         self.run('hashTable3', '2')
 
     def test_foreignClosure(self):
-        self.run('foreignClosure', build_error='Error: testing/foreignClosure.spl:1:6: Cannot put external function "strHash" into a closure')
+        self.run('foreignClosure', build_error='Error: testing/foreignClosure.spl:1:6: Cannot put external function `strHash` into a closure')
 
     def test_constructorClosure(self):
         self.run('constructorClosure', '3')
@@ -392,7 +392,7 @@ class TestAcceptance(object):
         self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable T to quantified type variable T\d+: Num, because the latter isn\'t constrained by trait Num'))
 
     def test_typeConstraint4(self):
-        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named "f" found for type "Test<String>"')
+        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<String>`')
 
     def test_typeConstraint5(self):
         self.run('typeConstraint5', '')
@@ -410,10 +410,13 @@ class TestAcceptance(object):
         self.run('typeAnnotation2', build_error='Error: testing/typeAnnotation2.spl:1:1: cannot unify types String and Int')
 
     def test_callVariable(self):
-        self.run('callVariable', build_error='Error: testing/callVariable.spl:2:1: "x" is not a function')
+        self.run('callVariable', build_error='Error: testing/callVariable.spl:2:1: `x` is not a function')
 
     def test_wrongList(self):
         self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types [String] and [Int]')
+
+    def test_unusedTypeParam(self):
+        self.run('unusedTypeParam', build_error='Error: testing/unusedTypeParam.spl:1:1: type variable `T` doesn\'t occur in type `Int`')
 
     # Medium tests (100ms-1s)
 
