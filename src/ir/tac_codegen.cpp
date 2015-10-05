@@ -542,7 +542,7 @@ void TACCodeGen::visit(ProgramNode* node)
         child->accept(this);
     }
 
-    emit(new ReturnInst());
+    emit(new ReturnInst);
 
     // The previous loop will have filled in _functions with all
     // functions / methods visited from the top level. Recursively generate
@@ -923,7 +923,7 @@ void TACCodeGen::visit(AssertNode* node)
              << location.first_column;
 
     Value* message = _context->createStaticString(name, contents.str());
-    CallInst* inst = new CallInst(nullptr, panicFunction, {message});
+    CallInst* inst = new CallInst(createTemp(ValueType::U64), panicFunction, {message});
     inst->ccall = true;
     inst->regpass = true;
     emit(inst);
@@ -1137,9 +1137,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         arguments.push_back(i->value);
     }
 
-    if (!node->type->equals(node->type->table()->Unit))
-        node->value = createTemp(getValueType(node->type));
-
+    node->value = createTemp(getValueType(node->type));
     Value* result = node->value;
 
     if (node->symbol->kind == kFunction && dynamic_cast<FunctionSymbol*>(node->symbol)->isBuiltin)
@@ -1279,8 +1277,7 @@ void TACCodeGen::visit(MethodCallNode* node)
         arguments.push_back(i->value);
     }
 
-    if (!node->type->equals(node->type->table()->Unit))
-        node->value = createTemp(getValueType(node->type));
+    node->value = createTemp(getValueType(node->type));
 
     Value* result = node->value;
 

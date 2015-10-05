@@ -1,0 +1,7 @@
+def f() -> Unit
+    pass
+
+drop $ f()
+x := f()
+y := x
+x = f()

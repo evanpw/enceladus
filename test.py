@@ -394,6 +394,14 @@ class TestAcceptance(object):
     def test_typeConstraint4(self):
         self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named "f" found for type "Test String"')
 
+    def test_typeConstraint5(self):
+        self.run('typeConstraint5', '')
+
+    def test_typeConstraint6(self):
+        self.run('typeConstraint6', build_error=Regex('Error: testing/typeConstraint6.spl:7:16: Can\'t bind variable T to quantified type variable T\d+: Num, because the latter isn\'t constrained by trait Num'))
+
+    def test_useUnit(self):
+        self.run('useUnit', '')
 
     # Medium tests (100ms-1s)
 

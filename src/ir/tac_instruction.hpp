@@ -288,7 +288,7 @@ struct CopyInst : public Instruction
 
     virtual void dropReferences()
     {
-        if (dest && this == dest->definition)
+        if (this == dest->definition)
             dest->definition = nullptr;
 
         src->uses.erase(this);
@@ -318,10 +318,7 @@ struct CallInst : public Instruction
     CallInst(Value* dest, Value* function, const std::vector<Value*>& params = {})
     : dest(dest), function(function), params(params)
     {
-        if (dest)
-        {
-            dest->definition = this;
-        }
+        dest->definition = this;
 
         function->uses.insert(this);
 
@@ -334,10 +331,7 @@ struct CallInst : public Instruction
     CallInst(Value* dest, Value* function, std::initializer_list<Value*> paramsList)
     : dest(dest), function(function)
     {
-        if (dest)
-        {
-            dest->definition = this;
-        }
+        dest->definition = this;
 
         function->uses.insert(this);
 
@@ -360,7 +354,7 @@ struct CallInst : public Instruction
 
     virtual void dropReferences()
     {
-        if (dest && this == dest->definition)
+        if (this == dest->definition)
             dest->definition = nullptr;
 
         function->uses.erase(this);
@@ -389,16 +383,13 @@ struct CallInst : public Instruction
     {
         std::stringstream ss;
 
-        if (dest)
-        {
-            ss << dest->str() << " = ";
-        }
+        ss << dest->str() << " = ";
 
         ss << "call " << function->str() << "(";
 
         for (size_t i = 0; i < params.size(); ++i)
         {
-            ss << params[i]->str();
+            ss << (params[i] ? params[i]->str() : "Unit");
             if (i + 1 != params.size()) ss << ", ";
         }
         ss << ")";
