@@ -395,10 +395,7 @@ class TestAcceptance(object):
         self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<String>`')
 
     def test_typeConstraint5(self):
-        self.run('typeConstraint5', '')
-
-    def test_typeConstraint6(self):
-        self.run('typeConstraint6', build_error='Error: testing/typeConstraint6.spl:7:16: no member named `x` found for type `Test<T>`')
+        self.run('typeConstraint5', build_error='Error: testing/typeConstraint5.spl:5:9: `T` is not an instance of trait `Num`')
 
     def test_useUnit(self):
         self.run('useUnit', '')

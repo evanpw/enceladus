@@ -72,14 +72,6 @@ TraitSymbol* SymbolTable::createTraitSymbol(const std::string& name, AstNode* no
     return symbol;
 }
 
-TypeConstructorSymbol* SymbolTable::createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
-{
-    TypeConstructorSymbol* symbol = new TypeConstructorSymbol(name, node, typeConstructor);
-    insert(symbol, SymbolTable::TYPE);
-    return symbol;
-}
-
-
 void SymbolTable::pushScope()
 {
     _scopes.push_back({});

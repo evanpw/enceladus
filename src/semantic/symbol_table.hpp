@@ -19,7 +19,6 @@ public:
 
     TraitSymbol* createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar);
     TypeSymbol* createTypeSymbol(const std::string& name, AstNode* node, Type* type);
-    TypeConstructorSymbol* createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 
     void pushScope();
     void popScope();

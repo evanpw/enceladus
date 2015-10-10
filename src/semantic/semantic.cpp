@@ -94,9 +94,9 @@ static void bindVariable(Type* variable, Type* value, AstNode* node)
                 if (rhsConstraints.find(constraint) == rhsConstraints.end())
                 {
                     std::stringstream ss;
-                    ss << "Can't bind variable " << value->name()
-                       << " to quantified type variable " << variable->name()
-                       << ", because the latter isn't constrained by trait " << constraint->name();
+                    ss << "Can't bind variable " << value->str()
+                       << " to quantified type variable " << variable->str()
+                       << ", because the latter isn't constrained by trait " << constraint->str();
                     inferenceError(node, ss.str());
                 }
             }
@@ -111,8 +111,8 @@ static void bindVariable(Type* variable, Type* value, AstNode* node)
             if (!isInstance(value, constraint))
             {
                 std::stringstream ss;
-                ss << "Can't bind variable " << variable->name() << " to type " << value->name()
-                   << " because it isn't an instance of trait " << constraint->name();
+                ss << "Can't bind variable " << variable->str() << " to type " << value->str()
+                   << " because it isn't an instance of trait " << constraint->str();
                 inferenceError(node, ss.str());
             }
         }
@@ -120,7 +120,7 @@ static void bindVariable(Type* variable, Type* value, AstNode* node)
         if (occurs(lhs, value))
         {
             std::stringstream ss;
-            ss << "variable " << variable->name() << " already occurs in " << value->name();
+            ss << "variable " << variable->str() << " already occurs in " << value->str();
             inferenceError(node, ss.str());
         }
     }
@@ -196,7 +196,7 @@ static bool tryUnify(Type* lhs, Type* rhs, AstNode* node)
         ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
         ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
 
-        if (lhsConstructed->typeConstructor() == rhsConstructed->typeConstructor())
+        if (lhsConstructed->name() == rhsConstructed->name())
         {
             assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
 
@@ -219,7 +219,7 @@ static void unify(Type* lhs, Type* rhs, AstNode* node)
     {
         // Can't be unified
         std::stringstream ss;
-        ss << "cannot unify types " << lhs->name() << " and " << rhs->name();
+        ss << "cannot unify types " << lhs->str() << " and " << rhs->str();
         inferenceError(node, ss.str());
     }
 }
@@ -238,7 +238,7 @@ static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
             if (constraints.find(trait) == constraints.end())
             {
                 std::stringstream ss;
-                ss << "Type variable " << type->name() << " does not satisfy constraint " << trait->name();
+                ss << "Type variable " << type->str() << " does not satisfy constraint " << trait->str();
                 inferenceError(node, ss.str());
             }
         }
@@ -250,7 +250,7 @@ static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
     if (!isInstance(type, trait))
     {
         std::stringstream ss;
-        ss << "Type " << type->name() << " is not an instance of trait " << trait->name();
+        ss << "Type " << type->str() << " is not an instance of trait " << trait->str();
         inferenceError(node, ss.str());
     }
 }
@@ -362,8 +362,8 @@ void SemanticAnalyzer::injectSymbols()
     _symbolTable->createTypeSymbol("Unit", _root, _typeTable->Unit);
     _symbolTable->createTypeSymbol("String", _root, _typeTable->String);
 
-    _symbolTable->createTypeConstructorSymbol("Function", _root, _typeTable->Function);
-    _symbolTable->createTypeConstructorSymbol("Array", _root, _typeTable->Array);
+    _symbolTable->createTypeSymbol("Function", _root, _typeTable->Function);
+    _symbolTable->createTypeSymbol("Array", _root, _typeTable->Array);
 
 
 	//// Create symbols for built-in functions
@@ -398,18 +398,19 @@ void SemanticAnalyzer::resolveBaseType(TypeName* typeName, const std::unordered_
     typeName->type = symbol->type;
 }
 
-TypeConstructor* SemanticAnalyzer::getTypeConstructor(const TypeName* typeName)
+Type* SemanticAnalyzer::getConstructedType(const TypeName* typeName)
 {
-    return getTypeConstructor(typeName->location, typeName->name);
+    return getConstructedType(typeName->location, typeName->name);
 }
 
-TypeConstructor* SemanticAnalyzer::getTypeConstructor(const YYLTYPE& location, const std::string& name)
+Type* SemanticAnalyzer::getConstructedType(const YYLTYPE& location, const std::string& name)
 {
     Symbol* symbol = resolveTypeSymbol(name);
-    CHECK_AT(location, symbol, "Type constructor `{}` is not defined", name);
-    CHECK_AT(location, symbol->kind == kTypeConstructor, "Symbol `{}` is not a type constructor", name);
+    CHECK_AT(location, symbol, "Constructed type `{}` is not defined", name);
+    CHECK_AT(location, symbol->kind == kType, "Symbol `{}` is not a type", name);
+    CHECK_AT(location, symbol->type->tag() == ttConstructed, "Symbol `{}` is not a constructed type", name);
 
-    return dynamic_cast<TypeConstructorSymbol*>(symbol)->typeConstructor;
+    return symbol->type;
 }
 
 void SemanticAnalyzer::resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables)
@@ -442,16 +443,37 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, const std::unordered_
         }
         else
         {
-            TypeConstructor* typeConstructor = getTypeConstructor(typeName);
+            Type* type = getConstructedType(typeName);
+            ConstructedType* constructedType = type->get<ConstructedType>();
 
             CHECK_AT(typeName->location,
-                     typeConstructor->parameters() == typeParameters.size(),
+                     constructedType->typeParameters().size() == typeParameters.size(),
                      "Expected {} parameter(s) to type constructor {}, but got {}",
-                     typeConstructor->parameters(),
+                     constructedType->typeParameters().size(),
                      typeName->name,
                      typeParameters.size());
 
-            typeName->type = _typeTable->createConstructedType(typeConstructor, typeParameters);
+            std::map<TypeVariable*, Type*> typeMapping;
+            for (size_t i = 0; i < constructedType->typeParameters().size(); ++i)
+            {
+                TypeVariable* variable = constructedType->typeParameters()[i]->get<TypeVariable>();
+                assert(variable && variable->get<TypeVariable>()->quantified());
+                Type* value = typeParameters[i];
+
+                // Check constraints
+                for (Trait* constraint : variable->constraints())
+                {
+                    CHECK_AT(typeName->location,
+                             isInstance(value, constraint),
+                             "`{}` is not an instance of trait `{}`",
+                             value->str(),
+                             constraint->str());
+                }
+
+                typeMapping[variable] = value;
+            }
+
+            typeName->type = instantiate(type, typeMapping);
         }
     }
 }
@@ -668,7 +690,7 @@ void SemanticAnalyzer::visit(MatchArm* node)
 {
     const std::string& constructorName = node->constructor;
     std::pair<size_t, ValueConstructor*> result = node->matchType->getValueConstructor(constructorName);
-    CHECK(result.second, "type `{}` has no value constructor named `{}`", node->matchType->name(), constructorName);
+    CHECK(result.second, "type `{}` has no value constructor named `{}`", node->matchType->str(), constructorName);
     node->constructorTag = result.first;
     node->valueConstructor = result.second;
 
@@ -836,7 +858,7 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
 
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->methodName, objectType, symbols);
-    CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", node->methodName, objectType->name());
+    CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", node->methodName, objectType->str());
     CHECK(symbols.size() < 2, "method call is ambiguous");
 
     CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", node->methodName);
@@ -899,7 +921,7 @@ void SemanticAnalyzer::visit(CastNode* node)
     if (srcType->equals(_typeTable->Int) && destType->equals(_typeTable->UInt)) return;
     if (srcType->equals(_typeTable->UInt) && destType->equals(_typeTable->Int)) return;
 
-    semanticError(node->location, "Cannot cast from type {} to {}", srcType->name(), destType->name());
+    semanticError(node->location, "Cannot cast from type {} to {}", srcType->str(), destType->str());
 }
 
 void SemanticAnalyzer::visit(NullaryNode* node)
@@ -1233,10 +1255,8 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
             typeContext.emplace(typeParameter, var);
         }
 
-        TypeConstructor* typeConstructor = _typeTable->createTypeConstructor(name, node->typeParameters.size());
-        TypeConstructorSymbol* symbol = _symbolTable->createTypeConstructorSymbol(name, node, typeConstructor);
-
-        Type* newType = _typeTable->createConstructedType(typeConstructor, variables);
+        Type* newType = _typeTable->createConstructedType(name, std::move(variables));
+        _symbolTable->createTypeSymbol(name, node, newType);
 
         for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
         {
@@ -1246,7 +1266,6 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
             spec->resultType = newType;
             spec->accept(this);
 
-            typeConstructor->addValueConstructor(spec->valueConstructor);
             node->valueConstructors.push_back(spec->valueConstructor);
             node->constructorSymbols.push_back(spec->symbol);
         }
@@ -1365,10 +1384,8 @@ void SemanticAnalyzer::visit(StructDefNode* node)
             typeContext.emplace(typeParameter, var);
         }
 
-        TypeConstructor* typeConstructor = _typeTable->createTypeConstructor(typeName, node->typeParameters.size());
-        TypeConstructorSymbol* symbol = _symbolTable->createTypeConstructorSymbol(typeName, node, typeConstructor);
-
-        Type* newType = _typeTable->createConstructedType(typeConstructor, variables);
+        Type* newType = _typeTable->createConstructedType(typeName, std::move(variables));
+        _symbolTable->createTypeSymbol(typeName, node, newType);
 
         std::vector<std::string> memberNames;
         std::vector<Type*> memberTypes;
@@ -1395,7 +1412,6 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 
         ValueConstructor* valueConstructor = _typeTable->createValueConstructor(typeName, 0, memberTypes, memberNames);
         node->valueConstructor = valueConstructor;
-        typeConstructor->addValueConstructor(valueConstructor);
 
         // Create a symbol for the constructor
         ConstructorSymbol* constructorSymbol = _symbolTable->createConstructorSymbol(typeName, node, valueConstructor, memberSymbols);
@@ -1423,7 +1439,7 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
 
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->memberName, objectType, symbols);
-    CHECK(!symbols.empty(), "no member named `{}` found for type `{}`", node->memberName, objectType->name());
+    CHECK(!symbols.empty(), "no member named `{}` found for type `{}`", node->memberName, objectType->str());
     assert(symbols.size() < 2);
 
     CHECK(symbols.front()->isMemberVar(), "`{}` is a method, not a member variable", node->memberName);
@@ -1492,7 +1508,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
         CHECK(occurs(item.second->get<TypeVariable>(), node->typeName->type),
             "type variable `{}` doesn't occur in type `{}`",
             item.first,
-            node->typeName->type->name());
+            node->typeName->type->str());
     }
 
     node->typeContext = typeContext;
@@ -1557,7 +1573,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         std::vector<MemberSymbol*> symbols;
         Type* parentType = _enclosingImplNode->typeName->type;
         _symbolTable->resolveMemberSymbol(node->name, parentType, symbols);
-        CHECK(symbols.empty(), "type `{}` already has a method or member named `{}`", parentType->name(), node->name);
+        CHECK(symbols.empty(), "type `{}` already has a method or member named `{}`", parentType->str(), node->name);
 
         // Create type variables for each type parameter
         std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;

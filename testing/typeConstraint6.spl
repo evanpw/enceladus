@@ -1,9 +1,0 @@
-struct Test<T: Num>
-    x: T
-
-# Fewer constraints than the original
-impl<T> Test<T>
-    def f(self: Test<T>, val: T) -> T
-        return self.x + val
-
-drop $ Test(1).f()

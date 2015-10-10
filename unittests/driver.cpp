@@ -23,10 +23,9 @@ TEST_CASE("concrete-type compatibility checks", "[isCompatible-concrete]")
 
     // Constructed types are compatible when they have the same type constructor
     // and compatible type parameters
-    TypeConstructor* List = table->createTypeConstructor("List", 1);
-    Type* intList1 = table->createConstructedType(List, {table->Int});
-    Type* intList2 = table->createConstructedType(List, {table->Int});
-    Type* stringList = table->createConstructedType(List, {table->String});
+    Type* intList1 = table->createConstructedType("List", {table->Int});
+    Type* intList2 = table->createConstructedType("List", {table->Int});
+    Type* stringList = table->createConstructedType("List", {table->String});
     REQUIRE(isCompatible(intList1, intList2));
     REQUIRE(!isCompatible(intList1, stringList));
 
@@ -44,18 +43,16 @@ TEST_CASE("generic-type compatibility checks", "[isCompatible-generic]")
     REQUIRE(isCompatible(var1, table->Int));
 
     // Recursive matching within constructed types
-    TypeConstructor* List = table->createTypeConstructor("List", 1);
-    Type* intList = table->createConstructedType(List, {table->Int});
-    Type* genericList = table->createConstructedType(List, {var1});
+    Type* intList = table->createConstructedType("List", {table->Int});
+    Type* genericList = table->createConstructedType("List", {var1});
     REQUIRE(isCompatible(intList, genericList));
 
     // Variables which match in one place must match with the same type in
     // every other place (as if they were substituted)
-    TypeConstructor* Pair = table->createTypeConstructor("Pair", 2);
-    Type* equalPair = table->createConstructedType(Pair, {var1, var1});
-    Type* unequalPair = table->createConstructedType(Pair, {var1, var2});
-    Type* twoInts = table->createConstructedType(Pair, {table->Int, table->Int});
-    Type* intString = table->createConstructedType(Pair, {table->Int, table->String});
+    Type* equalPair = table->createConstructedType("Pair", {var1, var1});
+    Type* unequalPair = table->createConstructedType("Pair", {var1, var2});
+    Type* twoInts = table->createConstructedType("Pair", {table->Int, table->Int});
+    Type* intString = table->createConstructedType("Pair", {table->Int, table->String});
     REQUIRE(isCompatible(equalPair, twoInts));
     REQUIRE(!isCompatible(equalPair, intString));
     REQUIRE(isCompatible(unequalPair, twoInts));
@@ -63,20 +60,18 @@ TEST_CASE("generic-type compatibility checks", "[isCompatible-generic]")
 
     // First two slots require T1=T2 and T3=T2. Next two test whether the
     // compatibility check correctly determines that T1=T3
-    TypeConstructor* P4 = table->createTypeConstructor("P4", 4);
     Type* var3 = table->createTypeVariable("V");
-    Type* type1 = table->createConstructedType(P4, {var1, var3, var1, var3});
-    Type* type2 = table->createConstructedType(P4, {var2, var2, table->Int, table->String});
+    Type* type1 = table->createConstructedType("P4", {var1, var3, var1, var3});
+    Type* type2 = table->createConstructedType("P4", {var2, var2, table->Int, table->String});
     REQUIRE(!isCompatible(type1, type2));
 
     // Make sure the checker doesn't go around in circles
-    Type* t12 = table->createConstructedType(Pair, {var1, var2});
-    Type* t21 = table->createConstructedType(Pair, {var2, var1});
+    Type* t12 = table->createConstructedType("Pair", {var1, var2});
+    Type* t21 = table->createConstructedType("Pair", {var2, var1});
     REQUIRE(isCompatible(t12, t21));
 
-    TypeConstructor* P3 = table->createTypeConstructor("P3", 3);
-    Type* t121 = table->createConstructedType(P3, {var1, var2, var1});
-    Type* t21i = table->createConstructedType(P3, {var2, var1, table->Int});
+    Type* t121 = table->createConstructedType("P3", {var1, var2, var1});
+    Type* t21i = table->createConstructedType("P3", {var2, var1, table->Int});
     REQUIRE(isCompatible(t121, t21i));
 
     delete table;
@@ -111,22 +106,20 @@ TEST_CASE("constrained generic-type compatibility checks", "[isCompatible-constr
     REQUIRE(!isCompatible(varSignedNum, table->UInt));
 
     // When unifying two variables, the constraints add
-    TypeConstructor* Pair = table->createTypeConstructor("Pair", 2);
     Type* var1 = table->createTypeVariable();
-    Type* type1a = table->createConstructedType(Pair, {var1, var1});
-    Type* type2a = table->createConstructedType(Pair, {varNum, table->Int});
-    Type* type3a = table->createConstructedType(Pair, {varNum, table->String});
+    Type* type1a = table->createConstructedType("Pair", {var1, var1});
+    Type* type2a = table->createConstructedType("Pair", {varNum, table->Int});
+    Type* type3a = table->createConstructedType("Pair", {varNum, table->String});
     REQUIRE(isCompatible(type1a, type2a));
     REQUIRE(!isCompatible(type1a, type3a));
     REQUIRE(isCompatible(type2a, type1a));
     REQUIRE(!isCompatible(type3a, type1a));
 
-    TypeConstructor* P3 = table->createTypeConstructor("P3", 3);
-    Type* type1b = table->createConstructedType(P3, {var1, var1, var1});
+    Type* type1b = table->createConstructedType("P3", {var1, var1, var1});
     Type* varSigned = table->createTypeVariable();
     varSigned->get<TypeVariable>()->addConstraint(Signed);
-    Type* type2b = table->createConstructedType(P3, {varNum, varSigned, table->Int});
-    Type* type3b = table->createConstructedType(P3, {varNum, varSigned, table->UInt});
+    Type* type2b = table->createConstructedType("P3", {varNum, varSigned, table->Int});
+    Type* type3b = table->createConstructedType("P3", {varNum, varSigned, table->UInt});
     REQUIRE(isCompatible(type1b, type2b));
     REQUIRE(!isCompatible(type1b, type3b));
     REQUIRE(isCompatible(type2b, type1b));
@@ -143,20 +136,20 @@ TEST_CASE("quantified-type compatibility checks", "[isCompatible-quantified]")
     // variables, but no concrete types
     Type* quantified = table->createTypeVariable("S", true);
     Type* unquantified = table->createTypeVariable("T");
-    //REQUIRE(isCompatible(quantified, unquantified));
-    //REQUIRE(!isCompatible(quantified, table->Int));
+    REQUIRE(isCompatible(quantified, unquantified));
+    REQUIRE(!isCompatible(quantified, table->Int));
 
     // Quantified variables don't unify with each other because they can't
     // be subsitutued
     Type* quantified2 = table->createTypeVariable("U", true);
-    //REQUIRE(!isCompatible(quantified, quantified2));
+    REQUIRE(!isCompatible(quantified, quantified2));
 
     // Constrained case: quantified type variables only unify with unquantified
     // type variables with no more constraints
     quantified->get<TypeVariable>()->addConstraint(table->Num);
-    //REQUIRE(isCompatible(quantified, unquantified));
+    REQUIRE(isCompatible(quantified, unquantified));
     unquantified->get<TypeVariable>()->addConstraint(table->Num);
-    //REQUIRE(isCompatible(quantified, unquantified));
+    REQUIRE(isCompatible(quantified, unquantified));
     unquantified->get<TypeVariable>()->addConstraint(table->createTrait("Signed"));
     REQUIRE(!isCompatible(quantified, unquantified));
 }

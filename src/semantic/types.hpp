@@ -16,7 +16,6 @@ class ConstructedType;
 class FunctionType;
 class Trait;
 class Type;
-class TypeConstructor;
 class TypeTable;
 class TypeVariable;
 class ValueConstructor;
@@ -34,7 +33,7 @@ public:
     {}
 
     virtual ~TypeImpl() {}
-    virtual std::string name() const = 0;
+    virtual std::string str() const = 0;
     virtual bool isBoxed() const = 0;
 
     TypeTable* table()
@@ -90,9 +89,9 @@ public:
         _impl->addReference(this);
     }
 
-    std::string name() const
+    std::string str() const
     {
-        return _impl->name();
+        return _impl->str();
     }
 
     // True if variables of this type are or may be stored on the heap. False
@@ -162,7 +161,12 @@ Type* instantiate(Type* type);
 class BaseType : public TypeImpl
 {
 public:
-    virtual std::string name() const
+    const std::string& name() const
+    {
+        return _name;
+    }
+
+    virtual std::string str() const
     {
         return _name;
     }
@@ -205,7 +209,7 @@ private:
 class FunctionType : public TypeImpl
 {
 public:
-    virtual std::string name() const;
+    virtual std::string str() const;
 
     virtual bool isBoxed() const
     {
@@ -239,16 +243,16 @@ private:
 class ConstructedType : public TypeImpl
 {
 public:
-    virtual std::string name() const;
+    const std::string& name() const
+    {
+        return _name;
+    }
+
+    virtual std::string str() const;
 
     virtual bool isBoxed() const
     {
         return true;
-    }
-
-    TypeConstructor* typeConstructor()
-    {
-        return _typeConstructor;
     }
 
     const std::vector<Type*>& typeParameters() const
@@ -259,10 +263,9 @@ public:
 private:
     friend TypeTable;
 
-    ConstructedType(TypeTable* table, TypeConstructor* typeConstructor, std::initializer_list<Type*> typeParameters);
-    ConstructedType(TypeTable* table, TypeConstructor* typeConstructor, const std::vector<Type*>& typeParameters);
+    ConstructedType(TypeTable* table, const std::string& name, std::vector<Type*>&& typeParameters);
 
-    TypeConstructor* _typeConstructor;
+    std::string _name;
     std::vector<Type*> _typeParameters;
 };
 
@@ -270,7 +273,7 @@ private:
 class TypeVariable : public TypeImpl
 {
 public:
-    virtual std::string name() const;
+    virtual std::string str() const;
 
     virtual bool isVariable() const
     {
@@ -341,7 +344,7 @@ public:
         Type* type;
     };
 
-    virtual std::string name() const
+    virtual std::string str() const
     {
         return _name;
     }
@@ -366,52 +369,10 @@ private:
     size_t _constructorTag;
 };
 
-
-class TypeConstructor
-{
-public:
-    TypeTable* table()
-    {
-        return _table;
-    }
-
-    const std::string& name() const
-    {
-        return _name;
-    }
-
-    size_t parameters() const
-    {
-        return _parameters;
-    }
-
-    virtual const std::vector<ValueConstructor*>& valueConstructors() const
-    {
-        return _valueConstructors;
-    }
-
-    void addValueConstructor(ValueConstructor* valueConstructor)
-    {
-        _valueConstructors.emplace_back(valueConstructor);
-    }
-
-private:
-    friend TypeTable;
-
-    TypeConstructor(TypeTable* table, const std::string& name, size_t parameters = 0)
-    : _table(table), _name(name), _parameters(parameters)
-    {}
-
-    TypeTable* _table;
-    std::string _name;
-    size_t _parameters;
-    std::vector<ValueConstructor*> _valueConstructors;
-};
-
 class Trait
 {
 public:
-    const std::string& name() const
+    const std::string& str() const
     {
         return _name;
     }
@@ -463,18 +424,9 @@ public:
         return type;
     }
 
-    Type* createConstructedType(TypeConstructor* typeConstructor, std::initializer_list<Type*> typeParameters)
+    Type* createConstructedType(const std::string& name, std::vector<Type*>&& typeParameters)
     {
-        std::shared_ptr<ConstructedType> typeImpl(new ConstructedType(this, typeConstructor, typeParameters));
-        Type* type = new Type(typeImpl);
-        _types.emplace_back(type);
-
-        return type;
-    }
-
-    Type* createConstructedType(TypeConstructor* typeConstructor, const std::vector<Type*>& typeParameters)
-    {
-        std::shared_ptr<ConstructedType> typeImpl(new ConstructedType(this, typeConstructor, typeParameters));
+        std::shared_ptr<ConstructedType> typeImpl(new ConstructedType(this, name, std::move(typeParameters)));
         Type* type = new Type(typeImpl);
         _types.emplace_back(type);
 
@@ -488,14 +440,6 @@ public:
         _types.emplace_back(type);
 
         return type;
-    }
-
-    TypeConstructor* createTypeConstructor(const std::string& name, size_t parameters = 0)
-    {
-        TypeConstructor* typeConstructor = new TypeConstructor(this, name, parameters);
-        _typeConstructors.emplace_back(typeConstructor);
-
-        return typeConstructor;
     }
 
     ValueConstructor* createValueConstructor(const std::string& name, size_t constructorTag, const std::vector<Type*>& memberTypes, const std::vector<std::string>& memberNames = {})
@@ -523,12 +467,11 @@ public:
 
     Trait* Num;
 
-    TypeConstructor* Function;
-    TypeConstructor* Array;
+    Type* Function;
+    Type* Array;
 
 private:
     std::vector<std::unique_ptr<Type>> _types;
-    std::vector<std::unique_ptr<TypeConstructor>> _typeConstructors;
     std::vector<std::unique_ptr<ValueConstructor>> _valueConstructors;
     std::vector<std::unique_ptr<Trait>> _traits;
 };

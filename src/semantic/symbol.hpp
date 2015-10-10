@@ -12,7 +12,7 @@ class TraitDefNode;
 class SymbolTable;
 
 
-enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMethod = 4, kMemberVar = 5, kTrait = 6, kTraitMethod};
+enum Kind {kVariable, kFunction, kType, kMethod, kMemberVar, kTrait, kTraitMethod};
 
 class Symbol
 {
@@ -114,16 +114,6 @@ public:
 private:
     friend class SymbolTable;
     TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar);
-};
-
-class TypeConstructorSymbol : public Symbol
-{
-public:
-    TypeConstructor* typeConstructor;
-
-private:
-    friend class SymbolTable;
-    TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 };
 
 class MemberSymbol : public Symbol

@@ -39,12 +39,6 @@ TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait, T
     this->traitVar = traitVar;
 }
 
-TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
-: Symbol(name, kTypeConstructor, node, nullptr, true)
-, typeConstructor(typeConstructor)
-{
-}
-
 MemberSymbol::MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType)
 : Symbol(name, kind, node, nullptr, true)
 , parentType(parentType)

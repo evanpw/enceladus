@@ -14,7 +14,7 @@ void Type::assign(Type* rhs)
     get<TypeVariable>()->assign(rhs);
 }
 
-std::string TypeVariable::name() const
+std::string TypeVariable::str() const
 {
     std::stringstream ss;
 
@@ -35,7 +35,7 @@ std::string TypeVariable::name() const
         for (Trait* constraint : _constraints)
         {
             if (!first) ss << " + ";
-            ss << constraint->name();
+            ss << constraint->str();
             first = false;
         }
     }
@@ -88,15 +88,15 @@ TypeTable::TypeTable()
     Unit = createBaseType("Unit", true);
     String = createBaseType("String", false);
 
-    Function = createTypeConstructor("Function", 1);
-    Array = createTypeConstructor("Array", 1);
+    Function = createConstructedType("Function", {createTypeVariable("T", true)});
+    Array = createConstructedType("Array", {createTypeVariable("T", true)});
 }
 
 std::pair<size_t, ValueConstructor*> TypeImpl::getValueConstructor(const std::string& name) const
 {
     for (size_t i = 0; i < _valueConstructors.size(); ++i)
     {
-        if (_valueConstructors[i]->name() == name)
+        if (_valueConstructors[i]->str() == name)
         {
             return std::make_pair(i, _valueConstructors[i]);
         }
@@ -105,7 +105,7 @@ std::pair<size_t, ValueConstructor*> TypeImpl::getValueConstructor(const std::st
     return std::make_pair(0, nullptr);
 }
 
-std::string FunctionType::name() const
+std::string FunctionType::str() const
 {
     std::stringstream ss;
 
@@ -119,7 +119,7 @@ std::string FunctionType::name() const
 
         for (size_t i = 0; i < _inputs.size(); ++i)
         {
-            ss << _inputs[i]->name();
+            ss << _inputs[i]->str();
 
             if (i + 1 < _inputs.size())
                 ss << ", ";
@@ -128,60 +128,35 @@ std::string FunctionType::name() const
         ss << "|";
     }
 
-    ss << " -> " << _output->name();
+    ss << " -> " << _output->str();
 
     return ss.str();
 }
 
-ConstructedType::ConstructedType(TypeTable* table, TypeConstructor* typeConstructor, std::initializer_list<Type*> typeParameters)
-: TypeImpl(table, ttConstructed), _typeConstructor(typeConstructor)
+ConstructedType::ConstructedType(TypeTable* table, const std::string& name, std::vector<Type*>&& typeParameters)
+: TypeImpl(table, ttConstructed), _name(name), _typeParameters(typeParameters)
 {
-    assert(typeParameters.size() == typeConstructor->parameters());
-
-    for (Type* parameter : typeParameters)
-    {
-        _typeParameters.push_back(parameter);
-    }
-
-    for (auto& valueConstructor : typeConstructor->valueConstructors())
-    {
-        addValueConstructor(valueConstructor);
-    }
 }
 
-ConstructedType::ConstructedType(TypeTable* table, TypeConstructor* typeConstructor, const std::vector<Type*>& typeParameters)
-: TypeImpl(table, ttConstructed), _typeConstructor(typeConstructor)
-{
-    for (Type* parameter : typeParameters)
-    {
-        _typeParameters.push_back(parameter);
-    }
-
-    for (auto& valueConstructor : typeConstructor->valueConstructors())
-    {
-        addValueConstructor(valueConstructor);
-    }
-}
-
-std::string ConstructedType::name() const
+std::string ConstructedType::str() const
 {
     std::stringstream ss;
 
-    if (_typeConstructor->name() == "List")
+    if (_name == "List")
     {
         assert(_typeParameters.size() == 1);
-        ss << "[" << _typeParameters[0]->name() << "]";
+        ss << "[" << _typeParameters[0]->str() << "]";
     }
     else
     {
-        ss << _typeConstructor->name();
+        ss << _name;
         ss << "<";
 
         bool first = true;
         for (const Type* type : _typeParameters)
         {
             if (!first) ss << ", ";
-            ss << type->name();
+            ss << type->str();
             first = false;
         }
         ss << ">";
@@ -211,7 +186,15 @@ ValueConstructor::ValueConstructor(const std::string& name,
 
 bool isInstance(Type* type, Trait* trait)
 {
-    // TODO: Relax the exact-match condition
+    if (type->isVariable())
+    {
+        // TODO: Is it possible to create a completely generic trait
+        // implementation?
+
+        TypeVariable* var = type->get<TypeVariable>();
+        return var->constraints().count(trait) > 0;
+    }
+
     for (Type* instance : trait->instances())
     {
         if (isCompatible(type, instance))
@@ -355,7 +338,7 @@ bool isCompatible(Type* lhs, Type* rhs, std::unordered_map<TypeVariable*, Type*>
         ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
         ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
 
-        if (lhsConstructed->typeConstructor() != rhsConstructed->typeConstructor())
+        if (lhsConstructed->name() != rhsConstructed->name())
             return false;
 
         assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
@@ -449,7 +432,15 @@ Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
                 params.push_back(instantiate(parameter, replacements));
             }
 
-            return type->table()->createConstructedType(constructedType->typeConstructor(), params);
+            Type* result = type->table()->createConstructedType(constructedType->name(), std::move(params));
+
+            // Inherit value constructors
+            for (ValueConstructor* constructor : constructedType->valueConstructors())
+            {
+                result->addValueConstructor(constructor);
+            }
+
+            return result;
         }
     }
 

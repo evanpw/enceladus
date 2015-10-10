@@ -31,7 +31,7 @@ static std::string mangleTypeName(Type* type, std::vector<TypeVariable*>& variab
 
     if (BaseType* baseType = type->get<BaseType>())
     {
-        std::string name = baseType->name();
+        std::string name = baseType->str();
         ss << name.size() << name;
     }
     else if (FunctionType* functionType = type->get<FunctionType>())
@@ -46,7 +46,7 @@ static std::string mangleTypeName(Type* type, std::vector<TypeVariable*>& variab
     }
     else if (ConstructedType* constructedType = type->get<ConstructedType>())
     {
-        std::string name = constructedType->typeConstructor()->name();
+        std::string name = constructedType->name();
         ss << name.size() << name << "L";
         for (auto& param : constructedType->typeParameters())
         {
@@ -246,7 +246,7 @@ static Type* substitute(Type* original, const TypeAssignment& typeAssignment)
             if (changed)
             {
                 TypeTable* typeTable = original->table();
-                return typeTable->createConstructedType(constructedType->typeConstructor(), newParams);
+                return typeTable->createConstructedType(constructedType->name(), std::move(newParams));
             }
             else
             {
@@ -458,11 +458,11 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
 
         if (BaseType* baseType = methodSymbol->parentType->get<BaseType>())
         {
-            ss << baseType->name();
+            ss << baseType->str();
         }
         else if (ConstructedType* constructedType = methodSymbol->parentType->get<ConstructedType>())
         {
-            ss << constructedType->typeConstructor()->name();
+            ss << constructedType->name();
         }
         else
         {
@@ -1181,7 +1181,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         Type* arrayType = node->type;
         ConstructedType* constructedType = arrayType->get<ConstructedType>();
         assert(constructedType);
-        assert(constructedType->typeConstructor()->name() == "Array");
+        assert(constructedType->name() == "Array");
 
         Type* internalType = constructedType->typeParameters()[0];
 

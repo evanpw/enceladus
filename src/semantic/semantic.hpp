@@ -79,8 +79,8 @@ private:
     FunctionSymbol* createExternal(const std::string& name);
     void injectSymbols();
 
-    TypeConstructor* getTypeConstructor(const TypeName* typeName);
-    TypeConstructor* getTypeConstructor(const YYLTYPE& location, const std::string& name);
+    Type* getConstructedType(const TypeName* typeName);
+    Type* getConstructedType(const YYLTYPE& location, const std::string& name);
     void resolveBaseType(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables);
     void resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables = {});
 
