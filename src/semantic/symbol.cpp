@@ -31,10 +31,12 @@ TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)
     this->type = type;
 }
 
-TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait)
+TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar)
 : Symbol(name, kTrait, node, nullptr, true)
 {
+    assert(traitVar->isVariable() && traitVar->get<TypeVariable>()->quantified());
     this->trait = trait;
+    this->traitVar = traitVar;
 }
 
 TypeConstructorSymbol::TypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor)
@@ -52,6 +54,12 @@ MemberSymbol::MemberSymbol(const std::string& name, Kind kind, AstNode* node, Ty
 MethodSymbol::MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType)
 : MemberSymbol(name, kMethod, node, parentType)
 , definition(node)
+{
+}
+
+TraitMethodSymbol::TraitMethodSymbol(const std::string& name, AstNode* node, TraitSymbol* traitSymbol)
+: MemberSymbol(name, kTraitMethod, node, traitSymbol->traitVar)
+, trait(traitSymbol->trait)
 {
 }
 

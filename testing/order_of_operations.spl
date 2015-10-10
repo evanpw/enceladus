@@ -76,7 +76,7 @@ def minTime(instructions: [String]) -> Int
 
     empty := zeroCache(m)
     full := fullCache(instructions)
-    memo := hashTable(hashString, eqString)
+    memo := hashTable()
 
     # From a full cache, we're finished -> zero time
     memo.insert(full, 0)

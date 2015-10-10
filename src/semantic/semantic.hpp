@@ -56,6 +56,7 @@ public:
     virtual void visit(MethodDefNode* node);
     virtual void visit(ProgramNode* node);
     virtual void visit(StructDefNode* node);
+    virtual void visit(TraitDefNode* node);
     virtual void visit(TypeAliasNode* node);
     virtual void visit(VariableDefNode* node);
     virtual void visit(WhileNode* node);
@@ -69,14 +70,10 @@ public:
     virtual void visit(PassNode* node);
     virtual void visit(ReturnNode* node);
     virtual void visit(StringLiteralNode* node);
+    virtual void visit(TraitMethodNode* node);
     virtual void visit(VariableNode* node);
 
 private:
-    //// Type Inference ////////////////////////////////////////////////////////
-    Type* newVariable();
-    Type* instantiate(Type* type);
-    Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements);
-
     //// General semantic analysis /////////////////////////////////////////////
     FunctionSymbol* createBuiltin(const std::string& name);
     FunctionSymbol* createExternal(const std::string& name);
@@ -98,6 +95,7 @@ private:
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;
     ImplNode* _enclosingImplNode;
+    TraitDefNode* _enclosingTraitDef;
 };
 
 class SemanticPass2 : public AstVisitor

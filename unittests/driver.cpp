@@ -43,11 +43,6 @@ TEST_CASE("generic-type compatibility checks", "[isCompatible-generic]")
     REQUIRE(isCompatible(var1, var2));
     REQUIRE(isCompatible(var1, table->Int));
 
-    // The same is true for unconstrained but quantified variables
-    Type* quantified = table->createTypeVariable("U", true);
-    REQUIRE(isCompatible(quantified, var1));
-    REQUIRE(isCompatible(quantified, table->Int));
-
     // Recursive matching within constructed types
     TypeConstructor* List = table->createTypeConstructor("List", 1);
     Type* intList = table->createConstructedType(List, {table->Int});
@@ -138,4 +133,30 @@ TEST_CASE("constrained generic-type compatibility checks", "[isCompatible-constr
     REQUIRE(!isCompatible(type3b, type1b));
 
     delete table;
+}
+
+TEST_CASE("quantified-type compatibility checks", "[isCompatible-quantified]")
+{
+    TypeTable* table = new TypeTable;
+
+    // Unconstrained: quantified type variables unify with unquantified
+    // variables, but no concrete types
+    Type* quantified = table->createTypeVariable("S", true);
+    Type* unquantified = table->createTypeVariable("T");
+    //REQUIRE(isCompatible(quantified, unquantified));
+    //REQUIRE(!isCompatible(quantified, table->Int));
+
+    // Quantified variables don't unify with each other because they can't
+    // be subsitutued
+    Type* quantified2 = table->createTypeVariable("U", true);
+    //REQUIRE(!isCompatible(quantified, quantified2));
+
+    // Constrained case: quantified type variables only unify with unquantified
+    // type variables with no more constraints
+    quantified->get<TypeVariable>()->addConstraint(table->Num);
+    //REQUIRE(isCompatible(quantified, unquantified));
+    unquantified->get<TypeVariable>()->addConstraint(table->Num);
+    //REQUIRE(isCompatible(quantified, unquantified));
+    unquantified->get<TypeVariable>()->addConstraint(table->createTrait("Signed"));
+    REQUIRE(!isCompatible(quantified, unquantified));
 }

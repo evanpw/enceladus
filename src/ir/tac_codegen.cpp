@@ -15,6 +15,7 @@ TACCodeGen::TACCodeGen(TACContext* context)
 
 void TACCodeGen::codeGen(AstContext* astContext)
 {
+    _astContext = astContext;
      astContext->root()->accept(this);
 }
 
@@ -1279,12 +1280,27 @@ void TACCodeGen::visit(MethodCallNode* node)
 
     node->value = createTemp(getValueType(node->type));
 
-    Value* result = node->value;
+    if (node->symbol->kind == kMethod)
+    {
+        Value* method = getFunctionValue(node->symbol, node, node->typeAssignment);
+        emit(new CallInst(node->value, method, arguments));
+    }
+    else if (node->symbol->kind == kTraitMethod)
+    {
+        TraitMethodSymbol* symbol = dynamic_cast<TraitMethodSymbol*>(node->symbol);
+        assert(symbol);
 
-    assert(node->symbol->kind == kMethod);
+        //TypeAssignment fullAssignment = combine(_typeContext, node->typeAssignment);
+        Type* objectType = substitute(substitute(node->object->type, node->typeAssignment), _typeContext);
+        assert(isConcrete(objectType));
+        assert(isInstance(objectType, symbol->trait));
 
-    Value* method = getFunctionValue(node->symbol, node, node->typeAssignment);
-    emit(new CallInst(result, method, arguments));
+        MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->methodName, objectType);
+        assert(methodSymbol);
+
+        Value* method = getFunctionValue(methodSymbol, node, node->typeAssignment);
+        emit(new CallInst(node->value, method, arguments));
+    }
 }
 
 void TACCodeGen::visit(ReturnNode* node)

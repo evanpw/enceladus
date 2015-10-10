@@ -14,9 +14,10 @@ public:
     ConstructorSymbol* createConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor, const std::vector<MemberVarSymbol*>& memberSymbols);
 
     MethodSymbol* createMethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType);
+    TraitMethodSymbol* createTraitMethodSymbol(const std::string& name, AstNode* node, TraitSymbol* traitSymbol);
     MemberVarSymbol* createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index);
 
-    TraitSymbol* createTraitSymbol(const std::string& name, AstNode* node, Trait* trait);
+    TraitSymbol* createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar);
     TypeSymbol* createTypeSymbol(const std::string& name, AstNode* node, Type* type);
     TypeConstructorSymbol* createTypeConstructorSymbol(const std::string& name, AstNode* node, TypeConstructor* typeConstructor);
 
@@ -32,6 +33,10 @@ public:
     // Members are stored in a separate unscoped table, and can have more than
     // one entry with the same name (with different types)
     void findMembers(const std::string& name, std::vector<MemberSymbol*>& result);
+    void resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols);
+
+    // Will return the first compatible method symbol, or null if none exists
+    MethodSymbol* resolveConcreteMethod(const std::string& name, Type* objectType);
 
     bool isTopScope() const { return _scopes.size() == 1; }
 

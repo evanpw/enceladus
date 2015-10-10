@@ -1,6 +1,6 @@
 import HashTable
 
-table := hashTable(hashInt, eqInt)
+table := hashTable()
 
 for i in range(1, 1000)
     table.insert(i, i * 2)

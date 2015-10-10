@@ -191,7 +191,9 @@ private:
     TypeAssignment _typeContext;
     std::deque<std::pair<const Symbol*, TypeAssignment>> _functions;
 
+    AstContext* _astContext;
     TACContext* _context;
+
     Function* _currentFunction;
     Value* _currentSwitchExpr = nullptr;
 

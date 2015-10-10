@@ -1,16 +1,18 @@
 import HashTable
 
-def hashPair(key: Pair<Int, Int>) -> UInt
-    result := 20 * key.first() + key.second()
-    return result as UInt
+impl Eq for Pair<Int, Int>
+    def eq(lhs: Pair<Int, Int>, rhs: Pair<Int, Int>) -> Bool
+        let Pair(x1, y1) := lhs
+        let Pair(x2, y2) := rhs
 
-def cmpPair(lhs: Pair<Int, Int>, rhs: Pair<Int, Int>) -> Bool
-    let Pair(x1, y1) := lhs
-    let Pair(x2, y2) := rhs
+        return x1 == x2 and y1 == y2
 
-    return x1 == x2 and y1 == y2
+impl Hash for Pair<Int, Int>
+    def hash(self: Pair<Int, Int>) -> UInt
+        result := 20 * self.first() + self.second()
+        return result as UInt
 
-memo := hashTable(hashPair, cmpPair)
+memo := hashTable()
 
 def countPaths(p: Pair<Int, Int>) -> Int
     let Pair(x, y) := p

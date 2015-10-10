@@ -214,7 +214,7 @@ bool isInstance(Type* type, Trait* trait)
     // TODO: Relax the exact-match condition
     for (Type* instance : trait->instances())
     {
-        if (type->equals(instance))
+        if (isCompatible(type, instance))
             return true;
     }
 
@@ -256,6 +256,9 @@ bool isCompatible(Type* lhs, Type* rhs, std::unordered_map<TypeVariable*, Type*>
 
         if (rhs->tag() != ttVariable)
         {
+            if (lhsVar->quantified())
+                return false;
+
             for (Trait* constraint : lhsVar->constraints())
             {
                 if (!isInstance(rhs, constraint))
@@ -275,9 +278,33 @@ bool isCompatible(Type* lhs, Type* rhs, std::unordered_map<TypeVariable*, Type*>
         }
         else if (!lhs->equals(rhs))
         {
-            // Combining variables means that the lhs inherits the constraints
-            // of the lhs
             TypeVariable* rhsVar = rhs->get<TypeVariable>();
+
+            if (lhsVar->quantified() && rhsVar->quantified())
+                return false;
+
+            // Quantified variables can't be substituted, so they can unify
+            // only with something that has no more constraints
+            if (lhsVar->quantified())
+            {
+                for (Trait* constraint : rhsVar->constraints())
+                {
+                    if (lhsVar->constraints().find(constraint) == lhsVar->constraints().end())
+                        return false;
+                }
+            }
+
+            if (rhsVar->quantified())
+            {
+                for (Trait* constraint : lhsVar->constraints())
+                {
+                    if (rhsVar->constraints().find(constraint) == rhsVar->constraints().end())
+                        return false;
+                }
+            }
+
+            // Combining variables means that the rhs inherits the constraints
+            // of the lhs
             for (Trait* constraint : lhsVar->constraints())
             {
                 constraints[rhsVar].insert(constraint);
@@ -357,4 +384,81 @@ bool isCompatible(Type* lhs, Type* rhs)
     std::unordered_map<TypeVariable*, Type*> context;
     std::unordered_map<TypeVariable*, std::set<Trait*>> constraints;
     return isCompatible(lhs, rhs, context, constraints);
+}
+
+Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
+{
+    switch (type->tag())
+    {
+        case ttBase:
+            return type;
+
+        case ttVariable:
+        {
+            TypeVariable* typeVariable = type->get<TypeVariable>();
+
+            auto i = replacements.find(typeVariable);
+            if (i != replacements.end())
+            {
+                return i->second;
+            }
+            else
+            {
+                if (typeVariable->quantified())
+                {
+                    Type* replacement = typeVariable->table()->createTypeVariable();
+
+                    // Inherit type constraints
+                    TypeVariable* newVar = replacement->get<TypeVariable>();
+                    for (Trait* constraint : typeVariable->constraints())
+                    {
+                        newVar->addConstraint(constraint);
+                    }
+
+                    replacements[typeVariable] = replacement;
+
+                    return replacement;
+                }
+                else
+                {
+                    return type;
+                }
+            }
+        }
+
+        case ttFunction:
+        {
+            FunctionType* functionType = type->get<FunctionType>();
+
+            std::vector<Type*> newInputs;
+            for (Type* input : functionType->inputs())
+            {
+                newInputs.push_back(instantiate(input, replacements));
+            }
+
+            return type->table()->createFunctionType(newInputs, instantiate(functionType->output(), replacements));
+        }
+
+        case ttConstructed:
+        {
+            std::vector<Type*> params;
+
+            ConstructedType* constructedType = type->get<ConstructedType>();
+            for (Type* parameter : constructedType->typeParameters())
+            {
+                params.push_back(instantiate(parameter, replacements));
+            }
+
+            return type->table()->createConstructedType(constructedType->typeConstructor(), params);
+        }
+    }
+
+    assert(false);
+    return nullptr;
+}
+
+Type* instantiate(Type* type)
+{
+    std::map<TypeVariable*, Type*> replacements;
+    return instantiate(type, replacements);
 }

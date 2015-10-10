@@ -62,6 +62,20 @@ public:
 	{}
 };
 
+
+////// Utility classes /////////////////////////////////////////////////////////
+
+struct TypeParam
+{
+	TypeParam(const std::string& name)
+	: name(name)
+	{}
+
+	std::string name;
+	std::vector<std::string> constraints;
+};
+
+
 ////// Miscellaneous AST nodes /////////////////////////////////////////////////
 
 class TypeName : public AstNode
@@ -465,7 +479,7 @@ public:
 class FunctionDefNode : public StatementNode
 {
 public:
-	FunctionDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, std::vector<std::pair<std::string, std::string>>&& typeParams, const std::vector<std::string>& params, TypeName* typeName)
+	FunctionDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, std::vector<TypeParam>&& typeParams, const std::vector<std::string>& params, TypeName* typeName)
 	: StatementNode(context, location), name(name), body(body), typeParams(typeParams), params(params), typeName(typeName)
 	{}
 
@@ -473,7 +487,7 @@ public:
 
 	std::string name;
 	StatementNode* body;
-	std::vector<std::pair<std::string, std::string>> typeParams;
+	std::vector<TypeParam> typeParams;
 	std::vector<std::string> params;
 	TypeName* typeName;
 
@@ -486,7 +500,7 @@ public:
 class MethodDefNode : public FunctionDefNode
 {
 public:
-	MethodDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, std::vector<std::pair<std::string, std::string>>&& typeParams, const std::vector<std::string>& params, TypeName* typeName)
+	MethodDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, StatementNode* body, std::vector<TypeParam>&& typeParams, const std::vector<std::string>& params, TypeName* typeName)
 	: FunctionDefNode(context, location, name, body, std::move(typeParams), params, typeName)
 	{
 	}
@@ -500,15 +514,16 @@ public:
 class ImplNode : public StatementNode
 {
 public:
-	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<std::pair<std::string, std::string>>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods)
-	: StatementNode(context, location), typeParams(typeParams), typeName(typeName), methods(methods)
+	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<TypeParam>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods, const std::string& traitName)
+	: StatementNode(context, location), typeParams(typeParams), typeName(typeName), methods(methods), traitName(traitName)
 	{}
 
 	AST_VISITABLE();
 
-	std::vector<std::pair<std::string, std::string>> typeParams;
+	std::vector<TypeParam> typeParams;
 	TypeName* typeName;
 	std::vector<MethodDefNode*> methods;
+	std::string traitName;
 
 	// Annotations
 	std::unordered_map<std::string, Type*> typeContext;
@@ -539,6 +554,9 @@ public:
 
 	std::string name;
 	std::vector<TraitMethodNode*> methods;
+
+	// Annotations
+	TraitSymbol* traitSymbol = nullptr;
 };
 
 class LetNode : public StatementNode
@@ -683,7 +701,7 @@ public:
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<std::pair<std::string, std::string>>&& typeParameters)
+	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<TypeParam>&& typeParameters)
 	: StatementNode(context, location), name(name), members(members), typeParameters(typeParameters)
 	{}
 
@@ -691,7 +709,7 @@ public:
 
 	std::string name;
 	std::vector<MemberDefNode*> members;
-	std::vector<std::pair<std::string, std::string>> typeParameters;
+	std::vector<TypeParam> typeParameters;
 
 	// Annotations
 	Type* structType;

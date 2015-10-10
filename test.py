@@ -398,7 +398,7 @@ class TestAcceptance(object):
         self.run('typeConstraint5', '')
 
     def test_typeConstraint6(self):
-        self.run('typeConstraint6', build_error=Regex('Error: testing/typeConstraint6.spl:7:16: Can\'t bind variable T to quantified type variable T\d+: Num, because the latter isn\'t constrained by trait Num'))
+        self.run('typeConstraint6', build_error='Error: testing/typeConstraint6.spl:7:16: no member named `x` found for type `Test<T>`')
 
     def test_useUnit(self):
         self.run('useUnit', '')

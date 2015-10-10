@@ -1,5 +1,6 @@
 #include "semantic/symbol_table.hpp"
 #include "ast/ast.hpp"
+#include "semantic/types.hpp"
 
 #include <cassert>
 
@@ -36,6 +37,15 @@ MethodSymbol* SymbolTable::createMethodSymbol(const std::string& name, FunctionD
     return symbol;
 }
 
+TraitMethodSymbol* SymbolTable::createTraitMethodSymbol(const std::string& name, AstNode* node, TraitSymbol* traitSymbol)
+{
+    TraitMethodSymbol* symbol = new TraitMethodSymbol(name, node, traitSymbol);
+    assert(name != "_");
+    _members[name].push_back(symbol);
+
+    return symbol;
+}
+
 MemberVarSymbol* SymbolTable::createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index)
 {
     MemberVarSymbol* symbol = new MemberVarSymbol(name, node, parentType, index);
@@ -55,9 +65,9 @@ TypeSymbol* SymbolTable::createTypeSymbol(const std::string& name, AstNode* node
     return symbol;
 }
 
-TraitSymbol* SymbolTable::createTraitSymbol(const std::string& name, AstNode* node, Trait* trait)
+TraitSymbol* SymbolTable::createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar)
 {
-    TraitSymbol* symbol = new TraitSymbol(name, node, trait);
+    TraitSymbol* symbol = new TraitSymbol(name, node, trait, traitVar);
     insert(symbol, SymbolTable::TYPE);
     return symbol;
 }
@@ -119,6 +129,38 @@ void SymbolTable::findMembers(const std::string& name, std::vector<MemberSymbol*
     {
         result = i->second;
     }
+}
+
+void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols)
+{
+    symbols.clear();
+
+    auto i = _members.find(name);
+    if (i == _members.end()) return;
+
+    for (MemberSymbol* symbol : i->second)
+    {
+        if (isCompatible(parentType, instantiate(symbol->parentType)))
+        {
+            symbols.push_back(symbol);
+        }
+    }
+}
+
+MethodSymbol* SymbolTable::resolveConcreteMethod(const std::string& name, Type* objectType)
+{
+    auto i = _members.find(name);
+    if (i == _members.end()) return nullptr;
+
+    for (MemberSymbol* symbol : i->second)
+    {
+        if (symbol->kind == kMethod && isCompatible(objectType, instantiate(symbol->parentType)))
+        {
+            return dynamic_cast<MethodSymbol*>(symbol);
+        }
+    }
+
+    return nullptr;
 }
 
 void SymbolTable::insert(Symbol* symbol, WhichTable whichTable)

@@ -12,7 +12,7 @@ class TraitDefNode;
 class SymbolTable;
 
 
-enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMethod = 4, kMemberVar = 5, kTrait = 6};
+enum Kind {kVariable = 0, kFunction = 1, kType = 2, kTypeConstructor = 3, kMethod = 4, kMemberVar = 5, kTrait = 6, kTraitMethod};
 
 class Symbol
 {
@@ -106,9 +106,14 @@ class TraitSymbol : public Symbol
 public:
     Trait* trait;
 
+    // Plays the role of the instance type in the method types
+    Type* traitVar;
+
+    std::unordered_map<std::string, Type*> methods;
+
 private:
     friend class SymbolTable;
-    TraitSymbol(const std::string& name, AstNode* node, Trait* trait);
+    TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar);
 };
 
 class TypeConstructorSymbol : public Symbol
@@ -128,6 +133,7 @@ public:
 
     virtual bool isMethod() { return false; }
     virtual bool isMemberVar() { return false; }
+    virtual bool isTraitMethod() { return false; }
 
 protected:
     friend class SymbolTable;
@@ -144,6 +150,18 @@ public:
 protected:
     friend class SymbolTable;
     MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType);
+};
+
+struct TraitMethodSymbol : public MemberSymbol
+{
+public:
+    virtual bool isTraitMethod() { return true; }
+
+    Trait* trait;
+
+private:
+    friend class SymbolTable;
+    TraitMethodSymbol(const std::string& name, AstNode* node, TraitSymbol* traitSymbol);
 };
 
 struct MemberVarSymbol : public MemberSymbol

@@ -1,6 +1,6 @@
 import HashTable
 
-table := hashTable(hashString, eqString)
+table := hashTable()
 
 table.insert("One", 1)
 table.insert("Two", 2)

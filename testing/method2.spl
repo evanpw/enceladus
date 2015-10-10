@@ -1,9 +1,9 @@
 impl Int
-    def eq(self: Int, other: Int) -> Bool
+    def equal(self: Int, other: Int) -> Bool
         return self == other
 
 impl [Int]
-    def eq(self: [Int], other: [Int]) -> Bool
+    def equal(self: [Int], other: [Int]) -> Bool
         if self.empty()
             return other.empty()
 
@@ -11,12 +11,12 @@ impl [Int]
             return False
 
         else
-            return self.head() == other.head() and self.tail().eq(other.tail())
+            return self.head() == other.head() and self.tail().equal(other.tail())
 
 x := [1, 2]
 y := [1, 2]
 
-if x.eq(y)
+if x.equal(y)
     print $ "Same"
 else
     print $ "Different"

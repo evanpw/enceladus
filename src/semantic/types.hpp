@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <set>
 #include <sstream>
@@ -151,9 +152,11 @@ private:
 
 bool isInstance(Type* type, Trait* trait);
 
-// Two (possibly polymorphic) types are compatible iff there is at least one
-// monomorphic type which unifies with both
+// Two (possibly polymorphic) types are compatible if they would unify
 bool isCompatible(Type* lhs, Type* rhs);
+
+Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements);
+Type* instantiate(Type* type);
 
 // Represents a bottom-level basic types (Int, Bool, ...)
 class BaseType : public TypeImpl
@@ -296,7 +299,7 @@ public:
         return _quantified;
     }
 
-    const std::set<Trait*> constraints() const
+    const std::set<Trait*>& constraints() const
     {
         return _constraints;
     }

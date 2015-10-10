@@ -159,6 +159,9 @@ StatementNode* Parser::statement()
     case tIMPL:
         return implementation_block();
 
+    case tTRAIT:
+        return trait_definition();
+
     case tLIDENT:
         if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == ':')
         {
@@ -269,7 +272,7 @@ FunctionDefNode* Parser::function_definition()
 
     expect(tDEF);
     std::string name = ident();
-    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
+    std::vector<TypeParam> typeParams = constrained_type_params();
     std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
 
     StatementNode* body = suite();
@@ -397,7 +400,7 @@ StructDefNode* Parser::struct_declaration()
     expect(tSTRUCT);
     Token name = expect(tUIDENT);
 
-    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
+    std::vector<TypeParam> typeParams = constrained_type_params();
 
     std::vector<MemberDefNode*> memberList = members();
 
@@ -500,13 +503,26 @@ BreakNode* Parser::break_statement()
 
 /// implementation_block
 ///     : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
+///     | IMPL UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
 ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
 
     expect(tIMPL);
 
-    std::vector<std::pair<std::string, std::string>> typeParams = constrained_type_params();
+    std::vector<TypeParam> typeParams;
+    std::string traitName;
+
+    if (peekType() == tUIDENT && peek2ndType() == tFOR)
+    {
+        traitName = expect(tUIDENT).value.str;
+        expect(tFOR);
+    }
+    else
+    {
+        typeParams = constrained_type_params();
+    }
+
     TypeName* typeName = type();
 
     expect(tEOL);
@@ -523,7 +539,7 @@ ImplNode* Parser::implementation_block()
 
     expect(tDEDENT);
 
-    return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods));
+    return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods), traitName);
 }
 
 MethodDefNode* Parser::method_definition()
@@ -863,43 +879,46 @@ std::vector<std::string> Parser::type_params()
 }
 
 /// constrained_type_params
-///     : '<' UIDENT [':' UIDENT ] { ',' UIDENT [':' UIDENT ] } '>'
+///     : '<' constrained_type_param { ',' constrained_type_param } '>'
 ///     | /* empty */
-std::vector<std::pair<std::string, std::string>> Parser::constrained_type_params()
+std::vector<TypeParam> Parser::constrained_type_params()
 {
-    if (peekType() != '<')
-        return {};
+    std::vector<TypeParam> result;
 
-    std::vector<std::pair<std::string, std::string>> result;
+    if (peekType() != '<')
+        return result;
 
     expect('<');
 
-    Token typeVar = expect(tUIDENT);
-    if (accept(':'))
-    {
-        Token constraint = expect(tUIDENT);
-        result.emplace_back(typeVar.value.str, constraint.value.str);
-    }
-    else
-    {
-        result.emplace_back(typeVar.value.str, "");
-    }
+    result.push_back(constrained_type_param());
 
     while (accept(','))
     {
-        Token typeVar = expect(tUIDENT);
-        if (accept(':'))
-        {
-            Token constraint = expect(tUIDENT);
-            result.emplace_back(typeVar.value.str, constraint.value.str);
-        }
-        else
-        {
-            result.emplace_back(typeVar.value.str, "");
-        }
+        result.push_back(constrained_type_param());
     }
 
     expect('>');
+
+    return result;
+}
+
+TypeParam Parser::constrained_type_param()
+{
+    Token typeVar = expect(tUIDENT);
+
+    TypeParam result(typeVar.value.str);
+
+    if (accept(':'))
+    {
+        Token constraint = expect(tUIDENT);
+        result.constraints.push_back(constraint.value.str);
+
+        while (accept('+'))
+        {
+            Token constraint = expect(tUIDENT);
+            result.constraints.push_back(constraint.value.str);
+        }
+    }
 
     return result;
 }

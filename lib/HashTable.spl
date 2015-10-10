@@ -1,31 +1,21 @@
-struct HashTable<S, T>
+struct HashTable<S: Eq + Hash, T>
     contents: Array<Option<Pair<S, T>>>
-    hashFn: |S| -> UInt
-    cmpFn: |S, S| -> Bool
     size: UInt
     capacity: UInt
 
 
-def hashTable<S, T>(hashFn: |S| -> UInt, cmpFn: |S, S| -> Bool) -> HashTable<S, T>
-    return HashTable(makeArray(0, None), hashFn, cmpFn, 0, 0)
+def hashTable<S: Eq + Hash, T>() -> HashTable<S, T>
+    return HashTable(makeArray(0, None), 0, 0)
 
 
-impl<S, T> HashTable<S, T>
-    def hash(self: HashTable<S, T>, key: S) -> UInt
-        hashFn := self.hashFn
-        return hashFn(key)
-
-    def cmp(self: HashTable<S, T>, lhs: S, rhs: S) -> Bool
-        cmpFn := self.cmpFn
-        return cmpFn(lhs, rhs)
-
+impl<S: Eq + Hash, T> HashTable<S, T>
     def insert(self: HashTable<S, T>, key: S, value: T) -> Unit
         # Resize when 2/3 full
         if 3 * self.size >= 2 * self.capacity
             newCapacity := max(1, 3 * self.size)
             self.resize(newCapacity)
 
-        startIdx := self.hash(key) mod self.capacity
+        startIdx := key.hash() mod self.capacity
 
         # Linear probing
         idx := startIdx
@@ -34,7 +24,7 @@ impl<S, T> HashTable<S, T>
                 Some(item)
                     let Pair(k, v) := item
 
-                    if self.cmp(k, key)
+                    if k.eq(key)
                         self.contents.set(idx, Some(Pair(key, value)))
                         break
 
@@ -50,7 +40,7 @@ impl<S, T> HashTable<S, T>
         if self.capacity == 0
             return None
 
-        startIdx := self.hash(key) mod self.capacity
+        startIdx := key.hash() mod self.capacity
 
         idx := startIdx
         forever
@@ -58,7 +48,7 @@ impl<S, T> HashTable<S, T>
                 Some(item)
                     let Pair(k, v) := item
 
-                    if self.cmp(k, key)
+                    if k.eq(key)
                         return Some(v)
 
                 None
@@ -89,25 +79,3 @@ impl<S, T> HashTable<S, T>
                     self.insert(k, v)
                 None
                     pass
-
-def hashInt(x: Int) -> UInt
-    return x as UInt
-
-def eqInt(lhs: Int, rhs: Int) -> Bool
-    return lhs == rhs
-
-def hashString(x: String) -> UInt
-    return strHash(x)
-
-def eqString(lhs: String, rhs: String) -> Bool
-    n1 := lhs.length()
-    n2 := rhs.length()
-
-    if n1 != n2
-        return False
-
-    for i in range(0, n1)
-        if lhs.at(i) != rhs.at(i)
-            return False
-
-    return True

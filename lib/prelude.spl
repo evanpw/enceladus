@@ -341,3 +341,39 @@ impl<S, T> Pair<S, T>
 
 def splitAt<T>(n: UInt, xs: [T]) -> Pair<[T], [T]>
     return Pair(xs.take(n), xs.drop(n))
+
+
+## Eq trait ##
+trait Eq
+    def eq(lhs: Self, rhs: Self) -> Bool
+
+impl Eq for Int
+    def eq(lhs: Int, rhs: Int) -> Bool
+        return lhs == rhs
+
+impl Eq for String
+    def eq(lhs: String, rhs: String) -> Bool
+        n1 := lhs.length()
+        n2 := rhs.length()
+
+        if n1 != n2
+            return False
+
+        for i in range(0, n1)
+            if lhs.at(i) != rhs.at(i)
+                return False
+
+        return True
+
+
+## Hash trait ##
+trait Hash
+    def hash(self: Self) -> UInt
+
+impl Hash for Int
+    def hash(self: Int) -> UInt
+        return self as UInt
+
+impl Hash for String
+    def hash(self: String) -> UInt
+        return strHash(self)
