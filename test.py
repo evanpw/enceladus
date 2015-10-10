@@ -415,6 +415,9 @@ class TestAcceptance(object):
     def test_unusedTypeParam(self):
         self.run('unusedTypeParam', build_error='Error: testing/unusedTypeParam.spl:1:1: type variable `T` doesn\'t occur in type `Int`')
 
+    def test_constrainedImpl(self):
+        self.run('constrainedImpl', '')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

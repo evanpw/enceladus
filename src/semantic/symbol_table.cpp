@@ -132,6 +132,10 @@ void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType,
 
     for (MemberSymbol* symbol : i->second)
     {
+        // Trait methods resolve only for unknown parent types
+        if (symbol->kind == kTraitMethod && !parentType->isVariable())
+            continue;
+
         if (isCompatible(parentType, instantiate(symbol->parentType)))
         {
             symbols.push_back(symbol);

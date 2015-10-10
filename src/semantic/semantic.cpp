@@ -859,6 +859,14 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->methodName, objectType, symbols);
     CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", node->methodName, objectType->str());
+
+    if (symbols.size() >= 2)
+    {
+        for (Symbol* symbol : symbols)
+        {
+            std::cerr << symbol->name << ": " << symbol->type->str() << std::endl;
+        }
+    }
     CHECK(symbols.size() < 2, "method call is ambiguous");
 
     CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", node->methodName);
@@ -1526,7 +1534,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
     if (traitSymbol)
     {
         // TODO: Trait implementations for generic types
-        assert(node->typeParams.empty());
+        //assert(node->typeParams.empty());
 
         std::map<TypeVariable*, Type*> traitSub;
         traitSub[traitSymbol->traitVar->get<TypeVariable>()] = node->typeName->type;

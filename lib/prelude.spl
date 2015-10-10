@@ -365,6 +365,18 @@ impl Eq for String
 
         return True
 
+impl<T: Eq> Eq for [T]
+    def eq(self: [T], other: [T]) -> Bool
+        if self.empty()
+            return other.empty()
+        elif other.empty()
+            return False
+
+        if not self.head().eq(other.head())
+            return False
+        else
+            return self.tail().eq(other.tail())
+
 
 ## Hash trait ##
 trait Hash

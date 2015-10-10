@@ -503,24 +503,20 @@ BreakNode* Parser::break_statement()
 
 /// implementation_block
 ///     : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
-///     | IMPL UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+///     | IMPL constrained_type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
 ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
 
     expect(tIMPL);
 
-    std::vector<TypeParam> typeParams;
+    std::vector<TypeParam> typeParams = constrained_type_params();
     std::string traitName;
 
     if (peekType() == tUIDENT && peek2ndType() == tFOR)
     {
         traitName = expect(tUIDENT).value.str;
         expect(tFOR);
-    }
-    else
-    {
-        typeParams = constrained_type_params();
     }
 
     TypeName* typeName = type();

@@ -97,7 +97,7 @@ break_statement
 
 implementation_block
     : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
-    | IMPL UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+    | IMPL constrained_type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
 
 method_definition
     : DEF ident constrained_type_params params_and_types suite

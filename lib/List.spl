@@ -1,14 +1,3 @@
-# Equality
-def eqList(xs: [Int], ys: [Int]) -> Bool
-    if xs.empty()
-        return ys.empty()
-
-    if ys.empty()
-        return xs.empty()
-
-    return xs.head() == ys.head() and eqList(xs.tail(), ys.tail())
-
-
 # Comparisons
 ## x < y   =>  -1
 ## x > y   =>  +1
