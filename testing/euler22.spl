@@ -23,7 +23,7 @@ def score(name: String) -> Int
     return total
 
 names := readNames()
-names = sort(cmpString, names)
+names = sort(names)
 
 total := 0
 for i in range(0, names.length())

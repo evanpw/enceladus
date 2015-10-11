@@ -149,14 +149,6 @@ private:
     std::shared_ptr<TypeImpl> _impl;
 };
 
-bool isInstance(Type* type, Trait* trait);
-
-// Two (possibly polymorphic) types are compatible if they would unify
-bool isCompatible(Type* lhs, Type* rhs);
-
-Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements);
-Type* instantiate(Type* type);
-
 // Represents a bottom-level basic types (Int, Bool, ...)
 class BaseType : public TypeImpl
 {

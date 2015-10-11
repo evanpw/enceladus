@@ -2,7 +2,7 @@
 
 #include "ast/ast_context.hpp"
 #include "lib/library.h"
-#include "semantic/types.hpp"
+#include "semantic/type_functions.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -464,6 +464,20 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
         {
             ss << constructedType->name();
         }
+        else if (TypeVariable* typeVariable = methodSymbol->parentType->get<TypeVariable>())
+        {
+            ss << "_";
+            if (!typeVariable->constraints().empty())
+            {
+                ss << "L";
+                for (Trait* constraint : typeVariable->constraints())
+                {
+                    std::string name = constraint->str();
+                    ss << name.size() << name;
+                }
+                ss << "G";
+            }
+        }
         else
         {
             assert(false);
@@ -558,6 +572,14 @@ void TACCodeGen::visit(ProgramNode* node)
         if (funcDefNode) /* regular function or method */
         {
             Function* function = (Function*)getFunctionValue(funcDefNode->symbol, nullptr, typeContext);
+            /*
+            std::cerr << "instantiating " << symbol->name << std::endl;
+            for (auto& item : typeContext)
+            {
+                std::cerr << item.first->str() << " -> " << item.second->str() << std::endl;
+            }
+            std::cerr << std::endl;
+            */
 
             _currentFunction = function;
             _localNames.clear();
@@ -1290,7 +1312,6 @@ void TACCodeGen::visit(MethodCallNode* node)
         TraitMethodSymbol* symbol = dynamic_cast<TraitMethodSymbol*>(node->symbol);
         assert(symbol);
 
-        //TypeAssignment fullAssignment = combine(_typeContext, node->typeAssignment);
         Type* objectType = substitute(substitute(node->object->type, node->typeAssignment), _typeContext);
         assert(isConcrete(objectType));
         assert(isInstance(objectType, symbol->trait));
@@ -1298,7 +1319,12 @@ void TACCodeGen::visit(MethodCallNode* node)
         MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->methodName, objectType);
         assert(methodSymbol);
 
-        Value* method = getFunctionValue(methodSymbol, node, node->typeAssignment);
+        TypeAssignment assignment;
+        Type* parentType = instantiate(methodSymbol->parentType, assignment);
+        auto result = tryUnify(parentType, objectType);
+        assert(result.first);
+
+        Value* method = getFunctionValue(methodSymbol, node, assignment);
         emit(new CallInst(node->value, method, arguments));
     }
 }

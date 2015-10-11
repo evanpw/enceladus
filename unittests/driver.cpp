@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include "semantic/types.hpp"
+#include "semantic/type_functions.hpp"
 
 TEST_CASE("concrete-type compatibility checks", "[isCompatible-concrete]")
 {

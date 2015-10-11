@@ -1,92 +1,55 @@
-# Comparisons
-## x < y   =>  -1
-## x > y   =>  +1
-## x == y  =>   0
-def cmpInt(x: Int, y: Int) -> Int
-    return (x - y)
-
-
-def cmpList(xs: [Int], ys: [Int]) -> Int
-    if xs.empty()
-        if ys.empty()
-            return 0
-        else
-            return -1
-    elif ys.empty()
-        return 1
-    else
-        if xs.head() < ys.head()
-            return -1
-        elif xs.head() > ys.head()
-            return 1
-        else
-            return cmpList(xs.tail(), ys.tail())
-
-
-def cmpString(xs: String, ys: String) -> Int
-    n1 := xs.length()
-    n2 := ys.length()
-
-    for n in range(0, min(n1, n2) + 1)
-        if xs.length() <= n
-            if ys.length() <= n
-                return 0
-            else
-                return -1
-        elif ys.length() <= n
-            return 1
-        else
-            if xs.at(n) < ys.at(n)
-                return -1
-            elif xs.at(n) > ys.at(n)
-                return 1
-
-    panic $ "Unreachable"
-
-
 # List operations
-def isIn<T>(eq: |T, T| -> Bool, x: T, ys: [T]) -> Bool
+def isIn<T: Eq>(x: T, ys: [T]) -> Bool
     for y in ys
-        if eq(x, y): return True
+        if x.eq(y)
+            return True
 
     return False
 
 
-def splitList<T>(cmp: |T, T| -> Int, xs: [T], pivot: T) -> Pair<[T], [T]>
+def splitList<T: Ord>(xs: [T], pivot: T) -> Pair<[T], [T]>
     lhs := []
     rhs := []
 
     for x in xs
-        if cmp(x, pivot) < 0
-            lhs = x :: lhs
-        else
-            rhs = x :: rhs
+        match x.cmp(pivot)
+            Less
+                lhs = x :: lhs
+            Greater
+                rhs = x :: rhs
+            Equal
+                rhs = x :: rhs
 
     return Pair(lhs, rhs)
 
 
-def sort<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
+def sort<T: Ord>(xs: [T]) -> [T]
     if xs.length() <= 1
         return xs
 
     pivot := xs.head()
-    let Pair(lhs, rhs) := splitList(cmp, xs.tail(), pivot)
+    let Pair(lhs, rhs) := splitList(xs.tail(), pivot)
 
-    return sort(cmp, lhs) ++ [pivot] ++ sort(cmp, rhs)
+    return sort(lhs) ++ [pivot] ++ sort(rhs)
 
 
-def uniquify<T>(cmp: |T, T| -> Int, xs: [T]) -> [T]
+def uniquify<T: Ord>(xs: [T]) -> [T]
     if xs.empty()
         return []
 
-    xs = sort(cmp, xs)
+    xs = sort(xs)
 
     result := [xs.head()]
     last := xs.head()
 
     for x in xs.tail()
-        if cmp(last, x) != 0
-            result = x :: result
+        match last.cmp(x)
+            Equal
+                pass
+            Less
+                result = x :: result
+            Greater
+                result = x :: result
 
         last = x
 

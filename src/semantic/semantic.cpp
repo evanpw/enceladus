@@ -2,6 +2,7 @@
 
 #include "ast/ast_context.hpp"
 #include "lib/library.h"
+#include "semantic/type_functions.hpp"
 #include "utility.hpp"
 
 #include <algorithm>
@@ -29,198 +30,22 @@ static void inferenceError(AstNode* node, const std::string& msg)
     throw TypeInferenceError(ss.str());
 }
 
-static bool occurs(TypeVariable* variable, Type* value)
+static void unify(Type* lhs, Type* rhs, AstNode* node)
 {
-    Type* rhs = value;
+    auto result = tryUnify(lhs, rhs);
 
-    switch (rhs->tag())
+    if (!result.first)
     {
-        case ttBase:
-            return false;
-
-        case ttVariable:
+        if (!result.second.empty())
         {
-            TypeVariable* typeVariable = rhs->get<TypeVariable>();
-            return typeVariable == variable;
-        }
-
-        case ttFunction:
-        {
-            FunctionType* functionType = rhs->get<FunctionType>();
-
-            for (auto& input : functionType->inputs())
-            {
-                if (occurs(variable, input)) return true;
-            }
-
-            return occurs(variable, functionType->output());
-        }
-
-        case ttConstructed:
-        {
-            ConstructedType* constructedType = rhs->get<ConstructedType>();
-            for (Type* parameter : constructedType->typeParameters())
-            {
-                if (occurs(variable, parameter)) return true;
-            }
-
-            return false;
-        }
-    }
-
-    assert(false);
-}
-
-static void bindVariable(Type* variable, Type* value, AstNode* node)
-{
-    assert(variable->tag() == ttVariable);
-    TypeVariable* lhs = variable->get<TypeVariable>();
-
-    // Check to see if the value is actually the same type variable, and don't
-    // rebind
-    if (value->tag() == ttVariable)
-    {
-        TypeVariable* rhs = value->get<TypeVariable>();
-        if (lhs == rhs) return;
-
-        // A quantified type variable can't acquire any new constraints in the
-        // process of unification (see overrideType test)
-        if (rhs->quantified())
-        {
-            auto& rhsConstraints = rhs->constraints();
-
-            for (Trait* constraint : lhs->constraints())
-            {
-                if (rhsConstraints.find(constraint) == rhsConstraints.end())
-                {
-                    std::stringstream ss;
-                    ss << "Can't bind variable " << value->str()
-                       << " to quantified type variable " << variable->str()
-                       << ", because the latter isn't constrained by trait " << constraint->str();
-                    inferenceError(node, ss.str());
-                }
-            }
-        }
-    }
-    else
-    {
-        // Otherwise, check that the rhs type meets all of the constraints on
-        // the lhs variable
-        for (Trait* constraint : lhs->constraints())
-        {
-            if (!isInstance(value, constraint))
-            {
-                std::stringstream ss;
-                ss << "Can't bind variable " << variable->str() << " to type " << value->str()
-                   << " because it isn't an instance of trait " << constraint->str();
-                inferenceError(node, ss.str());
-            }
-        }
-
-        if (occurs(lhs, value))
-        {
-            std::stringstream ss;
-            ss << "variable " << variable->str() << " already occurs in " << value->str();
-            inferenceError(node, ss.str());
-        }
-    }
-
-    variable->assign(value);
-}
-
-static bool tryUnify(Type* lhs, Type* rhs, AstNode* node)
-{
-    assert(lhs && rhs && node);
-
-    if (lhs->tag() == ttBase && rhs->tag() == ttBase)
-    {
-        // Two base types can be unified only if equal (we don't have inheritance)
-        if (lhs->equals(rhs))
-            return true;
-    }
-    else if (lhs->tag() == ttVariable)
-    {
-        // Non-quantified type variables can always be bound
-        if (!lhs->get<TypeVariable>()->quantified())
-        {
-            bindVariable(lhs, rhs, node);
-            return true;
+            inferenceError(node, result.second);
         }
         else
         {
-            // Trying to unify a quantified type variable with a type that is not a
-            // variable is always an error
-            if (rhs->tag() == ttVariable)
-            {
-                // A quantified type variable unifies with itself
-                if (lhs->equals(rhs))
-                {
-                    return true;
-                }
-
-                // And non-quantified type variables can be bound to quantified ones
-                else if (!rhs->get<TypeVariable>()->quantified())
-                {
-                    bindVariable(rhs, lhs, node);
-                    return true;
-                }
-             }
+            std::stringstream ss;
+            ss << "cannot unify types " << lhs->str() << " and " << rhs->str();
+            inferenceError(node, ss.str());
         }
-    }
-    else if (rhs->tag() == ttVariable && !rhs->get<TypeVariable>()->quantified())
-    {
-        bindVariable(rhs, lhs, node);
-        return true;
-    }
-    else if (lhs->tag() == ttFunction && rhs->tag() == ttFunction)
-    {
-        FunctionType* lhsFunction = lhs->get<FunctionType>();
-        FunctionType* rhsFunction = rhs->get<FunctionType>();
-
-        if (lhsFunction->inputs().size() == rhsFunction->inputs().size())
-        {
-            for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
-            {
-                if (!tryUnify(lhsFunction->inputs().at(i), rhsFunction->inputs().at(i), node))
-                    return false;
-            }
-
-            if (!tryUnify(lhsFunction->output(), rhsFunction->output(), node))
-                return false;
-
-            return true;
-        }
-    }
-    else if (lhs->tag() == ttConstructed && rhs->tag() == ttConstructed)
-    {
-        ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
-        ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
-
-        if (lhsConstructed->name() == rhsConstructed->name())
-        {
-            assert(lhsConstructed->typeParameters().size() == rhsConstructed->typeParameters().size());
-
-            for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
-            {
-                if (!tryUnify(lhsConstructed->typeParameters().at(i), rhsConstructed->typeParameters().at(i), node))
-                    return false;
-            }
-
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static void unify(Type* lhs, Type* rhs, AstNode* node)
-{
-    if (!tryUnify(lhs, rhs, node))
-    {
-        // Can't be unified
-        std::stringstream ss;
-        ss << "cannot unify types " << lhs->str() << " and " << rhs->str();
-        inferenceError(node, ss.str());
     }
 }
 
@@ -1533,8 +1358,10 @@ void SemanticAnalyzer::visit(ImplNode* node)
     // for each trait method
     if (traitSymbol)
     {
-        // TODO: Trait implementations for generic types
-        //assert(node->typeParams.empty());
+        // Check for overlapping trait instances
+        CHECK(!hasOverlappingInstance(traitSymbol->trait, node->typeName->type),
+            "trait `{}` already has an instance which would overlap with `{}`",
+            traitSymbol->name, node->typeName->type->str());
 
         std::map<TypeVariable*, Type*> traitSub;
         traitSub[traitSymbol->traitVar->get<TypeVariable>()] = node->typeName->type;
@@ -1578,11 +1405,6 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         CHECK(!_enclosingFunction, "methods cannot be nested");
         CHECK(_enclosingImplNode, "methods can only appear inside impl blocks");
 
-        std::vector<MemberSymbol*> symbols;
-        Type* parentType = _enclosingImplNode->typeName->type;
-        _symbolTable->resolveMemberSymbol(node->name, parentType, symbols);
-        CHECK(symbols.empty(), "type `{}` already has a method or member named `{}`", parentType->str(), node->name);
-
         // Create type variables for each type parameter
         std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
         for (auto& item : node->typeParams)
@@ -1610,6 +1432,11 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         }
 
         resolveTypeName(node->typeName, typeContext);
+
+        std::vector<MemberSymbol*> symbols;
+        Type* parentType = _enclosingImplNode->typeName->type;
+        _symbolTable->resolveMemberSymbol(node->name, parentType, symbols);
+        CHECK(symbols.empty(), "type `{}` already has a method or member named `{}`", parentType->str(), node->name);
 
         Type* type = node->typeName->type;
         FunctionType* functionType = type->get<FunctionType>();

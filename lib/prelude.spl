@@ -343,6 +343,61 @@ def splitAt<T>(n: UInt, xs: [T]) -> Pair<[T], [T]>
     return Pair(xs.take(n), xs.drop(n))
 
 
+## Ord trait ##
+data Ordering = Less | Equal | Greater
+
+trait Ord
+    def cmp(self: Self, other: Self) -> Ordering
+
+impl<T: Num> Ord for T
+    def cmp(self: T, other: T) -> Ordering
+        if self < other
+            return Less
+        elif self > other
+            return Greater
+        else
+            return Equal
+
+impl<T: Ord> Ord for [T]
+    def cmp(self: [T], other: [T]) -> Ordering
+        if self.empty()
+            if other.empty()
+                return Equal
+            else
+                return Less
+        elif other.empty()
+            return Greater
+        else
+            match self.head().cmp(other.head())
+                Less
+                    return Less
+                Greater
+                    return Greater
+                Equal
+                    return self.tail().cmp(other.tail())
+
+impl Ord for String
+    def cmp(self: String, other: String) -> Ordering
+        n1 := self.length()
+        n2 := other.length()
+
+        for n in range(0, min(n1, n2) + 1)
+            if self.length() <= n
+                if other.length() <= n
+                    return Equal
+                else
+                    return Less
+            elif other.length() <= n
+                return Greater
+            else
+                if self.at(n) < other.at(n)
+                    return Less
+                elif self.at(n) > other.at(n)
+                    return Greater
+
+        panic $ "Unreachable"
+
+
 ## Eq trait ##
 trait Eq
     def eq(lhs: Self, rhs: Self) -> Bool

@@ -1,6 +1,6 @@
 #include "semantic/symbol_table.hpp"
 #include "ast/ast.hpp"
-#include "semantic/types.hpp"
+#include "semantic/type_functions.hpp"
 
 #include <cassert>
 

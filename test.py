@@ -418,6 +418,18 @@ class TestAcceptance(object):
     def test_constrainedImpl(self):
         self.run('constrainedImpl', '')
 
+    def test_overlappingInstances(self):
+        self.run('overlappingInstances', build_error='Error: testing/overlappingInstances.spl:9:5: type `Int` already has a method or member named `isInteger`')
+
+    def test_overlappingInstances2(self):
+        self.run('overlappingInstances2', build_error='Error: testing/overlappingInstances2.spl:9:5: type `Int` already has a method or member named `isInteger`')
+
+    def test_overlappingInstances3(self):
+        self.run('overlappingInstances3', build_error='Error: testing/overlappingInstances3.spl:16:5: type `Int` already has a method or member named `isInteger`')
+
+    def test_overlappingInstances4(self):
+        self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.spl:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
