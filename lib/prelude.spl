@@ -349,8 +349,17 @@ data Ordering = Less | Equal | Greater
 trait Ord
     def cmp(self: Self, other: Self) -> Ordering
 
-impl<T: Num> Ord for T
-    def cmp(self: T, other: T) -> Ordering
+impl Ord for Int
+    def cmp(self: Int, other: Int) -> Ordering
+        if self < other
+            return Less
+        elif self > other
+            return Greater
+        else
+            return Equal
+
+impl Ord for UInt
+    def cmp(self: UInt, other: UInt) -> Ordering
         if self < other
             return Less
         elif self > other

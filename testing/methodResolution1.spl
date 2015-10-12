@@ -1,0 +1,3 @@
+xs := []
+if not xs.empty()
+    print $ "Hello"

@@ -127,16 +127,23 @@ void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType,
 {
     symbols.clear();
 
+    // Never match an unconstrained type to a method
+    if (parentType->isVariable() && parentType->get<TypeVariable>()->constraints().empty())
+        return;
+
+    bool matchTraits = parentType->isVariable() && parentType->get<TypeVariable>()->quantified();
+
     auto i = _members.find(name);
     if (i == _members.end()) return;
 
     for (MemberSymbol* symbol : i->second)
     {
-        // Trait methods resolve only for unknown parent types
-        if (symbol->kind == kTraitMethod && !parentType->isVariable())
+        // Trait methods only resolve for quantified type variables, and
+        // quantified type variables only resolve to trait methods
+        if ((matchTraits && symbol->kind != kTraitMethod) || (!matchTraits && symbol->kind == kTraitMethod))
             continue;
 
-        if (isCompatible(parentType, instantiate(symbol->parentType)))
+        if (isSubtype(parentType, symbol->parentType))
         {
             symbols.push_back(symbol);
         }
@@ -150,7 +157,7 @@ MethodSymbol* SymbolTable::resolveConcreteMethod(const std::string& name, Type* 
 
     for (MemberSymbol* symbol : i->second)
     {
-        if (symbol->kind == kMethod && isCompatible(objectType, instantiate(symbol->parentType)))
+        if (symbol->kind == kMethod && isSubtype(objectType, symbol->parentType))
         {
             return dynamic_cast<MethodSymbol*>(symbol);
         }

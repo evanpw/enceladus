@@ -1,0 +1,17 @@
+trait Nothing
+    def nothing(x: Self) -> Unit
+
+def getAnything<T: Nothing>() -> T
+    forever
+        pass
+
+impl Nothing for Int
+    def nothing(x: Int) -> Unit
+        pass
+
+impl Nothing for UInt
+    def nothing(x: UInt) -> Unit
+        pass
+
+x := getAnything()  # Has type T: Nothing (unquantified)
+x.nothing()         # Ambiguous (shouldn't match trait method)

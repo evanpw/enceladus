@@ -167,7 +167,7 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error=Regex('Error: testing/importSemantic.spl:4:1: Can\'t bind variable T\d+: Num to type Bool because it isn\'t an instance of trait Num'))
+        self.run('importSemantic', build_error=Regex('Error: testing/importSemantic.spl:4:1: Can\'t bind variable \'T\d+: Num to type Bool because it isn\'t an instance of trait Num'))
 
     def test_syntaxError(self):
         self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:1: left-hand side of assignment statement is not an lvalue')
@@ -380,16 +380,16 @@ class TestAcceptance(object):
         self.run('badCast1', build_error='Error: testing/badCast1.spl:2:20: Cannot cast from type UInt to String')
 
     def test_badCast2(self):
-        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:2:16: Cannot cast from type T\d+: Num to Int'))
+        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:2:16: Cannot cast from type \'T\d+: Num to Int'))
 
     def test_typeConstraint(self):
-        self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:3: Can\'t bind variable T\d+: Num to type String because it isn\'t an instance of trait Num'))
+        self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:3: Can\'t bind variable \'T\d+: Num to type String because it isn\'t an instance of trait Num'))
 
     def test_typeConstraint2(self):
         self.run('typeConstraint2', '3\n7\n11\n15')
 
     def test_typeConstraint3(self):
-        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable T to quantified type variable T\d+: Num, because the latter isn\'t constrained by trait Num'))
+        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable T to quantified type variable \'T\d+: Num, because the latter isn\'t constrained by trait Num'))
 
     def test_typeConstraint4(self):
         self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<String>`')
@@ -429,6 +429,27 @@ class TestAcceptance(object):
 
     def test_overlappingInstances4(self):
         self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.spl:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`')
+
+    def test_methodResolution(self):
+        good_tests = [2, 5, 7, 9, 12, 13, 15, 16]
+        for i in good_tests:
+            test_name = 'methodResolution' + str(i)
+            self.run(test_name, '')
+
+        bad_tests = {
+            '1': 'Error: testing/methodResolution1.spl:1:7: cannot infer concrete type of call to function Nil',
+            '3': 'Error: testing/methodResolution3.spl:9:1: method call is ambiguous',
+            '4': 'Error: testing/methodResolution4.spl:17:1: method call is ambiguous',
+            '6': 'Error: testing/methodResolution6.spl:7:5: no method named `nothing` found for type `T`',
+            '8': 'Error: testing/methodResolution8.spl:8:5: method call is ambiguous',
+            '10': 'Error: testing/methodResolution10.spl:6:5: no method named `nothing` found for type `[T]`',
+            '11': 'Error: testing/methodResolution11.spl:2:5: cannot unify types [Int] and [T: Num]',
+            '14': 'Error: testing/methodResolution14.spl:6:5: no method named `nothing` found for type `[T: Num]`',
+        }
+
+        for key, value in bad_tests.iteritems():
+            test_name = 'methodResolution' + key
+            self.run(test_name, build_error=value)
 
     # Medium tests (100ms-1s)
 

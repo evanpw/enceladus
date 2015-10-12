@@ -1,0 +1,8 @@
+trait Nothing1
+    def nothing(self: Self) -> Unit
+
+trait Nothing2
+    def nothing(self: Self) -> Unit
+
+def f<T: Nothing1 + Nothing2>(x: T) -> Unit
+    x.nothing()

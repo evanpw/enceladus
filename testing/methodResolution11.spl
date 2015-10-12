@@ -1,0 +1,6 @@
+impl<T: Num> [T]
+    def nothing(self: [Int]) -> Unit
+        pass
+
+def f<T>(x: [T]) -> Unit
+    x.nothing()

@@ -1,0 +1,17 @@
+trait IsInteger
+    def isInteger(self: Self) -> Bool
+
+trait Marked
+    def doNothing(self: Self) -> Unit
+
+impl<T: Marked> IsInteger for T
+    def isInteger(self: T) -> Bool
+        return False
+
+impl Marked for Int
+    def doNothing(self: Int) -> Unit
+        pass
+
+impl IsInteger for Int
+    def isInteger(self: Int) -> Bool
+        return True

@@ -1,0 +1,5 @@
+xs := []
+if not xs.empty()
+    print $ "Hello"
+
+xs = 1i :: xs

@@ -1,0 +1,120 @@
+Method Resolution
+-----------------
+1. Match trait methods only when object type is a constrained type variable
+2. Match can be ambiguous only when object type is a variable
+3. Dispatch is only on the first (self) parameter of the method
+4. Can match an impl on a type which is less specific, but not more
+
+object has type 'T
+* Always an error (disallow methods on completely generic type)
+
+object has type 'T: Trait
+* Match regular methods, never trait methods
+* Most common usage: implement method on Int but not UInt, call 1.methodName()
+* Not entirely sure this shouldn't always be an error
+* May be ambiguous
+
+object has type T: Trait
+* Match only trait methods
+* Could be ambiguous if multiple constraints with same named method
+
+object has concrete type
+* Never ambiguous
+
+object has type [T]
+* Should match impl on [T] but not on [Int]
+* Should not match [T: Num]
+* Never ambiguous
+
+object has type [T: Num]
+* Should match impl on [T] or [T: Num], but not [Int]
+
+object has type ['T]
+* Allowed, but may produce concrete-type error in codegen
+* Can match with [T] or [Int]
+* Never ambiguous
+
+
+Method Definition
+-----------------
+1. Matching methods on a completely concrete type should never be ambiguous
+    => Implementations overlap if there is any concrete type which inhabits both
+       Be careful with constrained type variables
+
+2. There should never be a method on an unconstrained type variable
+
+3. Should never have any unquantified type variables in type
+
+impl T
+* Always an error
+
+impl T: Num
+* Conflicts with impl Int
+
+impl Int
+* Conflicts with impl T: Num
+
+impl [T]
+* Conflicts with [Int] and with [T: Num]
+
+
+Trait Instances
+---------------
+1. For any given concrete type, there can be only one matching instance of any
+   particular trait
+
+2. Should make conflict rules identical to the ones for regular methods
+
+
+Type Ordering
+-------------
+1. Define the subtype relation <=
+2. Consider types with quantified type variables as a set of types
+   Then the subtype relation is the same as the subset relation
+3. Only a partial order
+
+Examples:
+* X <= T for any type X
+* S <= T for two type variables S and T
+* S: Trait <= T
+* S: Trait1 + Trait2 <= T: Trait1
+* X <= T: Trait for any X which is an instance of Trait
+* TyCons X1 X2 X3 <= TyCons Y1 Y2 Y3 iff X1 <= Y1, X2 <= Y2, X3 <= Y3
+* 'T <= X for any type X
+* 'T: Trait <= X for any X which is an instance of Trait
+* In general, if X contains unquantified type variables, then X <= Y iff there
+  exists an assignment to those type variables which makes X a subtype of Y
+* If X contains quantified type variables, then X <= Y iff *every* assignment
+  to the variables in X makes X a subtype of Y
+
+* If Y contains unquantified type variables, then X <= Y is undefined (?)
+
+* What about accidental subtypes: e.g., is T: Trait <= X if X is the only
+  instance of Trait? (Probably doesn't matter)
+
+
+Overlap
+-------
+* Define a function overlap(X, Y) -> Bool that returns true iff there could
+  exist a concrete type Z such that Z <= X and Z <= Y
+
+* Undefined if either X or Y contain unquantified type variables
+
+* Constraints are irrelevant (?)
+
+* overlap(Base1, Base2) iff Base1 == Base2
+* overlap(T, X) = true for any type X, even if T is constrained
+* overlap(Pair<T, T>, Pair<Int, String>) = false
+* overlap(Pair<S, T>, Pair<Int, Int>) = true
+* overlap(P3<S, T, S>, P4<U, U, Int>) = true
+* overlap(P4<S, T, S, T>, P4<U, U, Int, String>) = false
+
+
+* Possible future relaxation: allow two impls for different types that overlap if one is a subtype of the other
+  (always pick the most specific matching impl when resolving)
+
+
+Conclusions
+-----------
+* The call object.method(...) with object: X matches impl Y iff X <= Y
+* impl X and impl Y overlap iff there exists a concrete type Z such that Z <= X and Z <= Y

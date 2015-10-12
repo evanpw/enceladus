@@ -1,0 +1,6 @@
+impl<T> [T]
+    def nothing(self: [T]) -> [T]
+        return self
+
+x := [].nothing()
+drop $ 1i :: x

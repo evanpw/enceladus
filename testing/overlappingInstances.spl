@@ -1,0 +1,10 @@
+trait IsInteger
+    def isInteger(self: Self) -> Bool
+
+impl<T> IsInteger for T
+    def isInteger(self: T) -> Bool
+        return False
+
+impl IsInteger for Int
+    def isInteger(self: Int) -> Bool
+        return True

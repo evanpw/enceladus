@@ -1,0 +1,5 @@
+impl [Int]
+    def nothing(self: [Int]) -> [Int]
+        return self
+
+x := [].nothing()

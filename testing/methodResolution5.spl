@@ -1,0 +1,6 @@
+impl Int
+    def nothing(x: Int) -> Unit
+        pass
+
+x := 1              # Has type T: Num (unquantified)
+x.nothing()         # Only one implementation in scope: matches Int

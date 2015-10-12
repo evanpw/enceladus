@@ -120,7 +120,7 @@ Value* TACCodeGen::getValue(const Symbol* symbol)
     }
 }
 
-static bool sameAssignment(const TypeAssignment& lhs, const TypeAssignment& rhs)
+static bool subAssignment(const TypeAssignment& lhs, const TypeAssignment& rhs)
 {
     if (lhs.size() != rhs.size())
         return false;
@@ -131,11 +131,21 @@ static bool sameAssignment(const TypeAssignment& lhs, const TypeAssignment& rhs)
         if (match == rhs.end())
             return false;
 
-        if (!isCompatible(assignment.second, match->second))
+        if (!isSubtype(assignment.second, match->second))
+        {
             return false;
+        }
     }
 
     return true;
+}
+
+static bool sameAssignment(const TypeAssignment& lhs, const TypeAssignment& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    return subAssignment(lhs, rhs) || subAssignment(rhs, lhs);
 }
 
 static bool isConcrete(Type* original)
@@ -246,7 +256,7 @@ static Type* substitute(Type* original, const TypeAssignment& typeAssignment)
             if (changed)
             {
                 TypeTable* typeTable = original->table();
-                return typeTable->createConstructedType(constructedType->name(), std::move(newParams));
+                return constructedType->prototype()->instantiate(std::move(newParams));
             }
             else
             {
@@ -470,7 +480,7 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
             if (!typeVariable->constraints().empty())
             {
                 ss << "L";
-                for (Trait* constraint : typeVariable->constraints())
+                for (const Trait* constraint : typeVariable->constraints())
                 {
                     std::string name = constraint->str();
                     ss << name.size() << name;
@@ -572,14 +582,6 @@ void TACCodeGen::visit(ProgramNode* node)
         if (funcDefNode) /* regular function or method */
         {
             Function* function = (Function*)getFunctionValue(funcDefNode->symbol, nullptr, typeContext);
-            /*
-            std::cerr << "instantiating " << symbol->name << std::endl;
-            for (auto& item : typeContext)
-            {
-                std::cerr << item.first->str() << " -> " << item.second->str() << std::endl;
-            }
-            std::cerr << std::endl;
-            */
 
             _currentFunction = function;
             _localNames.clear();
@@ -1314,7 +1316,7 @@ void TACCodeGen::visit(MethodCallNode* node)
 
         Type* objectType = substitute(substitute(node->object->type, node->typeAssignment), _typeContext);
         assert(isConcrete(objectType));
-        assert(isInstance(objectType, symbol->trait));
+        assert(isSubtype(objectType, symbol->trait));
 
         MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->methodName, objectType);
         assert(methodSymbol);

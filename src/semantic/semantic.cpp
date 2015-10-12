@@ -72,7 +72,7 @@ static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
         return;
     }
 
-    if (!isInstance(type, trait))
+    if (!isSubtype(type, trait))
     {
         std::stringstream ss;
         ss << "Type " << type->str() << " is not an instance of trait " << trait->str();
@@ -282,14 +282,14 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, const std::unordered_
             for (size_t i = 0; i < constructedType->typeParameters().size(); ++i)
             {
                 TypeVariable* variable = constructedType->typeParameters()[i]->get<TypeVariable>();
-                assert(variable && variable->get<TypeVariable>()->quantified());
+                assert(variable && variable->quantified());
                 Type* value = typeParameters[i];
 
                 // Check constraints
-                for (Trait* constraint : variable->constraints())
+                for (const Trait* constraint : variable->constraints())
                 {
                     CHECK_AT(typeName->location,
-                             isInstance(value, constraint),
+                             isSubtype(value, constraint),
                              "`{}` is not an instance of trait `{}`",
                              value->str(),
                              constraint->str());
@@ -684,14 +684,6 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->methodName, objectType, symbols);
     CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", node->methodName, objectType->str());
-
-    if (symbols.size() >= 2)
-    {
-        for (Symbol* symbol : symbols)
-        {
-            std::cerr << symbol->name << ": " << symbol->type->str() << std::endl;
-        }
-    }
     CHECK(symbols.size() < 2, "method call is ambiguous");
 
     CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", node->methodName);

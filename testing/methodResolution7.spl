@@ -1,0 +1,16 @@
+trait Nothing
+    def nothing(self: Self) -> Unit
+
+impl Nothing for Int
+    def nothing(self: Int) -> Unit
+        pass
+
+impl Nothing for String
+    def nothing(self: String) -> Unit
+        pass
+
+def f<T: Nothing>(x: T) -> Unit
+    x.nothing()
+
+drop $ f("Hello")
+drop $ f(4i)

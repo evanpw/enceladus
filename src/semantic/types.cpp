@@ -24,6 +24,9 @@ std::string TypeVariable::str() const
     }
     else
     {
+        if (!_quantified)
+            ss << "'";
+
         ss << "T" << _index;
     }
 
@@ -32,7 +35,7 @@ std::string TypeVariable::str() const
         ss << ": ";
 
         bool first = true;
-        for (Trait* constraint : _constraints)
+        for (const Trait* constraint : _constraints)
         {
             if (!first) ss << " + ";
             ss << constraint->str();
@@ -56,7 +59,7 @@ void TypeVariable::assign(Type* rhs)
     if (rhs->isVariable())
     {
         TypeVariable* rhsVariable = rhs->get<TypeVariable>();
-        for (Trait* constraint : _constraints)
+        for (const Trait* constraint : _constraints)
         {
             rhsVariable->addConstraint(constraint);
         }
@@ -133,9 +136,21 @@ std::string FunctionType::str() const
     return ss.str();
 }
 
-ConstructedType::ConstructedType(TypeTable* table, const std::string& name, std::vector<Type*>&& typeParameters)
-: TypeImpl(table, ttConstructed), _name(name), _typeParameters(typeParameters)
+ConstructedType::ConstructedType(TypeTable* table, const std::string& name, std::vector<Type*>&& typeParameters, const ConstructedType* prototype)
+: TypeImpl(table, ttConstructed), _name(name), _typeParameters(typeParameters), _prototype(prototype)
 {
+    if (!_prototype)
+    {
+        _prototype = this;
+    }
+}
+
+Type* ConstructedType::instantiate(std::vector<Type*>&& typeParameters) const
+{
+    // Can only instantiate prototypical types
+    assert(_prototype == this);
+
+    return _table->createConstructedType(_name, std::move(typeParameters), this);
 }
 
 std::string ConstructedType::str() const
@@ -163,6 +178,37 @@ std::string ConstructedType::str() const
     }
 
     return ss.str();
+}
+
+// Passed through the prototype
+const std::vector<ValueConstructor*>& ConstructedType::valueConstructors() const
+{
+    if (_prototype == this)
+    {
+        return TypeImpl::valueConstructors();
+    }
+    else
+    {
+        return _prototype->valueConstructors();
+    }
+}
+
+std::pair<size_t, ValueConstructor*> ConstructedType::getValueConstructor(const std::string& name) const
+{
+    if (_prototype == this)
+    {
+        return TypeImpl::getValueConstructor(name);
+    }
+    else
+    {
+        return _prototype->getValueConstructor(name);
+    }
+}
+
+void ConstructedType::addValueConstructor(ValueConstructor* valueConstructor)
+{
+    assert(_prototype == this);
+    TypeImpl::addValueConstructor(valueConstructor);
 }
 
 int TypeVariable::_count;

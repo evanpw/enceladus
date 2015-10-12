@@ -66,13 +66,7 @@ public:
     // Do nothing except for on type variables
     virtual void addReference(Type* parent) {}
 
-    template <class T>
-    T* get()
-    {
-        return dynamic_cast<T*>(this);
-    }
-
-private:
+protected:
     TypeTable* _table;
     TypeTag _tag;
     std::vector<ValueConstructor*> _valueConstructors;
@@ -133,7 +127,7 @@ public:
 
     void assign(Type* rhs);
 
-    bool equals(Type* rhs)
+    bool equals(const Type* rhs) const
     {
         return _impl == rhs->_impl;
     }
@@ -142,6 +136,12 @@ public:
     T* get()
     {
         return dynamic_cast<T*>(_impl.get());
+    }
+
+    template <class T>
+    const T* get() const
+    {
+        return dynamic_cast<const T*>(_impl.get());
     }
 
 private:
@@ -252,13 +252,32 @@ public:
         return _typeParameters;
     }
 
+    const ConstructedType* prototype() const
+    {
+        return _prototype;
+    }
+
+    Type* instantiate(std::vector<Type*>&& typeParameters) const;
+
+    // Passed through the prototype
+    virtual const std::vector<ValueConstructor*>& valueConstructors() const;
+    virtual std::pair<size_t, ValueConstructor*> getValueConstructor(const std::string& name) const;
+
+    // Valid only for prototype
+    virtual void addValueConstructor(ValueConstructor* valueConstructor);
+
 private:
     friend TypeTable;
 
-    ConstructedType(TypeTable* table, const std::string& name, std::vector<Type*>&& typeParameters);
+    ConstructedType(TypeTable* table, const std::string& name, std::vector<Type*>&& typeParameters, const ConstructedType* prototype);
 
     std::string _name;
     std::vector<Type*> _typeParameters;
+
+    // Set to this for the prototypical constructed type. This is what defines
+    // identity for constructed types: types with the same prototype have the
+    // same type constructor
+    const ConstructedType* _prototype;
 };
 
 // A variable which can be substituted with a type. Used for polymorphism.
@@ -294,12 +313,12 @@ public:
         return _quantified;
     }
 
-    const std::set<Trait*>& constraints() const
+    const std::set<const Trait*>& constraints() const
     {
         return _constraints;
     }
 
-    void addConstraint(Trait* trait)
+    void addConstraint(const Trait* trait)
     {
         _constraints.insert(trait);
     }
@@ -315,7 +334,7 @@ private:
     std::string _name;
     int _index;
     bool _quantified;
-    std::set<Trait*> _constraints;
+    std::set<const Trait*> _constraints;
 
     std::vector<Type*> _references;
 
@@ -416,9 +435,9 @@ public:
         return type;
     }
 
-    Type* createConstructedType(const std::string& name, std::vector<Type*>&& typeParameters)
+    Type* createConstructedType(const std::string& name, std::vector<Type*>&& typeParameters, const ConstructedType* prototype = nullptr)
     {
-        std::shared_ptr<ConstructedType> typeImpl(new ConstructedType(this, name, std::move(typeParameters)));
+        std::shared_ptr<ConstructedType> typeImpl(new ConstructedType(this, name, std::move(typeParameters), prototype));
         Type* type = new Type(typeImpl);
         _types.emplace_back(type);
 
