@@ -1,0 +1,3 @@
+impl<T> Int
+    def f(x: Int) -> Int
+        return x
