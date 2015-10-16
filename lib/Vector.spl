@@ -7,7 +7,7 @@ def vector<T>() -> Vector<T>
     return Vector(emptyArray(), 0, 0)
 
 impl<T> Vector<T>
-    def pushBack(self: Vector<T>, x: T) -> Unit
+    def append(self: Vector<T>, x: T) -> Unit
         if self.size < self.capacity
             self.content.set(self.size, Some(x))
             self.size += 1
@@ -23,7 +23,7 @@ impl<T> Vector<T>
             self.capacity = newCapacity
             self.size += 1
 
-    def popBack(self: Vector<T>) -> T
+    def pop(self: Vector<T>) -> T
         assert self.size > 0
         value := self.content[self.size - 1]
         self.size -= 1

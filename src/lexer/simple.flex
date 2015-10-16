@@ -146,7 +146,7 @@ extern "C" int yywrap()
  /* It's easier to get rid of blank lines here than in the grammar. */
 ^[ \t]*("#".*)?\n  { yycolumn = 1; }
 
--?[0-9][0-9]*[ui]? { yylval.str = StringTable::add(yytext); return tINT_LIT; }
+-?[0-9][0-9]*(u|i|u8)? { yylval.str = StringTable::add(yytext); return tINT_LIT; }
 
  /* Python-style comments */
 "#".*

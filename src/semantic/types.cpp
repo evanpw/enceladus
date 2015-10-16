@@ -82,10 +82,12 @@ TypeTable::TypeTable()
 {
     Int = createBaseType("Int", true, 64, true);
     UInt = createBaseType("UInt", true, 64, false);
+    UInt8 = createBaseType("UInt8", true, 8, false);
 
     Num = createTrait("Num");
     Num->addInstance(Int);
     Num->addInstance(UInt);
+    Num->addInstance(UInt8);
 
     Bool = createBaseType("Bool", true);
     Unit = createBaseType("Unit", true);

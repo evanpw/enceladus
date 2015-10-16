@@ -377,10 +377,10 @@ class TestAcceptance(object):
         self.run('goodCasts', '1\n2\n3\nhello')
 
     def test_badCast1(self):
-        self.run('badCast1', build_error='Error: testing/badCast1.spl:2:20: Cannot cast from type UInt to String')
+        self.run('badCast1', build_error='Error: testing/badCast1.spl:1:8: Cannot cast from type UInt to String')
 
     def test_badCast2(self):
-        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:2:16: Cannot cast from type \'T\d+: Num to Int'))
+        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:1:8: Cannot cast from type \'T\d+: Num to Int'))
 
     def test_typeConstraint(self):
         self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:3: Can\'t bind variable \'T\d+: Num to type String because it isn\'t an instance of trait Num'))
@@ -450,6 +450,21 @@ class TestAcceptance(object):
         for key, value in bad_tests.iteritems():
             test_name = 'methodResolution' + key
             self.run(test_name, build_error=value)
+
+    def test_unsignedNegative(self):
+        self.run('unsignedNegative', build_error='Error: testing/unsignedNegative.spl:1:6: error: integer literal out of range: -1u')
+
+    def test_u8(self):
+        self.run('u8', '10')
+
+    def test_u8_2(self):
+        self.run('u8-2', '10')
+
+    def test_u8_3(self):
+        self.run('u8-3', '44')
+
+    def test_u8_4(self):
+        self.run('u8-4', '44\n116\n220\n15\n0')
 
     # Medium tests (100ms-1s)
 

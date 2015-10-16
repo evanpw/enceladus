@@ -172,7 +172,7 @@ public:
     size_t size() const
     {
         assert(!isBoxed());
-        return 64;
+        return _size;
     }
 
     // Always false except for integer types
@@ -472,6 +472,7 @@ public:
     // For easy access to commonly-used types
     Type* Int;
     Type* UInt;
+    Type* UInt8;
     Type* Bool;
     Type* Unit;
     Type* String;

@@ -20,6 +20,7 @@
 
 #include <cstdio>
 #include <iostream>
+#include <unistd.h>
 
 extern ProgramNode* parse();
 
@@ -29,9 +30,15 @@ extern void shutdownLexer();
 
 int main(int argc, char* argv[])
 {
-	if (argc < 1)
+	if (argc < 2)
 	{
 		std::cerr << "Please specify a source file to compile." << std::endl;
+		return 1;
+	}
+
+	if (access(argv[1], R_OK) == -1)
+	{
+		std::cerr << "Can't read file " << argv[1] << std::endl;
 		return 1;
 	}
 
@@ -92,6 +99,9 @@ int main(int argc, char* argv[])
 
 	for (Function* function : tacContext->functions)
 	{
+		ToSSA toSSA(function);
+		toSSA.run();
+
 		// std::cerr << function->name << ":" << std::endl;
 		// for (BasicBlock* block : function->blocks)
 		// {
@@ -102,9 +112,6 @@ int main(int argc, char* argv[])
 		//     }
 		// }
 		// std::cerr << std::endl;
-
-		ToSSA toSSA(function);
-		toSSA.run();
 
 		ConstantFolding constantFolding(function);
 		constantFolding.run();
@@ -190,6 +197,16 @@ int main(int argc, char* argv[])
 
 		RedundantMoves redundantMoves(mf);
 		redundantMoves.run();
+
+		// std::cerr << mf->name << ":" << std::endl;
+		// for (MachineBB* block : mf->blocks)
+		// {
+		// 	std::cerr << *block << ":" << std::endl;
+		// 	for (MachineInst* inst : block->instructions)
+		// 	{
+		// 		std::cerr << "\t" << *inst << std::endl;
+		// 	}
+		// }
 	}
 
 

@@ -1,0 +1,23 @@
+def getOneFifty() -> UInt8
+    return 150u8
+
+def getTen() -> UInt8
+    return 10u8
+
+oneFifty := getOneFifty()
+ten := getTen()
+
+result := oneFifty + oneFifty
+print $ showUInt(result as UInt)
+
+result = ten - oneFifty
+print $ showUInt(result as UInt)
+
+result = ten * oneFifty
+print $ showUInt(result as UInt)
+
+result = oneFifty / ten
+print $ showUInt(result as UInt)
+
+result = oneFifty mod ten
+print $ showUInt(result as UInt)

@@ -7,7 +7,7 @@
 std::string Value::str() const
 {
     std::stringstream ss;
-    ss << "%";
+    ss << valueTypeString(type) << " %";
 
     if (seqNumber >= 0)
     {
@@ -23,7 +23,9 @@ std::string Value::str() const
 
 std::string ConstantInt::str() const
 {
-    return std::to_string(value);
+    std::stringstream ss;
+    ss << valueTypeString(type) << " " << std::to_string(value);
+    return ss.str();
 }
 
 GlobalValue::GlobalValue(TACContext* context, ValueType type, const std::string& name, GlobalTag tag)
@@ -33,7 +35,7 @@ GlobalValue::GlobalValue(TACContext* context, ValueType type, const std::string&
 std::string GlobalValue::str() const
 {
     std::stringstream ss;
-    ss << "@" << name;
+    ss << valueTypeString(type) << " @" << name;
     return ss.str();
 }
 
@@ -44,13 +46,13 @@ LocalValue::LocalValue(TACContext* context, ValueType type, const std::string& n
 std::string LocalValue::str() const
 {
     std::stringstream ss;
-    ss << "$" << name;
+    ss << valueTypeString(type) << " $" << name;
     return ss.str();
 }
 
 std::string Argument::str() const
 {
     std::stringstream ss;
-    ss << "$" << name;
+    ss << valueTypeString(type) << " $" << name;
     return ss.str();
 }

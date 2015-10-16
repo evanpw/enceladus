@@ -42,6 +42,8 @@ enum class Opcode {
     MOVrd,
     MOVrm,
     MOVmd,
+    MOVSXrr,
+    MOVZXrr,
     POP,
     PUSH,
     RET,
@@ -66,9 +68,10 @@ struct MachineOperand
 
     virtual void print(std::ostream& out) const = 0;
 
-    virtual bool isVreg() const { return false; }
-    virtual bool isHreg() const { return false; }
-    virtual bool isRegister() const { return isVreg() || isHreg(); }
+    // In bits
+    virtual size_t size() const { return getSize(type); }
+
+    virtual bool isRegister() const { return false; }
     virtual bool isAddress() const { return false; }
     virtual bool isStackLocation() const { return false; }
     virtual bool isStackParameter() const { return false; }
@@ -82,26 +85,56 @@ struct HardwareRegister
 {
     void print(std::ostream& out) const
     {
-        out << "%" << name;
+        out << "%" << _qwordName;
     }
 
-    std::string name;
+    std::string name(size_t size)
+    {
+        switch (size)
+        {
+            case 64:
+                return _qwordName;
+
+            case 32:
+                return _dwordName;
+
+            case 16:
+                return _wordName;
+
+            case 8:
+                // Some registers aren't byte-addressable
+                assert(!_byteName.empty());
+                return _byteName;
+
+            default:
+                assert(false);
+        }
+    }
 
 private:
     friend class MachineContext;
 
-    HardwareRegister(const std::string& name)
-    : name(name)
+    HardwareRegister(const std::string& qwordName, const std::string dwordName, const std::string& wordName, const std::string& byteName)
+    : _qwordName(qwordName), _dwordName(dwordName), _wordName(wordName), _byteName(byteName)
     {}
+
+    std::string _qwordName, _dwordName, _wordName, _byteName;
 };
 
 struct VirtualRegister : public MachineOperand
 {
-    virtual bool isVreg() const { return true; }
+    virtual bool isRegister() const { return true; }
 
     virtual void print(std::ostream& out) const
     {
-        out << "%vreg" << id;
+        if (assignment)
+        {
+            out << "%" << assignment->name(getSize(type));
+        }
+        else
+        {
+            out << "%vreg" << id;
+        }
     }
 
     const int64_t id;
@@ -119,7 +152,7 @@ private:
 
 static inline HardwareRegister* getAssignment(MachineOperand* operand)
 {
-    assert(operand->isVreg());
+    assert(operand->isRegister());
     return dynamic_cast<VirtualRegister*>(operand)->assignment;
 }
 
@@ -237,15 +270,8 @@ private:
 struct MachineInst
 {
     MachineInst(Opcode opcode,
-                const std::initializer_list<MachineOperand*>&& outputs,
-                const std::initializer_list<MachineOperand*>&& inputs)
-    : opcode(opcode), outputs(outputs), inputs(inputs)
-    {
-    }
-
-    MachineInst(Opcode opcode,
-                const std::vector<MachineOperand*>&& outputs,
-                const std::vector<MachineOperand*>&& inputs)
+                std::vector<MachineOperand*>&& outputs,
+                std::vector<MachineOperand*>&& inputs)
     : opcode(opcode), outputs(outputs), inputs(inputs)
     {
     }
@@ -255,6 +281,7 @@ struct MachineInst
     Opcode opcode;
     std::vector<MachineOperand*> outputs;
     std::vector<MachineOperand*> inputs;
+    size_t size;
 };
 
 class MachineContext;

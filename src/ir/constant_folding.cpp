@@ -110,6 +110,28 @@ void ConstantFolding::visit(BinaryOperationInst* inst)
         assert(false);
     }
 
+    // Narrow the result if not 64-bit
+    switch (getSize(type))
+    {
+        case 64:
+            break;
+
+        case 32:
+            resultValue = uint32_t(resultValue);
+            break;
+
+        case 16:
+            resultValue = uint16_t(resultValue);
+            break;
+
+        case 8:
+            resultValue = uint8_t(resultValue);
+            break;
+
+        default:
+            assert(false);
+    }
+
     Value* result = _context->createConstantInt(type, resultValue);
     inst->removeFromParent();
     _function->replaceReferences(inst->dest, result);

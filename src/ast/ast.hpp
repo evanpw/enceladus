@@ -195,14 +195,14 @@ public:
 class IntNode : public ExpressionNode
 {
 public:
-	IntNode(AstContext* context, const YYLTYPE& location, int64_t intValue, char suffix)
+	IntNode(AstContext* context, const YYLTYPE& location, int64_t intValue, const std::string& suffix)
 	: ExpressionNode(context, location), intValue(intValue), suffix(suffix)
 	{}
 
 	AST_VISITABLE();
 
 	int64_t intValue;
-	char suffix;
+	std::string suffix;
 };
 
 class BoolNode : public ExpressionNode

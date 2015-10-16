@@ -1106,7 +1106,7 @@ ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
-        return new BinopNode(_context, getLocation(), new IntNode(_context, getLocation(), 0, '\0'), BinopNode::kSub, cast_expression());
+        return new BinopNode(_context, getLocation(), new IntNode(_context, getLocation(), 0, ""), BinopNode::kSub, cast_expression());
     }
     else if (accept(tNOT))
     {
@@ -1129,7 +1129,7 @@ ExpressionNode* Parser::cast_expression()
     if (accept(tAS))
     {
         TypeName* typeName = type();
-        return new CastNode(_context, getLocation(), expr, typeName);
+        return new CastNode(_context, location, expr, typeName);
     }
     else
     {
@@ -1314,36 +1314,87 @@ ExpressionNode* Parser::integer_literal()
     assert(!text.empty());
 
     // Extract type suffixes
-    size_t n = text.length();
-    char suffix = 0;
-    if (text[n - 1] == 'i' || text[n - 1] == 'u')
+    std::string suffix;
+    for (size_t i = 0; i < text.length(); ++i)
     {
-        suffix = text[n - 1];
-        text = text.substr(0, n - 1);
+        if ((text[i] < '0' || text[i] > '9') && text[i] != '-')
+        {
+            suffix = text.substr(i);
+            text = text.substr(0, i);
+
+            break;
+        }
     }
 
     assert(!text.empty());
 
     // Parse the integer, check for out-of-range errors
     int64_t value;
+    bool failure = false;
     try
     {
-        if (text[0] == '-' || suffix == 'i')
+        if ((text[0] == '-' && suffix == "") || suffix == "i")
         {
             value = boost::lexical_cast<int64_t>(text);
         }
-        else
+        else if (suffix == "u8")
+        {
+            if (text[0] != '-')
+            {
+                uint64_t u8value = boost::lexical_cast<uint64_t>(text);
+
+                if (u8value <= std::numeric_limits<uint8_t>::max())
+                {
+                    value = u8value;
+                }
+                else
+                {
+                    failure = true;
+                }
+            }
+            else
+            {
+                failure = true;
+            }
+        }
+        else if (suffix == "u")
+        {
+            if (text[0] != '-')
+            {
+                uint64_t uvalue = boost::lexical_cast<uint64_t>(text);
+                value = uvalue;
+            }
+            else
+            {
+                failure = true;
+            }
+        }
+        else /* no suffix and no negative sign */
         {
             uint64_t uvalue = boost::lexical_cast<uint64_t>(text);
 
             // Integers out of the int64 range have an implicit 'u' suffix
             if (uvalue > std::numeric_limits<int64_t>::max())
-                suffix = 'u';
+            {
+                if (text[0] != '-')
+                {
+                    suffix = "u";
+                }
+                else
+                {
+                    failure = true;
+                }
+            }
 
             value = uvalue;
         }
     }
     catch (boost::bad_lexical_cast&)
+    {
+        failure = true;
+    }
+
+    if (failure)
     {
         std::stringstream ss;
 
@@ -1351,7 +1402,7 @@ ExpressionNode* Parser::integer_literal()
            << ": error: integer literal out of range: " << token.value.str;
 
         throw LexerError(ss.str());
-     }
+    }
 
-     return new IntNode(_context, location, value, suffix);
+    return new IntNode(_context, location, value, suffix);
 }

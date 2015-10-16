@@ -39,14 +39,6 @@ private:
     MachineBB* _currentBlock = nullptr;
 
     void emit(Opcode opcode,
-              std::initializer_list<MachineOperand*> outputs,
-              std::initializer_list<MachineOperand*> inputs)
-    {
-        MachineInst* inst = new MachineInst(opcode, std::move(outputs), std::move(inputs));
-        _currentBlock->instructions.push_back(inst);
-    }
-
-    void emit(Opcode opcode,
               std::vector<MachineOperand*>&& outputs,
               std::vector<MachineOperand*>&& inputs)
     {

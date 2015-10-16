@@ -1,0 +1,2 @@
+x := 10u8
+print $ showUInt(x as UInt)

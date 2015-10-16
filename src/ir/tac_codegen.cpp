@@ -290,16 +290,25 @@ static ValueType getRealValueType(Type* type)
     {
         BaseType* baseType = type->get<BaseType>();
         assert(baseType);
-        assert(baseType->size() == 64);
 
-        if (baseType->isSigned())
+        if (baseType->size() == 64)
         {
-            return ValueType::I64;
+            if (baseType->isSigned())
+            {
+                return ValueType::I64;
+            }
+            else
+            {
+                return ValueType::U64;
+            }
         }
-        else
+        else if (baseType->size() == 8)
         {
-            return ValueType::U64;
+            assert(!baseType->isSigned());
+            return ValueType::U8;
         }
+
+        assert(false);
     }
 }
 

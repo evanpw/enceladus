@@ -179,6 +179,7 @@ void SemanticAnalyzer::injectSymbols()
     //// Built-in types ////////////////////////////////////////////////////////
     _symbolTable->createTypeSymbol("Int", _root, _typeTable->Int);
     _symbolTable->createTypeSymbol("UInt", _root, _typeTable->UInt);
+    _symbolTable->createTypeSymbol("UInt8", _root, _typeTable->UInt8);
 
     Type* Self = _typeTable->createTypeVariable("Self", true);
     _symbolTable->createTraitSymbol("Num", _root, _typeTable->Num, Self);
@@ -741,10 +742,12 @@ void SemanticAnalyzer::visit(CastNode* node)
     Type* srcType = node->lhs->type;
     Type* destType = node->type;
 
-    // Only supported casts are Int -> UInt, UInt -> Int, and anything to itself
+    // Only supported casts
     if (srcType->equals(destType)) return;
     if (srcType->equals(_typeTable->Int) && destType->equals(_typeTable->UInt)) return;
     if (srcType->equals(_typeTable->UInt) && destType->equals(_typeTable->Int)) return;
+    if (srcType->equals(_typeTable->UInt8) && destType->equals(_typeTable->Int)) return;
+    if (srcType->equals(_typeTable->UInt8) && destType->equals(_typeTable->UInt)) return;
 
     semanticError(node->location, "Cannot cast from type {} to {}", srcType->str(), destType->str());
 }
@@ -976,16 +979,22 @@ void SemanticAnalyzer::visit(BreakNode* node)
 
 void SemanticAnalyzer::visit(IntNode* node)
 {
-    if (node->suffix == 'u')
+    if (node->suffix == "u")
     {
         node->type = _typeTable->UInt;
     }
-    else if (node->suffix == 'i')
+    else if (node->suffix == "i")
     {
         node->type = _typeTable->Int;
     }
+    else if (node->suffix == "u8")
+    {
+        node->type = _typeTable->UInt8;
+    }
     else
     {
+        assert(node->suffix.empty());
+
         // The signedness of integers without a suffix is inferred. This will
         // be checked in the second pass
         node->type = _typeTable->createTypeVariable();

@@ -191,7 +191,7 @@ void RegAlloc::assignRegs()
             // Replace inputs
             for (size_t j = 0; j < inst->inputs.size(); ++j)
             {
-                if (inst->inputs[j]->isVreg())
+                if (inst->inputs[j]->isRegister())
                 {
                     dynamic_cast<VirtualRegister*>(inst->inputs[j])->assignment = _context->hregs[_coloring[inst->inputs[j]]];
                 }
@@ -200,7 +200,7 @@ void RegAlloc::assignRegs()
             // Replace outputs
             for (size_t j = 0; j < inst->outputs.size(); ++j)
             {
-                if (inst->outputs[j]->isVreg())
+                if (inst->outputs[j]->isRegister())
                 {
                     dynamic_cast<VirtualRegister*>(inst->outputs[j])->assignment = _context->hregs[_coloring[inst->outputs[j]]];
                 }
@@ -219,7 +219,7 @@ void RegAlloc::replaceRegs()
             // Replace inputs
             for (size_t j = 0; j < inst->inputs.size(); ++j)
             {
-                if (inst->inputs[j]->isVreg())
+                if (inst->inputs[j]->isRegister())
                 {
                     HardwareRegister* assignment = dynamic_cast<VirtualRegister*>(inst->inputs[j])->assignment;
                     assert(assignment);
@@ -231,7 +231,7 @@ void RegAlloc::replaceRegs()
             // Replace outputs
             for (size_t j = 0; j < inst->outputs.size(); ++j)
             {
-                if (inst->outputs[j]->isVreg())
+                if (inst->outputs[j]->isRegister())
                 {
                     HardwareRegister* assignment = dynamic_cast<VirtualRegister*>(inst->outputs[j])->assignment;
                     assert(assignment);
@@ -368,10 +368,10 @@ void RegAlloc::computeInterference()
 {
     _igraph.clear();
 
-    //std::cerr << _function->name << ":" << std::endl;
+    // std::cerr << _function->name << ":" << std::endl;
     for (MachineBB* block : _function->blocks)
     {
-        //std::cerr << *block << ":" << std::endl;
+        // std::cerr << *block << ":" << std::endl;
 
         // Compute live regs at the end of this block
         RegSet liveOut;
@@ -385,7 +385,7 @@ void RegAlloc::computeInterference()
         {
             MachineInst* inst = *i;
 
-            //std::cerr << "\t" << *inst << "\t\t" << liveOut << std::endl;
+            // std::cerr << "\t" << *inst << "\t\t" << liveOut << std::endl;
 
             // Data flow equation:
             // live[n] = (U_{s in succ[n]}  live[s]) - def[n] + ref[n]
@@ -439,7 +439,7 @@ void RegAlloc::computeInterference()
         {
             if (i.second != j.second && i.first != j.first)
             {
-                //std::cerr << *i.first << " " << i.second << " <-> " << *j.first << " " << j.second << std::endl;
+                // std::cerr << *i.first << " " << i.second << " <-> " << *j.first << " " << j.second << std::endl;
 
                 _igraph[i.first].insert(j.first);
                 _igraph[j.first].insert(i.first);
@@ -510,12 +510,7 @@ void RegAlloc::addVertexBack(IntGraph& graph, Reg* reg)
 
 bool RegAlloc::findColorFor(const IntGraph& graph, Reg* reg)
 {
-    // std::cerr << *reg;
-    // if (dynamic_cast<VirtualRegister*>(reg)->assignment)
-    // {
-    //     std::cerr << " " << colorOfHreg(dynamic_cast<VirtualRegister*>(reg)->assignment);
-    // }
-    // std::cerr << std::endl;
+    // std::cerr << *reg << std::endl;
 
     std::set<size_t> used;
     for (Reg* other : graph.at(reg))
@@ -524,7 +519,7 @@ bool RegAlloc::findColorFor(const IntGraph& graph, Reg* reg)
         if (i != _coloring.end())
         {
             used.insert(i->second);
-            //std::cerr << "\t" << *i->first << " " << i->second << std::endl;
+            // std::cerr << "\t" << *i->first << std::endl;
         }
     }
 
@@ -626,8 +621,8 @@ void RegAlloc::coalesceMoves()
             MachineInst* inst = *itr;
 
             if (inst->opcode == Opcode::MOVrd &&
-                inst->inputs[0]->isVreg() &&
-                inst->outputs[0]->isVreg() &&
+                inst->inputs[0]->isRegister() &&
+                inst->outputs[0]->isRegister() &&
                 !dynamic_cast<VirtualRegister*>(inst->inputs[0])->assignment &&
                 !dynamic_cast<VirtualRegister*>(inst->outputs[0])->assignment)
             {
