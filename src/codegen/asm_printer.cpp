@@ -134,7 +134,6 @@ void AsmPrinter::printSimpleOperand(MachineOperand* operand, bool inBrackets, si
     else if (operand->isAddress())
     {
         Address* address = dynamic_cast<Address*>(operand);
-        assert(size == 64);
 
         if (inBrackets)
             _out << "rel ";
@@ -247,11 +246,11 @@ void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base)
 void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base, MachineOperand* offset)
 {
     assert(offset->isImmediate() || offset->isRegister());
-    assert(dest->size() == 64 && base->size() == 64 && offset->size() == 64);
+    assert(offset->size() == 64);
 
     _out << "\tmov ";
     printSimpleOperand(dest);
-    _out << ", qword [";
+    _out << ", " << sizeName(dest->size()) << " [";
     printSimpleOperand(base, true);
     _out << " + ";
     printSimpleOperand(offset);
@@ -260,18 +259,20 @@ void AsmPrinter::printMovrm(MachineOperand* dest, MachineOperand* base, MachineO
 
 void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* src)
 {
+    assert(base->size() == src->size());
+
     if (base->isStackLocation())
     {
         StackLocation* stackLocation = dynamic_cast<StackLocation*>(base);
         assert(stackLocation->offset != 0);
 
-        _out << "\tmov " << sizeName(base->size()) << " [rbp + " << stackLocation->offset << "], ";
+        _out << "\tmov " << sizeName(src->size()) << " [rbp + " << stackLocation->offset << "], ";
         printSimpleOperand(src);
         _out << std::endl;
     }
     else
     {
-        _out << "\tmov " << sizeName(base->size()) << " [";
+        _out << "\tmov " << sizeName(src->size()) << " [";
         printSimpleOperand(base, true);
         _out << "], ";
         printSimpleOperand(src);
@@ -282,9 +283,9 @@ void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* src)
 void AsmPrinter::printMovmd(MachineOperand* base, MachineOperand* offset, MachineOperand* src)
 {
     assert(offset->isImmediate() || offset->isRegister());
-    assert(base->size() == 64 && offset->size() == 64 && src->size() == 64);
+    assert(offset->size() == 64);
 
-    _out << "\tmov qword [";
+    _out << "\tmov " << sizeName(src->size()) << " [";
     printSimpleOperand(base, true);
     _out << " + ";
     printSimpleOperand(offset);
@@ -469,7 +470,7 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 1);
             assert(inst->outputs[0]->isRegister() && inst->inputs[0]->isRegister());
-            assert(inst->outputs[0]->size() == 64 && (inst->inputs[0]->size() == 32 || inst->inputs[0]->size() == 16 || inst->inputs[0]->size() == 8));
+            assert(inst->outputs[0]->size() > inst->inputs[0]->size());
             printBinary("movsx", inst->outputs[0], inst->inputs[0]);
             break;
 
@@ -477,8 +478,7 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 1);
             assert(inst->outputs[0]->isRegister() && inst->inputs[0]->isRegister());
-            assert(inst->inputs[0]->size() == 16 || inst->inputs[0]->size() == 8);
-            assert(inst->outputs[0]->size() > inst->inputs[0]->size());
+            assert(inst->outputs[0]->size() > inst->inputs[0]->size() && inst->inputs[0]->size() != 32);
             printBinary("movzx", inst->outputs[0], inst->inputs[0]);
             break;
 
@@ -605,11 +605,18 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             printSimpleInstruction("pop", {inst->outputs[0]});
             break;
 
-        case Opcode::PUSH:
+        case Opcode::PUSHQ:
+        {
             assert(inst->outputs.size() == 0);
             assert(inst->inputs.size() == 1);
-            printSimpleInstruction("push", {inst->inputs[0]});
+
+            // Always use 64-bit register (e.g. PUSH al becomes PUSH rax)
+            _out << "\t" << "push ";
+            printSimpleOperand(inst->inputs[0], false, 64);
+            _out << std::endl;
+
             break;
+        }
 
         case Opcode::RET:
             assert(inst->outputs.size() == 0);

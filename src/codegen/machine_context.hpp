@@ -40,7 +40,7 @@ public:
     };
 
     Immediate* createImmediate(int64_t value, ValueType type);
-    Address* createGlobal(const std::string& name, bool clinkage = false);
+    Address* createGlobal(const std::string& name, ValueType type, bool clinkage = false);
 
 private:
     std::vector<std::unique_ptr<Immediate>> _immediates;

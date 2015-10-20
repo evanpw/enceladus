@@ -1,0 +1,7 @@
+x := 10u8
+
+def changeIt() -> Unit
+    x += 10
+
+changeIt()
+print $ showUInt(x as UInt)

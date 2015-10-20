@@ -29,7 +29,7 @@ MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
 
         if (entry)
         {
-            emit(Opcode::PUSH, {}, {vrbp});
+            emit(Opcode::PUSHQ, {}, {vrbp});
             emitMovrd(vrbp, vrsp);
             entry = false;
         }
@@ -50,7 +50,7 @@ MachineOperand* MachineCodeGen::getOperand(Value* value)
     else if (GlobalValue* global = dynamic_cast<GlobalValue*>(value))
     {
         bool clinkage = global->tag == GlobalTag::ExternFunction;
-        return _context->createGlobal(global->name, clinkage);
+        return _context->createGlobal(global->name, global->type, clinkage);
     }
     else if (dynamic_cast<LocalValue*>(value))
     {
@@ -104,7 +104,7 @@ void MachineCodeGen::emitMovrd(MachineOperand* dest, MachineOperand* src)
 
     if (src->isAddress())
     {
-        assert(dest->size() == 64 && src->size() == 64);
+        assert(dest->size() == 64);
 
         // MOV reg, addr is illegal on mac
         emit(Opcode::LEA, {dest}, {src});
@@ -146,7 +146,6 @@ void MachineCodeGen::emitMovmd(MachineOperand* base, MachineOperand* src, Machin
 {
     assert(base->isAddress() || base->isRegister());
     assert(src->isRegister() || src->isImmediate() || src->isAddress());
-    assert(src->size() == 64);
 
     // MOV [mem], imm64 is illegal on x86-64
     // MOV [mem], addr64 is illegal on Mac
@@ -208,14 +207,14 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
     }
     else if (inst->op == BinaryOperation::AND)
     {
-        assert(dest->size() == 64 && lhs->size() == 64 && rhs->size() == 64);
+        assert(dest->size() == lhs->size() && lhs->size() == rhs->size());
 
         emitMovrd(dest, lhs);
         emit(Opcode::AND, {dest}, {dest, rhs});
     }
     else if (inst->op == BinaryOperation::SHL)
     {
-        assert(dest->size() == 64 && lhs->size() == 64 && rhs->size() == 64);
+        assert(dest->size() == lhs->size());
         assert(rhs->isImmediate());
 
         int64_t value = dynamic_cast<Immediate*>(rhs)->value;
@@ -227,8 +226,8 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
     else if (inst->op == BinaryOperation::SHR)
     {
         // TODO: Add support for unsigned right shift
-        assert(lhs->type == ValueType::U64);
-        assert(dest->size() == 64 && lhs->size() == 64 && rhs->size() == 64);
+        assert(!isSigned(lhs->type));
+        assert(dest->size() == lhs->size());
 
         assert(rhs->isImmediate());
         int64_t value = dynamic_cast<Immediate*>(rhs)->value;
@@ -265,7 +264,7 @@ void MachineCodeGen::visit(BinaryOperationInst* inst)
             }
             else
             {
-                MachineOperand* zero = _context->createImmediate(0, ValueType::U64);
+                MachineOperand* zero = _context->createImmediate(0, type);
                 emitMovrd(vrdx, zero);
                 emit(Opcode::DIV, {vrdx, vrax}, {vrdx, vrax, rhs});
             }
@@ -365,7 +364,7 @@ void MachineCodeGen::visit(CallInst* inst)
 
             // Indirect call so that we can switch to the C stack
             emitMovrd(vrax2, target);
-            uses[0] = _context->createGlobal("ccall", true);
+            uses[0] = _context->createGlobal("ccall", ValueType::NonHeapAddress, true);
             emit(Opcode::CALL, {vrax}, std::move(uses));
         }
         else
@@ -386,14 +385,13 @@ void MachineCodeGen::visit(CallInst* inst)
         // Keep 16-byte alignment
         if (paramsOnStack % 2)
         {
-            emit(Opcode::PUSH, {}, {_context->createImmediate(0, ValueType::U64)});
+            emit(Opcode::PUSHQ, {}, {_context->createImmediate(0, ValueType::U64)});
             ++paramsOnStack;
         }
 
         for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
         {
             MachineOperand* param = getOperand(*i);
-            assert(param->size() == 64);
 
             // No 64-bit immediate push
             if (param->isAddress() ||
@@ -401,15 +399,15 @@ void MachineCodeGen::visit(CallInst* inst)
             {
                 VirtualRegister* vreg = _function->createVreg(param->type);
                 emitMovrd(vreg, param);
-                emit(Opcode::PUSH, {}, {vreg});
+                emit(Opcode::PUSHQ, {}, {vreg});
             }
             else if (param->isRegister())
             {
-                emit(Opcode::PUSH, {}, {param});
+                emit(Opcode::PUSHQ, {}, {param});
             }
             else if (param->isImmediate())
             {
-                emit(Opcode::PUSH, {}, {param});
+                emit(Opcode::PUSHQ, {}, {param});
             }
             else
             {
@@ -508,7 +506,6 @@ void MachineCodeGen::visit(IndexedLoadInst* inst)
     MachineOperand* dest = getOperand(inst->lhs);
     MachineOperand* base = getOperand(inst->rhs);
     MachineOperand* offset = _context->createImmediate(inst->offset, ValueType::I64);
-    assert(dest->size() == 64);
 
     assert(dest->isRegister());
     assert(base->isAddress() || base->isRegister());
@@ -522,7 +519,6 @@ void MachineCodeGen::visit(LoadInst* inst)
     MachineOperand* base = getOperand(inst->src);
     assert(dest->isRegister());
     assert(base->isAddress() || base->isRegister() || base->isStackLocation());
-    assert(dest->size() == 64);
 
     emit(Opcode::MOVrm, {dest}, {base});
 }
@@ -532,7 +528,7 @@ void MachineCodeGen::visit(IndexedStoreInst* inst)
     MachineOperand* base = getOperand(inst->lhs);
     MachineOperand* offset = getOperand(inst->offset);
     MachineOperand* src = getOperand(inst->rhs);
-    assert(src->size() == 64 && offset->size() == 64);
+    assert(offset->isImmediate());
 
     emitMovmd(base, src, offset);
 }
@@ -541,7 +537,6 @@ void MachineCodeGen::visit(StoreInst* inst)
 {
     MachineOperand* base = getOperand(inst->dest);
     MachineOperand* src = getOperand(inst->src);
-    assert(src->size() == 64);
 
     emitMovmd(base, src);
 }

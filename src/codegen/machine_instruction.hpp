@@ -45,7 +45,7 @@ enum class Opcode {
     MOVSXrr,
     MOVZXrr,
     POP,
-    PUSH,
+    PUSHQ,
     RET,
     SAL,
     SAR,
@@ -172,8 +172,8 @@ struct Address : public MachineOperand
 private:
     friend class MachineContext;
 
-    Address(const std::string& name, bool clinkage)
-    : MachineOperand(ValueType::NonHeapAddress), name(name), clinkage(clinkage)
+    Address(const std::string& name, ValueType type, bool clinkage)
+    : MachineOperand(type), name(name), clinkage(clinkage)
     {}
 };
 

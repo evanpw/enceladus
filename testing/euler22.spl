@@ -18,7 +18,7 @@ def score(name: String) -> Int
     total := 0
     for i in range(0, name.length())
         c := name.at(i)
-        total += (c - 'A') + 1
+        total += (c - 'A') as Int + 1
 
     return total
 

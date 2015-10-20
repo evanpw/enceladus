@@ -27,7 +27,7 @@ const char* opcodeNames[] = {
     "MOVSXrr",
     "MOVZXrr",
     "POP",
-    "PUSH",
+    "PUSHQ",
     "RET",
     "SAL",
     "SAR",

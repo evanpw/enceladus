@@ -2,6 +2,6 @@ messages := "Hello World"
 
 total := 0
 for c in messages.iter()
-    total += c
+    total += c as Int
 
 print $ show(total)
