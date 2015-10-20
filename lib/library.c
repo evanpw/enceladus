@@ -111,7 +111,7 @@ String* strCat(String* lhs, String* rhs)
     return result;
 }
 
-int64_t strAt(String* s, uint64_t idx)
+uint8_t strAt(String* s, uint64_t idx)
 {
     if (idx >= strLength(s))
     {

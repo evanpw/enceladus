@@ -30,7 +30,7 @@ private:
     void printMovmd(MachineOperand* base, MachineOperand* offset, MachineOperand* src);
     void printLea(MachineOperand* dest, MachineOperand* src);
 
-    void printSimpleOperand(MachineOperand* operand, bool inBrackets = false);
+    void printSimpleOperand(MachineOperand* operand, bool inBrackets = false, size_t size = 0);
 
     MachineContext* _context = nullptr;
     MachineFunction* _function = nullptr;

@@ -101,6 +101,6 @@ impl String
                 return None
 
             x *= 10
-            x += (digit - '0')
+            x += (digit - '0') as Int
 
         return Some(x)

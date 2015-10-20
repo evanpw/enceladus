@@ -89,7 +89,7 @@ impl BigInt
     def toString(self: BigInt) -> String
         s := []
         for x in self.digits()
-            s = (x + '0') :: s
+            s = ((x as UInt8) + '0') :: s
 
         return strFromList(s)
 

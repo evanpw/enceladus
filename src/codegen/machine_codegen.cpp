@@ -393,10 +393,11 @@ void MachineCodeGen::visit(CallInst* inst)
         for (auto i = inst->params.rbegin(); i != inst->params.rend(); ++i)
         {
             MachineOperand* param = getOperand(*i);
+            assert(param->size() == 64);
 
             // No 64-bit immediate push
             if (param->isAddress() ||
-                (param->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(param)->value)))
+                (param->isImmediate() && param->size() == 64 && !is32Bit(dynamic_cast<Immediate*>(param)->value)))
             {
                 VirtualRegister* vreg = _function->createVreg(param->type);
                 emitMovrd(vreg, param);
@@ -434,7 +435,6 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     MachineOperand* rhs = getOperand(inst->rhs);
     assert(lhs->isRegister() || lhs->isImmediate());
     assert(rhs->isRegister() || rhs->isImmediate());
-    assert(lhs->size() == 64 && rhs->size() == 64);
 
     // cmp imm, imm is illegal (this should really be optimized away)
     if (lhs->isImmediate() && rhs->isImmediate())
@@ -444,11 +444,11 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
         lhs = newLhs;
     }
 
-    // Immediates are 32-bit
+    // Immediates are at most 32-bit
     if (lhs->isImmediate())
         std::swap(lhs, rhs);
 
-    if (rhs->isImmediate() && !is32Bit(dynamic_cast<Immediate*>(rhs)->value))
+    if (rhs->isImmediate() && rhs->size() == 64 && !is32Bit(dynamic_cast<Immediate*>(rhs)->value))
     {
         VirtualRegister* newRhs = _function->createVreg(rhs->type);
         emitMovrd(newRhs, rhs);

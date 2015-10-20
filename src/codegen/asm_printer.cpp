@@ -113,14 +113,19 @@ void AsmPrinter::printBlock(MachineBB* block)
     }
 }
 
-void AsmPrinter::printSimpleOperand(MachineOperand* operand, bool inBrackets)
+void AsmPrinter::printSimpleOperand(MachineOperand* operand, bool inBrackets, size_t size)
 {
+    if (size == 0)
+    {
+        size = operand->size();
+    }
+
     if (operand->isRegister())
     {
         HardwareRegister* hreg = getAssignment(operand);
         assert(hreg);
 
-        _out << hreg->name(operand->size());
+        _out << hreg->name(size);
     }
     else if (operand->isImmediate())
     {
@@ -129,7 +134,7 @@ void AsmPrinter::printSimpleOperand(MachineOperand* operand, bool inBrackets)
     else if (operand->isAddress())
     {
         Address* address = dynamic_cast<Address*>(operand);
-        assert(operand->size() == 64);
+        assert(size == 64);
 
         if (inBrackets)
             _out << "rel ";

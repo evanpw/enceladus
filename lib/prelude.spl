@@ -4,7 +4,7 @@ foreign panic<T>(msg: String) -> T
 data List<T> = Cons(T, List<T>) | Nil
 
 ## String ##
-type Char = Int
+type Char = UInt8
 foreign strLength(s: String) -> UInt
 foreign strSlice(s: String, pos: UInt, len: UInt) -> String
 foreign strAt(s: String, n: UInt) -> Char
@@ -26,7 +26,7 @@ impl String
     def slice(self: String, pos: UInt, len: UInt) -> String
         return strSlice(self, pos, len)
 
-    def at(self: String, n: UInt) -> Int
+    def at(self: String, n: UInt) -> UInt8
         return strAt(self, n)
 
     def concat(self: String, other: String) -> String
