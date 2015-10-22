@@ -1,0 +1,12 @@
+import Vector
+
+v := Vector::new()
+
+for x in range(1u8, 10u8)
+    v.append(x)
+
+total := 0
+for i in range(0, v.size)
+    total += v.at(i) as Int
+
+print $ show(total)

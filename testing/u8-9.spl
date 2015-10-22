@@ -1,0 +1,12 @@
+struct Test
+    x: UInt8
+    y: UInt8
+    z: Int
+    w: UInt8
+
+t := Test(1, 2, 3, 4)
+
+print $ show(t.x as Int)
+print $ show(t.y as Int)
+print $ show(t.z)
+print $ show(t.w as Int)
