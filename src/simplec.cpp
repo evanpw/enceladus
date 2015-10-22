@@ -189,6 +189,16 @@ int main(int argc, char* argv[])
 		RegAlloc regAlloc(mf);
 		regAlloc.run();
 
+		// std::cerr << mf->name << ":" << std::endl;
+		// for (MachineBB* block : mf->blocks)
+		// {
+		// 	std::cerr << *block << ":" << std::endl;
+		// 	for (MachineInst* inst : block->instructions)
+		// 	{
+		// 		std::cerr << "\t" << *inst << std::endl;
+		// 	}
+		// }
+
 		StackAlloc stackAlloc(mf);
 		stackAlloc.run();
 

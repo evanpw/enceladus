@@ -632,6 +632,7 @@ void RegAlloc::coalesceMoves()
             if (inst->opcode == Opcode::MOVrd &&
                 inst->inputs[0]->isRegister() &&
                 inst->outputs[0]->isRegister() &&
+                inst->inputs[0]->size() == inst->outputs[0]->size() &&
                 !dynamic_cast<VirtualRegister*>(inst->inputs[0])->assignment &&
                 !dynamic_cast<VirtualRegister*>(inst->outputs[0])->assignment)
             {

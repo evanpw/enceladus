@@ -472,6 +472,9 @@ class TestAcceptance(object):
     def test_u8_6(self):
         self.run('u8-6', 'x < y\nx <= y\nx != y')
 
+    def test_u8_7(self):
+        self.run('u8-7', '12')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

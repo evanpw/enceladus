@@ -99,9 +99,6 @@ void MachineCodeGen::emitMovrd(MachineOperand* dest, MachineOperand* src)
 {
     assert(dest->isRegister());
 
-    // TODO: Narrowing MOVs
-    assert(dest->size() >= src->size());
-
     if (src->isAddress())
     {
         assert(dest->size() == 64);
@@ -111,21 +108,25 @@ void MachineCodeGen::emitMovrd(MachineOperand* dest, MachineOperand* src)
     }
     else if (src->isRegister())
     {
-        if (dest->size() == src->size())
+        if (dest->size() <= src->size())
         {
             emit(Opcode::MOVrd, {dest}, {src});
         }
-        else if (isSigned(src->type))
-        {
-            emit(Opcode::MOVSXrr, {dest}, {src});
-        }
         else
         {
-            emit(Opcode::MOVZXrr, {dest}, {src});
+            if (isSigned(src->type))
+            {
+                emit(Opcode::MOVSXrr, {dest}, {src});
+            }
+            else
+            {
+                emit(Opcode::MOVZXrr, {dest}, {src});
+            }
         }
     }
     else if (src->isImmediate())
     {
+        assert(dest->size() >= src->size());
         emit(Opcode::MOVrd, {dest}, {src});
     }
     else

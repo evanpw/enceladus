@@ -745,11 +745,11 @@ void SemanticAnalyzer::visit(CastNode* node)
     // Only supported casts
     if (srcType->equals(destType)) return;
     if (srcType->equals(_typeTable->Int) && destType->equals(_typeTable->UInt)) return;
+    if (srcType->equals(_typeTable->Int) && destType->equals(_typeTable->UInt8)) return;
     if (srcType->equals(_typeTable->UInt) && destType->equals(_typeTable->Int)) return;
+    if (srcType->equals(_typeTable->UInt) && destType->equals(_typeTable->UInt8)) return;
     if (srcType->equals(_typeTable->UInt8) && destType->equals(_typeTable->Int)) return;
     if (srcType->equals(_typeTable->UInt8) && destType->equals(_typeTable->UInt)) return;
-    if (srcType->equals(_typeTable->Int) && destType->equals(_typeTable->UInt8)) return;
-    if (srcType->equals(_typeTable->UInt) && destType->equals(_typeTable->UInt8)) return;
 
     semanticError(node->location, "Cannot cast from type {} to {}", srcType->str(), destType->str());
 }

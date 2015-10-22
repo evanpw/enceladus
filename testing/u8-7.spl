@@ -1,0 +1,6 @@
+def getFour() -> UInt
+    return 256u + 12
+
+x := getFour()
+y := x as UInt8
+print $ showUInt(y as UInt)

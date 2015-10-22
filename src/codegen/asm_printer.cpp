@@ -463,7 +463,14 @@ void AsmPrinter::printInstruction(MachineInst* inst)
         case Opcode::MOVrd:
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 1);
-            printBinary("mov", inst->outputs[0], inst->inputs[0]);
+            assert(inst->outputs[0]->isRegister());
+
+            _out << "\tmov ";
+            printSimpleOperand(inst->outputs[0]);
+            _out << ", ";
+            // Handle narrowing moves correctly
+            printSimpleOperand(inst->inputs[0], false, inst->outputs[0]->size());
+            _out << std::endl;
             break;
 
         case Opcode::MOVSXrr:
