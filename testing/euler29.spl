@@ -8,7 +8,7 @@ for a in range(2, 101)
     for b in range(2, 101)
         n := bigPower(a, b)
 
-        values = n.digits() :: values
+        values = values.insert(n.digits())
 
 values = uniquify(values)
 print $ showUInt $ values.length()

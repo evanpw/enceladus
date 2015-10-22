@@ -1242,6 +1242,12 @@ void TACCodeGen::visit(FunctionCallNode* node)
         inst->regpass = inst->ccall;
         emit(inst);
     }
+    else if (node->symbol->kind == kMethod)
+    {
+        // Methods can't be ccall or regpass
+        Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
+        emit(new CallInst(result, fn, arguments));
+    }
     else /* node->symbol->kind == kVariable */
     {
         // The variable represents a closure, so extract the actual function

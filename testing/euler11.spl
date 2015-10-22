@@ -38,7 +38,7 @@ def allRuns(xrange: Range<UInt>, yrange: Range<UInt>, dx: UInt, dy: UInt) -> [UI
 
     for x in xrange
         for y in yrange
-            xs = makeRun(x, y, dx, dy) :: xs
+            xs = xs.insert(makeRun(x, y, dx, dy))
 
     return xs
 

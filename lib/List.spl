@@ -14,11 +14,11 @@ def splitList<T: Ord>(xs: [T], pivot: T) -> Pair<[T], [T]>
     for x in xs
         match x.cmp(pivot)
             Less
-                lhs = x :: lhs
+                lhs = lhs.insert(x)
             Greater
-                rhs = x :: rhs
+                rhs = rhs.insert(x)
             Equal
-                rhs = x :: rhs
+                rhs = rhs.insert(x)
 
     return Pair(lhs, rhs)
 
@@ -47,9 +47,9 @@ def uniquify<T: Ord>(xs: [T]) -> [T]
             Equal
                 pass
             Less
-                result = x :: result
+                result = result.insert(x)
             Greater
-                result = x :: result
+                result = result.insert(x)
 
         last = x
 

@@ -116,7 +116,7 @@ class TestAcceptance(object):
         self.run('poly2', result='False')
 
     def test_fail(self):
-        self.run('fail', runtime_error='*** Exception: Called head on empty list')
+        self.run('fail', runtime_error='*** Exception: Called tail on empty list')
 
     def test_unaryMinus(self):
         self.run('unaryMinus', result='-5')
@@ -443,7 +443,7 @@ class TestAcceptance(object):
             '6': 'Error: testing/methodResolution6.spl:7:5: no method named `nothing` found for type `T`',
             '8': 'Error: testing/methodResolution8.spl:8:5: method call is ambiguous',
             '10': 'Error: testing/methodResolution10.spl:6:5: no method named `nothing` found for type `[T]`',
-            '11': 'Error: testing/methodResolution11.spl:2:5: cannot unify types [Int] and [T: Num]',
+            '11': 'Error: testing/methodResolution11.spl:6:5: no method named `nothing` found for type `[T]`',
             '14': 'Error: testing/methodResolution14.spl:6:5: no method named `nothing` found for type `[T: Num]`',
         }
 

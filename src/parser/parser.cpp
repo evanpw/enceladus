@@ -745,10 +745,8 @@ TypeName* Parser::constructed_type()
 }
 
 /// simple_type
-///     : LIDENT
-///     | UIDENT
+///     : UIDENT
 ///     | '[' type ']'
-///     | '(' type ')'
 TypeName* Parser::simple_type()
 {
     YYLTYPE location = getLocation();
@@ -762,14 +760,6 @@ TypeName* Parser::simple_type()
     {
         Token typeName = expect(tLIDENT);
         return new TypeName(_context, location, typeName.value.str);
-    }
-    else if (peekType() == '(')
-    {
-        expect('(');
-        TypeName* internalType = type();
-        expect(')');
-
-        return internalType;
     }
     else
     {
@@ -1000,37 +990,23 @@ ExpressionNode* Parser::equality_expression()
 
 ExpressionNode* Parser::relational_expression()
 {
-    ExpressionNode* lhs = cons_expression();
+    ExpressionNode* lhs = additive_expression();
 
     if (accept('>'))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreater, cons_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreater, additive_expression());
     }
     else if (accept('<'))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLess, cons_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLess, additive_expression());
     }
     else if (accept(tGE))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreaterOrEqual, cons_expression());
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreaterOrEqual, additive_expression());
     }
     else if (accept(tLE))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLessOrEqual, cons_expression());
-    }
-    else
-    {
-        return lhs;
-    }
-}
-
-ExpressionNode* Parser::cons_expression()
-{
-    ExpressionNode* lhs = additive_expression();
-
-    if (accept(tDCOLON))
-    {
-        return new FunctionCallNode(_context, getLocation(), "Cons", {lhs, cons_expression()});
+        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLessOrEqual, additive_expression());
     }
     else
     {
@@ -1194,7 +1170,8 @@ ExpressionNode* Parser::method_member_idx_expression()
 /// func_call_expression
 ///     : ident '$' expression
 ///     | ident '(' [ expression ] { ',' expression } ] ')'
-///     | unary_expression
+///     | UIDENT '::' [ expression ] { ',' expression } ] ')'
+///     | static_function_call_expression
 ExpressionNode* Parser::func_call_expression()
 {
     if ((peekType() == tLIDENT || peekType() == tUIDENT) && (peek2ndType() == '(' || peek2ndType() == '$'))
@@ -1229,8 +1206,52 @@ ExpressionNode* Parser::func_call_expression()
     }
     else
     {
+        return static_function_call_expression();
+    }
+}
+
+/// static_function_call_expression
+///     : type '::' LIDENT '(' [ expression { ',' expression } ] ')'
+///     | unary_expression
+ExpressionNode* Parser::static_function_call_expression()
+{
+    YYLTYPE location = getLocation();
+
+    if (peekType() == tUIDENT)
+    {
+        if (peek2ndType() != '<' && peek2ndType() != tDCOLON)
+        {
+            return unary_expression();
+        }
+    }
+    // Don't allow the [T] abbreviation for list types because of confusion with
+    // list literals
+    else if (peekType() != '|')
+    {
         return unary_expression();
     }
+
+    TypeName* typeName = type();
+    expect(tDCOLON);
+
+    Token functionName = expect(tLIDENT);
+
+    std::vector<ExpressionNode*> argList;
+    expect('(');
+
+    if (!accept(')'))
+    {
+        argList.push_back(expression());
+
+        while (accept(','))
+        {
+            argList.push_back(expression());
+        }
+
+        expect(')');
+    }
+
+    return new FunctionCallNode(_context, location, functionName.value.str, std::move(argList), typeName);
 }
 
 ExpressionNode* Parser::unary_expression()

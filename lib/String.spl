@@ -60,11 +60,11 @@ impl String
         for i in range(0, len)
             if isSpace(s.at(i))
                 len := i - start
-                result = s.slice(start, len) :: result
+                result = result.insert(s.slice(start, len))
                 start = i + 1
 
         if start < len
-            result = s.slice(start, len - start) :: result
+            result = result.insert(s.slice(start, len - start))
 
         return result.reverse()
 
@@ -76,11 +76,11 @@ impl String
         for i in range(0, len)
             if s.at(i) == sep
                 len := i - start
-                result = s.slice(start, len) :: result
+                result = result.insert(s.slice(start, len))
                 start = i + 1
 
         if start < len
-            result = s.slice(start, len - start) :: result
+            result = result.insert(s.slice(start, len - start))
 
         return result.reverse()
 

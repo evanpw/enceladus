@@ -12,11 +12,11 @@ def readInput() -> [[Int]]
             Some(line)
                 xs := []
                 for s in line.split()
-                    xs = s.toInt().unwrap() :: xs
+                    xs = xs.insert(s.toInt().unwrap())
 
                 row := xs.reverse()
 
-                pyramid = row :: pyramid
+                pyramid = pyramid.insert(row)
 
             None
                 break

@@ -27,7 +27,7 @@ def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
             c = '1'
             k += 1
 
-        newCache = c :: newCache
+        newCache = newCache.insert(c)
 
     return Pair(strFromList(newCache.reverse()), k * k)
 
@@ -61,7 +61,7 @@ def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) 
             # The min cost starting at this point is at most the cost of this
             # instruction, plus the cost starting at the successor cache value
             cost := instCost + costAt(memo, instructions, nextCache)
-            costs = cost :: costs
+            costs = costs.insert(cost)
 
     assert costs.length() > 0
 

@@ -123,10 +123,8 @@ constructed_type
     | simple_type
 
 simple_type
-    : LIDENT
-    | UIDENT
+    : UIDENT
     | '[' type ']'
-    | '(' type ')'
 
 //// Miscellaneous /////////////////////////////////////////////////////////////
 
@@ -184,10 +182,7 @@ equality_expression
     : relational_expression [ ( EQUALS | NE ) relational_expression ]
 
 relational_expression
-    : cons_expression [ ( '>' | '<' | GE | LE ) cons_expression ]
-
-cons_expression
-    : additive_expression [ DCOLON cons_expression ]
+    : cons_expression [ ( '>' | '<' | GE | LE ) additive_expression ]
 
 additive_expression
     : multiplicative_expression { ( '+' | '-' ) multiplicative_expression }
@@ -215,7 +210,11 @@ method_member_idx_expression
 
 func_call_expression
     : ident '$' expression
-    | ident '(' [ expression ] { ',' expression } ] ')'
+    | ident '(' [ expression { ',' expression } ] ')'
+    | static_function_call_expression
+
+static_function_call_expression
+    : type '::' LIDENT '(' [ expression { ',' expression } ] ')'
     | unary_expression
 
 unary_expression

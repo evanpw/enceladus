@@ -6,7 +6,7 @@ def readNumber() -> BigInt
     ys := []
 
     for j in range(0, 50)
-        ys = read :: ys
+        ys = ys.insert(read)
 
     return BigInt(ys)
 

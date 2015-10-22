@@ -7,9 +7,9 @@ def divisors(n: Int) -> [Int]
     while i * i <= n
         if n mod i == 0
             if i * i == n
-                result = i :: result
+                result = result.insert(i)
             else
-                result = i :: (n / i) :: result
+                result = result.insert(n / i).insert(i)
 
         i += 1
 

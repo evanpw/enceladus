@@ -1,5 +1,5 @@
-xs := True :: []
-ys := 4 :: 3 :: []
+xs := [True]
+ys := [4, 3]
 
 if xs.head()
     print $ show $ ys.head()

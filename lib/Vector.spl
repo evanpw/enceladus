@@ -7,6 +7,9 @@ def vector<T>() -> Vector<T>
     return Vector(emptyArray(), 0, 0)
 
 impl<T> Vector<T>
+    def new() -> Vector<T>
+        return Vector(emptyArray(), 0, 0)
+
     def append(self: Vector<T>, x: T) -> Unit
         if self.size < self.capacity
             self.content.set(self.size, Some(x))

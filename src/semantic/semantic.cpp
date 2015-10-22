@@ -652,8 +652,27 @@ void SemanticAnalyzer::visit(AssignNode* node)
 void SemanticAnalyzer::visit(FunctionCallNode* node)
 {
 	const std::string& name = node->target;
-	Symbol* symbol = resolveSymbol(name);
-    CHECK(symbol, "function `{}` is not defined", name);
+
+    Symbol* symbol;
+    if (!node->typeName) // Regular function call
+    {
+        symbol = resolveSymbol(name);
+        CHECK(symbol, "function `{}` is not defined", name);
+    }
+    else // Static method
+    {
+        resolveTypeName(node->typeName);
+
+        std::vector<MemberSymbol*> symbols;
+        _symbolTable->resolveMemberSymbol(name, node->typeName->type, symbols);
+        CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", name, node->typeName->type->str());
+        CHECK(symbols.size() < 2, "method call is ambiguous");
+
+        CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", name);
+        symbol = symbols.front();
+    }
+
+    assert(symbol);
 
     Type* expectedType = instantiate(symbol->type, node->typeAssignment);
     CHECK(expectedType->tag() == ttFunction, "`{}` is not a function", name);
@@ -1448,9 +1467,6 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         assert(functionType->inputs().size() == node->params.size());
 
         const std::vector<Type*>& paramTypes = functionType->inputs();
-
-        CHECK(!paramTypes.empty(), "methods must take at least one argument");
-        unify(paramTypes[0], parentType, node);
 
         MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, parentType);
         symbol->type = type;

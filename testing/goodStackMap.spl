@@ -5,7 +5,7 @@ def only<T>(value: T) -> [T]
     x := value
     ys := Nil
     triggerGC()
-    ys = x :: ys
+    ys = ys.insert(x)
 
     return ys
 

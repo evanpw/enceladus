@@ -8,9 +8,9 @@ def divisors(n: Int) -> [Int]
     while i * i <= n
         if n mod i == 0
             if i * i == n
-                result = i :: result
+                result = result.insert(i)
             else
-                result = i :: (n / i) :: result
+                result = result.insert(i).insert(n / i)
 
         i += 1
 
@@ -39,7 +39,7 @@ def isSumOfTwo(y: Int, xs: Array<Int>) -> Bool
 reversedList := []
 for i in range(1, 28124)
     if isAbundant(i)
-        reversedList = i :: reversedList
+        reversedList = reversedList.insert(i)
 
 
 # Convert the list into an array

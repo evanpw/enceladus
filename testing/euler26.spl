@@ -10,7 +10,7 @@ def reciprocal(d: Int) -> [Int]
 
         assert quotient < 10
 
-        result = quotient :: result
+        result = result.insert(quotient)
         numerator = remainder * 10
 
     return result.reverse()
@@ -46,7 +46,7 @@ def periodLength(d: Int) -> Int
         if index >= 0
             return index + 1
 
-        numerators = n :: numerators
+        numerators = numerators.insert(n)
 
     return 0
 

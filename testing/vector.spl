@@ -1,12 +1,9 @@
 # Ideas:
-# LIB: Create a library function to create an empty array
-# LANG: Allow mutation of structs
-# LANG: Add static methods (for scoping)
 # LANG / LIB: Add a trait Default for types that have a default value
 import Vector
 
 # Int vector
-v := vector()
+v := Vector::new()
 
 for i in range(1, 11)
     v.append(i)
@@ -19,7 +16,7 @@ for i in range(0, v.size)
     total += v[i]
 
 # Boolean vector
-v2 := vector()
+v2 := Vector::new()
 v2.append(True)
 v2.append(False)
 
@@ -27,4 +24,3 @@ if v2[0]
     total += 1
 
 print $ show(total)
-

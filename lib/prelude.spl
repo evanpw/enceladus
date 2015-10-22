@@ -3,6 +3,10 @@ foreign panic<T>(msg: String) -> T
 ## List ##
 data List<T> = Cons(T, List<T>) | Nil
 
+impl<T> List<T>
+    def insert(self: List<T>, x: T) -> List<T>
+        return Cons(x, self)
+
 ## String ##
 type Char = UInt8
 foreign strLength(s: String) -> UInt
@@ -161,7 +165,7 @@ impl<T> List<T>
         if n == 0
             return []
         else
-            return self.head() :: self.tail().take(n - 1)
+            return self.tail().take(n - 1).insert(self.head())
 
     def drop(self: [T], n: UInt) -> [T]
         if n == 0
@@ -181,7 +185,7 @@ impl<T> List<T>
     def reverse(self: [T]) -> [T]
         ys := []
         for x in self
-            ys = x :: ys
+            ys = ys.insert(x)
 
         return ys
 
@@ -189,7 +193,7 @@ impl<T> List<T>
         result := other
 
         for x in self.reverse()
-            result = x :: result
+            result = result.insert(x)
 
         return result
 
@@ -197,14 +201,14 @@ impl<T> List<T>
         result := []
         for x in self
             if f(x)
-                result = x :: result
+                result = result.insert(x)
 
         return result.reverse()
 
     def map<S>(self: [T], f: T -> S) -> [S]
         result := []
         for x in self
-            result = f(x) :: result
+            result = result.insert(f(x))
 
         return result.reverse()
 
@@ -237,7 +241,7 @@ impl<T: Num> Range<T>
 
         i := self.end - 1
         while i >= self.start
-            result = i :: result
+            result = result.insert(i)
             i -= 1
 
         return result

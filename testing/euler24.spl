@@ -15,7 +15,7 @@ def delete(x: UInt, xs: [UInt]) -> [UInt]
         if xs'.head() == x
             return initial.reverse() ++ xs'.tail()
         else
-            initial = xs'.head() :: initial
+            initial = initial.insert(xs'.head())
 
         xs' = xs'.tail()
 
@@ -41,7 +41,7 @@ def permutationAt(n: UInt, digits: [UInt]) -> [UInt]
             n -= subCount
         else
             subDigits := delete(digit, digits)
-            return digit :: permutationAt(n, subDigits)
+            return permutationAt(n, subDigits).insert(digit)
 
     panic $ "Unreachable"
 

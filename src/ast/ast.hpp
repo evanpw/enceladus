@@ -242,19 +242,15 @@ public:
 class FunctionCallNode : public ExpressionNode
 {
 public:
-	FunctionCallNode(AstContext* context, const YYLTYPE& location, const std::string& target, std::vector<ExpressionNode*>&& arguments)
-	: ExpressionNode(context, location), target(target), arguments(std::move(arguments))
+	FunctionCallNode(AstContext* context, const YYLTYPE& location, const std::string& target, std::vector<ExpressionNode*>&& arguments, TypeName* typeName = nullptr)
+	: ExpressionNode(context, location), target(target), arguments(std::move(arguments)), typeName(typeName)
 	{}
-
-	FunctionCallNode(AstContext* context, const YYLTYPE& location, const std::string& target, std::initializer_list<ExpressionNode*>&& args)
-    : ExpressionNode(context, location), target(target), arguments(std::move(args))
-    {
-    }
 
 	AST_VISITABLE();
 
 	std::string target;
 	std::vector<ExpressionNode*> arguments;
+	TypeName* typeName;
 
 	// Annotations
 	Symbol* symbol = nullptr;

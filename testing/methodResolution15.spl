@@ -3,4 +3,4 @@ impl<T> [T]
         return self
 
 x := [].nothing()
-drop $ 1i :: x
+drop $ x.insert(1i)

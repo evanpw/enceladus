@@ -13,13 +13,13 @@ def countGroups(xs: [Int]) -> [Int]
         if xs.head() == last
             count += 1
         else
-            result = count :: result
+            result = result.insert(count)
             last = xs.head()
             count = 1
 
         xs = xs.tail()
 
-    return (count :: result).reverse()
+    return result.insert(count).reverse()
 
 def factor(n: Int) -> [Int]
     if n == 1
@@ -30,7 +30,7 @@ def factor(n: Int) -> [Int]
 
     while n > 1
         while n mod i == 0
-            factors = i :: factors
+            factors = factors.insert(i)
             n /= i
 
         i += 1

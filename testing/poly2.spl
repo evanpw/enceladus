@@ -4,11 +4,11 @@ def mydrop<T>(n: Int, xs: [T]) -> [T]
     else
         return mydrop(n - 1, xs.tail())
 
-xs := 1 :: 2 :: 3 :: 4 :: []
+xs := [1, 2, 3, 4]
 ys := mydrop(2, xs)
 n := ys.head()
 
-zs := True :: True :: True :: False :: False :: False :: []
+zs := [True, True, True, False, False, False]
 us := mydrop(n, zs)
 if us.head()
    print $ "True"
