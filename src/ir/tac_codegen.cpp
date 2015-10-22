@@ -1248,6 +1248,27 @@ void TACCodeGen::visit(FunctionCallNode* node)
         Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
         emit(new CallInst(result, fn, arguments));
     }
+    else if (node->symbol->kind == kTraitMethod)
+    {
+        TraitMethodSymbol* symbol = dynamic_cast<TraitMethodSymbol*>(node->symbol);
+        assert(symbol);
+
+        assert(node->typeName && node->typeName->type);
+        Type* objectType = substitute(substitute(node->typeName->type, node->typeAssignment), _typeContext);
+        assert(isConcrete(objectType));
+        assert(isSubtype(objectType, symbol->trait));
+
+        MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->target, objectType);
+        assert(methodSymbol);
+
+        TypeAssignment assignment;
+        Type* parentType = instantiate(methodSymbol->parentType, assignment);
+        auto unifyResult = tryUnify(parentType, objectType);
+        assert(unifyResult.first);
+
+        Value* method = getFunctionValue(methodSymbol, node, assignment);
+        emit(new CallInst(result, method, arguments));
+    }
     else /* node->symbol->kind == kVariable */
     {
         // The variable represents a closure, so extract the actual function

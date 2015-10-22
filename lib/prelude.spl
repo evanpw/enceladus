@@ -457,3 +457,32 @@ impl Hash for Int
 impl Hash for String
     def hash(self: String) -> UInt
         return strHash(self)
+
+
+## Default trait ##
+trait Default
+    def default() -> Self
+
+impl Default for Int
+    def default() -> Int
+        return 0i
+
+impl Default for UInt
+    def default() -> UInt
+        return 0u
+
+impl Default for UInt8
+    def default() -> UInt8
+        return 0u8
+
+impl<T> Default for [T]
+    def default() -> [T]
+        return []
+
+impl Default for String
+    def default() -> String
+        return ""
+
+impl Default for Bool
+    def default() -> Bool
+        return False

@@ -1,5 +1,3 @@
-# Ideas:
-# LANG / LIB: Add a trait Default for types that have a default value
 import Vector
 
 # Int vector

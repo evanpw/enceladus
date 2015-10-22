@@ -206,14 +206,30 @@ void SemanticAnalyzer::injectSymbols()
     _symbolTable->createFunctionSymbol("_main", _root, nullptr);
 }
 
-void SemanticAnalyzer::resolveBaseType(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables)
+Type* SemanticAnalyzer::findInContext(const std::string& varName)
+{
+    for (auto i = _typeContexts.rbegin(); i != _typeContexts.rend(); ++i)
+    {
+        TypeContext& context = *i;
+
+        auto j = context.find(varName);
+        if (j != context.end())
+        {
+            return j->second;
+        }
+    }
+
+    return nullptr;
+}
+
+void SemanticAnalyzer::resolveBaseType(TypeName* typeName)
 {
     const std::string& name = typeName->name;
 
-    auto i = variables.find(name);
-    if (i != variables.end())
+    Type* contextMatch = findInContext(name);
+    if (contextMatch)
     {
-        typeName->type = i->second;
+        typeName->type = contextMatch;
         return;
     }
 
@@ -239,18 +255,18 @@ Type* SemanticAnalyzer::getConstructedType(const YYLTYPE& location, const std::s
     return symbol->type;
 }
 
-void SemanticAnalyzer::resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables)
+void SemanticAnalyzer::resolveTypeName(TypeName* typeName)
 {
     if (typeName->parameters.empty())
     {
-        resolveBaseType(typeName, variables);
+        resolveBaseType(typeName);
     }
     else
     {
         std::vector<Type*> typeParameters;
         for (auto& parameter : typeName->parameters)
         {
-            resolveTypeName(parameter, variables);
+            resolveTypeName(parameter);
             typeParameters.push_back(parameter->type);
         }
 
@@ -377,7 +393,9 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
         typeContext.emplace(typeParameter, var);
     }
 
-    resolveTypeName(node->typeName, typeContext);
+    _typeContexts.push_back(typeContext);
+    resolveTypeName(node->typeName);
+
     Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();
     node->functionType = functionType;
@@ -412,6 +430,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	_enclosingFunction = nullptr;
 
 	_symbolTable->popScope();
+    _typeContexts.pop_back();
 
     unify(node->body->type, functionType->output(), node);
     node->type = _typeTable->Unit;
@@ -441,7 +460,9 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
         typeContext.emplace(typeParameter, var);
     }
 
-    resolveTypeName(node->typeName, typeContext);
+    _typeContexts.push_back(typeContext);
+    resolveTypeName(node->typeName);
+    _typeContexts.pop_back();
 
     Type* functionType = node->typeName->type;
     assert(functionType->get<FunctionType>()->inputs().size() == node->params.size());
@@ -1113,17 +1134,18 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
         Type* newType = _typeTable->createConstructedType(name, std::move(variables));
         _symbolTable->createTypeSymbol(name, node, newType);
 
+        _typeContexts.push_back(typeContext);
         for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
         {
             auto& spec = node->constructorSpecs[i];
             spec->constructorTag = i;
-            spec->typeContext = typeContext;
             spec->resultType = newType;
             spec->accept(this);
 
             node->valueConstructors.push_back(spec->valueConstructor);
             node->constructorSymbols.push_back(spec->symbol);
         }
+        _typeContexts.pop_back();
     }
 
     node->type = _typeTable->Unit;
@@ -1139,7 +1161,7 @@ void SemanticAnalyzer::visit(ConstructorSpec* node)
     {
         auto& member = node->members[i];
 
-        resolveTypeName(member, node->typeContext);
+        resolveTypeName(member);
         node->memberTypes.push_back(member->type);
 
         MemberVarSymbol* memberSymbol = _symbolTable->createMemberVarSymbol("_", node, nullptr, node->resultType, i);
@@ -1242,6 +1264,8 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         Type* newType = _typeTable->createConstructedType(typeName, std::move(variables));
         _symbolTable->createTypeSymbol(typeName, node, newType);
 
+        _typeContexts.push_back(typeContext);
+
         std::vector<std::string> memberNames;
         std::vector<Type*> memberTypes;
         std::vector<MemberVarSymbol*> memberSymbols;
@@ -1254,7 +1278,6 @@ void SemanticAnalyzer::visit(StructDefNode* node)
             CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type `{}` already has a member named `{}`", node->name, member->name);
             alreadyUsed.insert(member->name);
 
-            member->typeContext = typeContext;
             member->accept(this);
 
             memberTypes.push_back(member->memberType);
@@ -1264,6 +1287,8 @@ void SemanticAnalyzer::visit(StructDefNode* node)
             memberSymbol->type = _typeTable->createFunctionType({newType}, member->memberType);
             memberSymbols.push_back(memberSymbol);
         }
+
+        _typeContexts.pop_back();
 
         ValueConstructor* valueConstructor = _typeTable->createValueConstructor(typeName, 0, memberTypes, memberNames);
         node->valueConstructor = valueConstructor;
@@ -1282,7 +1307,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 void SemanticAnalyzer::visit(MemberDefNode* node)
 {
     // All of the constructor members must refer to already-declared types
-    resolveTypeName(node->typeName, node->typeContext);
+    resolveTypeName(node->typeName);
     node->memberType = node->typeName->type;
     node->type = _typeTable->Unit;
 }
@@ -1354,7 +1379,8 @@ void SemanticAnalyzer::visit(ImplNode* node)
         typeContext.emplace(typeParameter, var);
     }
 
-    resolveTypeName(node->typeName, typeContext);
+    _typeContexts.push_back(typeContext);
+    resolveTypeName(node->typeName);
 
     // Don't allow extraneous type variables, like this:
     // impl<T> Test
@@ -1414,6 +1440,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
         method->accept(this);
     }
 
+    _typeContexts.pop_back();
     _enclosingImplNode = nullptr;
 
     node->type = _typeTable->Unit;
@@ -1453,7 +1480,8 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
             typeContext.emplace(typeParameter, var);
         }
 
-        resolveTypeName(node->typeName, typeContext);
+        _typeContexts.push_back(typeContext);
+        resolveTypeName(node->typeName);
 
         std::vector<MemberSymbol*> symbols;
         Type* parentType = _enclosingImplNode->typeName->type;
@@ -1501,6 +1529,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         _enclosingFunction = nullptr;
 
         _symbolTable->popScope();
+        _typeContexts.pop_back();
 
         unify(node->body->type, functionType->output(), node);
         node->type = _typeTable->Unit;
@@ -1550,15 +1579,15 @@ void SemanticAnalyzer::visit(TraitMethodNode* node)
 
     std::unordered_map<std::string, Type*> typeContext;
     typeContext["Self"] = traitSymbol->traitVar;
-    resolveTypeName(node->typeName, typeContext);
+
+    _typeContexts.push_back(typeContext);
+    resolveTypeName(node->typeName);
+    _typeContexts.pop_back();
 
     Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();
 
     const std::vector<Type*>& paramTypes = functionType->inputs();
-
-    CHECK(!paramTypes.empty(), "methods must take at least one argument");
-    unify(paramTypes[0], traitSymbol->traitVar, node);
 
     methods[name] = type;
 

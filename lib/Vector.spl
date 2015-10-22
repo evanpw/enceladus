@@ -1,26 +1,24 @@
-struct Vector<T>
-    content: Array<Option<T>>
+struct Vector<T: Default>
+    content: Array<T>
     capacity: UInt
     size: UInt
 
-def vector<T>() -> Vector<T>
-    return Vector(emptyArray(), 0, 0)
 
-impl<T> Vector<T>
+impl<T: Default> Vector<T>
     def new() -> Vector<T>
         return Vector(emptyArray(), 0, 0)
 
     def append(self: Vector<T>, x: T) -> Unit
         if self.size < self.capacity
-            self.content.set(self.size, Some(x))
+            self.content.set(self.size, x)
             self.size += 1
         else
             newCapacity := self.capacity * 2 + 1
-            newContent := makeArray(newCapacity, None)
+            newContent := makeArray(newCapacity, T::default())
             for i in range(0, self.size)
                 newContent.set(i, self.content[i])
 
-            newContent.set(self.size, Some(x))
+            newContent.set(self.size, x)
 
             self.content = newContent
             self.capacity = newCapacity
@@ -31,7 +29,7 @@ impl<T> Vector<T>
         value := self.content[self.size - 1]
         self.size -= 1
 
-        return value.unwrap()
+        return value
 
     def at(self: Vector<T>, n: UInt) -> T
-        return self.content.at(n).unwrap()
+        return self.content.at(n)

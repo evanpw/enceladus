@@ -79,10 +79,14 @@ private:
     FunctionSymbol* createExternal(const std::string& name);
     void injectSymbols();
 
+    using TypeContext = std::unordered_map<std::string, Type*>;
+    std::vector<TypeContext> _typeContexts;
+    Type* findInContext(const std::string& varName);
+
     Type* getConstructedType(const TypeName* typeName);
     Type* getConstructedType(const YYLTYPE& location, const std::string& name);
-    void resolveBaseType(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables);
-    void resolveTypeName(TypeName* typeName, const std::unordered_map<std::string, Type*>& variables = {});
+    void resolveBaseType(TypeName* typeName);
+    void resolveTypeName(TypeName* typeName);
 
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);
