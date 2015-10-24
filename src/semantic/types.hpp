@@ -125,23 +125,15 @@ public:
         _impl->addValueConstructor(valueConstructor);
     }
 
-    void assign(Type* rhs);
-
     bool equals(const Type* rhs) const
     {
         return _impl == rhs->_impl;
     }
 
     template <class T>
-    T* get()
+    T* get() const
     {
         return dynamic_cast<T*>(_impl.get());
-    }
-
-    template <class T>
-    const T* get() const
-    {
-        return dynamic_cast<const T*>(_impl.get());
     }
 
 private:
@@ -301,7 +293,7 @@ public:
         _references.push_back(parent);
     }
 
-    void assign(Type* rhs);
+    void assign(const Type* rhs);
 
     int index() const
     {
@@ -383,31 +375,88 @@ private:
 class Trait
 {
 public:
-    const std::string& str() const
+    struct Instance
     {
-        return _name;
+        std::vector<Type*> traitParams;
+        Type* type;
+    };
+
+    std::string str() const
+    {
+        std::stringstream ss;
+
+        ss << _name;
+        if (!_params.empty())
+        {
+            ss << "<";
+
+            bool first = true;
+            for (Type* param : _params)
+            {
+                if (!first) ss << ", ";
+                ss << param->str();
+                first = false;
+            }
+
+            ss << ">";
+        }
+
+        return ss.str();
     }
 
-    const std::vector<Type*> instances() const
+    TypeTable* table() const
     {
-        return _instances;
+        return _table;
     }
 
-    void addInstance(Type* type)
+    const std::vector<Type*>& parameters() const
     {
-        _instances.push_back(type);
+        return _params;
+    }
+
+    const Trait* prototype() const
+    {
+        return _prototype;
+    }
+
+    const Trait* instantiate(std::vector<Type*>&& params) const;
+
+    const std::vector<Instance>& instances() const
+    {
+        if (_prototype == this)
+        {
+            return _instances;
+        }
+        else
+        {
+            return _prototype->instances();
+        }
+    }
+
+    void addInstance(Type* type, const std::vector<Type*>& traitParams = {})
+    {
+        assert(_prototype == this);
+        _instances.push_back({traitParams, type});
     }
 
 private:
     friend TypeTable;
 
-    Trait(TypeTable* table, const std::string& name)
-    : _table(table), _name(name)
-    {}
+    Trait(TypeTable* table, const std::string& name, std::vector<Type*>&& params, const Trait* prototype)
+    : _table(table), _name(name), _params(params), _prototype(prototype)
+    {
+        if (!_prototype)
+            _prototype = this;
+    }
 
     TypeTable* _table;
     std::string _name;
-    std::vector<Type*> _instances;
+    std::vector<Type*> _params;
+    std::vector<Instance> _instances;
+
+    // Similar to constructed types, this is what defines identity for a trait.
+    // Set to this for the prototypical trait
+    const Trait* _prototype;
 };
 
 
@@ -461,9 +510,9 @@ public:
         return valueConstructor;
     }
 
-    Trait* createTrait(const std::string& name)
+    Trait* createTrait(const std::string& name, std::vector<Type*>&& params= {}, const Trait* prototype = nullptr)
     {
-        Trait* trait = new Trait(this, name);
+        Trait* trait = new Trait(this, name, std::move(params), prototype);
         _traits.emplace_back(trait);
 
         return trait;

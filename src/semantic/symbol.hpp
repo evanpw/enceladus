@@ -109,11 +109,14 @@ public:
     // Plays the role of the instance type in the method types
     Type* traitVar;
 
+    // Type parameters: should all appear in traitVar
+    std::vector<Type*> typeParameters;
+
     std::unordered_map<std::string, Type*> methods;
 
 private:
     friend class SymbolTable;
-    TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar);
+    TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters);
 };
 
 class MemberSymbol : public Symbol

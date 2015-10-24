@@ -1,0 +1,5 @@
+def checkType<T: Iterator<Int>>(x: T) -> Unit
+    pass
+
+i := "Hello World".iter()
+checkType(i)

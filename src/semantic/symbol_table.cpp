@@ -1,5 +1,6 @@
 #include "semantic/symbol_table.hpp"
 #include "ast/ast.hpp"
+#include "semantic/subtype.hpp"
 #include "semantic/type_functions.hpp"
 
 #include <cassert>
@@ -65,9 +66,9 @@ TypeSymbol* SymbolTable::createTypeSymbol(const std::string& name, AstNode* node
     return symbol;
 }
 
-TraitSymbol* SymbolTable::createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar)
+TraitSymbol* SymbolTable::createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters)
 {
-    TraitSymbol* symbol = new TraitSymbol(name, node, trait, traitVar);
+    TraitSymbol* symbol = new TraitSymbol(name, node, trait, traitVar, std::move(typeParameters));
     insert(symbol, SymbolTable::TYPE);
     return symbol;
 }
@@ -125,6 +126,8 @@ void SymbolTable::findMembers(const std::string& name, std::vector<MemberSymbol*
 
 void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols)
 {
+    //std::cerr << "resolveMemberSymbol: " << name << " " << parentType->str() << std::endl;
+
     symbols.clear();
 
     // Never match an unconstrained type to a method
@@ -142,6 +145,8 @@ void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType,
         // quantified type variables only resolve to trait methods
         if ((matchTraits && symbol->kind != kTraitMethod) || (!matchTraits && symbol->kind == kTraitMethod))
             continue;
+
+        //std::cerr << "possible match: " << symbol->parentType->str() << std::endl;
 
         if (isSubtype(parentType, symbol->parentType))
         {

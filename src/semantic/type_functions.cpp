@@ -1,7 +1,43 @@
-#include "type_functions.hpp"
+#include "semantic/type_functions.hpp"
+#include "semantic/subtype.hpp"
+
+const Trait* instantiate(const Trait* trait)
+{
+    // TODO: Can we just check trait->prototype() == trait to see if it needs
+    // instantiating?
+
+    bool anyChanged = false;
+
+    std::vector<Type*> params;
+    for (Type* param : trait->parameters())
+    {
+        if (param->isVariable() && param->get<TypeVariable>()->quantified())
+        {
+            params.push_back(trait->table()->createTypeVariable());
+            anyChanged = true;
+        }
+        else
+        {
+            params.push_back(param);
+        }
+    }
+
+    const Trait* result;
+    if (anyChanged)
+    {
+        result = trait->instantiate(std::move(params));
+    }
+    else
+    {
+        result = trait;
+    }
+
+    return result;
+}
 
 Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
 {
+
     switch (type->tag())
     {
         case ttBase:
@@ -26,7 +62,8 @@ Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
                     TypeVariable* newVar = replacement->get<TypeVariable>();
                     for (const Trait* constraint : typeVariable->constraints())
                     {
-                        newVar->addConstraint(constraint);
+                        // TODO: Do we need to check replacements?
+                        newVar->addConstraint(instantiate(constraint));
                     }
 
                     replacements[typeVariable] = replacement;
@@ -79,19 +116,19 @@ Type* instantiate(Type* type)
 
 bool hasOverlappingInstance(Trait* trait, Type* type)
 {
-    for (Type* instance : trait->instances())
+    for (const Trait::Instance& instance : trait->instances())
     {
-        if (overlap(type, instance))
+        // TODO: Allow one type to be an instance of multiple instantiations of a trait
+
+        if (overlap(type, instance.type))
             return true;
     }
 
     return false;
 }
 
-std::pair<bool, std::string> bindVariable(Type* variable, Type* value)
+std::pair<bool, std::string> bindVariable(TypeVariable* lhs, const Type* value)
 {
-    assert(variable->tag() == ttVariable);
-    TypeVariable* lhs = variable->get<TypeVariable>();
 
     // Check to see if the value is actually the same type variable, and don't
     // rebind
@@ -101,36 +138,62 @@ std::pair<bool, std::string> bindVariable(Type* variable, Type* value)
         if (lhs == rhs)
             return {true, ""};
 
-        // A quantified type variable can't acquire any new constraints in the
-        // process of unification (see overrideType test)
-        if (rhs->quantified())
-        {
-            auto& rhsConstraints = rhs->constraints();
+        std::vector<const Trait*> missingConstraints;
 
-            for (const Trait* constraint : lhs->constraints())
+        auto& rhsConstraints = rhs->constraints();
+
+        for (const Trait* constraint : lhs->constraints())
+        {
+            bool good = false;
+
+            for (const Trait* rhsConstraint : rhsConstraints)
             {
-                if (rhsConstraints.find(constraint) == rhsConstraints.end())
+
+                if (isSubtype(constraint, rhsConstraint))
+                {
+                    good = true;
+                    break;
+                }
+            }
+
+
+            if (!good)
+            {
+                // A quantified type variable can't acquire any new constraints in the
+                // process of unification (see overrideType test)
+                if (rhs->quantified())
                 {
                     std::stringstream ss;
                     ss << "Can't bind variable " << value->str()
-                       << " to quantified type variable " << variable->str()
+                       << " to quantified type variable " << lhs->str()
                        << ", because the latter isn't constrained by trait " << constraint->str();
 
                     return {false, ss.str()};
                 }
+                else
+                {
+                    missingConstraints.push_back(constraint);
+                }
             }
+        }
+
+        for (const Trait* missing : missingConstraints)
+        {
+            assert(!rhs->quantified());
+            rhs->addConstraint(missing);
         }
     }
     else
     {
         // Otherwise, check that the rhs type meets all of the constraints on
         // the lhs variable
+
         for (const Trait* constraint : lhs->constraints())
         {
             if (!isSubtype(value, constraint))
             {
                 std::stringstream ss;
-                ss << "Can't bind variable " << variable->str() << " to type " << value->str()
+                ss << "Can't bind variable " << lhs->str() << " to type " << value->str()
                    << " because it isn't an instance of trait " << constraint->str();
 
                 return {false, ss.str()};
@@ -140,14 +203,23 @@ std::pair<bool, std::string> bindVariable(Type* variable, Type* value)
         if (occurs(lhs, value))
         {
             std::stringstream ss;
-            ss << "variable " << variable->str() << " already occurs in " << value->str();
+            ss << "variable " << lhs->str() << " already occurs in " << value->str();
 
             return {false, ss.str()};
         }
     }
 
-    variable->assign(value);
+
+    lhs->assign(value);
     return {true, ""};
+}
+
+std::pair<bool, std::string> bindVariable(Type* variable, const Type* value)
+{
+    assert(variable->tag() == ttVariable);
+    TypeVariable* lhs = variable->get<TypeVariable>();
+
+    return bindVariable(lhs, value);
 }
 
 std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs)
@@ -231,9 +303,9 @@ std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs)
     return {false, ""};
 }
 
-bool occurs(TypeVariable* variable, Type* value)
+bool occurs(const TypeVariable* variable, const Type* value)
 {
-    Type* rhs = value;
+    const Type* rhs = value;
 
     switch (rhs->tag())
     {
@@ -271,31 +343,6 @@ bool occurs(TypeVariable* variable, Type* value)
     }
 
     assert(false);
-}
-
-
-bool isSubtype(const Type* lhs, const Trait* trait)
-{
-    if (lhs->isVariable())
-    {
-        const TypeVariable* lhsVariable = lhs->get<TypeVariable>();
-        if (!lhsVariable->quantified())
-        {
-            return true;
-        }
-        else
-        {
-            return lhsVariable->constraints().count(trait) > 0;
-        }
-    }
-
-    for (const Type* instance : trait->instances())
-    {
-        if (isSubtype(lhs, instance))
-            return true;
-    }
-
-    return false;
 }
 
 bool equals(const Type* lhs, const Type* rhs)
@@ -352,129 +399,11 @@ bool equals(const Type* lhs, const Type* rhs)
     assert(false);
 }
 
-bool isSubtype(const Type* lhs, const Type* rhs, std::unordered_map<const TypeVariable*, const Type*>& subs)
-{
-    if (rhs->isVariable())
-    {
-        const TypeVariable* rhsVariable = rhs->get<TypeVariable>();
-
-        if (rhsVariable->quantified())
-        {
-            auto i = subs.find(rhsVariable);
-            if (i != subs.end())
-            {
-                return i->second->equals(lhs);
-            }
-
-            for (const Trait* constraint : rhsVariable->constraints())
-            {
-                if (!isSubtype(lhs, constraint))
-                    return false;
-            }
-
-            subs[rhsVariable] = lhs;
-            return true;
-        }
-        else
-        {
-            assert(false);
-        }
-    }
-
-    // If we get to this point, then rhs is not a variable
-
-    switch (lhs->tag())
-    {
-        case ttBase:
-        {
-            if (rhs->tag() != ttBase)
-                return false;
-
-            return lhs->get<BaseType>() == rhs->get<BaseType>();
-        }
-
-        case ttVariable:
-        {
-            const TypeVariable* typeVariable = lhs->get<TypeVariable>();
-
-            if (typeVariable->quantified())
-            {
-                // A quantified type variable cannot be a subtype of anything
-                // but a type variable
-                return false;
-            }
-            else
-            {
-                for (const Trait* constraint : typeVariable->constraints())
-                {
-                    if (!isSubtype(rhs, constraint))
-                        return false;
-                }
-
-                return true;
-            }
-        }
-
-        case ttFunction:
-        {
-            if (rhs->tag() != ttFunction)
-                return false;
-
-            const FunctionType* lhsFunction = lhs->get<FunctionType>();
-            const FunctionType* rhsFunction = rhs->get<FunctionType>();
-
-            if (lhsFunction->inputs().size() != rhsFunction->inputs().size())
-                return false;
-
-            for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
-            {
-                if (!isSubtype(lhsFunction->inputs()[i], rhsFunction->inputs()[i], subs))
-                    return false;
-            }
-
-            if (!isSubtype(lhsFunction->output(), rhsFunction->output(), subs))
-                return false;
-
-            return true;
-        }
-
-        case ttConstructed:
-        {
-            if (rhs->tag() != ttConstructed)
-                return false;
-
-            const ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
-            const ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
-
-            if (lhsConstructed->prototype() != rhsConstructed->prototype())
-                return false;
-
-            for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
-            {
-                if (!isSubtype(lhsConstructed->typeParameters()[i], rhsConstructed->typeParameters()[i], subs))
-                    return false;
-            }
-
-            return true;
-        }
-    }
-
-    assert(false);
-}
-
-// Two (possibly polymorphic) types are compatible iff there is at least one
-// monomorphic type which unifies with both
-bool isSubtype(const Type* lhs, const Type* rhs)
-{
-    std::unordered_map<const TypeVariable*, const Type*> subs;
-    return isSubtype(lhs, rhs, subs);
-}
-
-static const Type* lookup(const Type* type, const std::unordered_map<const TypeVariable*, const Type*>& context)
+static const Type* lookup(const Type* type, const std::unordered_map<TypeVariable*, const Type*>& context)
 {
     while (type->isVariable())
     {
-        const TypeVariable* var = type->get<TypeVariable>();
+        TypeVariable* var = type->get<TypeVariable>();
         auto i = context.find(var);
         if (i == context.end())
         {
@@ -489,7 +418,7 @@ static const Type* lookup(const Type* type, const std::unordered_map<const TypeV
     return type;
 }
 
-bool overlap(const Type *lhs, const Type* rhs, std::unordered_map<const TypeVariable*, const Type*>& subs)
+bool overlap(const Type *lhs, const Type* rhs, std::unordered_map<TypeVariable*, const Type*>& subs)
 {
     lhs = lookup(lhs, subs);
     rhs = lookup(rhs, subs);
@@ -501,7 +430,7 @@ bool overlap(const Type *lhs, const Type* rhs, std::unordered_map<const TypeVari
         if (equals(lhs, rhs))
             return true;
 
-        const TypeVariable* lhsVariable = lhs->get<TypeVariable>();
+        TypeVariable* lhsVariable = lhs->get<TypeVariable>();
 
         assert(subs.find(lhsVariable) == subs.end());
         subs[lhs->get<TypeVariable>()] = rhs;
@@ -571,6 +500,6 @@ bool overlap(const Type *lhs, const Type* rhs, std::unordered_map<const TypeVari
 
 bool overlap(const Type *lhs, const Type* rhs)
 {
-    std::unordered_map<const TypeVariable*, const Type*> subs;
+    std::unordered_map<TypeVariable*, const Type*> subs;
     return overlap(lhs, rhs, subs);
 }

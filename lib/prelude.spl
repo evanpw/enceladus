@@ -7,6 +7,12 @@ impl<T> List<T>
     def insert(self: List<T>, x: T) -> List<T>
         return Cons(x, self)
 
+# Iterator trait ##
+trait Iterator<T>
+    def head(self: Self) -> T
+    def tail(self: Self) -> Self
+    def empty(self: Self) -> Bool
+
 ## String ##
 type Char = UInt8
 foreign strLength(s: String) -> UInt
@@ -39,7 +45,7 @@ impl String
     def iter(self: String) -> StringIterator
         return StringIterator(self, 0u)
 
-impl StringIterator
+impl Iterator<Char> for StringIterator
     def head(self: StringIterator) -> Char
         return self.str[self.offset]
 
@@ -129,7 +135,7 @@ neverUsed := Some("Hello")
 neverUsed = None
 
 ## List ##
-impl<T> List<T>
+impl<T> Iterator<T> for List<T>
     def head(self: [T]) -> T
         match self
             Cons(x, _)
@@ -151,6 +157,7 @@ impl<T> List<T>
             Nil
                 return True
 
+impl<T> List<T>
     def length(self: [T]) -> UInt
         result := 0
         xs := self
@@ -221,7 +228,7 @@ struct Range<T: Num>
 def range<T: Num>(start: T, end: T) -> Range<T>
     return Range(start, end)
 
-impl<T: Num> Range<T>
+impl<T: Num> Iterator<T> for Range<T>
     def head(self: Range<T>) -> T
         assert self.start < self.end
         return self.start
@@ -233,6 +240,7 @@ impl<T: Num> Range<T>
     def empty(self: Range<T>) -> Bool
         return self.start >= self.end
 
+impl<T: Num> Range<T>
     def toList(self: Range<T>) -> [T]
         result := []
 

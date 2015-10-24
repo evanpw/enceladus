@@ -86,8 +86,7 @@ struct_declaration
     : STRUCT UIDENT constrained_type_params '=' members
 
 variable_declaration
-    : LIDENT [ ':' type ] COLON_EQUAL expression EOL
-    | VAR LIDENT [ ':' type ] '=' expression EOL
+    : LIDENT COLON_EQUAL expression EOL
 
 while_statement
     : WHILE expression suite
@@ -96,14 +95,13 @@ break_statement
     : BREAK EOL
 
 implementation_block
-    : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
-    | IMPL constrained_type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+    : IMPL constrained_type_params type [ FOR type ] EOL INDENT method_definition { method_definition } DEDENT
 
 method_definition
     : DEF ident constrained_type_params params_and_types suite
 
 trait_definition
-    : TRAIT UIDENT EOL INDENT trait_method { trait_method } DEDENT
+    : TRAIT UIDENT type_params EOL INDENT trait_method { trait_method } DEDENT
 
 trait_method
     : DEF LIDENT params_and_types EOL
@@ -125,6 +123,9 @@ constructed_type
 simple_type
     : UIDENT
     | '[' type ']'
+
+trait_name
+    : UIDENT [ '<' type {',' type } '>' ]
 
 //// Miscellaneous /////////////////////////////////////////////////////////////
 

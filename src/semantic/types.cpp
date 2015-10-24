@@ -8,12 +8,6 @@
 #include <cassert>
 #include <sstream>
 
-void Type::assign(Type* rhs)
-{
-    assert(isVariable());
-    get<TypeVariable>()->assign(rhs);
-}
-
 std::string TypeVariable::str() const
 {
     std::stringstream ss;
@@ -46,24 +40,10 @@ std::string TypeVariable::str() const
     return ss.str();
 }
 
-void TypeVariable::assign(Type* rhs)
+void TypeVariable::assign(const Type* rhs)
 {
     assert(!_quantified);
     assert(!_references.empty());
-
-    // Assume that if assigning to a concrete type that we've already checked
-    // all of the constraints.
-
-    // The type variable obtained by unifying two type variables inherits the
-    // contraints of both
-    if (rhs->isVariable())
-    {
-        TypeVariable* rhsVariable = rhs->get<TypeVariable>();
-        for (const Trait* constraint : _constraints)
-        {
-            rhsVariable->addConstraint(constraint);
-        }
-    }
 
     // This is needed to keep myself alive until the end of this function,
     // because the for-loop below will reduce the reference count down to zero
@@ -229,5 +209,20 @@ ValueConstructor::ValueConstructor(const std::string& name,
         std::string memberName = memberNames.empty() ? "" : memberNames[i];
         Type* type = memberTypes[i];
         _members.emplace_back(memberName, type);
+    }
+}
+
+const Trait* Trait::instantiate(std::vector<Type*>&& params) const
+{
+    // Can only instantiate prototypical types
+    assert(_prototype == this);
+
+    if (params.empty())
+    {
+        return this;
+    }
+    else
+    {
+        return _table->createTrait(_name, std::move(params), this);
     }
 }

@@ -187,12 +187,6 @@ class TestAcceptance(object):
     def test_noReturn3(self):
         self.run('noReturn3', build_error='Error: testing/noReturn3.spl:1:1: cannot unify types Unit and Int')
 
-    def test_implicitReturn(self):
-        self.run('implicitReturn', result='4')
-
-    def test_implicitReturn2(self):
-        self.run('implicitReturn2', result='10')
-
     def test_fizzBuzz(self):
         self.run('fizzBuzz', result=open('testing/fizzBuzz.correct').read())
 
@@ -400,12 +394,6 @@ class TestAcceptance(object):
     def test_useUnit(self):
         self.run('useUnit', '')
 
-    def test_typeAnnotation(self):
-        self.run('typeAnnotation', '')
-
-    def test_typeAnnotation2(self):
-        self.run('typeAnnotation2', build_error='Error: testing/typeAnnotation2.spl:1:1: cannot unify types String and Int')
-
     def test_callVariable(self):
         self.run('callVariable', build_error='Error: testing/callVariable.spl:2:1: `x` is not a function')
 
@@ -474,6 +462,27 @@ class TestAcceptance(object):
 
     def test_u8_7(self):
         self.run('u8-7', '12')
+
+    def test_u8_8(self):
+        self.run('u8-8', '45')
+
+    def test_u8_9(self):
+        self.run('u8-9', '1\n2\n3\n4')
+
+    def test_genericTrait(self):
+        self.run('genericTrait', '')
+
+    def test_genericTrait2(self):
+        self.run('genericTrait2', build_error=Regex('Error: testing/genericTrait2.spl:5:11: Can\'t bind variable \'T\d+: Iterator<Int> to type StringIterator because it isn\'t an instance of trait Iterator<Int>'))
+
+    def test_genericTrait3(self):
+        self.run('genericTrait3', '72')
+
+    def test_genericTrait4(self):
+        self.run('genericTrait4', build_error='Error: testing/genericTrait4.spl:9:5: type `Int` already has a method or member named `nothing`')
+
+    def test_iterateInt(self):
+        self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterator<\'T\d+>'))
 
     # Medium tests (100ms-1s)
 

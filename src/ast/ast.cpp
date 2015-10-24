@@ -22,9 +22,20 @@ std::string TypeName::str() const
     std::stringstream ss;
 
     ss << name;
-    for (auto& param : parameters)
+
+    if (!parameters.empty())
     {
-        ss << " " << param->str();
+        ss << "<";
+
+        bool first = true;
+        for (auto& param : parameters)
+        {
+            if (!first) ss << ", ";
+            ss << param->str();
+            first = false;
+        }
+
+        ss << ">";
     }
 
     return ss.str();

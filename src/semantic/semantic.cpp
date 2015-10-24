@@ -2,6 +2,7 @@
 
 #include "ast/ast_context.hpp"
 #include "lib/library.h"
+#include "semantic/subtype.hpp"
 #include "semantic/type_functions.hpp"
 #include "utility.hpp"
 
@@ -49,7 +50,7 @@ static void unify(Type* lhs, Type* rhs, AstNode* node)
     }
 }
 
-static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
+static void imposeConstraint(Type* type, const Trait* trait, AstNode* node)
 {
     if (type->isVariable())
     {
@@ -320,6 +321,61 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName)
     }
 }
 
+TraitSymbol* SemanticAnalyzer::resolveTrait(TypeName* traitName, std::vector<Type*>& traitParams)
+{
+    Symbol* symbol = resolveTypeSymbol(traitName->name);
+    CHECK_AT(traitName->location, symbol->kind == kTrait, "`{}` is not a trait", traitName->name);
+
+    TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(symbol);
+    assert(traitSymbol);
+
+    CHECK_AT(traitName->location, traitName->parameters.size() <= traitSymbol->typeParameters.size(), "`{}` has too many parameters", traitName->str());
+    CHECK_AT(traitName->location, traitName->parameters.size() >= traitSymbol->typeParameters.size(), "`{}` has too few parameters", traitName->str());
+
+    for (auto& traitParam : traitName->parameters)
+    {
+        resolveTypeName(traitParam);
+        traitParams.push_back(traitParam->type);
+    }
+
+    return traitSymbol;
+}
+
+void SemanticAnalyzer::addConstraints(TypeVariable* var, const std::vector<TypeName*>& constraints)
+{
+    for (TypeName* constraint : constraints)
+    {
+        std::vector<Type*> traitParams;
+        TraitSymbol* constraintSymbol = resolveTrait(constraint, traitParams);
+
+        var->addConstraint(constraintSymbol->trait->instantiate(std::move(traitParams)));
+    }
+}
+
+void SemanticAnalyzer::resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext)
+{
+    std::vector<Type*> variables;
+    resolveTypeParams(node, typeParams, typeContext, variables);
+}
+
+void SemanticAnalyzer::resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables)
+{
+    for (auto& item : typeParams)
+    {
+        const std::string& typeParameter = item.name;
+        const std::vector<TypeName*>& constraints = item.constraints;
+
+        CHECK_UNDEFINED(typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
+        Type* var = _typeTable->createTypeVariable(typeParameter, true);
+
+        addConstraints(var->get<TypeVariable>(), constraints);
+
+        typeContext.emplace(typeParameter, var);
+        variables.push_back(var);
+    }
+}
+
 
 //// Visitor functions /////////////////////////////////////////////////////////
 
@@ -369,29 +425,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 
     // Create type variables for each type parameter
     std::unordered_map<std::string, Type*> typeContext;
-    for (auto& item : node->typeParams)
-    {
-        std::string& typeParameter = item.name;
-        std::vector<std::string>& constraints = item.constraints;
-
-        CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
-        Type* var = _typeTable->createTypeVariable(typeParameter, true);
-
-        for (std::string& constraint : constraints)
-        {
-            Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-            CHECK(constraintSymbol, "no such trait `{}`", constraint);
-            CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
-
-            TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
-            assert(traitSymbol);
-
-            var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
-        }
-
-        typeContext.emplace(typeParameter, var);
-    }
+    resolveTypeParams(node, node->typeParams, typeContext);
 
     _typeContexts.push_back(typeContext);
     resolveTypeName(node->typeName);
@@ -432,7 +466,6 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	_symbolTable->popScope();
     _typeContexts.pop_back();
 
-    unify(node->body->type, functionType->output(), node);
     node->type = _typeTable->Unit;
 }
 
@@ -477,8 +510,8 @@ void SemanticAnalyzer::visit(ForeignDeclNode* node)
 
 void SemanticAnalyzer::visit(VariableDefNode* node)
 {
-	// Visit children. Do this first so that we can't have recursive definitions.
-	AstVisitor::visit(node);
+	// Do this first so that we can't have recursive definitions.
+	node->rhs->accept(this);
 
 	const std::string& target = node->target;
     if (target != "_")
@@ -488,19 +521,8 @@ void SemanticAnalyzer::visit(VariableDefNode* node)
         bool global = _symbolTable->isTopScope();
     	VariableSymbol* symbol = _symbolTable->createVariableSymbol(target, node, _enclosingFunction, global);
 
-    	if (node->typeName)
-    	{
-    		resolveTypeName(node->typeName);
-    		symbol->type = node->typeName->type;
-    	}
-    	else
-    	{
-    		symbol->type = _typeTable->createTypeVariable();
-    	}
-
+        symbol->type = node->rhs->type;
     	node->symbol = symbol;
-
-    	unify(node->rhs->type, symbol->type, node);
     }
     else
     {
@@ -515,8 +537,6 @@ void SemanticAnalyzer::visit(MatchNode* node)
     node->expr->accept(this);
     Type* type = node->expr->type;
 
-    node->type = _typeTable->createTypeVariable();
-
     std::set<size_t> constructorTags;
     for (auto& arm : node->arms)
     {
@@ -526,11 +546,11 @@ void SemanticAnalyzer::visit(MatchNode* node)
         bool notDuplicate = (constructorTags.find(arm->constructorTag) == constructorTags.end());
         CHECK_AT(arm->location, notDuplicate, "cannot repeat constructors in match statement");
         constructorTags.insert(arm->constructorTag);
-
-        unify(node->type, arm->type, node);
     }
 
     CHECK(constructorTags.size() == type->valueConstructors().size(), "switch statement is not exhaustive");
+
+    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(MatchArm* node)
@@ -581,11 +601,12 @@ void SemanticAnalyzer::visit(MatchArm* node)
     }
 
     // Visit body
-    AstVisitor::visit(node);
+    node->body->accept(this);
+    unify(node->body->type, _typeTable->Unit, node->body);
 
     _symbolTable->popScope();
 
-    node->type = node->body->type;
+    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(LetNode* node)
@@ -816,10 +837,7 @@ void SemanticAnalyzer::visit(NullaryNode* node)
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(symbol);
         if (functionType->get<FunctionType>()->inputs().empty())
         {
-            Type* returnType = _typeTable->createTypeVariable();
-            unify(functionType, _typeTable->createFunctionType({}, returnType), node);
-
-            node->type = returnType;
+            node->type = functionType->get<FunctionType>()->output();
             node->kind = NullaryNode::FUNC_CALL;
         }
         else
@@ -858,23 +876,13 @@ void SemanticAnalyzer::visit(LogicalNode* node)
 
 void SemanticAnalyzer::visit(BlockNode* node)
 {
-    // Blocks have the type of their last expression
-
-    for (size_t i = 0; i + 1 < node->children.size(); ++i)
+    for (auto& child : node->children)
     {
-        node->children[i]->accept(this);
-        unify(node->children[i]->type, _typeTable->Unit, node);
+        child->accept(this);
+        unify(child->type, _typeTable->Unit, child);
     }
 
-    if (node->children.size() > 0)
-    {
-        node->children.back()->accept(this);
-        node->type = node->children.back()->type;
-    }
-    else
-    {
-        node->type = _typeTable->Unit;
-    }
+    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(IfNode* node)
@@ -944,8 +952,6 @@ void SemanticAnalyzer::visit(ForeachNode* node)
 {
     node->listExpression->accept(this);
     Type* iteratorType = node->listExpression->type;
-    Type* varType = _typeTable->createTypeVariable();
-    node->varType = varType;
 
     // Save the current inner-most loop so that we can restore it after
     // visiting the children of this loop.
@@ -959,16 +965,20 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     CHECK(node->varName != "_", "for-loop induction variable cannot be unnamed");
     CHECK_UNDEFINED_IN_SCOPE(node->varName);
 
-    VariableSymbol* symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
-    symbol->type = varType;
-    node->symbol = symbol;
+    // HACK: Check that the rhs is an instance of Iterator
+    TraitSymbol* iteratorSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
+    assert(iteratorSymbol);
+    Type* varType = _typeTable->createTypeVariable();
+    const Trait* Iterator = iteratorSymbol->trait->instantiate({varType});
+    imposeConstraint(iteratorType, Iterator, node->listExpression);
 
     // HACK: Give the code generator access to these symbols
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol("head", iteratorType, symbols);
     node->headSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
     Type* headType = instantiate(node->headSymbol->type, node->headTypeAssignment);
-    unify(headType, _typeTable->createFunctionType({iteratorType}, varType), node);
+    node->varType = headType->get<FunctionType>()->output();
+    unify(headType, _typeTable->createFunctionType({iteratorType}, node->varType), node);
 
     _symbolTable->resolveMemberSymbol("tail", iteratorType, symbols);
     node->tailSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
@@ -979,6 +989,12 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     node->emptySymbol = dynamic_cast<MethodSymbol*>(symbols.front());
     Type* emptyType = instantiate(node->emptySymbol->type, node->emptyTypeAssignment);
     unify(emptyType, _typeTable->createFunctionType({iteratorType}, _typeTable->Bool), node);
+
+
+
+    VariableSymbol* symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
+    symbol->type = node->varType;
+    node->symbol = symbol;
 
     node->body->accept(this);
     unify(node->body->type, _typeTable->Unit, node);
@@ -995,10 +1011,6 @@ void SemanticAnalyzer::visit(ForeverNode* node)
     // visiting the children of this loop.
     LoopNode* outerLoop = _enclosingLoop;
 
-    // The type of an infinite loop can be anything, unless we encounter a break
-    // statement in the body, in which case it must be Unit
-    node->type = _typeTable->createTypeVariable();
-
     _enclosingLoop = node;
     _symbolTable->pushScope();
 
@@ -1007,15 +1019,12 @@ void SemanticAnalyzer::visit(ForeverNode* node)
     _symbolTable->popScope();
     _enclosingLoop = outerLoop;
 
-    unify(node->body->type, _typeTable->Unit, node);
+    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(BreakNode* node)
 {
     CHECK(_enclosingLoop, "break statement must be within a loop");
-
-    unify(_enclosingLoop->type, _typeTable->Unit, node);
-
     node->type = _typeTable->Unit;
 }
 
@@ -1073,10 +1082,7 @@ void SemanticAnalyzer::visit(ReturnNode* node)
     FunctionType* functionType = type->get<FunctionType>();
 
     unify(node->expression->type, functionType->output(), node);
-
-    // Since the function doesn't continue past a return statement, its value
-    // doesn't matter
-    node->type = _typeTable->createTypeVariable();
+    node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(VariableNode* node)
@@ -1236,30 +1242,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         // Create type variables for each type parameter
         std::vector<Type*> variables;
         std::unordered_map<std::string, Type*> typeContext;
-        for (auto& item : node->typeParameters)
-        {
-            std::string& typeParameter = item.name;
-            std::vector<std::string>& constraints = item.constraints;
-
-            CHECK_UNDEFINED(typeParameter);
-            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
-            Type* var = _typeTable->createTypeVariable(typeParameter, true);
-
-            for (std::string& constraint : constraints)
-            {
-                Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-                CHECK(constraintSymbol, "no such trait `{}`", constraint);
-                CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
-
-                TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
-                assert(traitSymbol);
-
-                var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
-            }
-
-            variables.push_back(var);
-            typeContext.emplace(typeParameter, var);
-        }
+        resolveTypeParams(node, node->typeParameters, typeContext, variables);
 
         Type* newType = _typeTable->createConstructedType(typeName, std::move(variables));
         _symbolTable->createTypeSymbol(typeName, node, newType);
@@ -1326,13 +1309,14 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     MemberVarSymbol* symbol = dynamic_cast<MemberVarSymbol*>(symbols.front());
     node->symbol = symbol;
 
-    Type* returnType = _typeTable->createTypeVariable();
-    Type* functionType = instantiate(symbol->type, node->typeAssignment);
-
-    unify(functionType, _typeTable->createFunctionType({objectType}, returnType), node);
+    // Member var types are stored in the symbol table in the form |ObjectType| -> MemberType
+    // so that the same matching machinery can be used for member variables as for methods
+    FunctionType* functionType = instantiate(symbol->type, node->typeAssignment)->get<FunctionType>();
+    assert(functionType->inputs().size() == 1);
+    unify(functionType->inputs()[0], objectType, node);
 
     node->symbol = symbol;
-    node->type = returnType;
+    node->type = functionType->output();
     node->constructorSymbol = symbol->constructorSymbol;
     node->memberIndex = symbol->index;
 }
@@ -1344,46 +1328,24 @@ void SemanticAnalyzer::visit(ImplNode* node)
     assert(!_enclosingImplNode);
     _enclosingImplNode = node;
 
-    TraitSymbol* traitSymbol = nullptr;
-    if (!node->traitName.empty())
-    {
-        Symbol* symbol = resolveTypeSymbol(node->traitName);
-        CHECK(symbol->kind == kTrait, "`{}` is not a trait", node->traitName);
-
-        traitSymbol = dynamic_cast<TraitSymbol*>(symbol);
-    }
-
     // Create type variables for each type parameter
     std::unordered_map<std::string, Type*> typeContext;
-    for (auto& item : node->typeParams)
+    resolveTypeParams(node, node->typeParams, typeContext);
+    _typeContexts.push_back(typeContext);
+
+    TraitSymbol* traitSymbol = nullptr;
+    std::vector<Type*> traitParameters;
+    if (node->traitName)
     {
-        std::string& typeParameter = item.name;
-        std::vector<std::string>& constraints = item.constraints;
-
-        CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
-        Type* var = _typeTable->createTypeVariable(typeParameter, true);
-
-        for (std::string& constraint : constraints)
-        {
-            Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-            CHECK(constraintSymbol, "no such trait `{}`", constraint);
-            CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
-
-            TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
-            assert(traitSymbol);
-
-            var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
-        }
-
-        typeContext.emplace(typeParameter, var);
+        traitSymbol = resolveTrait(node->traitName, traitParameters);
     }
 
-    _typeContexts.push_back(typeContext);
     resolveTypeName(node->typeName);
 
     // Don't allow extraneous type variables, like this:
-    // impl<T> Test
+    // impl<T> Test. This also implies that if this is a trait impl block, then
+    // the trait is no more generic than the object type. In other words, for
+    // each concrete object type, there is a unique concrete trait
     for (auto& item : typeContext)
     {
         CHECK(occurs(item.second->get<TypeVariable>(), node->typeName->type),
@@ -1431,7 +1393,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
             CHECK(traitSymbol->methods.find(item.first) != traitSymbol->methods.end(), "method `{}` is not a member of trait `{}`", item.first, traitSymbol->name);
         }
 
-        traitSymbol->trait->addInstance(node->typeName->type);
+        traitSymbol->trait->addInstance(node->typeName->type, traitParameters);
     }
 
     // Second pass: check the method body
@@ -1456,29 +1418,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
 
         // Create type variables for each type parameter
         std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
-        for (auto& item : node->typeParams)
-        {
-            std::string& typeParameter = item.name;
-            std::vector<std::string>& constraints = item.constraints;
-
-            CHECK_UNDEFINED(typeParameter);
-            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
-            Type* var = _typeTable->createTypeVariable(typeParameter, true);
-
-            for (std::string& constraint : constraints)
-            {
-                Symbol* constraintSymbol = resolveTypeSymbol(constraint);
-                CHECK(constraintSymbol, "no such trait `{}`", constraint);
-                CHECK(constraintSymbol->kind == kTrait, "`{}` is not a trait", constraint);
-
-                TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(constraintSymbol);
-                assert(traitSymbol);
-
-                var->get<TypeVariable>()->addConstraint(traitSymbol->trait);
-            }
-
-            typeContext.emplace(typeParameter, var);
-        }
+        resolveTypeParams(node, node->typeParams, typeContext);
 
         _typeContexts.push_back(typeContext);
         resolveTypeName(node->typeName);
@@ -1531,7 +1471,6 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         _symbolTable->popScope();
         _typeContexts.pop_back();
 
-        unify(node->body->type, functionType->output(), node);
         node->type = _typeTable->Unit;
     }
 }
@@ -1544,19 +1483,33 @@ void SemanticAnalyzer::visit(TraitDefNode* node)
     const std::string& traitName = node->name;
     CHECK_UNDEFINED(traitName);
 
-    // TODO: Generic traits
+    // Create type variables for each type parameter
+    std::unordered_map<std::string, Type*> typeContext;
+    std::vector<Type*> typeParameters;
+    for (const std::string& typeParameter : node->typeParams)
+    {
+        CHECK_UNDEFINED(typeParameter);
+        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
+        Type* var = _typeTable->createTypeVariable(typeParameter, true);
 
-    Trait* trait = _typeTable->createTrait(traitName);
+        typeContext.emplace(typeParameter, var);
+        typeParameters.push_back(var);
+    }
+
+    std::vector<Type*> paramsCopy = typeParameters;
+    Trait* trait = _typeTable->createTrait(traitName, std::move(paramsCopy));
     Type* traitVar = _typeTable->createTypeVariable("Self", true);
     traitVar->get<TypeVariable>()->addConstraint(trait);
-    node->traitSymbol = _symbolTable->createTraitSymbol(traitName, node, trait, traitVar);
+    node->traitSymbol = _symbolTable->createTraitSymbol(traitName, node, trait, traitVar, std::move(typeParameters));
 
     // Recurse to methods
     _enclosingTraitDef = node;
+    _typeContexts.push_back(typeContext);
     for (auto& method : node->methods)
     {
         method->accept(this);
     }
+    _typeContexts.pop_back();
     _enclosingTraitDef = nullptr;
 
     node->type = _typeTable->Unit;

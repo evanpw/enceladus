@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
+#include "semantic/subtype.hpp"
 #include "semantic/type_functions.hpp"
 
 TEST_CASE("subtype checks", "[isSubtype]")
@@ -104,6 +105,8 @@ TEST_CASE("generic-type subtype checks", "[isSubtype-generic]")
     Type* T = table->createTypeVariable("T", true);
     Type* U = table->createTypeVariable("U", true);
     Type* V = table->createTypeVariable("V", true);
+    Type* W = table->createTypeVariable();
+    Type* X = table->createTypeVariable();
     ConstructedType* List = table->createConstructedType("List", {T})->get<ConstructedType>();
     ConstructedType* Pair = table->createConstructedType("Pair", {S, T})->get<ConstructedType>();
     ConstructedType* P3 = table->createConstructedType("P3", {S, T, U})->get<ConstructedType>();
@@ -114,6 +117,9 @@ TEST_CASE("generic-type subtype checks", "[isSubtype-generic]")
     Type* genericList = List->instantiate({S});
     REQUIRE(isSubtype(intList, genericList));
     REQUIRE(!isSubtype(genericList, intList));
+
+    // ['W] <= [S]
+    REQUIRE(isSubtype(List->instantiate({W}), List->instantiate({S})));
 
     // Variables which match in one place must match with the same type in
     // every other place (as if they were substituted)
@@ -128,6 +134,17 @@ TEST_CASE("generic-type subtype checks", "[isSubtype-generic]")
     REQUIRE(!isSubtype(intString, equalPair));
     REQUIRE(isSubtype(twoInts, unequalPair));
     REQUIRE(isSubtype(intString, unequalPair));
+
+    // For unquantified variables, isSubtype answers the question: is there any
+    // assignment to the unquantified free variables which makes lhs a subtype
+    // of rhs?
+    Type* unequalPairUnQ = Pair->instantiate({W, X});
+    REQUIRE(isSubtype(unequalPairUnQ, equalPair));
+
+    Type* equalPairUnQ = Pair->instantiate({W, W});
+    REQUIRE(isSubtype(equalPairUnQ, twoInts));
+    REQUIRE(!isSubtype(equalPairUnQ, intString));
+    REQUIRE(isSubtype(equalPairUnQ, unequalPair));
 
     // First two slots require T1=T2 and T3=T2. Next two test whether the
     // compatibility check correctly determines that T1=T3
@@ -148,6 +165,56 @@ TEST_CASE("generic-type subtype checks", "[isSubtype-generic]")
     Type* t121 = P3->instantiate({S, T, S});
     Type* t21i = P3->instantiate({T, S, table->Int});
     REQUIRE(!isSubtype(t121, t21i));
+
+    delete table;
+}
+
+TEST_CASE("pair subtype checks", "[isSubtype-pairs]")
+{
+    TypeTable* table = new TypeTable;
+
+    Type* S = table->createTypeVariable();
+    Type* T = table->createTypeVariable();
+    Type* U = table->createTypeVariable("U", true);
+    Type* V = table->createTypeVariable("V", true);
+    Type* W = table->createTypeVariable("W", true);
+    Type* X = table->createTypeVariable("X", true);
+    ConstructedType* Pair = table->createConstructedType("Pair", {W, X})->get<ConstructedType>();
+
+    // Pair<'S, 'S> <= Pair<U, V>?
+    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({U, V})));
+
+    // Pair<'S, 'T> <= Pair<U, U>?
+    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({U, U})));
+
+    // Pair<'S, 'T> <= Pair<Int, Int>?
+    CHECK(isSubtype(Pair->instantiate({S, T}), Pair->instantiate({table->Int, table->Int})));
+
+    // Pair<'S, 'S> <= Pair<Int, UInt>?
+    CHECK(!isSubtype(Pair->instantiate({S, S}), Pair->instantiate({table->Int, table->UInt})));
+
+    delete table;
+}
+
+TEST_CASE("constrained pair subtype checks", "[isSubtype-constrained-pairs]")
+{
+    TypeTable* table = new TypeTable;
+
+    Type* S = table->createTypeVariable();
+    Type* T = table->createTypeVariable("T", true);
+    T->get<TypeVariable>()->addConstraint(table->Num);
+    Type* U = table->createTypeVariable("U", true);
+    Type* V = table->createTypeVariable("V", true);
+    ConstructedType* Pair = table->createConstructedType("Pair", {U, V})->get<ConstructedType>();
+
+    // Pair<'S, 'S> <= Pair<T: Num, String>?
+    CHECK(!isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->String})));
+
+    // Pair<'S, 'S> <= Pair<T: Num, T: Num>?
+    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, T})));
+
+    // Pair<'S, 'S> <= Pair<T: Num, Int>?
+    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->Int})));
 
     delete table;
 }
@@ -189,6 +256,66 @@ TEST_CASE("constrained generic-type subtype checks", "[isSubtype-constrained]")
     delete table;
 }
 
+TEST_CASE("complex subtype checks", "[isSubtype-complex]")
+{
+    TypeTable* table = new TypeTable;
+
+    Type* V = table->createTypeVariable("V", true);
+    Trait* Iterator = table->createTrait("Iterator", {V});
+
+    Type* S = table->createTypeVariable();
+    Type* T = table->createTypeVariable("T", true);
+    Type* U = table->createTypeVariable("U", true);
+    T->get<TypeVariable>()->addConstraint(Iterator->instantiate({U}));
+
+    Type* T1 = table->createTypeVariable();
+    T1->get<TypeVariable>()->addConstraint(Iterator->instantiate({table->Int}));
+
+    Type* Y = table->createTypeVariable("Y", true);
+    Type* Z = table->createTypeVariable("Z", true);
+    Y->get<TypeVariable>()->addConstraint(Iterator->instantiate({Z}));
+
+    Type* W = table->createTypeVariable("U", true);
+    Type* X = table->createTypeVariable("V", true);
+    ConstructedType* Pair = table->createConstructedType("Pair", {W, X})->get<ConstructedType>();
+
+    // Make String: Iterator<Char> for the purposes of this test
+    Iterator->addInstance(table->String, {table->UInt8});
+
+    // Pair<'S, 'S> <= Pair<T: Iterator<U>, String>?
+    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->String})));
+
+    // 'T1: Iterator<Int> <= T: Iterator<U>?
+    CHECK(isSubtype(T1, T));
+
+    // Pair<'S, 'S> <= Pair<T: Iterator<U>, Y: Iterator<Z>>?
+    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, Y})));
+
+    delete table;
+}
+
+/*
+TEST_CASE("unification checks", "[unify]")
+{
+    TypeTable* table = new TypeTable;
+
+    Type* S = table->createTypeVariable("S");
+    S->get<TypeVariable>()->addConstraint(table->Num);
+
+    Type* T = table->createTypeVariable("T");
+    T->get<TypeVariable>()->addConstraint(table->Num);
+
+    tryUnify(S, T);
+
+    CHECK(S->get<TypeVariable>());
+    CHECK(S->get<TypeVariable>() == T->get<TypeVariable>());
+    CHECK(S->get<TypeVariable>()->constraints().size() == 1);
+    CHECK(*(S->get<TypeVariable>()->constraints().begin()) == table->Num);
+
+    delete table;
+}
+*/
+
 TEST_CASE("type overlap checks", "[type-overlap]")
 {
     TypeTable* table = new TypeTable;
@@ -228,4 +355,95 @@ TEST_CASE("type overlap checks", "[type-overlap]")
     Type* t6 = P4->instantiate({S, T, S, T});
     Type* t7 = P4->instantiate({U, U, table->Int, table->String});
     REQUIRE(!overlap(t6, t7));
+
+    delete table;
+}
+
+TEST_CASE("generic trait checks", "[generic-trait]")
+{
+    TypeTable* table = new TypeTable;
+
+    SECTION("sub-constraint")
+    {
+        Type* S = table->createTypeVariable("S", true);
+        Trait* Iterator = table->createTrait("Iterator", {S});
+
+        Type* T = table->createTypeVariable("T", true);
+        T->get<TypeVariable>()->addConstraint(Iterator->instantiate({table->UInt8}));
+
+        Type* T1 = table->createTypeVariable();
+        Type* T2 = table->createTypeVariable();
+        T1->get<TypeVariable>()->addConstraint(Iterator->instantiate({T2}));
+
+        // Unify T: Iterator<UInt8> with 'T1: Iterator<'T2>
+        // Expecting T: Iterator<UInt8>
+        tryUnify(T, T1);
+        CHECK(T->get<TypeVariable>() == T1->get<TypeVariable>());
+        CHECK(T->get<TypeVariable>()->constraints().size() == 1);
+    }
+
+    SECTION("string-iterator")
+    {
+        Type* S = table->createTypeVariable("S", true);
+        Trait* Iterator = table->createTrait("Iterator", {S});
+
+        // StringIterator: Iterator<UInt8>
+        Type* StringIterator = table->createBaseType("StringIterator");
+        Iterator->addInstance(StringIterator, {table->UInt8});
+
+        // StringIterator <= Iterator<T>?
+        Type* T = table->createTypeVariable("T", true);
+        CHECK(isSubtype(StringIterator, Iterator->instantiate({T})));
+    }
+
+    SECTION("multiple-params")
+    {
+        Type* T1 = table->createTypeVariable("T1", true);
+        Type* T2 = table->createTypeVariable("T2", true);
+        Trait* Map = table->createTrait("Map", {T1, T2});
+
+        Type* S = table->createTypeVariable("S", true);
+        Type* T = table->createTypeVariable("T", true);
+        Type* U = table->createTypeVariable("U", true);
+
+        Type* V = table->createTypeVariable("V", true);
+        Type* W = table->createTypeVariable("V", true);
+
+        V->get<TypeVariable>()->addConstraint(Map->instantiate({S, S}));
+        W->get<TypeVariable>()->addConstraint(Map->instantiate({T, U}));
+
+        // V: Map<S, S> <= W: Map<T, U>?
+        CHECK(isSubtype(V, W));
+
+        // W: Map<T, U> <= V: Map<S, S>?
+        CHECK(!isSubtype(W, V));
+    }
+
+    SECTION("var-vs-generic")
+    {
+        Type* T = table->createTypeVariable("T", true);
+        Type* List = table->createConstructedType("List", {T});
+
+        Type* S = table->createTypeVariable("S", true);
+        Trait* Iterator = table->createTrait("Iterator", {S});
+
+        // List<T> is an instance of Iterator<T>
+        Iterator->addInstance(List, {T});
+
+        Type* T1 = table->createTypeVariable();
+        Type* T2 = table->createTypeVariable();
+        T1->get<TypeVariable>()->addConstraint(Iterator->instantiate({T2}));
+
+        Type* W = table->createTypeVariable("W", true);
+        Type* genericList = List->get<ConstructedType>()->instantiate({W});
+
+        // Unify 'T1: Iterator<'T2> with [W]
+        // Expecting [W], with 'T2 getting assigned a value of W
+        auto result = tryUnify(T1, genericList);
+        CHECK(result.first);
+        CHECK(equals(T1, genericList));
+        CHECK(equals(T2, W));
+    }
+
+    delete table;
 }

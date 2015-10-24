@@ -478,17 +478,18 @@ StatementNode* Parser::assign_or_expr()
     }
 }
 
+/// variable_declaration
+///     : LIDENT COLON_EQUAL expression EOL
 VariableDefNode* Parser::variable_declaration()
 {
     YYLTYPE location = getLocation();
 
     Token varName = expect(tLIDENT);
-    TypeName* varType = accept(':') ? type() : nullptr;
     expect(tCOLON_EQUAL);
     ExpressionNode* value = expression();
     expect(tEOL);
 
-    return new VariableDefNode(_context, location, varName.value.str, varType, value);
+    return new VariableDefNode(_context, location, varName.value.str, value);
 }
 
 BreakNode* Parser::break_statement()
@@ -502,8 +503,7 @@ BreakNode* Parser::break_statement()
 }
 
 /// implementation_block
-///     : IMPL constrained_type_params type EOL INDENT method_definition { method_definition } DEDENT
-///     | IMPL constrained_type_params UIDENT FOR type EOL INDENT method_definition { method_definition } DEDENT
+///     : IMPL constrained_type_params type [ FOR type ] EOL INDENT method_definition { method_definition } DEDENT
 ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
@@ -511,15 +511,15 @@ ImplNode* Parser::implementation_block()
     expect(tIMPL);
 
     std::vector<TypeParam> typeParams = constrained_type_params();
-    std::string traitName;
-
-    if (peekType() == tUIDENT && peek2ndType() == tFOR)
-    {
-        traitName = expect(tUIDENT).value.str;
-        expect(tFOR);
-    }
 
     TypeName* typeName = type();
+    TypeName* traitName = nullptr;
+
+    if (accept(tFOR))
+    {
+        traitName = typeName;
+        typeName = type();
+    }
 
     expect(tEOL);
     expect(tINDENT);
@@ -552,7 +552,7 @@ MethodDefNode* Parser::method_definition()
 }
 
 /// trait_definition
-///     : TRAIT UIDENT EOL INDENT trait_method { trait_method } DEDENT
+///     : TRAIT UIDENT type_params EOL INDENT trait_method { trait_method } DEDENT
 TraitDefNode* Parser::trait_definition()
 {
     YYLTYPE location = getLocation();
@@ -560,6 +560,7 @@ TraitDefNode* Parser::trait_definition()
     expect(tTRAIT);
 
     Token traitName = expect(tUIDENT);
+    auto typeParams = type_params();
 
     expect(tEOL);
     expect(tINDENT);
@@ -570,7 +571,7 @@ TraitDefNode* Parser::trait_definition()
         methods.push_back(trait_method());
     }
 
-    return new TraitDefNode(_context, location, traitName.value.str, std::move(methods));
+    return new TraitDefNode(_context, location, traitName.value.str, std::move(typeParams), std::move(methods));
 }
 
 /// trait_method
@@ -774,6 +775,29 @@ TypeName* Parser::simple_type()
     }
 }
 
+/// trait_name
+///     : UIDENT [ '<' type {',' type } '>' ]
+TypeName* Parser::trait_name()
+{
+    YYLTYPE location = getLocation();
+
+    Token name = expect(tUIDENT);
+    TypeName* typeName = new TypeName(_context, location, name.value.str);
+
+    if (accept('<'))
+    {
+        typeName->parameters.push_back(type());
+        while (accept(','))
+        {
+            typeName->parameters.push_back(type());
+        }
+
+        expect('>');
+    }
+
+    return typeName;
+}
+
 /// constructor_spec
 ///     : UIDENT [ '(' type { ',' type } ')' ]
 ConstructorSpec* Parser::constructor_spec()
@@ -888,6 +912,8 @@ std::vector<TypeParam> Parser::constrained_type_params()
     return result;
 }
 
+/// constrained_type_param
+///     : UIDENT [':' trait_name { '+' trait_name }]
 TypeParam Parser::constrained_type_param()
 {
     Token typeVar = expect(tUIDENT);
@@ -896,13 +922,11 @@ TypeParam Parser::constrained_type_param()
 
     if (accept(':'))
     {
-        Token constraint = expect(tUIDENT);
-        result.constraints.push_back(constraint.value.str);
+        result.constraints.push_back(trait_name());
 
         while (accept('+'))
         {
-            Token constraint = expect(tUIDENT);
-            result.constraints.push_back(constraint.value.str);
+            result.constraints.push_back(trait_name());
         }
     }
 

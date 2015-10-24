@@ -17,7 +17,7 @@ public:
     TraitMethodSymbol* createTraitMethodSymbol(const std::string& name, AstNode* node, TraitSymbol* traitSymbol);
     MemberVarSymbol* createMemberVarSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition, Type* parentType, size_t index);
 
-    TraitSymbol* createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar);
+    TraitSymbol* createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters = {});
     TypeSymbol* createTypeSymbol(const std::string& name, AstNode* node, Type* type);
 
     void pushScope();

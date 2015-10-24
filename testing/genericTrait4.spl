@@ -1,0 +1,10 @@
+trait Test<T>
+    def nothing(self: Self) -> Unit
+
+impl Test<Char> for Int
+    def nothing(self: Int) -> Unit
+        pass
+
+impl Test<Int> for Int
+    def nothing(self: Int) -> Unit
+        pass

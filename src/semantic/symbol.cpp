@@ -31,8 +31,8 @@ TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)
     this->type = type;
 }
 
-TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar)
-: Symbol(name, kTrait, node, nullptr, true)
+TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters)
+: Symbol(name, kTrait, node, nullptr, true), typeParameters(typeParameters)
 {
     assert(traitVar->isVariable() && traitVar->get<TypeVariable>()->quantified());
     this->trait = trait;

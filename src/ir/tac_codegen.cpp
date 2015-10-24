@@ -2,6 +2,7 @@
 
 #include "ast/ast_context.hpp"
 #include "lib/library.h"
+#include "semantic/subtype.hpp"
 #include "semantic/type_functions.hpp"
 
 #include <algorithm>

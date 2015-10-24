@@ -1,0 +1,5 @@
+def getHead<T: Iterator<Char>>(x: T) -> Char
+    return x.head()
+
+i := "Hello World".iter()
+print $ show $ getHead(i) as Int

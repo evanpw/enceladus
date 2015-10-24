@@ -72,7 +72,7 @@ struct TypeParam
 	{}
 
 	std::string name;
-	std::vector<std::string> constraints;
+	std::vector<TypeName*> constraints;
 };
 
 
@@ -458,14 +458,13 @@ public:
 class VariableDefNode : public StatementNode
 {
 public:
-	VariableDefNode(AstContext* context, const YYLTYPE& location, const std::string& target, TypeName* typeName, ExpressionNode* rhs)
-	: StatementNode(context, location), target(target), typeName(typeName), rhs(rhs)
+	VariableDefNode(AstContext* context, const YYLTYPE& location, const std::string& target, ExpressionNode* rhs)
+	: StatementNode(context, location), target(target), rhs(rhs)
 	{}
 
 	AST_VISITABLE();
 
 	std::string target;
-	TypeName* typeName;
 	ExpressionNode* rhs;
 
 	// Annotations
@@ -510,7 +509,7 @@ public:
 class ImplNode : public StatementNode
 {
 public:
-	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<TypeParam>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods, const std::string& traitName)
+	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<TypeParam>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods, TypeName* traitName)
 	: StatementNode(context, location), typeParams(typeParams), typeName(typeName), methods(methods), traitName(traitName)
 	{}
 
@@ -519,7 +518,7 @@ public:
 	std::vector<TypeParam> typeParams;
 	TypeName* typeName;
 	std::vector<MethodDefNode*> methods;
-	std::string traitName;
+	TypeName* traitName;
 
 	// Annotations
 	std::unordered_map<std::string, Type*> typeContext;
@@ -542,13 +541,14 @@ public:
 class TraitDefNode : public StatementNode
 {
 public:
-	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<TraitMethodNode*>&& methods)
-	: StatementNode(context, location), name(name), methods(methods)
+	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<std::string>&& typeParams, std::vector<TraitMethodNode*>&& methods)
+	: StatementNode(context, location), name(name), typeParams(typeParams), methods(methods)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
+	std::vector<std::string> typeParams;
 	std::vector<TraitMethodNode*> methods;
 
 	// Annotations
