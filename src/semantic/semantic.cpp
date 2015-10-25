@@ -3,6 +3,7 @@
 #include "ast/ast_context.hpp"
 #include "lib/library.h"
 #include "semantic/subtype.hpp"
+#include "semantic/unify_trait.hpp"
 #include "semantic/type_functions.hpp"
 #include "utility.hpp"
 
@@ -50,26 +51,52 @@ static void unify(Type* lhs, Type* rhs, AstNode* node)
     }
 }
 
+// TODO: Calling these parameters "const" is deeply misleading
+static void unify(const Type* lhs, const Trait* rhs, AstNode* node)
+{
+    auto result = tryUnify(lhs, rhs);
+
+    if (!result.first)
+    {
+        if (!result.second.empty())
+        {
+            inferenceError(node, result.second);
+        }
+        else
+        {
+            std::stringstream ss;
+            ss << "cannot unify type " << lhs->str() << " with trait " << rhs->str();
+            inferenceError(node, ss.str());
+        }
+    }
+}
+
 static void imposeConstraint(Type* type, const Trait* trait, AstNode* node)
 {
     if (type->isVariable())
     {
         TypeVariable* var = type->get<TypeVariable>();
 
-        // A quantified type variable can't acquire any new constraints in the
-        // process of unification (see overrideType test)
-        if (var->quantified())
+        auto& constraints = var->constraints();
+
+        bool matches = constraints.find(trait) != constraints.end();
+
+        if (!matches)
         {
-            auto& constraints = var->constraints();
-            if (constraints.find(trait) == constraints.end())
+            // A quantified type variable can't acquire any new constraints in the
+            // process of unification (see overrideType test)
+            if (var->quantified())
             {
                 std::stringstream ss;
                 ss << "Type variable " << type->str() << " does not satisfy constraint " << trait->str();
                 inferenceError(node, ss.str());
             }
+            else
+            {
+                var->addConstraint(trait);
+            }
         }
 
-        var->addConstraint(trait);
         return;
     }
 
@@ -966,23 +993,26 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     assert(iteratorSymbol);
     Type* varType = _typeTable->createTypeVariable();
     const Trait* Iterator = iteratorSymbol->trait->instantiate({varType});
-    imposeConstraint(iteratorType, Iterator, node->listExpression);
+
+    //std::cerr << "before: " << iteratorType->str() << " -- " << Iterator->str() << std::endl;
+    unify(iteratorType, Iterator, node->listExpression);
+    //std::cerr << "after: " << iteratorType->str() << " -- " << Iterator->str() << std::endl;
 
     // HACK: Give the code generator access to these symbols
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol("head", iteratorType, symbols);
-    node->headSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
+    node->headSymbol = symbols.front();
     Type* headType = instantiate(node->headSymbol->type, node->headTypeAssignment);
     node->varType = headType->get<FunctionType>()->output();
     unify(headType, _typeTable->createFunctionType({iteratorType}, node->varType), node);
 
     _symbolTable->resolveMemberSymbol("tail", iteratorType, symbols);
-    node->tailSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
+    node->tailSymbol = symbols.front();
     Type* tailType = instantiate(node->tailSymbol->type, node->tailTypeAssignment);
     unify(tailType, _typeTable->createFunctionType({iteratorType}, iteratorType), node);
 
     _symbolTable->resolveMemberSymbol("empty", iteratorType, symbols);
-    node->emptySymbol = dynamic_cast<MethodSymbol*>(symbols.front());
+    node->emptySymbol = symbols.front();
     Type* emptyType = instantiate(node->emptySymbol->type, node->emptyTypeAssignment);
     unify(emptyType, _typeTable->createFunctionType({iteratorType}, _typeTable->Bool), node);
 
@@ -1305,6 +1335,30 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     node->type = functionType->output();
     node->constructorSymbol = symbol->constructorSymbol;
     node->memberIndex = symbol->index;
+}
+
+void SemanticAnalyzer::visit(IndexNode* node)
+{
+    node->object->accept(this);
+
+    // Make sure the object's type is an instance of Index
+    TraitSymbol* indexSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Index"));
+    assert(indexSymbol);
+    Type* outputType = _typeTable->createTypeVariable();
+    const Trait* Index = indexSymbol->trait->instantiate({outputType});
+    imposeConstraint(node->object->type, Index, node->object);
+
+    // Find the at method
+    std::vector<MemberSymbol*> symbols;
+    _symbolTable->resolveMemberSymbol("at", node->object->type, symbols);
+    node->atSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
+    Type* atType = instantiate(node->atSymbol->type, node->typeAssignment);
+    unify(atType, _typeTable->createFunctionType({node->object->type}, outputType), node);
+
+    node->index->accept(this);
+    unify(node->index->type, _typeTable->UInt, node->index);
+
+    node->type = outputType;
 }
 
 void SemanticAnalyzer::visit(ImplNode* node)

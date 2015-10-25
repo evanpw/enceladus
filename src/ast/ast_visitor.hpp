@@ -22,6 +22,7 @@ class FunctionDefNode;
 class IfElseNode;
 class IfNode;
 class ImplNode;
+class IndexNode;
 class IntNode;
 class LetNode;
 class LogicalNode;
@@ -62,6 +63,7 @@ public:
 	virtual void visit(IfElseNode* node);
 	virtual void visit(IfNode* node);
 	virtual void visit(ImplNode* node);
+	virtual void visit(IndexNode* node);
 	virtual void visit(LetNode* node);
 	virtual void visit(LogicalNode* node);
 	virtual void visit(MatchArm* node);

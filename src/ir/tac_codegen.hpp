@@ -50,6 +50,7 @@ public:
     UNSUPPORTED(IfElseNode);
     UNSUPPORTED(IfNode);
     UNSUPPORTED(ImplNode);
+    //UNSUPPORTED(IndexNode);
     UNSUPPORTED(IntNode);
     UNSUPPORTED(LetNode);
     UNSUPPORTED(MatchArm);
@@ -130,6 +131,7 @@ public:
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
     virtual void visit(ImplNode* node);
+    //virtual void visit(IndexNode* node);
     virtual void visit(IntNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
@@ -162,6 +164,7 @@ private:
 
     Value* getValue(const Symbol* symbol);
     Value* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
+    Value* getTraitMethodValue(Type* objectType, const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
     ValueType getValueType(Type* type);
     ValueType getValueType(Type* type, const TypeAssignment& typeAssignment);

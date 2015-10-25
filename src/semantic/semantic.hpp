@@ -47,6 +47,7 @@ public:
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
     virtual void visit(ImplNode* node);
+    virtual void visit(IndexNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
     virtual void visit(MatchArm* node);

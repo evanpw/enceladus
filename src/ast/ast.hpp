@@ -391,11 +391,11 @@ public:
 	Type* varType;
 
 	// HACK: give the code generator to these functions
-	MethodSymbol* headSymbol;
+	Symbol* headSymbol;
 	std::map<TypeVariable*, Type*> headTypeAssignment;
-	MethodSymbol* tailSymbol;
+	Symbol* tailSymbol;
 	std::map<TypeVariable*, Type*> tailTypeAssignment;
-	MethodSymbol* emptySymbol;
+	Symbol* emptySymbol;
 	std::map<TypeVariable*, Type*> emptyTypeAssignment;
 };
 
@@ -657,6 +657,24 @@ public:
 	AST_VISITABLE();
 
 	ExpressionNode* expression;
+};
+
+class IndexNode : public ExpressionNode
+{
+public:
+	IndexNode(AstContext* context, const YYLTYPE& location, ExpressionNode* object, ExpressionNode* index)
+	: ExpressionNode(context, location), object(object), index(index)
+	{}
+
+	AST_VISITABLE();
+
+	ExpressionNode* object;
+	ExpressionNode* index;
+
+	// Annotations
+	// HACK: give the code generator access to this method
+	MethodSymbol* atSymbol;
+	std::map<TypeVariable*, Type*> typeAssignment;
 };
 
 //// Structures ////////////////////////////////////////////////////////////////

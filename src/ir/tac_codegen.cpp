@@ -524,6 +524,26 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
     return result;
 }
 
+Value* TACCodeGen::getTraitMethodValue(Type* objectType, const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
+{
+    assert(symbol->kind == kTraitMethod);
+    Trait* trait = dynamic_cast<const TraitMethodSymbol*>(symbol)->trait;
+
+    objectType = substitute(substitute(objectType, typeAssignment), _typeContext);
+    assert(isConcrete(objectType));
+    assert(isSubtype(objectType, trait));
+
+    MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(symbol->name, objectType);
+    assert(methodSymbol);
+
+    TypeAssignment assignment;
+    Type* parentType = instantiate(methodSymbol->parentType, assignment);
+    auto result = tryUnify(parentType, objectType);
+    assert(result.first);
+
+    return getFunctionValue(methodSymbol, node, assignment);
+}
+
 void TACConditionalCodeGen::emit(Instruction* inst)
 {
     _mainCodeGen->emit(inst);
@@ -996,9 +1016,25 @@ void TACCodeGen::visit(WhileNode* node)
 void TACCodeGen::visit(ForeachNode* node)
 {
     // HACK
-    Value* headFunction = getFunctionValue(node->headSymbol, node, node->headTypeAssignment);
-    Value* tailFunction = getFunctionValue(node->tailSymbol, node, node->tailTypeAssignment);
-    Value* emptyFunction = getFunctionValue(node->emptySymbol, node, node->emptyTypeAssignment);
+    Value* headFunction;
+    Value* tailFunction;
+    Value* emptyFunction;
+    if (node->headSymbol->kind == kMethod)
+    {
+        headFunction = getFunctionValue(node->headSymbol, node, node->headTypeAssignment);
+        tailFunction = getFunctionValue(node->tailSymbol, node, node->tailTypeAssignment);
+        emptyFunction = getFunctionValue(node->emptySymbol, node, node->emptyTypeAssignment);
+    }
+    else
+    {
+        assert(node->headSymbol->kind == kTraitMethod);
+
+        Type* objectType = node->listExpression->type;
+
+        headFunction = getTraitMethodValue(objectType, node->headSymbol, node, node->headTypeAssignment);
+        tailFunction = getTraitMethodValue(objectType, node->tailSymbol, node, node->tailTypeAssignment);
+        emptyFunction = getTraitMethodValue(objectType, node->emptySymbol, node, node->emptyTypeAssignment);
+    }
 
     BasicBlock* loopInit = createBlock();
     BasicBlock* loopBegin = createBlock();
@@ -1052,6 +1088,46 @@ void TACCodeGen::visit(ForeachNode* node)
 
     setBlock(loopExit);
 }
+
+/*
+void TACCodeGen::visit(IndexNode* node)
+{
+    // HACK
+    Value* atFunction = getFunctionValue(node->atSymbol, node, node->typeAssignment);
+
+    Value* object = visitAndGet(node->object);
+    Value* index = visitAndGet(node->object);
+    std::vector<Value*> arguments = {object, index};
+
+    node->value = createTemp(getValueType(node->type));
+
+    if (node->symbol->kind == kMethod)
+    {
+        Value* method = getFunctionValue(node->symbol, node, node->typeAssignment);
+        emit(new CallInst(node->value, method, arguments));
+    }
+    else if (node->symbol->kind == kTraitMethod)
+    {
+        TraitMethodSymbol* symbol = dynamic_cast<TraitMethodSymbol*>(node->symbol);
+        assert(symbol);
+
+        Type* objectType = substitute(substitute(node->object->type, node->typeAssignment), _typeContext);
+        assert(isConcrete(objectType));
+        assert(isSubtype(objectType, symbol->trait));
+
+        MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->methodName, objectType);
+        assert(methodSymbol);
+
+        TypeAssignment assignment;
+        Type* parentType = instantiate(methodSymbol->parentType, assignment);
+        auto result = tryUnify(parentType, objectType);
+        assert(result.first);
+
+        Value* method = getFunctionValue(methodSymbol, node, assignment);
+        emit(new CallInst(node->value, method, arguments));
+    }
+}
+*/
 
 void TACCodeGen::visit(ForeverNode* node)
 {
@@ -1246,23 +1322,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
     }
     else if (node->symbol->kind == kTraitMethod)
     {
-        TraitMethodSymbol* symbol = dynamic_cast<TraitMethodSymbol*>(node->symbol);
-        assert(symbol);
-
-        assert(node->typeName && node->typeName->type);
-        Type* objectType = substitute(substitute(node->typeName->type, node->typeAssignment), _typeContext);
-        assert(isConcrete(objectType));
-        assert(isSubtype(objectType, symbol->trait));
-
-        MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->target, objectType);
-        assert(methodSymbol);
-
-        TypeAssignment assignment;
-        Type* parentType = instantiate(methodSymbol->parentType, assignment);
-        auto unifyResult = tryUnify(parentType, objectType);
-        assert(unifyResult.first);
-
-        Value* method = getFunctionValue(methodSymbol, node, assignment);
+        // Static trait method
+        Value* method = getTraitMethodValue(node->typeName->type, node->symbol, node, node->typeAssignment);
         emit(new CallInst(result, method, arguments));
     }
     else /* node->symbol->kind == kVariable */
@@ -1343,22 +1404,7 @@ void TACCodeGen::visit(MethodCallNode* node)
     }
     else if (node->symbol->kind == kTraitMethod)
     {
-        TraitMethodSymbol* symbol = dynamic_cast<TraitMethodSymbol*>(node->symbol);
-        assert(symbol);
-
-        Type* objectType = substitute(substitute(node->object->type, node->typeAssignment), _typeContext);
-        assert(isConcrete(objectType));
-        assert(isSubtype(objectType, symbol->trait));
-
-        MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->methodName, objectType);
-        assert(methodSymbol);
-
-        TypeAssignment assignment;
-        Type* parentType = instantiate(methodSymbol->parentType, assignment);
-        auto result = tryUnify(parentType, objectType);
-        assert(result.first);
-
-        Value* method = getFunctionValue(methodSymbol, node, assignment);
+        Value* method = getTraitMethodValue(node->object->type, node->symbol, node, node->typeAssignment);
         emit(new CallInst(node->value, method, arguments));
     }
 }

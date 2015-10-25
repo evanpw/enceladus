@@ -176,3 +176,9 @@ void AstVisitor::visit(TraitDefNode* node)
 		method->accept(this);
 	}
 }
+
+void AstVisitor::visit(IndexNode* node)
+{
+	node->object->accept(this);
+	node->index->accept(this);
+}

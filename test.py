@@ -481,6 +481,9 @@ class TestAcceptance(object):
     def test_genericTrait4(self):
         self.run('genericTrait4', build_error='Error: testing/genericTrait4.spl:9:5: type `Int` already has a method or member named `nothing`')
 
+    def test_genericTrait5(self):
+        self.run('genericTrait5', '20\n10\n')
+
     def test_iterateInt(self):
         self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterator<\'T\d+>'))
 
