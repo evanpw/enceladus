@@ -275,22 +275,6 @@ public:
 	std::map<TypeVariable*, Type*> typeAssignment;
 };
 
-class VariableNode : public ExpressionNode
-{
-public:
-	VariableNode(AstContext* context, const YYLTYPE& location, const std::string& name)
-	: ExpressionNode(context, location), name(name)
-	{
-	}
-
-	AST_VISITABLE();
-
-	std::string name;
-
-	// Annotations
-	Symbol* symbol = nullptr;
-};
-
 class BinopNode : public ExpressionNode
 {
 public:

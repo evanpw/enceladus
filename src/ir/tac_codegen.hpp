@@ -68,7 +68,6 @@ public:
     virtual void visit(BoolNode* node) { wrapper(node); }
     virtual void visit(MemberAccessNode* node) { wrapper(node); }
     virtual void visit(NullaryNode* node) { wrapper(node); }
-    virtual void visit(VariableNode* node) { wrapper(node); }
     virtual void visit(MethodCallNode* node) { wrapper(node); }
 
     virtual void visit(FunctionCallNode* node);
@@ -144,7 +143,6 @@ public:
     virtual void visit(StringLiteralNode* node);
     virtual void visit(StructDefNode* node);
     virtual void visit(VariableDefNode* node);
-    virtual void visit(VariableNode* node);
     virtual void visit(WhileNode* node);
 
     // No code to generate (or handled separately)

@@ -1,0 +1,74 @@
+# Single Round Match 671 Round 1 - Division I, Level One
+import Vector
+
+struct Progress
+    nonempty: Vector<Bool>
+    closed: Vector<Bool>
+
+impl Progress
+    def new() -> Progress
+        return Progress(Vector::new(), Vector::new())
+
+    def copy(self: Progress) -> Progress
+        return Progress(self.nonempty.copy(), self.closed.copy())
+
+impl Vector<Bool>
+    def toString(self: Vector<Bool>) -> String
+        result := []
+        for x in self.iter()
+            if x
+                result = result.insert('1')
+            else
+                result = result.insert('0')
+
+        return strFromList(result.reverse())
+
+def compute(progress: Progress, message: String, idx: UInt) -> Int
+    assert progress.nonempty.size == progress.closed.size
+
+    if idx == message.length()
+        if all(progress.nonempty) and all(progress.closed)
+            return 1
+        else
+            return 0
+
+    c := message.at(idx)
+
+    total := 0
+
+    if c == ';'
+        # Create a new emoticon
+        next := progress.copy()
+        next.nonempty.append(False)
+        next.closed.append(False)
+        total += compute(next, message, idx + 1)
+
+        # Close an existing emoticon
+        for i in range(0, progress.nonempty.size)
+            if progress.nonempty[i] and not progress.closed[i]
+                next := progress.copy()
+                next.closed.set(i, True)
+                total += compute(next, message, idx + 1)
+    else
+        assert c == '_'
+
+        for i in range(0, progress.nonempty.size)
+            if not progress.closed[i]
+                next := progress.copy()
+                next.nonempty.set(i, True)
+                total += compute(next, message, idx + 1)
+
+    return total
+
+def count(message: String) -> Int
+    return compute(Progress::new(), message, 0) mod 1000000007
+
+assert count("_;__;") == 0
+assert count(";__;____;") == 0
+assert count(";_;_") == 0
+assert count(";;") == 0
+assert count(";_;") == 1
+assert count(";_;;_____;") == 2
+assert count(";;;___;;;") == 36
+assert count(";_____________________________________;") == 1
+assert count(";_;;__;_;;") == 52

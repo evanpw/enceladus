@@ -42,7 +42,6 @@ class TraitMethodNode;
 class TypeAliasNode;
 class TypeName;
 class VariableDefNode;
-class VariableNode;
 class WhileNode;
 
 class AstVisitor
@@ -90,7 +89,6 @@ public:
 	virtual void visit(TraitMethodNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(TypeName* node) {}
-	virtual void visit(VariableNode* node) {}
 };
 
 #endif

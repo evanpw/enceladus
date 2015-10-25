@@ -663,11 +663,7 @@ void SemanticAnalyzer::visit(AssignNode* node)
     node->lhs->accept(this);
 
     Symbol* symbol;
-    if (VariableNode* lhs = dynamic_cast<VariableNode*>(node->lhs))
-    {
-        symbol = lhs->symbol;
-    }
-    else if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
+    if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
     {
         symbol = lhs->symbol;
     }
@@ -1083,16 +1079,6 @@ void SemanticAnalyzer::visit(ReturnNode* node)
 
     unify(node->expression->type, functionType->output(), node);
     node->type = _typeTable->Unit;
-}
-
-void SemanticAnalyzer::visit(VariableNode* node)
-{
-    Symbol* symbol = resolveSymbol(node->name);
-    CHECK(symbol != nullptr, "symbol `{}` is not defined in this scope", node->name);
-    CHECK(symbol->kind == kVariable, "symbol `{}` is not a variable", node->name);
-
-    node->symbol = symbol;
-    node->type = symbol->type;
 }
 
 void SemanticAnalyzer::visit(DataDeclaration* node)

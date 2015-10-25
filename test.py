@@ -484,6 +484,9 @@ class TestAcceptance(object):
     def test_iterateInt(self):
         self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterator<\'T\d+>'))
 
+    def test_bearCries(self):
+        self.run('bear_cries', '')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

@@ -3,6 +3,9 @@ struct Vector<T: Default>
     capacity: UInt
     size: UInt
 
+struct VectorIterator<T: Default>
+    v: Vector<T>
+    idx: UInt
 
 impl<T: Default> Vector<T>
     def new() -> Vector<T>
@@ -33,3 +36,41 @@ impl<T: Default> Vector<T>
 
     def at(self: Vector<T>, n: UInt) -> T
         return self.content.at(n)
+
+    def set(self: Vector<T>, n: UInt, x: T) -> Unit
+        self.content.set(n, x)
+
+    def copy(self: Vector<T>) -> Vector<T>
+        result := Vector(makeArray(self.capacity, T::default()), self.capacity, self.size)
+        for i in range(0, self.size)
+            result.content.set(i, self.content[i])
+
+        return result
+
+    def iter(self: Vector<T>) -> VectorIterator<T>
+        return VectorIterator(self, 0)
+
+impl<T: Default> Iterator<T> for VectorIterator<T>
+    def head(self: VectorIterator<T>) -> T
+        assert self.idx < self.v.size
+        return self.v.at(self.idx)
+
+    def tail(self: VectorIterator<T>) -> VectorIterator<T>
+        return VectorIterator(self.v, self.idx + 1)
+
+    def empty(self: VectorIterator<T>) -> Bool
+        return self.idx >= self.v.size
+
+def all(xs: Vector<Bool>) -> Bool
+    for x in xs.iter()
+        if not x
+            return False
+
+    return True
+
+def any(xs: Vector<Bool>) -> Bool
+    for x in xs.iter()
+        if x
+            return True
+
+    return False

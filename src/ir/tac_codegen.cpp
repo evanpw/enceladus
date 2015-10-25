@@ -1086,12 +1086,7 @@ void TACCodeGen::visit(AssignNode* node)
 
     // TODO: Is there a less-hacky way of doing this?
     Symbol* symbol;
-    if (VariableNode* lhs = dynamic_cast<VariableNode*>(node->lhs))
-    {
-        Value* dest = getValue(lhs->symbol);
-        emit(new StoreInst(dest, value));
-    }
-    else if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
+    if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
     {
         Value* dest = getValue(lhs->symbol);
         emit(new StoreInst(dest, value));
@@ -1372,13 +1367,6 @@ void TACCodeGen::visit(ReturnNode* node)
 {
     Value* result = visitAndGet(node->expression);
     emit(new ReturnInst(result));
-}
-
-void TACCodeGen::visit(VariableNode* node)
-{
-    assert(node->symbol->kind == kVariable);
-    node->value = createTemp(getValueType(node->symbol->type));
-    emit(new LoadInst(node->value, getValue(node->symbol)));
 }
 
 void TACCodeGen::visit(MemberAccessNode* node)

@@ -71,7 +71,6 @@ public:
     virtual void visit(ReturnNode* node);
     virtual void visit(StringLiteralNode* node);
     virtual void visit(TraitMethodNode* node);
-    virtual void visit(VariableNode* node);
 
 private:
     //// General semantic analysis /////////////////////////////////////////////
