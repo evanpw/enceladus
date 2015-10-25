@@ -2,20 +2,22 @@
 #define TYPE_FUNCTIONS_HPP
 
 #include "semantic/types.hpp"
-#include <map>
+#include <unordered_map>
 
-Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements);
+Type* instantiate(Type* type, TypeAssignment& replacements);
 Type* instantiate(Type* type);
-const Trait* instantiate(const Trait* trait);
+Trait* instantiate(Trait* trait);
+
+Type* substitute(Type* original, const TypeAssignment& typeAssignment);
 
 bool hasOverlappingInstance(Trait* trait, Type* type);
 
-std::pair<bool, std::string> bindVariable(Type* variable, const Type* value);
+std::pair<bool, std::string> bindVariable(Type* variable, Type* value);
 std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs);
-bool occurs(const TypeVariable* variable, const Type* value);
+bool occurs(const TypeVariable* variable, Type* value);
 
-bool equals(const Type* lhs, const Type* rhs);
+bool equals(Type* lhs, Type* rhs);
 
-bool overlap(const Type* lhs, const Type* rhs);
+bool overlap(Type* lhs, Type* rhs);
 
 #endif

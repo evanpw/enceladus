@@ -1180,7 +1180,8 @@ ExpressionNode* Parser::method_member_idx_expression()
             ExpressionNode* index = expression();
             expect(']');
 
-            expr = new MethodCallNode(_context, location, expr, "at", {index});
+            expr = new IndexNode(_context, location, expr, index);
+            //expr = new MethodCallNode(_context, location, expr, "at", {index});
         }
         else
         {

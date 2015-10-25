@@ -3,7 +3,7 @@
 #include "semantic/type_functions.hpp"
 #include <sstream>
 
-std::pair<bool, std::string> tryUnify(const Trait* lhs, const Trait* rhs)
+std::pair<bool, std::string> tryUnify(Trait* lhs, Trait* rhs)
 {
     assert(lhs->prototype() == rhs->prototype());
     assert(lhs->parameters().size() == rhs->parameters().size());
@@ -20,7 +20,7 @@ std::pair<bool, std::string> tryUnify(const Trait* lhs, const Trait* rhs)
     return {true, ""};
 }
 
-std::pair<bool, std::string> tryUnify(const Type* type, const Trait* trait)
+std::pair<bool, std::string> tryUnify(Type* type, Trait* trait)
 {
     if (type->isVariable())
     {
@@ -28,7 +28,7 @@ std::pair<bool, std::string> tryUnify(const Type* type, const Trait* trait)
         auto& constraints = var->constraints();
 
         bool found = false;
-        for (const Trait* constraint : constraints)
+        for (Trait* constraint : constraints)
         {
             if (constraint->prototype() == trait->prototype())
             {
@@ -65,7 +65,9 @@ std::pair<bool, std::string> tryUnify(const Type* type, const Trait* trait)
 
         for (const Trait::Instance& instance : trait->instances())
         {
-            if (isSubtype(type, instance.type))
+            TypeComparer comparer;
+
+            if (comparer.compare(type, instance.type))
             {
                 found = true;
 
@@ -73,7 +75,9 @@ std::pair<bool, std::string> tryUnify(const Type* type, const Trait* trait)
 
                 for (size_t i = 0; i < instance.traitParams.size(); ++i)
                 {
-                    auto result = tryUnify(trait->parameters()[i], instance.traitParams[i]);
+                    // TODO: Do we need instantiate instead of substitute?
+                    Type* instanceParam = substitute(instance.traitParams[i], comparer.rhsSubs());
+                    auto result = tryUnify(trait->parameters()[i], instanceParam);
                     if (!result.first)
                     {
                         return result;

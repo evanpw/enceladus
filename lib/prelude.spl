@@ -7,11 +7,15 @@ impl<T> List<T>
     def insert(self: List<T>, x: T) -> List<T>
         return Cons(x, self)
 
-# Iterator trait ##
+## Iterator trait ##
 trait Iterator<T>
     def head(self: Self) -> T
     def tail(self: Self) -> Self
     def empty(self: Self) -> Bool
+
+## Index trait ##
+trait Index<S, T>
+    def at(self: Self, n: S) -> T
 
 ## String ##
 type Char = UInt8
@@ -36,14 +40,15 @@ impl String
     def slice(self: String, pos: UInt, len: UInt) -> String
         return strSlice(self, pos, len)
 
-    def at(self: String, n: UInt) -> UInt8
-        return strAt(self, n)
-
     def concat(self: String, other: String) -> String
         return strCat(self, other)
 
     def iter(self: String) -> StringIterator
         return StringIterator(self, 0u)
+
+impl Index<UInt, Char> for String
+    def at(self: String, n: UInt) -> UInt8
+        return strAt(self, n)
 
 impl Iterator<Char> for StringIterator
     def head(self: StringIterator) -> Char
@@ -80,11 +85,12 @@ def makeArray<T>(size: UInt, value: T) -> Array<T>
     return arr
 
 # Method wrappers (methods can't be implemented in C)
-impl<T> Array<T>
+impl<T> Index<UInt, T> for Array<T>
     def at(self: Array<T>, n: UInt) -> T
         assert n < arrayLength(self)
         return unsafeArrayAt(self, n)
 
+impl<T> Array<T>
     def set(self: Array<T>, n: UInt, value: T) -> Unit
         assert n < arrayLength(self)
         unsafeArraySet(self, n, value)
@@ -157,6 +163,16 @@ impl<T> Iterator<T> for List<T>
             Nil
                 return True
 
+impl<T> Index<UInt, T> for List<T>
+    def at(self: [T], n: UInt) -> T
+        xs := self
+
+        while n > 0
+            xs = xs.tail()
+            n -= 1
+
+        return xs.head()
+
 impl<T> List<T>
     def length(self: [T]) -> UInt
         result := 0
@@ -179,15 +195,6 @@ impl<T> List<T>
             return self
         else
             return self.tail().drop(n - 1)
-
-    def at(self: [T], n: UInt) -> T
-        xs := self
-
-        while n > 0
-            xs = xs.tail()
-            n -= 1
-
-        return xs.head()
 
     def reverse(self: [T]) -> [T]
         ys := []

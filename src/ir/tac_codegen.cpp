@@ -192,83 +192,6 @@ static bool isConcrete(Type* original)
     assert(false);
 }
 
-static Type* substitute(Type* original, const TypeAssignment& typeAssignment)
-{
-    switch (original->tag())
-    {
-        case ttBase:
-            return original;
-
-        case ttVariable:
-        {
-            TypeVariable* typeVariable = original->get<TypeVariable>();
-
-            auto i = typeAssignment.find(typeVariable);
-            if (i != typeAssignment.end())
-            {
-                return i->second;
-            }
-            else
-            {
-                return original;
-            }
-        }
-
-        case ttFunction:
-        {
-            FunctionType* functionType = original->get<FunctionType>();
-
-            bool changed = false;
-            std::vector<Type*> newInputs;
-            for (auto& input : functionType->inputs())
-            {
-                Type* newInput = substitute(input, typeAssignment);
-                changed |= (newInput != input);
-                newInputs.push_back(newInput);
-            }
-
-            Type* newOutput = substitute(functionType->output(), typeAssignment);
-            changed |= (newOutput != functionType->output());
-
-            if (changed)
-            {
-                TypeTable* typeTable = original->table();
-                return typeTable->createFunctionType(newInputs, newOutput);
-            }
-            else
-            {
-                return original;
-            }
-        }
-
-        case ttConstructed:
-        {
-            ConstructedType* constructedType = original->get<ConstructedType>();
-
-            bool changed = false;
-            std::vector<Type*> newParams;
-            for (auto& param : constructedType->typeParameters())
-            {
-                Type* newParam = substitute(param, typeAssignment);
-                changed |= (newParam != param);
-                newParams.push_back(newParam);
-            }
-
-            if (changed)
-            {
-                TypeTable* typeTable = original->table();
-                return constructedType->prototype()->instantiate(std::move(newParams));
-            }
-            else
-            {
-                return original;
-            }
-        }
-    }
-
-    assert(false);
-}
-
 static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssignment& typeAssignment)
 {
     TypeAssignment result = typeAssignment;
@@ -1089,45 +1012,30 @@ void TACCodeGen::visit(ForeachNode* node)
     setBlock(loopExit);
 }
 
-/*
 void TACCodeGen::visit(IndexNode* node)
 {
     // HACK
-    Value* atFunction = getFunctionValue(node->atSymbol, node, node->typeAssignment);
+    Value* atMethod;
+    if (node->atSymbol->kind == kMethod)
+    {
+        atMethod = getFunctionValue(node->atSymbol, node, node->typeAssignment);
+    }
+    else
+    {
+        assert(node->atSymbol->kind == kTraitMethod);
+
+        Type* objectType = node->object->type;
+        atMethod = getTraitMethodValue(objectType, node->atSymbol, node, node->typeAssignment);
+    }
+
 
     Value* object = visitAndGet(node->object);
-    Value* index = visitAndGet(node->object);
-    std::vector<Value*> arguments = {object, index};
-
+    Value* index = visitAndGet(node->index);
     node->value = createTemp(getValueType(node->type));
 
-    if (node->symbol->kind == kMethod)
-    {
-        Value* method = getFunctionValue(node->symbol, node, node->typeAssignment);
-        emit(new CallInst(node->value, method, arguments));
-    }
-    else if (node->symbol->kind == kTraitMethod)
-    {
-        TraitMethodSymbol* symbol = dynamic_cast<TraitMethodSymbol*>(node->symbol);
-        assert(symbol);
-
-        Type* objectType = substitute(substitute(node->object->type, node->typeAssignment), _typeContext);
-        assert(isConcrete(objectType));
-        assert(isSubtype(objectType, symbol->trait));
-
-        MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(node->methodName, objectType);
-        assert(methodSymbol);
-
-        TypeAssignment assignment;
-        Type* parentType = instantiate(methodSymbol->parentType, assignment);
-        auto result = tryUnify(parentType, objectType);
-        assert(result.first);
-
-        Value* method = getFunctionValue(methodSymbol, node, assignment);
-        emit(new CallInst(node->value, method, arguments));
-    }
+    std::vector<Value*> arguments = {object, index};
+    emit(new CallInst(node->value, atMethod, arguments));
 }
-*/
 
 void TACCodeGen::visit(ForeverNode* node)
 {

@@ -6,11 +6,10 @@
 #include "ir/context.hpp"
 #include "ir/tac_instruction.hpp"
 #include "ir/value.hpp"
+#include "semantic/types.hpp"
 
 #include <deque>
 #include <stdexcept>
-
-using TypeAssignment = std::map<TypeVariable*, Type*>;
 
 #define UNSUPPORTED(T) virtual void visit(T* node) { assert(false); }
 
@@ -50,7 +49,6 @@ public:
     UNSUPPORTED(IfElseNode);
     UNSUPPORTED(IfNode);
     UNSUPPORTED(ImplNode);
-    //UNSUPPORTED(IndexNode);
     UNSUPPORTED(IntNode);
     UNSUPPORTED(LetNode);
     UNSUPPORTED(MatchArm);
@@ -70,6 +68,7 @@ public:
     virtual void visit(MemberAccessNode* node) { wrapper(node); }
     virtual void visit(NullaryNode* node) { wrapper(node); }
     virtual void visit(MethodCallNode* node) { wrapper(node); }
+    virtual void visit(IndexNode* node) { wrapper(node); }
 
     virtual void visit(FunctionCallNode* node);
     virtual void visit(ComparisonNode* node);
@@ -131,7 +130,7 @@ public:
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
     virtual void visit(ImplNode* node);
-    //virtual void visit(IndexNode* node);
+    virtual void visit(IndexNode* node);
     virtual void visit(IntNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);

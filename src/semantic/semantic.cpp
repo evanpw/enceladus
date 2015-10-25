@@ -51,8 +51,7 @@ static void unify(Type* lhs, Type* rhs, AstNode* node)
     }
 }
 
-// TODO: Calling these parameters "const" is deeply misleading
-static void unify(const Type* lhs, const Trait* rhs, AstNode* node)
+static void unify(Type* lhs, Trait* rhs, AstNode* node)
 {
     auto result = tryUnify(lhs, rhs);
 
@@ -71,7 +70,7 @@ static void unify(const Type* lhs, const Trait* rhs, AstNode* node)
     }
 }
 
-static void imposeConstraint(Type* type, const Trait* trait, AstNode* node)
+static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
 {
     if (type->isVariable())
     {
@@ -323,7 +322,7 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName)
                      typeName->name,
                      typeParameters.size());
 
-            std::map<TypeVariable*, Type*> typeMapping;
+            TypeAssignment typeMapping;
             for (size_t i = 0; i < constructedType->typeParameters().size(); ++i)
             {
                 TypeVariable* variable = constructedType->typeParameters()[i]->get<TypeVariable>();
@@ -331,7 +330,7 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName)
                 Type* value = typeParameters[i];
 
                 // Check constraints
-                for (const Trait* constraint : variable->constraints())
+                for (Trait* constraint : variable->constraints())
                 {
                     CHECK_AT(typeName->location,
                              isSubtype(value, constraint),
@@ -654,7 +653,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 	assert(constructorSymbol->type->tag() == ttFunction);
     Type* instantiatedType = instantiate(constructorSymbol->type, node->typeAssignment);
 	FunctionType* functionType = instantiatedType->get<FunctionType>();
-	const Type* constructedType = functionType->output();
+	Type* constructedType = functionType->output();
 
     CHECK(constructedType->valueConstructors().size() == 1, "let statement pattern matching only applies to types with a single constructor");
     CHECK(functionType->inputs().size() == node->params.size(), "constructor pattern `{}` does not have the correct number of arguments", constructor);
@@ -801,10 +800,10 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
 void SemanticAnalyzer::visit(BinopNode* node)
 {
     node->lhs->accept(this);
-    imposeConstraint(node->lhs->type, _typeTable->Num, node->lhs);
+    unify(node->lhs->type, _typeTable->Num, node->lhs);
 
     node->rhs->accept(this);
-    imposeConstraint(node->rhs->type, _typeTable->Num, node->rhs);
+    unify(node->rhs->type, _typeTable->Num, node->rhs);
 
     unify(node->lhs->type, node->rhs->type, node);
 
@@ -876,10 +875,10 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 void SemanticAnalyzer::visit(ComparisonNode* node)
 {
     node->lhs->accept(this);
-    imposeConstraint(node->lhs->type, _typeTable->Num, node->lhs);
+    unify(node->lhs->type, _typeTable->Num, node->lhs);
 
     node->rhs->accept(this);
-    imposeConstraint(node->rhs->type, _typeTable->Num, node->rhs);
+    unify(node->rhs->type, _typeTable->Num, node->rhs);
 
     unify(node->lhs->type, node->rhs->type, node);
 
@@ -992,7 +991,7 @@ void SemanticAnalyzer::visit(ForeachNode* node)
     TraitSymbol* iteratorSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
     assert(iteratorSymbol);
     Type* varType = _typeTable->createTypeVariable();
-    const Trait* Iterator = iteratorSymbol->trait->instantiate({varType});
+    Trait* Iterator = iteratorSymbol->trait->instantiate({varType});
 
     //std::cerr << "before: " << iteratorType->str() << " -- " << Iterator->str() << std::endl;
     unify(iteratorType, Iterator, node->listExpression);
@@ -1075,7 +1074,7 @@ void SemanticAnalyzer::visit(IntNode* node)
         // The signedness of integers without a suffix is inferred. This will
         // be checked in the second pass
         node->type = _typeTable->createTypeVariable();
-        imposeConstraint(node->type, _typeTable->Num, node);
+        node->type->get<TypeVariable>()->addConstraint(_typeTable->Num);
     }
 }
 
@@ -1340,23 +1339,25 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
 void SemanticAnalyzer::visit(IndexNode* node)
 {
     node->object->accept(this);
+    node->index->accept(this);
 
     // Make sure the object's type is an instance of Index
     TraitSymbol* indexSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Index"));
     assert(indexSymbol);
+
+    Type* inputType = node->index->type;
     Type* outputType = _typeTable->createTypeVariable();
-    const Trait* Index = indexSymbol->trait->instantiate({outputType});
-    imposeConstraint(node->object->type, Index, node->object);
+    Trait* Index = indexSymbol->trait->instantiate({inputType, outputType});
+    unify(node->object->type, Index, node->object);
 
     // Find the at method
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol("at", node->object->type, symbols);
     node->atSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
     Type* atType = instantiate(node->atSymbol->type, node->typeAssignment);
-    unify(atType, _typeTable->createFunctionType({node->object->type}, outputType), node);
 
-    node->index->accept(this);
-    unify(node->index->type, _typeTable->UInt, node->index);
+    Type* expectedType = _typeTable->createFunctionType({node->object->type, node->index->type}, outputType);
+    unify(atType, expectedType, node);
 
     node->type = outputType;
 }
@@ -1413,7 +1414,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
             "trait `{}` already has an instance which would overlap with `{}`",
             traitSymbol->name, node->typeName->type->str());
 
-        std::map<TypeVariable*, Type*> traitSub;
+        TypeAssignment traitSub;
         traitSub[traitSymbol->traitVar->get<TypeVariable>()] = node->typeName->type;
 
         for (auto& item : traitSymbol->methods)

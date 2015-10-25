@@ -1,57 +1,14 @@
 #include "semantic/subtype.hpp"
 #include "semantic/type_functions.hpp"
 
-class TypeComparer
+std::set<Trait*> TypeComparer::getConstraints(TypeVariable* var)
 {
-public:
-    bool compare(const Trait* lhs, const Trait* rhs);
-    bool compare(const Type* lhs, const Trait* trait);
-    bool compare(const Type* lhs, const Type* rhs);
-
-private:
-    // Special cases
-    bool compare(TypeVariable* lhs, const Type* rhs);
-    bool compare(const Type* lhs, TypeVariable* rhs);
-
-    std::set<const Trait*> getConstraints(TypeVariable* var);
-
-    // Saves the state of comparer at initialization, and rolls it back at
-    // destruction unless accept() is called first
-    class Transaction
-    {
-    public:
-        Transaction(TypeComparer* comparer);
-        ~Transaction();
-
-        void rollback();
-        void accept() { _accepted = true; }
-
-    private:
-        bool _accepted = false;
-
-        TypeComparer* _comparer;
-
-        std::unordered_map<TypeVariable*, const Type*> _lhsSubs;
-        std::unordered_map<TypeVariable*, const Type*> _rhsSubs;
-        std::unordered_map<TypeVariable*, std::set<const Trait*>> _newConstraints;
-    };
-
-    friend class Transaction;
-
-    std::unordered_map<TypeVariable*, const Type*> _lhsSubs;
-    std::unordered_map<TypeVariable*, const Type*> _rhsSubs;
-    std::unordered_map<TypeVariable*, std::set<const Trait*>> _newConstraints;
-
-};
-
-std::set<const Trait*> TypeComparer::getConstraints(TypeVariable* var)
-{
-    std::set<const Trait*> result = var->constraints();
+    std::set<Trait*> result = var->constraints();
 
     auto i = _newConstraints.find(var);
     if (i != _newConstraints.end())
     {
-        for (const Trait* trait : i->second)
+        for (Trait* trait : i->second)
         {
             result.insert(trait);
         }
@@ -89,19 +46,19 @@ TypeComparer::Transaction::~Transaction()
     }
 }
 
-bool isSubtype(const Trait* lhs, const Trait* rhs)
+bool isSubtype(Trait* lhs, Trait* rhs)
 {
     TypeComparer comparer;
     return comparer.compare(lhs, rhs);
 }
 
-bool isSubtype(const Type* lhs, const Trait* trait)
+bool isSubtype(Type* lhs, Trait* trait)
 {
     TypeComparer comparer;
     return comparer.compare(lhs, trait);
 }
 
-bool isSubtype(const Type* lhs, const Type* rhs)
+bool isSubtype(Type* lhs, Type* rhs)
 {
     TypeComparer comparer;
     return comparer.compare(lhs, rhs);
@@ -109,7 +66,7 @@ bool isSubtype(const Type* lhs, const Type* rhs)
 
 //// Trait <= Trait ////////////////////////////////////////////////////////////
 
-bool TypeComparer::compare(const Trait* lhs, const Trait* rhs)
+bool TypeComparer::compare(Trait* lhs, Trait* rhs)
 {
     if (lhs->prototype() != rhs->prototype())
         return false;
@@ -128,21 +85,23 @@ bool TypeComparer::compare(const Trait* lhs, const Trait* rhs)
 
 //// Type <= Trait /////////////////////////////////////////////////////////////
 
-bool TypeComparer::compare(const Type* lhs, const Trait* trait)
+bool TypeComparer::compare(Type* lhs, Trait* trait)
 {
     Transaction transaction(this);
 
     if (lhs->isVariable())
     {
         TypeVariable* lhsVariable = lhs->get<TypeVariable>();
+
         if (!lhsVariable->quantified())
         {
+            _newConstraints[lhsVariable].insert(instantiate(trait->prototype()));
             transaction.accept();
             return true;
         }
         else
         {
-            for (const Trait* constraint : getConstraints(lhsVariable))
+            for (Trait* constraint : getConstraints(lhsVariable))
             {
                 if (compare(constraint, trait))
                 {
@@ -188,14 +147,14 @@ bool TypeComparer::compare(const Type* lhs, const Trait* trait)
 
 //// Type <= Type //////////////////////////////////////////////////////////////
 
-bool TypeComparer::compare(TypeVariable* lhs, const Type* rhs)
+bool TypeComparer::compare(TypeVariable* lhs, Type* rhs)
 {
     Transaction transaction(this);
     assert(!lhs->quantified());
 
     if (!rhs->isVariable())
     {
-        for (const Trait* constraint : getConstraints(lhs))
+        for (Trait* constraint : getConstraints(lhs))
         {
             if (!compare(rhs, constraint))
                 return false;
@@ -234,7 +193,7 @@ bool TypeComparer::compare(TypeVariable* lhs, const Type* rhs)
     {
         // If rhs is a variable, then don't make a substitution, but inherit
         // all constraints
-        for (const Trait* rhsConstraint : rhs->get<TypeVariable>()->constraints())
+        for (Trait* rhsConstraint : rhs->get<TypeVariable>()->constraints())
         {
             // Don't worry about redundant constraints: they won't be externally
             // visible anyway
@@ -246,19 +205,59 @@ bool TypeComparer::compare(TypeVariable* lhs, const Type* rhs)
     }
 }
 
-bool TypeComparer::compare(const Type* lhs, TypeVariable* rhs)
+bool TypeComparer::compare(Type* lhs, TypeVariable* rhs)
 {
+    Transaction transaction(this);
+
     assert(rhs->quantified());
 
     auto i = _rhsSubs.find(rhs);
     if (i != _rhsSubs.end())
     {
-        return i->second->equals(lhs);
+        if (i->second->equals(lhs))
+        {
+            transaction.accept();
+            return true;
+        }
+        else
+        {
+            // One possible saving throw: if either the new or the old
+            // assignment are unquantified type variables, we may be able
+            // to substitute
+
+            if (i->second->isVariable())
+            {
+                TypeVariable* var = i->second->get<TypeVariable>();
+
+                if (!var->quantified())
+                {
+                    if (compare(var, lhs))
+                    {
+                        transaction.accept();
+                        return true;
+                    }
+                }
+            }
+
+            if (lhs->isVariable())
+            {
+                TypeVariable* var = lhs->get<TypeVariable>();
+
+                if (!var->quantified())
+                {
+                    if (compare(var, i->second))
+                    {
+                        transaction.accept();
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
     }
 
-    Transaction transaction(this);
-
-    for (const Trait* constraint : rhs->constraints())
+    for (Trait* constraint : rhs->constraints())
     {
         if (!compare(lhs, constraint))
             return false;
@@ -269,9 +268,23 @@ bool TypeComparer::compare(const Type* lhs, TypeVariable* rhs)
     return true;
 }
 
-bool TypeComparer::compare(const Type* lhs, const Type* rhs)
+bool TypeComparer::compare(Type* lhs, Type* rhs)
 {
     Transaction transaction(this);
+
+    if (rhs->isVariable())
+    {
+        bool result = compare(lhs, rhs->get<TypeVariable>());
+        if (result)
+        {
+            transaction.accept();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     if (lhs->isVariable())
     {
@@ -295,26 +308,15 @@ bool TypeComparer::compare(const Type* lhs, const Type* rhs)
         {
             // If lhs is a quantified type variable, then lhs <= rhs is possible
             // only when rhs is also a type variable
-            if (!rhs->isVariable())
+            if (rhs->isVariable())
+            {
+                transaction.accept();
+                return true;
+            }
+            else
             {
                 return false;
             }
-
-            // Fall through
-        }
-    }
-
-    if (rhs->isVariable())
-    {
-        bool result = compare(lhs, rhs->get<TypeVariable>());
-        if (result)
-        {
-            transaction.accept();
-            return true;
-        }
-        else
-        {
-            return false;
         }
     }
 

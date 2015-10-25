@@ -36,7 +36,7 @@ public:
     virtual std::string str() const = 0;
     virtual bool isBoxed() const = 0;
 
-    TypeTable* table()
+    TypeTable* table() const
     {
         return _table;
     }
@@ -95,7 +95,7 @@ public:
         return _impl->isBoxed();
     }
 
-    TypeTable* table()
+    TypeTable* table() const
     {
         return _impl->table();
     }
@@ -305,12 +305,12 @@ public:
         return _quantified;
     }
 
-    const std::set<const Trait*>& constraints() const
+    const std::set<Trait*>& constraints() const
     {
         return _constraints;
     }
 
-    void addConstraint(const Trait* trait)
+    void addConstraint(Trait* trait)
     {
         _constraints.insert(trait);
     }
@@ -326,13 +326,14 @@ private:
     std::string _name;
     int _index;
     bool _quantified;
-    std::set<const Trait*> _constraints;
+    std::set<Trait*> _constraints;
 
     std::vector<Type*> _references;
 
     static int _count;
 };
 
+using TypeAssignment = std::unordered_map<TypeVariable*, Type*>;
 
 class ValueConstructor
 {
@@ -414,12 +415,12 @@ public:
         return _params;
     }
 
-    const Trait* prototype() const
+    Trait* prototype() const
     {
         return _prototype;
     }
 
-    const Trait* instantiate(std::vector<Type*>&& params) const;
+    Trait* instantiate(std::vector<Type*>&& params);
 
     const std::vector<Instance>& instances() const
     {
@@ -442,7 +443,7 @@ public:
 private:
     friend TypeTable;
 
-    Trait(TypeTable* table, const std::string& name, std::vector<Type*>&& params, const Trait* prototype)
+    Trait(TypeTable* table, const std::string& name, std::vector<Type*>&& params, Trait* prototype)
     : _table(table), _name(name), _params(params), _prototype(prototype)
     {
         if (!_prototype)
@@ -456,7 +457,7 @@ private:
 
     // Similar to constructed types, this is what defines identity for a trait.
     // Set to this for the prototypical trait
-    const Trait* _prototype;
+    Trait* _prototype;
 };
 
 
@@ -510,7 +511,7 @@ public:
         return valueConstructor;
     }
 
-    Trait* createTrait(const std::string& name, std::vector<Type*>&& params= {}, const Trait* prototype = nullptr)
+    Trait* createTrait(const std::string& name, std::vector<Type*>&& params= {}, Trait* prototype = nullptr)
     {
         Trait* trait = new Trait(this, name, std::move(params), prototype);
         _traits.emplace_back(trait);

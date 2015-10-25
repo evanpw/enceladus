@@ -57,8 +57,68 @@ Uses:
     chosen for which Lhs <= Rhs.
 */
 
-bool isSubtype(const Trait* lhs, const Trait* rhs);
-bool isSubtype(const Type* lhs, const Trait* trait);
-bool isSubtype(const Type* lhs, const Type* rhs);
+
+// Convenience functions
+bool isSubtype(Trait* lhs, Trait* rhs);
+bool isSubtype(Type* lhs, Trait* trait);
+bool isSubtype(Type* lhs, Type* rhs);
+
+// Full-power comparer
+class TypeComparer
+{
+public:
+    bool compare(Trait* lhs, Trait* rhs);
+    bool compare(Type* lhs, Trait* trait);
+    bool compare(Type* lhs, Type* rhs);
+
+    const TypeAssignment& lhsSubs() const
+    {
+        return _lhsSubs;
+    }
+
+    const TypeAssignment& rhsSubs() const
+    {
+        return _rhsSubs;
+    }
+
+    const std::unordered_map<TypeVariable*, std::set<Trait*>>& newConstraints() const
+    {
+        return _newConstraints;
+    }
+
+private:
+    // Special cases
+    bool compare(TypeVariable* lhs, Type* rhs);
+    bool compare(Type* lhs, TypeVariable* rhs);
+
+    std::set<Trait*> getConstraints(TypeVariable* var);
+
+    // Saves the state of comparer at initialization, and rolls it back at
+    // destruction unless accept() is called first
+    class Transaction
+    {
+    public:
+        Transaction(TypeComparer* comparer);
+        ~Transaction();
+
+        void rollback();
+        void accept() { _accepted = true; }
+
+    private:
+        bool _accepted = false;
+
+        TypeComparer* _comparer;
+
+        TypeAssignment _lhsSubs;
+        TypeAssignment _rhsSubs;
+        std::unordered_map<TypeVariable*, std::set<Trait*>> _newConstraints;
+    };
+
+    friend class Transaction;
+
+    TypeAssignment _lhsSubs;
+    TypeAssignment _rhsSubs;
+    std::unordered_map<TypeVariable*, std::set<Trait*>> _newConstraints;
+};
 
 #endif

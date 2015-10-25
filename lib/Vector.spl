@@ -34,9 +34,6 @@ impl<T: Default> Vector<T>
 
         return value
 
-    def at(self: Vector<T>, n: UInt) -> T
-        return self.content.at(n)
-
     def set(self: Vector<T>, n: UInt, x: T) -> Unit
         self.content.set(n, x)
 
@@ -49,6 +46,10 @@ impl<T: Default> Vector<T>
 
     def iter(self: Vector<T>) -> VectorIterator<T>
         return VectorIterator(self, 0)
+
+impl<T: Default> Index<UInt, T> for Vector<T>
+    def at(self: Vector<T>, n: UInt) -> T
+        return self.content[n]
 
 impl<T: Default> Iterator<T> for VectorIterator<T>
     def head(self: VectorIterator<T>) -> T

@@ -383,7 +383,7 @@ class TestAcceptance(object):
         self.run('typeConstraint2', '3\n7\n11\n15')
 
     def test_typeConstraint3(self):
-        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable T to quantified type variable \'T\d+: Num, because the latter isn\'t constrained by trait Num'))
+        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable \'T\d+: Num to quantified type variable T, because the latter isn\'t constrained by trait Num'))
 
     def test_typeConstraint4(self):
         self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<String>`')
@@ -483,6 +483,9 @@ class TestAcceptance(object):
 
     def test_genericTrait5(self):
         self.run('genericTrait5', '20\n10\n')
+
+    def test_genericTrait6(self):
+        self.run('genericTrait6', '12')
 
     def test_iterateInt(self):
         self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterator<\'T\d+>'))

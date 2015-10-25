@@ -1,0 +1,5 @@
+def getFirst<T: Num>(xs: Array<T>) -> T
+    return xs[0]
+
+xs := makeArray(10, 12i)
+print $ show $ getFirst(xs)

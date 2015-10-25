@@ -188,7 +188,7 @@ public:
 	// Annotations
 	enum NullaryKind { VARIABLE, FUNC_CALL, CLOSURE };
 	Symbol* symbol = nullptr;
-	std::map<TypeVariable*, Type*> typeAssignment;
+	TypeAssignment typeAssignment;
 	NullaryKind kind;
 };
 
@@ -254,7 +254,7 @@ public:
 
 	// Annotations
 	Symbol* symbol = nullptr;
-	std::map<TypeVariable*, Type*> typeAssignment;
+	TypeAssignment typeAssignment;
 };
 
 class MethodCallNode : public ExpressionNode
@@ -272,7 +272,7 @@ public:
 
 	// Annotations
 	Symbol* symbol = nullptr;
-	std::map<TypeVariable*, Type*> typeAssignment;
+	TypeAssignment typeAssignment;
 };
 
 class BinopNode : public ExpressionNode
@@ -392,11 +392,11 @@ public:
 
 	// HACK: give the code generator to these functions
 	Symbol* headSymbol;
-	std::map<TypeVariable*, Type*> headTypeAssignment;
+	TypeAssignment headTypeAssignment;
 	Symbol* tailSymbol;
-	std::map<TypeVariable*, Type*> tailTypeAssignment;
+	TypeAssignment tailTypeAssignment;
 	Symbol* emptySymbol;
-	std::map<TypeVariable*, Type*> emptyTypeAssignment;
+	TypeAssignment emptyTypeAssignment;
 };
 
 
@@ -554,7 +554,7 @@ public:
 
 	// Annotations
 	ConstructorSymbol* constructorSymbol;
-	std::map<TypeVariable*, Type*> typeAssignment;
+	TypeAssignment typeAssignment;
 
 	std::vector<Symbol*> symbols;
 	ValueConstructor* valueConstructor;
@@ -575,7 +575,7 @@ public:
 
 	// Annotations
 	ConstructorSymbol* constructorSymbol;
-	std::map<TypeVariable*, Type*> typeAssignment;
+	TypeAssignment typeAssignment;
 
 	Type* matchType;
 	std::vector<Symbol*> symbols;
@@ -673,8 +673,8 @@ public:
 
 	// Annotations
 	// HACK: give the code generator access to this method
-	MethodSymbol* atSymbol;
-	std::map<TypeVariable*, Type*> typeAssignment;
+	Symbol* atSymbol;
+	TypeAssignment typeAssignment;
 };
 
 //// Structures ////////////////////////////////////////////////////////////////
@@ -732,7 +732,7 @@ public:
 	MemberVarSymbol* symbol;
 	ConstructorSymbol* constructorSymbol;
 	size_t memberIndex;
-	std::map<TypeVariable*, Type*> typeAssignment;
+	TypeAssignment typeAssignment;
 };
 
 

@@ -29,7 +29,7 @@ std::string TypeVariable::str() const
         ss << ": ";
 
         bool first = true;
-        for (const Trait* constraint : _constraints)
+        for (Trait* constraint : _constraints)
         {
             if (!first) ss << " + ";
             ss << constraint->str();
@@ -212,17 +212,10 @@ ValueConstructor::ValueConstructor(const std::string& name,
     }
 }
 
-const Trait* Trait::instantiate(std::vector<Type*>&& params) const
+Trait* Trait::instantiate(std::vector<Type*>&& params)
 {
     // Can only instantiate prototypical types
     assert(_prototype == this);
 
-    if (params.empty())
-    {
-        return this;
-    }
-    else
-    {
-        return _table->createTrait(_name, std::move(params), this);
-    }
+    return _table->createTrait(_name, std::move(params), this);
 }

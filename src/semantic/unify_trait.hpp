@@ -5,6 +5,6 @@
 #include <string>
 #include <utility>
 
-std::pair<bool, std::string> tryUnify(const Type* type, const Trait* trait);
+std::pair<bool, std::string> tryUnify(Type* type, Trait* trait);
 
 #endif

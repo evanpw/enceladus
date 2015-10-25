@@ -3,6 +3,7 @@
 
 #include "semantic/subtype.hpp"
 #include "semantic/type_functions.hpp"
+#include "semantic/unify_trait.hpp"
 
 TEST_CASE("subtype checks", "[isSubtype]")
 {
@@ -294,6 +295,61 @@ TEST_CASE("complex subtype checks", "[isSubtype-complex]")
     delete table;
 }
 
+TEST_CASE("type-trait unification checks", "[unify-type-trait]")
+{
+    TypeTable* table = new TypeTable;
+
+    // Type Array<S>
+    Type* S = table->createTypeVariable("S", true);
+    ConstructedType* Array = table->createConstructedType("Array", {S})->get<ConstructedType>();
+
+    // Trait Index<T>
+    Type* T = table->createTypeVariable("T", true);
+    Trait* Index = table->createTrait("Index", {T});
+
+    // Make Array<U> an instance of Index<U>
+    Type* U = table->createTypeVariable("U", true);
+    Type* ArrayU = Array->instantiate({U});
+    Index->addInstance(ArrayU, {U});
+
+    SECTION("quantified-lhs")
+    {
+        // Array<V> and Index<'T1>
+        Type* V = table->createTypeVariable("V", true);
+        Type* ArrayV = Array->instantiate({V});
+        Type* T1 = table->createTypeVariable();
+        Trait* IndexT1 = Index->instantiate({T1});
+
+        // Should unify, with 'T1 = V
+        auto result = tryUnify(ArrayV, IndexT1);
+        CHECK(result.first);
+        CHECK(equals(T1, V));
+    }
+
+    SECTION("constrained-lhs")
+    {
+        // Array<'T1: Num>
+        Type* T1 = table->createTypeVariable();
+        T1->get<TypeVariable>()->addConstraint(table->Num);
+        Type* ArrayT1 = Array->instantiate({T1});
+
+        // Index<'T2>
+        Type* T2 = table->createTypeVariable();
+        Trait* IndexT2 = Index->instantiate({T2});
+
+        // Should unify, with 'T2 = 'T1
+        auto result = tryUnify(ArrayT1, IndexT2);
+
+        CHECK(result.first);
+        CHECK(T1->isVariable());
+        CHECK(!T1->get<TypeVariable>()->quantified());
+        CHECK(isSubtype(T1, table->Num));
+        CHECK(equals(T1, T2));
+    }
+
+    delete table;
+}
+
 /*
 TEST_CASE("unification checks", "[unify]")
 {
@@ -419,6 +475,7 @@ TEST_CASE("generic trait checks", "[generic-trait]")
         CHECK(!isSubtype(W, V));
     }
 
+    /*
     SECTION("var-vs-generic")
     {
         Type* T = table->createTypeVariable("T", true);
@@ -444,6 +501,7 @@ TEST_CASE("generic trait checks", "[generic-trait]")
         CHECK(equals(T1, genericList));
         CHECK(equals(T2, W));
     }
+    */
 
     delete table;
 }

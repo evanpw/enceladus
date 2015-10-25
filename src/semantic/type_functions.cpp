@@ -1,7 +1,7 @@
 #include "semantic/type_functions.hpp"
 #include "semantic/subtype.hpp"
 
-const Trait* instantiate(const Trait* trait)
+Trait* instantiate(Trait* trait)
 {
     // TODO: Can we just check trait->prototype() == trait to see if it needs
     // instantiating?
@@ -22,7 +22,7 @@ const Trait* instantiate(const Trait* trait)
         }
     }
 
-    const Trait* result;
+    Trait* result;
     if (anyChanged)
     {
         result = trait->instantiate(std::move(params));
@@ -35,7 +35,7 @@ const Trait* instantiate(const Trait* trait)
     return result;
 }
 
-Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
+Type* instantiate(Type* type, TypeAssignment& replacements)
 {
 
     switch (type->tag())
@@ -60,7 +60,7 @@ Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
 
                     // Inherit type constraints
                     TypeVariable* newVar = replacement->get<TypeVariable>();
-                    for (const Trait* constraint : typeVariable->constraints())
+                    for (Trait* constraint : typeVariable->constraints())
                     {
                         // TODO: Do we need to check replacements?
                         newVar->addConstraint(instantiate(constraint));
@@ -110,7 +110,7 @@ Type* instantiate(Type* type, std::map<TypeVariable*, Type*>& replacements)
 
 Type* instantiate(Type* type)
 {
-    std::map<TypeVariable*, Type*> replacements;
+    TypeAssignment replacements;
     return instantiate(type, replacements);
 }
 
@@ -127,9 +127,8 @@ bool hasOverlappingInstance(Trait* trait, Type* type)
     return false;
 }
 
-std::pair<bool, std::string> bindVariable(TypeVariable* lhs, const Type* value)
+std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)
 {
-
     // Check to see if the value is actually the same type variable, and don't
     // rebind
     if (value->tag() == ttVariable)
@@ -138,24 +137,22 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, const Type* value)
         if (lhs == rhs)
             return {true, ""};
 
-        std::vector<const Trait*> missingConstraints;
+        std::vector<Trait*> missingConstraints;
 
         auto& rhsConstraints = rhs->constraints();
 
-        for (const Trait* constraint : lhs->constraints())
+        for (Trait* constraint : lhs->constraints())
         {
             bool good = false;
 
-            for (const Trait* rhsConstraint : rhsConstraints)
+            for (Trait* rhsConstraint : rhsConstraints)
             {
-
                 if (isSubtype(constraint, rhsConstraint))
                 {
                     good = true;
                     break;
                 }
             }
-
 
             if (!good)
             {
@@ -164,8 +161,8 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, const Type* value)
                 if (rhs->quantified())
                 {
                     std::stringstream ss;
-                    ss << "Can't bind variable " << value->str()
-                       << " to quantified type variable " << lhs->str()
+                    ss << "Can't bind variable " << lhs->str()
+                       << " to quantified type variable " << rhs->str()
                        << ", because the latter isn't constrained by trait " << constraint->str();
 
                     return {false, ss.str()};
@@ -177,7 +174,7 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, const Type* value)
             }
         }
 
-        for (const Trait* missing : missingConstraints)
+        for (Trait* missing : missingConstraints)
         {
             assert(!rhs->quantified());
             rhs->addConstraint(missing);
@@ -188,7 +185,7 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, const Type* value)
         // Otherwise, check that the rhs type meets all of the constraints on
         // the lhs variable
 
-        for (const Trait* constraint : lhs->constraints())
+        for (Trait* constraint : lhs->constraints())
         {
             if (!isSubtype(value, constraint))
             {
@@ -214,7 +211,7 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, const Type* value)
     return {true, ""};
 }
 
-std::pair<bool, std::string> bindVariable(Type* variable, const Type* value)
+std::pair<bool, std::string> bindVariable(Type* variable, Type* value)
 {
     assert(variable->tag() == ttVariable);
     TypeVariable* lhs = variable->get<TypeVariable>();
@@ -303,9 +300,9 @@ std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs)
     return {false, ""};
 }
 
-bool occurs(const TypeVariable* variable, const Type* value)
+bool occurs(const TypeVariable* variable, Type* value)
 {
-    const Type* rhs = value;
+    Type* rhs = value;
 
     switch (rhs->tag())
     {
@@ -345,7 +342,7 @@ bool occurs(const TypeVariable* variable, const Type* value)
     assert(false);
 }
 
-bool equals(const Type* lhs, const Type* rhs)
+bool equals(Type* lhs, Type* rhs)
 {
     if (lhs->tag() != rhs->tag())
         return false;
@@ -399,7 +396,7 @@ bool equals(const Type* lhs, const Type* rhs)
     assert(false);
 }
 
-static const Type* lookup(const Type* type, const std::unordered_map<TypeVariable*, const Type*>& context)
+static Type* lookup(Type* type, const TypeAssignment& context)
 {
     while (type->isVariable())
     {
@@ -418,7 +415,7 @@ static const Type* lookup(const Type* type, const std::unordered_map<TypeVariabl
     return type;
 }
 
-bool overlap(const Type *lhs, const Type* rhs, std::unordered_map<TypeVariable*, const Type*>& subs)
+bool overlap(Type* lhs, Type* rhs, TypeAssignment& subs)
 {
     lhs = lookup(lhs, subs);
     rhs = lookup(rhs, subs);
@@ -498,8 +495,85 @@ bool overlap(const Type *lhs, const Type* rhs, std::unordered_map<TypeVariable*,
     assert(false);
 }
 
-bool overlap(const Type *lhs, const Type* rhs)
+bool overlap(Type* lhs, Type* rhs)
 {
-    std::unordered_map<TypeVariable*, const Type*> subs;
+    TypeAssignment subs;
     return overlap(lhs, rhs, subs);
+}
+
+Type* substitute(Type* original, const TypeAssignment& typeAssignment)
+{
+    switch (original->tag())
+    {
+        case ttBase:
+            return original;
+
+        case ttVariable:
+        {
+            TypeVariable* typeVariable = original->get<TypeVariable>();
+
+            auto i = typeAssignment.find(typeVariable);
+            if (i != typeAssignment.end())
+            {
+                return i->second;
+            }
+            else
+            {
+                return original;
+            }
+        }
+
+        case ttFunction:
+        {
+            FunctionType* functionType = original->get<FunctionType>();
+
+            bool changed = false;
+            std::vector<Type*> newInputs;
+            for (auto& input : functionType->inputs())
+            {
+                Type* newInput = substitute(input, typeAssignment);
+                changed |= (newInput != input);
+                newInputs.push_back(newInput);
+            }
+
+            Type* newOutput = substitute(functionType->output(), typeAssignment);
+            changed |= (newOutput != functionType->output());
+
+            if (changed)
+            {
+                TypeTable* typeTable = original->table();
+                return typeTable->createFunctionType(newInputs, newOutput);
+            }
+            else
+            {
+                return original;
+            }
+        }
+
+        case ttConstructed:
+        {
+            ConstructedType* constructedType = original->get<ConstructedType>();
+
+            bool changed = false;
+            std::vector<Type*> newParams;
+            for (auto& param : constructedType->typeParameters())
+            {
+                Type* newParam = substitute(param, typeAssignment);
+                changed |= (newParam != param);
+                newParams.push_back(newParam);
+            }
+
+            if (changed)
+            {
+                TypeTable* typeTable = original->table();
+                return constructedType->prototype()->instantiate(std::move(newParams));
+            }
+            else
+            {
+                return original;
+            }
+        }
+    }
+
+    assert(false);
 }
