@@ -1,6 +1,6 @@
 import HashTable
 
-table := hashTable()
+table := HashTable::new()
 
 table.insert("One", 1)
 table.insert("Two", 2)

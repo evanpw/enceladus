@@ -12,7 +12,7 @@ impl Hash for Pair<Int, Int>
         result := 20 * self.first() + self.second()
         return result as UInt
 
-memo := hashTable()
+memo := HashTable::new()
 
 def countPaths(p: Pair<Int, Int>) -> Int
     let Pair(x, y) := p

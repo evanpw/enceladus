@@ -3,12 +3,10 @@ struct HashTable<S: Eq + Hash, T>
     size: UInt
     capacity: UInt
 
-
-def hashTable<S: Eq + Hash, T>() -> HashTable<S, T>
-    return HashTable(makeArray(0, None), 0, 0)
-
-
 impl<S: Eq + Hash, T> HashTable<S, T>
+    def new() -> HashTable<S, T>
+        return HashTable(makeArray(0, None), 0, 0)
+
     def insert(self: HashTable<S, T>, key: S, value: T) -> Unit
         # Resize when 2/3 full
         if 3 * self.size >= 2 * self.capacity
