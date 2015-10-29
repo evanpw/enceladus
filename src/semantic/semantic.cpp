@@ -181,8 +181,7 @@ bool SemanticAnalyzer::analyze()
 		return false;
 	}
 
-    SemanticPass2 pass2(_context);
-    return pass2.analyze();
+    return true;
 }
 
 FunctionSymbol* SemanticAnalyzer::createBuiltin(const std::string& name)
@@ -350,6 +349,7 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName)
 TraitSymbol* SemanticAnalyzer::resolveTrait(TypeName* traitName, std::vector<Type*>& traitParams)
 {
     Symbol* symbol = resolveTypeSymbol(traitName->name);
+    CHECK_AT(traitName->location, symbol, "no such trait `{}`", traitName->name);
     CHECK_AT(traitName->location, symbol->kind == kTrait, "`{}` is not a trait", traitName->name);
 
     TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(symbol);
@@ -857,7 +857,7 @@ void SemanticAnalyzer::visit(NullaryNode* node)
         Type* functionType = instantiate(symbol->type, node->typeAssignment);
 
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(symbol);
-        if (functionType->get<FunctionType>()->inputs().empty())
+        if (functionSymbol->isConstructor && functionType->get<FunctionType>()->inputs().empty())
         {
             node->type = functionType->get<FunctionType>()->output();
             node->kind = NullaryNode::FUNC_CALL;
@@ -875,12 +875,57 @@ void SemanticAnalyzer::visit(NullaryNode* node)
 void SemanticAnalyzer::visit(ComparisonNode* node)
 {
     node->lhs->accept(this);
-    unify(node->lhs->type, _typeTable->Num, node->lhs);
-
     node->rhs->accept(this);
-    unify(node->rhs->type, _typeTable->Num, node->rhs);
-
     unify(node->lhs->type, node->rhs->type, node);
+
+    if (!isSubtype(node->lhs->type, _typeTable->Num))
+    {
+        TraitSymbol* traitSymbol;
+        if (node->op == ComparisonNode::kEqual || node->op == ComparisonNode::kNotEqual)
+        {
+            traitSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Eq"));
+        }
+        else
+        {
+            traitSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("PartialOrd"));
+        }
+
+        assert(traitSymbol);
+
+        Trait* trait = traitSymbol->trait;
+
+        unify(node->lhs->type, trait, node->lhs);
+        unify(node->rhs->type, trait, node->rhs);
+
+        switch (node->op)
+        {
+            case ComparisonNode::kEqual:
+                node->method = traitSymbol->methods["eq"];
+                break;
+
+            case ComparisonNode::kNotEqual:
+                node->method = traitSymbol->methods["ne"];
+                break;
+
+            case ComparisonNode::kLess:
+                node->method = traitSymbol->methods["lt"];
+                break;
+
+            case ComparisonNode::kLessOrEqual:
+                node->method = traitSymbol->methods["le"];
+                break;
+
+            case ComparisonNode::kGreater:
+                node->method = traitSymbol->methods["gt"];
+                break;
+
+            case ComparisonNode::kGreaterOrEqual:
+                node->method = traitSymbol->methods["ge"];
+                break;
+        }
+
+        assert(node->method);
+    }
 
     node->type = _typeTable->Bool;
 }
@@ -972,60 +1017,56 @@ void SemanticAnalyzer::visit(WhileNode* node)
 
 void SemanticAnalyzer::visit(ForeachNode* node)
 {
+    // Check that listExpression is an instance of Iterator
     node->listExpression->accept(this);
-    Type* iteratorType = node->listExpression->type;
-
-    // Save the current inner-most loop so that we can restore it after
-    // visiting the children of this loop.
-    LoopNode* outerLoop = _enclosingLoop;
-
-    node->type = _typeTable->Unit;
-
-    _enclosingLoop = node;
-    _symbolTable->pushScope();
-
-    CHECK(node->varName != "_", "for-loop induction variable cannot be unnamed");
-    CHECK_UNDEFINED_IN_SCOPE(node->varName);
-
-    // HACK: Check that the rhs is an instance of Iterator
     TraitSymbol* iteratorSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
-    assert(iteratorSymbol);
-    Type* varType = _typeTable->createTypeVariable();
-    Trait* Iterator = iteratorSymbol->trait->instantiate({varType});
+    Trait* Iterator = instantiate(iteratorSymbol->trait);
+    unify(node->listExpression->type, Iterator, node->listExpression);
 
-    //std::cerr << "before: " << iteratorType->str() << " -- " << Iterator->str() << std::endl;
-    unify(iteratorType, Iterator, node->listExpression);
-    //std::cerr << "after: " << iteratorType->str() << " -- " << Iterator->str() << std::endl;
+    // Poor-man's AST transformation:
 
-    // HACK: Give the code generator access to these symbols
-    std::vector<MemberSymbol*> symbols;
-    _symbolTable->resolveMemberSymbol("head", iteratorType, symbols);
-    node->headSymbol = symbols.front();
-    Type* headType = instantiate(node->headSymbol->type, node->headTypeAssignment);
-    node->varType = headType->get<FunctionType>()->output();
-    unify(headType, _typeTable->createFunctionType({iteratorType}, node->varType), node);
+    // for x in xs
+    //     body
 
-    _symbolTable->resolveMemberSymbol("tail", iteratorType, symbols);
-    node->tailSymbol = symbols.front();
-    Type* tailType = instantiate(node->tailSymbol->type, node->tailTypeAssignment);
-    unify(tailType, _typeTable->createFunctionType({iteratorType}, iteratorType), node);
+    // =>
 
-    _symbolTable->resolveMemberSymbol("empty", iteratorType, symbols);
-    node->emptySymbol = symbols.front();
-    Type* emptyType = instantiate(node->emptySymbol->type, node->emptyTypeAssignment);
-    unify(emptyType, _typeTable->createFunctionType({iteratorType}, _typeTable->Bool), node);
+    // xs := iteratorExpr
+    // while not xs.empty()
+    //     x := xs.head()
+
+    //     body
+
+    //     xs = xs.tail()
+
+    static size_t iteratorCount = 1;
+
+    std::stringstream ss;
+    ss << "_iterator" << iteratorCount++;
+    std::string iterName = ss.str();
+
+    node->setupNode = new VariableDefNode(_context, node->location, iterName, node->listExpression);
+
+    NullaryNode* xs = new NullaryNode(_context, node->location, iterName);
+    MethodCallNode* xsEmpty = new MethodCallNode(_context, node->location, xs, "empty", {});
+    FunctionCallNode* condition = new FunctionCallNode(_context, node->location, "not", {xsEmpty});
+
+    BlockNode* body = new BlockNode(_context, node->location);
+
+    node->loopNode = new WhileNode(_context, node->location, condition, body);
+
+    MethodCallNode* xsHead = new MethodCallNode(_context, node->location, xs, "head", {});
+    VariableDefNode* varDef = new VariableDefNode(_context, node->location, node->varName, xsHead);
+
+    MethodCallNode* xsTail = new MethodCallNode(_context, node->location, xs, "tail", {});
+    AssignNode* xsAssign = new AssignNode(_context, node->location, xs, xsTail);
+
+    body->children.push_back(varDef);
+    body->children.push_back(node->body);
+    body->children.push_back(xsAssign);
 
 
-
-    VariableSymbol* symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
-    symbol->type = node->varType;
-    node->symbol = symbol;
-
-    node->body->accept(this);
-    unify(node->body->type, _typeTable->Unit, node);
-
-    _symbolTable->popScope();
-    _enclosingLoop = outerLoop;
+    node->setupNode->accept(this);
+    node->loopNode->accept(this);
 
     node->type = _typeTable->Unit;
 }
@@ -1343,23 +1384,12 @@ void SemanticAnalyzer::visit(IndexNode* node)
 
     // Make sure the object's type is an instance of Index
     TraitSymbol* indexSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Index"));
-    assert(indexSymbol);
+    unify(node->object->type, instantiate(indexSymbol->trait), node->object);
 
-    Type* inputType = node->index->type;
-    Type* outputType = _typeTable->createTypeVariable();
-    Trait* Index = indexSymbol->trait->instantiate({inputType, outputType});
-    unify(node->object->type, Index, node->object);
+    node->methodCall = new MethodCallNode(_context, node->location, node->object, "at", {node->index});
+    node->methodCall->accept(this);
 
-    // Find the at method
-    std::vector<MemberSymbol*> symbols;
-    _symbolTable->resolveMemberSymbol("at", node->object->type, symbols);
-    node->atSymbol = dynamic_cast<MethodSymbol*>(symbols.front());
-    Type* atType = instantiate(node->atSymbol->type, node->typeAssignment);
-
-    Type* expectedType = _typeTable->createFunctionType({node->object->type, node->index->type}, outputType);
-    unify(atType, expectedType, node);
-
-    node->type = outputType;
+    node->type = node->methodCall->type;
 }
 
 void SemanticAnalyzer::visit(ImplNode* node)
@@ -1420,7 +1450,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
         for (auto& item : traitSymbol->methods)
         {
             std::string name = item.first;
-            Type* type = instantiate(item.second, traitSub);
+            Type* type = instantiate(item.second->type, traitSub);
 
             auto i = methods.find(name);
             CHECK(i != methods.end(), "no implementation was given for method `{}` in trait `{}`", name, traitSymbol->name);
@@ -1583,10 +1613,9 @@ void SemanticAnalyzer::visit(TraitMethodNode* node)
 
     const std::vector<Type*>& paramTypes = functionType->inputs();
 
-    methods[name] = type;
-
     TraitMethodSymbol* symbol = _symbolTable->createTraitMethodSymbol(node->name, node, traitSymbol);
     symbol->type = type;
+    methods[name] = symbol;
 
     node->type = _typeTable->Unit;
 }
@@ -1594,60 +1623,4 @@ void SemanticAnalyzer::visit(TraitMethodNode* node)
 void SemanticAnalyzer::visit(PassNode* node)
 {
     node->type = _typeTable->Unit;
-}
-
-
-//// SemanticPass2 /////////////////////////////////////////////////////////////
-
-SemanticPass2::SemanticPass2(AstContext* context)
-: _context(context)
-, _typeTable(context->typeTable())
-{
-}
-
-bool SemanticPass2::analyze()
-{
-    try
-    {
-        _context->root()->accept(this);
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-void SemanticPass2::visit(BinopNode* node)
-{
-    Type* type = node->type;
-
-    if (type->isVariable() && !type->get<TypeVariable>()->quantified())
-    {
-        semanticError(node->location, "Cannot infer the type of arguments to binary operator");
-    }
-}
-
-void SemanticPass2::visit(ComparisonNode* node)
-{
-    Type* type = node->lhs->type;
-
-    // Quantified variables will be replaced with concrete types during monomorphisation
-    if (type->isVariable() && !type->get<TypeVariable>()->quantified())
-    {
-        semanticError(node->location, "Cannot infer the type of arguments to comparison operator");
-    }
-}
-
-void SemanticPass2::visit(IntNode* node)
-{
-    Type* type = node->type;
-
-    if (type->isVariable() && !type->get<TypeVariable>()->quantified())
-    {
-        // If no specific type was inferred, then assume Int
-        unify(type, _typeTable->Int, node);
-    }
 }

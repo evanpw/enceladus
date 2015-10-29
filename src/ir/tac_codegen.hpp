@@ -200,7 +200,7 @@ private:
     TACConditionalCodeGen _conditionalCodeGen;
     friend class TACConditionalCodeGen;
 
-    Value* createTemp(ValueType type)
+    Value* createTemp(ValueType type = ValueType::U64)
     {
         return _currentFunction->createTemp(type);
     }

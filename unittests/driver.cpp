@@ -385,13 +385,13 @@ TEST_CASE("type overlap checks", "[type-overlap]")
     REQUIRE(overlap(table->Int, table->Int));
     REQUIRE(!overlap(table->Int, table->String));
 
-    // A type variable matches every type, even if constrained
+    // A type variable matches every type that meets its constraints
     REQUIRE(overlap(T, table->Int));
     REQUIRE(overlap(table->Int, T));
     REQUIRE(overlap(S, T));
     T->get<TypeVariable>()->addConstraint(table->Num);
-    REQUIRE(overlap(T, table->String));
-    REQUIRE(overlap(table->String, T));
+    REQUIRE(!overlap(T, table->String));
+    REQUIRE(!overlap(table->String, T));
     REQUIRE(overlap(S, T));
 
     // Must be a *consistent* choice of type variables

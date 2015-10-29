@@ -490,8 +490,17 @@ class TestAcceptance(object):
     def test_iterateInt(self):
         self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterator<\'T\d+>'))
 
+    def test_fakeIterator(self):
+        self.run('fakeIterator', build_error=Regex('Error: testing/fakeIterator.spl:9:10: Type Test is not an instance of trait Iterator<\'T\d+>'))
+
     def test_bearCries(self):
         self.run('bear_cries', '')
+
+    def test_inferFromReturn(self):
+        self.run('inferFromReturn', 'Test')
+
+    def test_strictCoherence(self):
+        self.run('strictCoherence', build_error=Regex('.+'))
 
     # Medium tests (100ms-1s)
 

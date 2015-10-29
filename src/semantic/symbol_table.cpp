@@ -8,7 +8,12 @@
 VariableSymbol* SymbolTable::createVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
 {
     VariableSymbol* symbol = new VariableSymbol(name, node, enclosingFunction, global);
-    insert(symbol);
+
+    if (symbol->name != "_")
+    {
+        insert(symbol);
+    }
+
     return symbol;
 }
 
@@ -126,8 +131,6 @@ void SymbolTable::findMembers(const std::string& name, std::vector<MemberSymbol*
 
 void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols)
 {
-    //std::cerr << "resolveMemberSymbol: " << name << " " << parentType->str() << std::endl;
-
     symbols.clear();
 
     // Never match an unconstrained type to a method
@@ -145,8 +148,6 @@ void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType,
         // quantified type variables only resolve to trait methods
         if ((matchTraits && symbol->kind != kTraitMethod) || (!matchTraits && symbol->kind == kTraitMethod))
             continue;
-
-        //std::cerr << "possible match: " << symbol->parentType->str() << std::endl;
 
         if (isSubtype(parentType, symbol->parentType))
         {

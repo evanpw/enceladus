@@ -1,5 +1,5 @@
 n := 10000
-arr := makeArray(n, 0)
+arr := Array::make(n, 0)
 
 for i in range(0, n)
     arr.set(i, i)

@@ -57,7 +57,7 @@ def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) 
     for inst in instructions
         let Pair(nextCache, instCost) := simulateInstruction(cache, inst)
 
-        if not cache.eq(nextCache)
+        if cache != nextCache
             # The min cost starting at this point is at most the cost of this
             # instruction, plus the cost starting at the successor cache value
             cost := instCost + costAt(memo, instructions, nextCache)

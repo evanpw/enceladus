@@ -6,4 +6,4 @@ def g() -> Bool
     print $ "World"
     return False
 
-x := f or g
+x := f() or g()

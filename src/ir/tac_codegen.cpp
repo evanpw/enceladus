@@ -157,7 +157,18 @@ static bool isConcrete(Type* original)
             return true;
 
         case ttVariable:
+        {
+            // Any leftover 'T: Num variables are assumed to be Int
+            TypeVariable* var = original->get<TypeVariable>();
+
+            if (!var->quantified() && var->constraints().size() == 1 && isSubtype(original, var->table()->Num))
+            {
+                var->assign(var->table()->Int);
+                return true;
+            }
+
             return false;
+        }
 
         case ttFunction:
         {
@@ -204,8 +215,22 @@ static TypeAssignment combine(const TypeAssignment& typeContext, const TypeAssig
     return result;
 }
 
+static TypeAssignment compose(const TypeAssignment& typeContext, const TypeAssignment& typeAssignment)
+{
+    TypeAssignment result = typeContext;
+
+    for (auto& assignment : typeAssignment)
+    {
+        result[assignment.first] = substitute(assignment.second, typeContext);
+    }
+
+    return result;
+}
+
 static ValueType getRealValueType(Type* type)
 {
+    assert(isConcrete(type));
+
     if (type->isBoxed())
     {
         return ValueType::Reference;
@@ -238,7 +263,7 @@ static ValueType getRealValueType(Type* type)
 
 ValueType TACCodeGen::getValueType(Type* type, const TypeAssignment& typeAssignment)
 {
-    TypeAssignment fullAssignment = combine(_typeContext, typeAssignment);
+    TypeAssignment fullAssignment = compose(_typeContext, typeAssignment);
     Type* realType = substitute(type, fullAssignment);
 
     return getRealValueType(realType);
@@ -577,6 +602,15 @@ void TACConditionalCodeGen::visit(ComparisonNode* node)
     Value* lhs = visitAndGet(node->lhs);
     Value* rhs = visitAndGet(node->rhs);
 
+    if (node->method)
+    {
+        Value* method = _mainCodeGen->getTraitMethodValue(node->lhs->type, node->method, node);
+        Value* condition = _mainCodeGen->createTemp(ValueType::U64);
+        emit(new CallInst(condition, method, {lhs, rhs}));
+        emit(new JumpIfInst(condition, _trueBranch, _falseBranch));
+        return;
+    }
+
     switch(node->op)
     {
         case ComparisonNode::kGreater:
@@ -643,6 +677,14 @@ void TACCodeGen::visit(ComparisonNode* node)
 
     Value* lhs = visitAndGet(node->lhs);
     Value* rhs = visitAndGet(node->rhs);
+    node->value = createTemp(ValueType::U64);
+
+    if (node->method)
+    {
+        Value* method = getTraitMethodValue(node->lhs->type, node->method, node);
+        emit(new CallInst(node->value, method, {lhs, rhs}));
+        return;
+    }
 
     BasicBlock* trueBranch = createBlock();
     BasicBlock* falseBranch = createBlock();
@@ -657,7 +699,6 @@ void TACCodeGen::visit(ComparisonNode* node)
     emit(new JumpInst(continueAt));
 
     setBlock(continueAt);
-    node->value = createTemp(ValueType::U64);
     PhiInst* phi = new PhiInst(node->value);
     phi->addSource(falseBranch, _context->False);
     phi->addSource(trueBranch, _context->True);
@@ -743,14 +784,14 @@ void TACCodeGen::visit(NullaryNode* node)
     }
     else
     {
-        ValueType type = getValueType(node->type, node->typeAssignment);
-        Value* dest = node->value = createTemp(type);
-
         FunctionSymbol* functionSymbol = dynamic_cast<FunctionSymbol*>(node->symbol);
+
+        Value* dest = node->value = createTemp();
 
         if (node->kind == NullaryNode::FUNC_CALL)
         {
             Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
+
             CallInst* inst = new CallInst(dest, fn);
             inst->ccall = functionSymbol->isExternal;
             inst->regpass = inst->ccall;
@@ -773,6 +814,8 @@ void TACCodeGen::visit(NullaryNode* node)
             Value* fn = getFunctionValue(node->symbol, node, node->typeAssignment);
             emit(new IndexedStoreInst(dest, _context->createConstantInt(ValueType::U64, sizeof(SplObject)), fn));
         }
+
+        dest->type = getValueType(node->type, node->typeAssignment);
     }
 }
 
@@ -938,103 +981,13 @@ void TACCodeGen::visit(WhileNode* node)
 
 void TACCodeGen::visit(ForeachNode* node)
 {
-    // HACK
-    Value* headFunction;
-    Value* tailFunction;
-    Value* emptyFunction;
-    if (node->headSymbol->kind == kMethod)
-    {
-        headFunction = getFunctionValue(node->headSymbol, node, node->headTypeAssignment);
-        tailFunction = getFunctionValue(node->tailSymbol, node, node->tailTypeAssignment);
-        emptyFunction = getFunctionValue(node->emptySymbol, node, node->emptyTypeAssignment);
-    }
-    else
-    {
-        assert(node->headSymbol->kind == kTraitMethod);
-
-        Type* objectType = node->listExpression->type;
-
-        headFunction = getTraitMethodValue(objectType, node->headSymbol, node, node->headTypeAssignment);
-        tailFunction = getTraitMethodValue(objectType, node->tailSymbol, node, node->tailTypeAssignment);
-        emptyFunction = getTraitMethodValue(objectType, node->emptySymbol, node, node->emptyTypeAssignment);
-    }
-
-    BasicBlock* loopInit = createBlock();
-    BasicBlock* loopBegin = createBlock();
-    BasicBlock* loopExit = createBlock();
-    BasicBlock* loopBody = createBlock();
-
-    // Create an unnamed local variable to hold the list being iterated over
-    Value* listVar = _context->createLocal(ValueType::Reference, "");
-    _currentFunction->locals.push_back(listVar);
-
-    emit(new JumpInst(loopInit));
-    setBlock(loopInit);
-
-    Value* initialList = visitAndGet(node->listExpression);
-    emit(new StoreInst(listVar, initialList));
-
-    emit(new JumpInst(loopBegin));
-    setBlock(loopBegin);
-
-    // Loop while list variable is not null
-    Value* currentList = createTemp(ValueType::Reference);
-    emit(new LoadInst(currentList, listVar));
-    Value* isNull = createTemp(ValueType::U64);
-    emit(new CallInst(isNull, emptyFunction, {currentList}));
-    emit(new JumpIfInst(isNull, loopExit, loopBody));
-
-    // Push a new inner loop on the (implicit) stack
-    BasicBlock* prevLoopExit = _currentLoopExit;
-    _currentLoopExit = loopExit;
-
-    setBlock(loopBody);
-
-    // Assign the head of the list to the induction variable
-    currentList = createTemp(ValueType::Reference);
-    emit(new LoadInst(currentList, listVar));
-    Value* currentHead = createTemp(getValueType(node->varType, _typeContext));
-    emit(new CallInst(currentHead, headFunction, {currentList}));
-    emit(new StoreInst(getValue(node->symbol), currentHead));
-
-    // Pop the head off the current list
-    Value* currentTail = createTemp(ValueType::Reference);
-    emit(new CallInst(currentTail, tailFunction, {currentList}));
-    emit(new StoreInst(listVar, currentTail));
-
-    node->body->accept(this);
-
-    if (!_currentBlock->isTerminated())
-        emit(new JumpInst(loopBegin));
-
-    _currentLoopExit = prevLoopExit;
-
-    setBlock(loopExit);
+    node->setupNode->accept(this);
+    node->loopNode->accept(this);
 }
 
 void TACCodeGen::visit(IndexNode* node)
 {
-    // HACK
-    Value* atMethod;
-    if (node->atSymbol->kind == kMethod)
-    {
-        atMethod = getFunctionValue(node->atSymbol, node, node->typeAssignment);
-    }
-    else
-    {
-        assert(node->atSymbol->kind == kTraitMethod);
-
-        Type* objectType = node->object->type;
-        atMethod = getTraitMethodValue(objectType, node->atSymbol, node, node->typeAssignment);
-    }
-
-
-    Value* object = visitAndGet(node->object);
-    Value* index = visitAndGet(node->index);
-    node->value = createTemp(getValueType(node->type));
-
-    std::vector<Value*> arguments = {object, index};
-    emit(new CallInst(node->value, atMethod, arguments));
+    node->value = visitAndGet(node->methodCall);
 }
 
 void TACCodeGen::visit(ForeverNode* node)
@@ -1092,8 +1045,6 @@ void TACCodeGen::visit(AssignNode* node)
 
 void TACCodeGen::visit(VariableDefNode* node)
 {
-    Value* dest = getValue(node->symbol);
-
     if (!node->symbol)
     {
         visitAndGet(node->rhs);
@@ -1101,6 +1052,7 @@ void TACCodeGen::visit(VariableDefNode* node)
     else
     {
         Value* value = visitAndGet(node->rhs);
+        Value* dest = getValue(node->symbol);
         emit(new StoreInst(dest, value));
     }
 }
@@ -1151,7 +1103,7 @@ void TACCodeGen::visit(FunctionCallNode* node)
         arguments.push_back(i->value);
     }
 
-    node->value = createTemp(getValueType(node->type));
+    node->value = createTemp();
     Value* result = node->value;
 
     if (node->symbol->kind == kFunction && dynamic_cast<FunctionSymbol*>(node->symbol)->isBuiltin)
@@ -1177,6 +1129,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
             phi->addSource(trueBranch, _context->False);
             phi->addSource(falseBranch, _context->True);
             emit(phi);
+
+            result->type = getValueType(node->type);
             return;
 
         }
@@ -1246,6 +1200,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
         CallInst* inst = new CallInst(result, functionAddress, arguments);
         emit(inst);
     }
+
+    result->type = getValueType(node->type);
 }
 
 void TACCodeGen::visit(BinopNode* node)
@@ -1303,7 +1259,7 @@ void TACCodeGen::visit(MethodCallNode* node)
         arguments.push_back(i->value);
     }
 
-    node->value = createTemp(getValueType(node->type));
+    node->value = createTemp();
 
     if (node->symbol->kind == kMethod)
     {
@@ -1315,6 +1271,8 @@ void TACCodeGen::visit(MethodCallNode* node)
         Value* method = getTraitMethodValue(node->object->type, node->symbol, node, node->typeAssignment);
         emit(new CallInst(node->value, method, arguments));
     }
+
+    node->value->type = getValueType(node->type);
 }
 
 void TACCodeGen::visit(ReturnNode* node)

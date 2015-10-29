@@ -1,7 +1,7 @@
 x := 1
 
-def f() -> Int 
+def f() -> Int
     x := 2
     return x
 
-print $ show $ x + f
+print $ show $ x + f()

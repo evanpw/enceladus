@@ -44,7 +44,7 @@ for i in range(1, 28124)
 
 # Convert the list into an array
 n := reversedList.length()
-abundants := makeArray(n, 0)
+abundants := Array::make(n, 0)
 
 for j in range(0, n)
     x := reversedList.head()

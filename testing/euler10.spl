@@ -2,7 +2,7 @@
 primeSum := 0
 n := 2000000
 
-maybePrime := makeArray(n, True)
+maybePrime := Array::make(n, True)
 
 for i in range(2, n)
     if maybePrime[i]

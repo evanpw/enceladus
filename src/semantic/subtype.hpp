@@ -62,6 +62,7 @@ Uses:
 bool isSubtype(Trait* lhs, Trait* rhs);
 bool isSubtype(Type* lhs, Trait* trait);
 bool isSubtype(Type* lhs, Type* rhs);
+bool overlap(Type* lhs, Type* rhs);
 
 // Full-power comparer
 class TypeComparer
@@ -70,6 +71,7 @@ public:
     bool compare(Trait* lhs, Trait* rhs);
     bool compare(Type* lhs, Trait* trait);
     bool compare(Type* lhs, Type* rhs);
+    bool overlap(Type* lhs, Type* rhs);
 
     const TypeAssignment& lhsSubs() const
     {

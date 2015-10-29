@@ -172,6 +172,9 @@ public:
 	ExpressionNode* lhs;
 	Operator op;
 	ExpressionNode* rhs;
+
+	// Annotations
+	TraitMethodSymbol* method = nullptr;
 };
 
 class NullaryNode : public ExpressionNode
@@ -387,18 +390,10 @@ public:
 	StatementNode* body;
 
 	// Annotations
-	Symbol* symbol;
-	Type* varType;
-
-	// HACK: give the code generator to these functions
-	Symbol* headSymbol;
-	TypeAssignment headTypeAssignment;
-	Symbol* tailSymbol;
-	TypeAssignment tailTypeAssignment;
-	Symbol* emptySymbol;
-	TypeAssignment emptyTypeAssignment;
+	// TODO: Use a real AST transformation
+	StatementNode* setupNode;
+	WhileNode* loopNode;
 };
-
 
 class ForeverNode : public LoopNode
 {
@@ -672,9 +667,8 @@ public:
 	ExpressionNode* index;
 
 	// Annotations
-	// HACK: give the code generator access to this method
-	Symbol* atSymbol;
-	TypeAssignment typeAssignment;
+	// TODO: Use a real AST transformation
+	MethodCallNode* methodCall;
 };
 
 //// Structures ////////////////////////////////////////////////////////////////

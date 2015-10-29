@@ -396,110 +396,123 @@ bool equals(Type* lhs, Type* rhs)
     assert(false);
 }
 
-static Type* lookup(Type* type, const TypeAssignment& context)
-{
-    while (type->isVariable())
-    {
-        TypeVariable* var = type->get<TypeVariable>();
-        auto i = context.find(var);
-        if (i == context.end())
-        {
-            return type;
-        }
-        else
-        {
-            type = i->second;
-        }
-    }
+// static Type* lookup(Type* type, const TypeAssignment& context)
+// {
+//     while (type->isVariable())
+//     {
+//         TypeVariable* var = type->get<TypeVariable>();
+//         auto i = context.find(var);
+//         if (i == context.end())
+//         {
+//             return type;
+//         }
+//         else
+//         {
+//             type = i->second;
+//         }
+//     }
 
-    return type;
-}
+//     return type;
+// }
 
-bool overlap(Type* lhs, Type* rhs, TypeAssignment& subs)
-{
-    lhs = lookup(lhs, subs);
-    rhs = lookup(rhs, subs);
+// bool overlap(Type* lhs, Type* rhs, TypeAssignment& subs)
+// {
+//     lhs = lookup(lhs, subs);
+//     rhs = lookup(rhs, subs);
 
-    if (lhs->isVariable())
-    {
-        assert(lhs->get<TypeVariable>()->quantified());
+//     if (lhs->isVariable())
+//     {
+//         assert(lhs->get<TypeVariable>()->quantified());
 
-        if (equals(lhs, rhs))
-            return true;
+//         if (equals(lhs, rhs))
+//             return true;
 
-        TypeVariable* lhsVariable = lhs->get<TypeVariable>();
+//         TypeVariable* lhsVariable = lhs->get<TypeVariable>();
 
-        assert(subs.find(lhsVariable) == subs.end());
-        subs[lhs->get<TypeVariable>()] = rhs;
+//         assert(subs.find(lhsVariable) == subs.end());
 
-        return true;
-    }
-    else if (rhs->isVariable())
-    {
-        assert(rhs->get<TypeVariable>()->quantified());
+//         for (Trait* constraint : lhsVariable->constraints())
+//         {
+//             if (!isSubtype(rhs, constraint))
+//                 return false;
+//         }
 
-        assert(subs.find(rhs->get<TypeVariable>()) == subs.end());
-        subs[rhs->get<TypeVariable>()] = lhs;
+//         subs[lhs->get<TypeVariable>()] = rhs;
 
-        return true;
-    }
+//         return true;
+//     }
+//     else if (rhs->isVariable())
+//     {
+//         assert(rhs->get<TypeVariable>()->quantified());
+//         assert(subs.find(rhs->get<TypeVariable>()) == subs.end());
 
-    if (lhs->tag() != rhs->tag())
-        return false;
+//         for (Trait* constraint : rhs->get<TypeVariable>()->constraints())
+//         {
+//             if (!isSubtype(lhs, constraint))
+//                 return false;
+//         }
 
-    switch (lhs->tag())
-    {
-        case ttBase:
-        {
-            return lhs->get<BaseType>() == rhs->get<BaseType>();
-        }
+//         subs[rhs->get<TypeVariable>()] = lhs;
 
-        case ttFunction:
-        {
-            const FunctionType* lhsFunction = lhs->get<FunctionType>();
-            const FunctionType* rhsFunction = rhs->get<FunctionType>();
+//         return true;
+//     }
 
-            if (lhsFunction->inputs().size() != rhsFunction->inputs().size())
-                return false;
+//     if (lhs->tag() != rhs->tag())
+//         return false;
 
-            for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
-            {
-                if (!overlap(lhsFunction->inputs()[i], rhsFunction->inputs()[i], subs))
-                    return false;
-            }
+//     switch (lhs->tag())
+//     {
+//         case ttBase:
+//         {
+//             return lhs->get<BaseType>() == rhs->get<BaseType>();
+//         }
 
-            if (!overlap(lhsFunction->output(), rhsFunction->output(), subs))
-                return false;
+//         case ttFunction:
+//         {
+//             const FunctionType* lhsFunction = lhs->get<FunctionType>();
+//             const FunctionType* rhsFunction = rhs->get<FunctionType>();
 
-            return true;
-        }
+//             if (lhsFunction->inputs().size() != rhsFunction->inputs().size())
+//                 return false;
 
-        case ttConstructed:
-        {
-            const ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
-            const ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
+//             for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
+//             {
+//                 if (!overlap(lhsFunction->inputs()[i], rhsFunction->inputs()[i], subs))
+//                     return false;
+//             }
 
-            if (lhsConstructed->prototype() != rhsConstructed->prototype())
-                return false;
+//             if (!overlap(lhsFunction->output(), rhsFunction->output(), subs))
+//                 return false;
 
-            for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
-            {
-                if (!overlap(lhsConstructed->typeParameters()[i], rhsConstructed->typeParameters()[i], subs))
-                    return false;
-            }
+//             return true;
+//         }
 
-            return true;
-        }
-    }
+//         case ttConstructed:
+//         {
+//             const ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
+//             const ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
 
-    assert(false);
-}
+//             if (lhsConstructed->prototype() != rhsConstructed->prototype())
+//                 return false;
 
-bool overlap(Type* lhs, Type* rhs)
-{
-    TypeAssignment subs;
-    return overlap(lhs, rhs, subs);
-}
+//             for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
+//             {
+//                 if (!overlap(lhsConstructed->typeParameters()[i], rhsConstructed->typeParameters()[i], subs))
+//                     return false;
+//             }
+
+//             return true;
+//         }
+//     }
+
+//     assert(false);
+// }
+
+// bool overlap(Type* lhs, Type* rhs)
+// {
+//     TypeAssignment subs;
+//     return overlap(lhs, rhs, subs);
+// }
 
 Type* substitute(Type* original, const TypeAssignment& typeAssignment)
 {

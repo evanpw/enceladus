@@ -101,6 +101,8 @@ private:
     TypeSymbol(const std::string& name, AstNode* node, Type* type);
 };
 
+class TraitMethodSymbol;
+
 class TraitSymbol : public Symbol
 {
 public:
@@ -112,7 +114,7 @@ public:
     // Type parameters: should all appear in traitVar
     std::vector<Type*> typeParameters;
 
-    std::unordered_map<std::string, Type*> methods;
+    std::unordered_map<std::string, TraitMethodSymbol*> methods;
 
 private:
     friend class SymbolTable;

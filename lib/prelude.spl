@@ -7,15 +7,66 @@ impl<T> List<T>
     def insert(self: List<T>, x: T) -> List<T>
         return Cons(x, self)
 
+
 ## Iterator trait ##
 trait Iterator<T>
     def head(self: Self) -> T
     def tail(self: Self) -> Self
     def empty(self: Self) -> Bool
 
+
 ## Index trait ##
 trait Index<S, T>
     def at(self: Self, n: S) -> T
+
+
+## Eq trait ##
+trait Eq
+    def eq(lhs: Self, rhs: Self) -> Bool
+    def ne(lhs: Self, rhs: Self) -> Bool
+
+impl<T: Num> Eq for T
+    def eq(lhs: T, rhs: T) -> Bool
+        return lhs == rhs
+
+    def ne(lhs: T, rhs: T) -> Bool
+        return lhs != rhs
+
+
+## Range ##
+struct Range<T: Num>
+    start: T
+    end: T
+
+def range<T: Num>(start: T, end: T) -> Range<T>
+    return Range(start, end)
+
+impl<T: Num> Iterator<T> for Range<T>
+    def head(self: Range<T>) -> T
+        assert self.start < self.end
+        return self.start
+
+    def tail(self: Range<T>) -> Range<T>
+        assert self.start < self.end
+        return Range(self.start + 1, self.end)
+
+    def empty(self: Range<T>) -> Bool
+        return self.start >= self.end
+
+impl<T: Num> Range<T>
+    def toList(self: Range<T>) -> [T]
+        result := []
+
+        if self.empty()
+            return result
+
+        i := self.end - 1
+        while i >= self.start
+            result = result.insert(i)
+            i -= 1
+
+        return result
+
 
 ## String ##
 type Char = UInt8
@@ -61,6 +112,24 @@ impl Iterator<Char> for StringIterator
     def empty(self: StringIterator) -> Bool
         return self.offset >= self.str.length()
 
+impl Eq for String
+    def eq(lhs: String, rhs: String) -> Bool
+        n1 := lhs.length()
+        n2 := rhs.length()
+
+        if n1 != n2
+            return False
+
+        for i in range(0, n1)
+            if lhs.at(i) != rhs.at(i)
+                return False
+
+        return True
+
+    def ne(lhs: String, rhs: String) -> Bool
+        return not (lhs == rhs)
+
+
 ## Array ##
 # FOR INTERNAL USE ONLY: Does not initialize the array
 foreign unsafeMakeArray<T>(size: UInt) -> Array<T>
@@ -68,21 +137,22 @@ foreign unsafeArrayAt<T>(arr: Array<T>, n: UInt) -> T
 foreign unsafeArraySet<T>(arr: Array<T>, n: UInt, value: T) -> Unit
 foreign arrayLength<T>(arr: Array<T>) -> UInt
 
-def emptyArray<T>() -> Array<T>
-    return unsafeMakeArray(0)
+impl<T> Array<T>
+    def new() -> Array<T>
+        return unsafeMakeArray(0)
 
-def makeArray<T>(size: UInt, value: T) -> Array<T>
-    arr := unsafeMakeArray(size)
+    def make(size: UInt, value: T) -> Array<T>
+        arr := unsafeMakeArray(size)
 
-    # MUST NOT collect garbage in between allocation and initialization
-    # if T is boxed
+        # MUST NOT collect garbage in between allocation and initialization
+        # if T is boxed
 
-    i := 0
-    while i < size
-        unsafeArraySet(arr, i, value)
-        i += 1
+        i := 0
+        while i < size
+            unsafeArraySet(arr, i, value)
+            i += 1
 
-    return arr
+        return arr
 
 # Method wrappers (methods can't be implemented in C)
 impl<T> Index<UInt, T> for Array<T>
@@ -139,6 +209,7 @@ foreign print(msg: String) -> Unit
 # HACK: Make sure these constructors exist for the C library to use
 neverUsed := Some("Hello")
 neverUsed = None
+
 
 ## List ##
 impl<T> Iterator<T> for List<T>
@@ -226,40 +297,20 @@ impl<T> List<T>
 
         return result.reverse()
 
-
-## Range ##
-struct Range<T: Num>
-    start: T
-    end: T
-
-def range<T: Num>(start: T, end: T) -> Range<T>
-    return Range(start, end)
-
-impl<T: Num> Iterator<T> for Range<T>
-    def head(self: Range<T>) -> T
-        assert self.start < self.end
-        return self.start
-
-    def tail(self: Range<T>) -> Range<T>
-        assert self.start < self.end
-        return Range(self.start + 1, self.end)
-
-    def empty(self: Range<T>) -> Bool
-        return self.start >= self.end
-
-impl<T: Num> Range<T>
-    def toList(self: Range<T>) -> [T]
-        result := []
-
+impl<T: Eq> Eq for [T]
+    def eq(self: [T], other: [T]) -> Bool
         if self.empty()
-            return result
+            return other.empty()
+        elif other.empty()
+            return False
 
-        i := self.end - 1
-        while i >= self.start
-            result = result.insert(i)
-            i -= 1
+        if self.head() != other.head()
+            return False
+        else
+            return self.tail() == other.tail()
 
-        return result
+    def ne(self: [T], other: [T]) -> Bool
+        return not (self == other)
 
 
 ## Native-language standard library
@@ -426,39 +477,49 @@ impl Ord for String
         panic $ "Unreachable"
 
 
-## Eq trait ##
-trait Eq
-    def eq(lhs: Self, rhs: Self) -> Bool
+## PartialOrd trait ##
+trait PartialOrd
+    def lt(self: Self, other: Self) -> Bool
+    def le(self: Self, other: Self) -> Bool
+    def gt(self: Self, other: Self) -> Bool
+    def ge(self: Self, other: Self) -> Bool
 
-impl Eq for Int
-    def eq(lhs: Int, rhs: Int) -> Bool
-        return lhs == rhs
-
-impl Eq for String
-    def eq(lhs: String, rhs: String) -> Bool
-        n1 := lhs.length()
-        n2 := rhs.length()
-
-        if n1 != n2
-            return False
-
-        for i in range(0, n1)
-            if lhs.at(i) != rhs.at(i)
+impl<T: Ord> PartialOrd for T
+    def lt(self: T, other: T) -> Bool
+        match self.cmp(other)
+            Less
+                return True
+            Equal
+                return False
+            Greater
                 return False
 
-        return True
+    def le(self: T, other: T) -> Bool
+        match self.cmp(other)
+            Less
+                return True
+            Equal
+                return True
+            Greater
+                return False
 
-impl<T: Eq> Eq for [T]
-    def eq(self: [T], other: [T]) -> Bool
-        if self.empty()
-            return other.empty()
-        elif other.empty()
-            return False
+    def gt(self: T, other: T) -> Bool
+        match self.cmp(other)
+            Less
+                return False
+            Equal
+                return False
+            Greater
+                return True
 
-        if not self.head().eq(other.head())
-            return False
-        else
-            return self.tail().eq(other.tail())
+    def ge(self: T, other: T) -> Bool
+        match self.cmp(other)
+            Less
+                return False
+            Equal
+                return True
+            Greater
+                return True
 
 
 ## Hash trait ##

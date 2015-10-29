@@ -107,21 +107,6 @@ private:
     TraitDefNode* _enclosingTraitDef;
 };
 
-class SemanticPass2 : public AstVisitor
-{
-public:
-    SemanticPass2(AstContext* context);
-    bool analyze();
-
-    virtual void visit(BinopNode* node);
-    virtual void visit(ComparisonNode* node);
-    virtual void visit(IntNode* node);
-
-private:
-    AstContext* _context;
-    TypeTable* _typeTable;
-};
-
 class TypeInferenceError : public std::exception
 {
 public:

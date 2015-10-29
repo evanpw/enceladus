@@ -5,7 +5,7 @@ struct HashTable<S: Eq + Hash, T>
 
 impl<S: Eq + Hash, T> HashTable<S, T>
     def new() -> HashTable<S, T>
-        return HashTable(makeArray(0, None), 0, 0)
+        return HashTable(Array::make(0, None), 0, 0)
 
     def insert(self: HashTable<S, T>, key: S, value: T) -> Unit
         # Resize when 2/3 full
@@ -22,7 +22,7 @@ impl<S: Eq + Hash, T> HashTable<S, T>
                 Some(item)
                     let Pair(k, v) := item
 
-                    if k.eq(key)
+                    if k == key
                         self.contents.set(idx, Some(Pair(key, value)))
                         break
 
@@ -46,7 +46,7 @@ impl<S: Eq + Hash, T> HashTable<S, T>
                 Some(item)
                     let Pair(k, v) := item
 
-                    if k.eq(key)
+                    if k == key
                         return Some(v)
 
                 None
@@ -63,7 +63,7 @@ impl<S: Eq + Hash, T> HashTable<S, T>
         oldCapacity := self.capacity
 
         self.capacity = newCapacity
-        self.contents = makeArray(newCapacity, None)
+        self.contents = Array::make(newCapacity, None)
         self.size = 0
 
         for idx in range(0, oldCapacity)

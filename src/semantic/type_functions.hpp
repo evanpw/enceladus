@@ -18,6 +18,6 @@ bool occurs(const TypeVariable* variable, Type* value);
 
 bool equals(Type* lhs, Type* rhs);
 
-bool overlap(Type* lhs, Type* rhs);
+//bool overlap(Type* lhs, Type* rhs);
 
 #endif

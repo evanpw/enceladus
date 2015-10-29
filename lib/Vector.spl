@@ -9,7 +9,7 @@ struct VectorIterator<T: Default>
 
 impl<T: Default> Vector<T>
     def new() -> Vector<T>
-        return Vector(emptyArray(), 0, 0)
+        return Vector(Array::new(), 0, 0)
 
     def append(self: Vector<T>, x: T) -> Unit
         if self.size < self.capacity
@@ -17,7 +17,7 @@ impl<T: Default> Vector<T>
             self.size += 1
         else
             newCapacity := self.capacity * 2 + 1
-            newContent := makeArray(newCapacity, T::default())
+            newContent := Array::make(newCapacity, T::default())
             for i in range(0, self.size)
                 newContent.set(i, self.content[i])
 
@@ -38,7 +38,7 @@ impl<T: Default> Vector<T>
         self.content.set(n, x)
 
     def copy(self: Vector<T>) -> Vector<T>
-        result := Vector(makeArray(self.capacity, T::default()), self.capacity, self.size)
+        result := Vector(Array::make(self.capacity, T::default()), self.capacity, self.size)
         for i in range(0, self.size)
             result.content.set(i, self.content[i])
 

@@ -64,6 +64,12 @@ bool isSubtype(Type* lhs, Type* rhs)
     return comparer.compare(lhs, rhs);
 }
 
+bool overlap(Type* lhs, Type* rhs)
+{
+    TypeComparer comparer;
+    return comparer.overlap(lhs, rhs);
+}
+
 //// Trait <= Trait ////////////////////////////////////////////////////////////
 
 bool TypeComparer::compare(Trait* lhs, Trait* rhs)
@@ -374,6 +380,128 @@ bool TypeComparer::compare(Type* lhs, Type* rhs)
             }
 
             transaction.accept();
+            return true;
+        }
+    }
+
+    assert(false);
+}
+
+
+//// Overlap ///////////////////////////////////////////////////////////////////
+
+static Type* lookup(Type* type, const TypeAssignment& context)
+{
+    while (type->isVariable())
+    {
+        TypeVariable* var = type->get<TypeVariable>();
+        auto i = context.find(var);
+        if (i == context.end())
+        {
+            return type;
+        }
+        else
+        {
+            type = i->second;
+        }
+    }
+
+    return type;
+}
+
+bool TypeComparer::overlap(Type* lhs, Type* rhs)
+{
+    lhs = lookup(lhs, _lhsSubs);
+    rhs = lookup(rhs, _rhsSubs);
+
+    if (lhs->isVariable())
+    {
+        assert(lhs->get<TypeVariable>()->quantified());
+
+        if (equals(lhs, rhs))
+            return true;
+
+        TypeVariable* lhsVariable = lhs->get<TypeVariable>();
+
+        assert(_lhsSubs.find(lhsVariable) == _lhsSubs.end());
+
+        for (Trait* constraint : lhsVariable->constraints())
+        {
+            if (rhs->isVariable())
+            {
+                _newConstraints[rhs->get<TypeVariable>()].insert(constraint);
+            }
+            else
+            {
+                if (!isSubtype(rhs, constraint))
+                    return false;
+            }
+        }
+
+        _lhsSubs[lhs->get<TypeVariable>()] = rhs;
+
+        return true;
+    }
+    else if (rhs->isVariable())
+    {
+        assert(rhs->get<TypeVariable>()->quantified());
+        assert(_rhsSubs.find(rhs->get<TypeVariable>()) == _rhsSubs.end());
+
+        for (Trait* constraint : rhs->get<TypeVariable>()->constraints())
+        {
+            if (!isSubtype(lhs, constraint))
+                return false;
+        }
+
+        _rhsSubs[rhs->get<TypeVariable>()] = lhs;
+
+        return true;
+    }
+
+    if (lhs->tag() != rhs->tag())
+        return false;
+
+    switch (lhs->tag())
+    {
+        case ttBase:
+        {
+            return lhs->get<BaseType>() == rhs->get<BaseType>();
+        }
+
+        case ttFunction:
+        {
+            const FunctionType* lhsFunction = lhs->get<FunctionType>();
+            const FunctionType* rhsFunction = rhs->get<FunctionType>();
+
+            if (lhsFunction->inputs().size() != rhsFunction->inputs().size())
+                return false;
+
+            for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
+            {
+                if (!overlap(lhsFunction->inputs()[i], rhsFunction->inputs()[i]))
+                    return false;
+            }
+
+            if (!overlap(lhsFunction->output(), rhsFunction->output()))
+                return false;
+
+            return true;
+        }
+
+        case ttConstructed:
+        {
+            const ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
+            const ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
+
+            if (lhsConstructed->prototype() != rhsConstructed->prototype())
+                return false;
+
+            for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
+            {
+                if (!overlap(lhsConstructed->typeParameters()[i], rhsConstructed->typeParameters()[i]))
+                    return false;
+            }
+
             return true;
         }
     }
