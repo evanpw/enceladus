@@ -1,0 +1,5 @@
+def none<S>() -> Option<S>
+    return None
+
+x := none()
+print $ x.unwrapOr("Test")

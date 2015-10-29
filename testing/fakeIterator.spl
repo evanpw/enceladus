@@ -1,0 +1,10 @@
+struct Test
+    x: Int
+
+impl Test
+    def at(self: Test, n: UInt) -> Int
+        return self.x
+
+test := Test(10)
+for x in test
+    pass
