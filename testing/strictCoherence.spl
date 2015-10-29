@@ -1,0 +1,25 @@
+trait Trait1
+    def method1(self: Self) -> Unit
+
+trait Trait2
+    def method2(self: Self) -> Unit
+
+impl<T: Trait1> Trait2 for T
+    def method2(self: T) -> Unit
+        print $ "method2<T: Trait1>"
+
+impl Trait2 for Int
+    def method2(self: Int) -> Unit
+        print $ "method2<Int>"
+
+# After this impl, both of the two previous Trait2 impls apply to Int, breaking
+# coherence
+impl Trait1 for Int
+    def method1(self: Int) -> Unit
+        print $ "method1<Int>"
+
+
+def callMethod2<T: Trait2>(x: T) -> Unit
+    x.method2()
+
+callMethod2(1i)

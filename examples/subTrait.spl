@@ -1,0 +1,20 @@
+trait Trait1
+    def method1(self: Self) -> Unit
+
+trait Trait2
+    def method2(self: Self) -> Unit
+
+impl<T: Trait1> Trait2 for T
+    def method2(self: T) -> Unit
+        print $ "method2"
+
+impl Trait1 for Int
+    def method1(self: Int) -> Unit
+        print $ "method1"
+
+
+def indirectCall<T: Trait1>(x: T) -> Unit
+    # Since every T: Trait1 is an instance of Trait2, this should be possible
+    x.method2()
+
+indirectCall(1i)
