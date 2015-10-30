@@ -13,7 +13,6 @@ enum TokenType : int
     tASSERT,
     tBREAK,
     tCOLON_EQUAL,
-    tCONCAT,
     tDARROW,
     tDATA,
     tDCOLON,

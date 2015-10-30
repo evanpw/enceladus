@@ -1,38 +1,25 @@
 #include "semantic/type_functions.hpp"
 #include "semantic/subtype.hpp"
+#include "semantic/unify_trait.hpp"
 
-Trait* instantiate(Trait* trait)
+Trait* instantiate(Trait* trait, TypeAssignment& replacements)
 {
-    // TODO: Can we just check trait->prototype() == trait to see if it needs
-    // instantiating?
-
-    bool anyChanged = false;
+    if (trait->parameters().empty())
+        return trait;
 
     std::vector<Type*> params;
     for (Type* param : trait->parameters())
     {
-        if (param->isVariable() && param->get<TypeVariable>()->quantified())
-        {
-            params.push_back(trait->table()->createTypeVariable());
-            anyChanged = true;
-        }
-        else
-        {
-            params.push_back(param);
-        }
+        params.push_back(instantiate(param, replacements));
     }
 
-    Trait* result;
-    if (anyChanged)
-    {
-        result = trait->instantiate(std::move(params));
-    }
-    else
-    {
-        result = trait;
-    }
+    return trait->prototype()->instantiate(std::move(params));
+}
 
-    return result;
+Trait* instantiate(Trait* trait)
+{
+    TypeAssignment typeAssignment;
+    return instantiate(trait, typeAssignment);
 }
 
 Type* instantiate(Type* type, TypeAssignment& replacements)
@@ -62,8 +49,7 @@ Type* instantiate(Type* type, TypeAssignment& replacements)
                     TypeVariable* newVar = replacement->get<TypeVariable>();
                     for (Trait* constraint : typeVariable->constraints())
                     {
-                        // TODO: Do we need to check replacements?
-                        newVar->addConstraint(instantiate(constraint));
+                        newVar->addConstraint(instantiate(constraint, replacements));
                     }
 
                     replacements[typeVariable] = replacement;
@@ -187,13 +173,10 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)
 
         for (Trait* constraint : lhs->constraints())
         {
-            if (!isSubtype(value, constraint))
+            auto result = tryUnify(value, constraint);
+            if (!result.first)
             {
-                std::stringstream ss;
-                ss << "Can't bind variable " << lhs->str() << " to type " << value->str()
-                   << " because it isn't an instance of trait " << constraint->str();
-
-                return {false, ss.str()};
+                return result;
             }
         }
 

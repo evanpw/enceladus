@@ -16,8 +16,6 @@ std::string tokenToString(TokenType t)
         return "BREAK";
     case tCOLON_EQUAL:
         return "COLON_EQUAL";
-    case tCONCAT:
-        return "CONCAT";
     case tDARROW:
         return "DARROW";
     case tDATA:

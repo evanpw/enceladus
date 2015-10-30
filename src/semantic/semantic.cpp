@@ -1423,14 +1423,24 @@ void SemanticAnalyzer::visit(IndexNode* node)
     node->object->accept(this);
     node->index->accept(this);
 
-    // Make sure the object's type is an instance of Index
-    TraitSymbol* indexSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Index"));
-    unify(node->object->type, instantiate(indexSymbol->trait), node->object);
+    TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Index"));
+    assert(traitSymbol);
 
-    node->methodCall = new MethodCallNode(_context, node->location, node->object, "at", {node->index});
-    node->methodCall->accept(this);
+    TypeAssignment typeAssignment;
+    Trait* trait = instantiate(traitSymbol->trait, typeAssignment);
+    assert(trait);
 
-    node->type = node->methodCall->type;
+    node->method = traitSymbol->methods["at"];
+    assert(node->method);
+
+    FunctionType* methodType = instantiate(node->method->type, typeAssignment)->get<FunctionType>();
+    assert(methodType);
+
+    assert(methodType->inputs().size() == 2);
+    unify(methodType->inputs()[0], node->object->type, node);
+    unify(methodType->inputs()[1], node->index->type, node);
+
+    node->type = methodType->output();
 }
 
 void SemanticAnalyzer::visit(ImplNode* node)

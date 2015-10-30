@@ -190,10 +190,7 @@ additive_expression
     : multiplicative_expression { ( '+' | '-' ) multiplicative_expression }
 
 multiplicative_expression
-    : concat_expression { ( '*' | '/' | '%' ) concat_expression }
-
-concat_expression
-    : negation_expression [ '++' concat_expression ]
+    : negation_expression { ( '*' | '/' | '%' ) negation_expression }
 
 negation_expression
     : cast_expression

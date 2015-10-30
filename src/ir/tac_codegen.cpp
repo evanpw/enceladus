@@ -987,7 +987,13 @@ void TACCodeGen::visit(ForeachNode* node)
 
 void TACCodeGen::visit(IndexNode* node)
 {
-    node->value = visitAndGet(node->methodCall);
+    Value* object = visitAndGet(node->object);
+    Value* index = visitAndGet(node->index);
+    Value* method = getTraitMethodValue(node->object->type, node->method, node);
+
+    node->value = createTemp(getValueType(node->type));
+
+    emit(new CallInst(node->value, method, {object, index}));
 }
 
 void TACCodeGen::visit(ForeverNode* node)

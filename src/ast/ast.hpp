@@ -670,8 +670,7 @@ public:
 	ExpressionNode* index;
 
 	// Annotations
-	// TODO: Use a real AST transformation
-	MethodCallNode* methodCall;
+	TraitMethodSymbol* method = nullptr;
 };
 
 //// Structures ////////////////////////////////////////////////////////////////

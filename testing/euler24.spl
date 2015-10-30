@@ -13,7 +13,7 @@ def delete(x: UInt, xs: [UInt]) -> [UInt]
 
     while not xs'.empty()
         if xs'.head() == x
-            return initial.reverse() ++ xs'.tail()
+            return initial.reverse() + xs'.tail()
         else
             initial = initial.insert(xs'.head())
 

@@ -1066,42 +1066,26 @@ ExpressionNode* Parser::additive_expression()
 
 ExpressionNode* Parser::multiplicative_expression()
 {
-    ExpressionNode* result = concat_expression();
+    ExpressionNode* result = negation_expression();
 
     while (peekType() == '*' || peekType() == '/' || peekType() == '%')
     {
         if (accept('*'))
         {
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kMul, concat_expression());
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kMul, negation_expression());
         }
         else if (accept('/'))
         {
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kDiv, concat_expression());
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kDiv, negation_expression());
         }
         else
         {
             expect('%');
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kRem, concat_expression());
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kRem, negation_expression());
         }
     }
 
     return result;
-}
-
-/// concat_expression
-///     : negation_expression [ '++' concat_expression ]
-ExpressionNode* Parser::concat_expression()
-{
-    ExpressionNode* lhs = negation_expression();
-
-    if (accept(tCONCAT))
-    {
-        return new MethodCallNode(_context, getLocation(), lhs, "concat", {concat_expression()});
-    }
-    else
-    {
-        return lhs;
-    }
 }
 
 /// negation_expression

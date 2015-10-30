@@ -271,14 +271,6 @@ impl<T> List<T>
 
         return ys
 
-    def concat(self: [T], other: [T]) -> [T]
-        result := other
-
-        for x in self.reverse()
-            result = result.insert(x)
-
-        return result
-
     def filter(self: [T], f: T -> Bool) -> [T]
         result := []
         for x in self
@@ -546,6 +538,15 @@ impl<T: Num> Rem for T
 impl Add for String
     def add(self: String, other: String) -> String
         return strCat(self, other)
+
+impl<T> Add for [T]
+    def add(self: [T], other: [T]) -> [T]
+        result := other
+
+        for x in self.reverse()
+            result = result.insert(x)
+
+        return result
 
 
 ## Hash trait ##

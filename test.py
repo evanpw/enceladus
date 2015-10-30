@@ -167,7 +167,7 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error=Regex('Error: testing/importSemantic.spl:4:1: Can\'t bind variable \'T\d+: Num to type Bool because it isn\'t an instance of trait Num'))
+        self.run('importSemantic', build_error="Error: testing/importSemantic.spl:4:1: Type Bool is not an instance of trait Num")
 
     def test_syntaxError(self):
         self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:1: left-hand side of assignment statement is not an lvalue')
@@ -377,7 +377,7 @@ class TestAcceptance(object):
         self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:1:8: Cannot cast from type \'T\d+: Num to Int'))
 
     def test_typeConstraint(self):
-        self.run('typeConstraint', build_error=Regex('Error: testing/typeConstraint.spl:5:3: Can\'t bind variable \'T\d+: Num to type String because it isn\'t an instance of trait Num'))
+        self.run('typeConstraint', build_error="Error: testing/typeConstraint.spl:5:3: Type String is not an instance of trait Num")
 
     def test_typeConstraint2(self):
         self.run('typeConstraint2', '3\n7\n11\n15')
@@ -473,7 +473,7 @@ class TestAcceptance(object):
         self.run('genericTrait', '')
 
     def test_genericTrait2(self):
-        self.run('genericTrait2', build_error=Regex('Error: testing/genericTrait2.spl:5:11: Can\'t bind variable \'T\d+: Iterator<Int> to type StringIterator because it isn\'t an instance of trait Iterator<Int>'))
+        self.run('genericTrait2', build_error=Regex("Error: testing/genericTrait2.spl:5:11: cannot unify types StringIterator and 'T\d+: Iterator<Int>"))
 
     def test_genericTrait3(self):
         self.run('genericTrait3', '72')

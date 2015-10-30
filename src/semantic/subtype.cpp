@@ -175,14 +175,16 @@ bool TypeComparer::compare(TypeVariable* lhs, Type* rhs)
         }
         else
         {
-            if (compare(rhs, i->second))
+            Type* newValue = i->second;
+
+            if (compare(rhs, newValue))
             {
                 // New assignment is more specific
                 _lhsSubs[lhs] = rhs;
                 transaction.accept();
                 return true;
             }
-            else if (compare(i->second, rhs))
+            else if (compare(newValue, rhs))
             {
                 // No new substitution needed
                 transaction.accept();

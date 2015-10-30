@@ -475,7 +475,6 @@ TEST_CASE("generic trait checks", "[generic-trait]")
         CHECK(!isSubtype(W, V));
     }
 
-    /*
     SECTION("var-vs-generic")
     {
         Type* T = table->createTypeVariable("T", true);
@@ -501,7 +500,6 @@ TEST_CASE("generic trait checks", "[generic-trait]")
         CHECK(equals(T1, genericList));
         CHECK(equals(T2, W));
     }
-    */
 
     delete table;
 }

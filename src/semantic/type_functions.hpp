@@ -6,6 +6,7 @@
 
 Type* instantiate(Type* type, TypeAssignment& replacements);
 Type* instantiate(Type* type);
+Trait* instantiate(Trait* trait, TypeAssignment& replacements);
 Trait* instantiate(Trait* trait);
 
 Type* substitute(Type* original, const TypeAssignment& typeAssignment);

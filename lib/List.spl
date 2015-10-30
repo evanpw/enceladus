@@ -27,7 +27,7 @@ def sort<T: PartialOrd>(xs: [T]) -> [T]
     pivot := xs.head()
     let Pair(lhs, rhs) := splitList(xs.tail(), pivot)
 
-    return sort(lhs) ++ [pivot] ++ sort(rhs)
+    return sort(lhs) + [pivot] + sort(rhs)
 
 
 # Needs sub-traits to work correctly, so that Ord => PartialOrd and we can

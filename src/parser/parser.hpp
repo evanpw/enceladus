@@ -70,7 +70,6 @@ private:
     ExpressionNode* relational_expression();
     ExpressionNode* additive_expression();
     ExpressionNode* multiplicative_expression();
-    ExpressionNode* concat_expression();
     ExpressionNode* negation_expression();
     ExpressionNode* cast_expression();
     ExpressionNode* method_member_idx_expression();

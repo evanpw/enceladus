@@ -189,7 +189,6 @@ extern "C" int yywrap()
 "*="    { return tTIMES_EQUAL; }
 "/="    { return tDIV_EQUAL; }
 "%="    { return tREM_EQUAL; }
-"++"    { return tCONCAT; }
 
  /* Keywords */
 "assert"    { return tASSERT; }
