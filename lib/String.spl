@@ -90,7 +90,7 @@ impl String
         elif xs.length() == 1
             return xs.head()
         else
-            return xs.head() ++ s ++ s.join(xs.tail())
+            return xs.head() + s + s.join(xs.tail())
 
     def toInt(s: String) -> Option<Int>
         x := 0

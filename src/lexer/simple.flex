@@ -156,6 +156,7 @@ extern "C" int yywrap()
 "-"     { return '-'; }
 "*"     { return '*'; }
 "/"     { return '/'; }
+"%"     { return '%'; }
 ">"     { return '>'; }
 "<"     { return '<'; }
 ":"     { return ':'; }
@@ -172,7 +173,6 @@ extern "C" int yywrap()
 "}"     { return '}'; }
 "|"     { return '|'; }
 "^"     { return '^'; }
-"mod"   { return tMOD; }
 "->"    { return tRARROW; }
 "=>"    { return tDARROW; }
 "<="    { return tLE; }
@@ -188,6 +188,7 @@ extern "C" int yywrap()
 "-="    { return tMINUS_EQUAL; }
 "*="    { return tTIMES_EQUAL; }
 "/="    { return tDIV_EQUAL; }
+"%="    { return tREM_EQUAL; }
 "++"    { return tCONCAT; }
 
  /* Keywords */

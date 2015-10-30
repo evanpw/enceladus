@@ -82,6 +82,8 @@ std::string tokenToString(TokenType t)
         return "PLUS_EQUAL";
     case tRARROW:
         return "RARROW";
+    case tREM_EQUAL:
+        return "REM_EQUAL";
     case tRETURN:
         return "RETURN";
     case tSTRING_LIT:

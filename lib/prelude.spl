@@ -91,9 +91,6 @@ impl String
     def slice(self: String, pos: UInt, len: UInt) -> String
         return strSlice(self, pos, len)
 
-    def concat(self: String, other: String) -> String
-        return strCat(self, other)
-
     def iter(self: String) -> StringIterator
         return StringIterator(self, 0u)
 
@@ -314,11 +311,6 @@ impl<T: Eq> Eq for [T]
 
 
 ## Native-language standard library
-def assertMessage(b: Bool, err: String) -> Unit
-    if not b
-        panic $ "Assertion failed: " ++ err
-
-
 def drop<T>(x: T) -> Unit
     pass
 
@@ -367,14 +359,14 @@ def minimum<T: Num>(xs: [T]) -> T
 
 
 def even<T: Num>(x: T) -> Bool
-    if x mod 2 == 0
+    if x % 2 == 0
         return True
     else
         return False
 
 
 def odd<T: Num>(x: T) -> Bool
-    if x mod 2 == 0
+    if x % 2 == 0
         return False
     else
         return True
@@ -383,7 +375,7 @@ def odd<T: Num>(x: T) -> Bool
 def pow<T: Num>(a: T, b: UInt) -> T
     r := 1
     forever
-        if b mod 2 == 1
+        if b % 2 == 1
             r *= a
 
         b /= 2
@@ -419,17 +411,8 @@ data Ordering = Less | Equal | Greater
 trait Ord
     def cmp(self: Self, other: Self) -> Ordering
 
-impl Ord for Int
-    def cmp(self: Int, other: Int) -> Ordering
-        if self < other
-            return Less
-        elif self > other
-            return Greater
-        else
-            return Equal
-
-impl Ord for UInt
-    def cmp(self: UInt, other: UInt) -> Ordering
+impl<T: Num> Ord for T
+    def cmp(self: T, other: T) -> Ordering
         if self < other
             return Less
         elif self > other
@@ -522,6 +505,49 @@ impl<T: Ord> PartialOrd for T
                 return True
 
 
+## Add/Sub/Mul/Div traits ##
+trait Add
+    def add(self: Self, other: Self) -> Self
+
+impl<T: Num> Add for T
+    def add(self: T, other: T) -> T
+        return self + other
+
+trait Sub
+    def sub(self: Self, other: Self) -> Self
+
+impl<T: Num> Sub for T
+    def sub(self: T, other: T) -> T
+        return self - other
+
+trait Mul
+    def mul(self: Self, other: Self) -> Self
+
+impl<T: Num> Mul for T
+    def mul(self: T, other: T) -> T
+        return self * other
+
+trait Div
+    def div(self: Self, other: Self) -> Self
+
+impl<T: Num> Div for T
+    def div(self: T, other: T) -> T
+        return self / other
+
+trait Rem
+    def rem(self: Self, other: Self) -> Self
+
+impl<T: Num> Rem for T
+    def rem(self: T, other: T) -> T
+        return self % other
+
+
+## Concatenation (abusing the Add trait)
+impl Add for String
+    def add(self: String, other: String) -> String
+        return strCat(self, other)
+
+
 ## Hash trait ##
 trait Hash
     def hash(self: Self) -> UInt
@@ -562,3 +588,9 @@ impl Default for String
 impl Default for Bool
     def default() -> Bool
         return False
+
+
+## Miscellaneous
+def assertMessage(b: Bool, err: String) -> Unit
+    if not b
+        panic $ "Assertion failed: " + err

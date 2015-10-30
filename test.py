@@ -176,7 +176,7 @@ class TestAcceptance(object):
         self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
 
     def test_overrideType(self):
-        self.run('overrideType', build_error='Error: testing/overrideType.spl:2:12: Type variable T does not satisfy constraint Num')
+        self.run('overrideType', build_error=Regex("Error: testing/overrideType.spl:2:16: Can't bind variable 'T\d+: Num to quantified type variable T, because the latter isn't constrained by trait Num"))
 
     def test_noReturn(self):
         self.run('noReturn', result='1')

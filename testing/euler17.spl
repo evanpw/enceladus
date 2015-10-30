@@ -16,17 +16,17 @@ def numInWords(x: UInt) -> String
         return smallNumbers.at(x)
     elif x < 100
         tens := x / 10
-        ones := x mod 10
+        ones := x % 10
 
         if ones != 0
             return "".join([multiplesOfTen.at(tens), smallNumbers.at(ones)])
         else
             return multiplesOfTen.at(tens)
     elif x < 1000
-        ones := x mod 10
-        tens := (x / 10) mod 10
+        ones := x % 10
+        tens := (x / 10) % 10
         hundreds := x / 100
-        rest := x mod 100
+        rest := x % 100
 
         if rest != 0
             return "".join([smallNumbers.at(hundreds), "hundred", "and", numInWords(rest)])

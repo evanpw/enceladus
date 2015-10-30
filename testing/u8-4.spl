@@ -19,5 +19,5 @@ print $ showUInt(result as UInt)
 result = oneFifty / ten
 print $ showUInt(result as UInt)
 
-result = oneFifty mod ten
+result = oneFifty % ten
 print $ showUInt(result as UInt)

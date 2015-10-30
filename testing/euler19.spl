@@ -12,9 +12,9 @@ impl Date
     def isLeapYear(self: Date) -> Bool
         year := self.year
 
-        if year mod 4 == 0
-            if year mod 100 == 0
-                if year mod 400 == 0
+        if year % 4 == 0
+            if year % 100 == 0
+                if year % 400 == 0
                     return True
                 else
                     return False
@@ -36,7 +36,7 @@ impl Date
         let Date(y, m, d, w) := self
 
         d += 1
-        w = (w + 1) mod 7
+        w = (w + 1) % 7
 
         if d > self.daysInMonth()
             d = 1

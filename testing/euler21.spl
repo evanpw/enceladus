@@ -5,7 +5,7 @@ def divisors(n: Int) -> [Int]
 
     i := 2
     while i * i <= n
-        if n mod i == 0
+        if n % i == 0
             if i * i == n
                 result = result.insert(i)
             else

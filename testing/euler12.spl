@@ -29,7 +29,7 @@ def factor(n: Int) -> [Int]
     i := 2
 
     while n > 1
-        while n mod i == 0
+        while n % i == 0
             factors = factors.insert(i)
             n /= i
 

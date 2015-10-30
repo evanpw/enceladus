@@ -46,6 +46,7 @@ enum TokenType : int
     tPASS,
     tPLUS_EQUAL,
     tRARROW,
+    tREM_EQUAL,
     tRETURN,
     tSTRING_LIT,
     tSTRUCT,

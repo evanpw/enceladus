@@ -47,6 +47,7 @@ assign_or_expr
     | expression MINUS_EQUAL expression EOL
     | expression PLUS_EQUAL expression EOL
     | expression TIMES_EQUAL expression EOL
+    | expression REM_EQUAL expression EOL
     | expression EOL
 
 data_declaration
@@ -189,7 +190,7 @@ additive_expression
     : multiplicative_expression { ( '+' | '-' ) multiplicative_expression }
 
 multiplicative_expression
-    : concat_expression { ( '*' | '/' | MOD ) concat_expression }
+    : concat_expression { ( '*' | '/' | '%' ) concat_expression }
 
 concat_expression
     : negation_expression [ '++' concat_expression ]

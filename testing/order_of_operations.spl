@@ -34,7 +34,7 @@ def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
 def zeroCache(m: UInt) -> String
     result := ""
     for i in range(0, m)
-        result = result ++ "0"
+        result = result + "0"
 
     return result
 

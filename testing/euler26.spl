@@ -6,7 +6,7 @@ def reciprocal(d: Int) -> [Int]
 
     while numerator != 0
         quotient := numerator / d
-        remainder := numerator mod d
+        remainder := numerator % d
 
         assert quotient < 10
 
@@ -17,7 +17,7 @@ def reciprocal(d: Int) -> [Int]
 
 def next(n: Int, d: Int) -> Int
     quotient := n / d
-    remainder := n mod d
+    remainder := n % d
 
     assert quotient < 10
 

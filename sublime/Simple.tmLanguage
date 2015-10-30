@@ -240,7 +240,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(and|or|in|to|mod|as)\b</string>
+			<string>\b(and|or|in|to|as)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>
@@ -510,7 +510,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>(\+|-|\*|/|&gt;|&lt;|:|=|:=|\$|\||\^|->|=&gt;|&lt;=|&gt;=|==|!=|::|\+=|-=|\*=|\/=|\+\+)</string>
+			<string>(\+|-|\*|/|%|&gt;|&lt;|:|=|:=|\$|\||\^|->|=&gt;|&lt;=|&gt;=|==|!=|::|\+=|-=|\*=|\/=|\+\+)</string>
 			<key>name</key>
 			<string>keyword.operator.simple</string>
 		</dict>

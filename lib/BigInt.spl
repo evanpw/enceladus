@@ -4,7 +4,7 @@ def toBigInt(x: Int) -> BigInt
     result := []
 
     while x != 0
-        result = result.insert(x mod 10)
+        result = result.insert(x % 10)
         x /= 10
 
     return BigInt(result.reverse())
@@ -38,7 +38,7 @@ impl BigInt
 
             z := x + y + carry
 
-            result = result.insert(z mod 10)
+            result = result.insert(z % 10)
             carry = z / 10
 
         return BigInt(result.reverse())
@@ -58,7 +58,7 @@ impl BigInt
                 z = x * rhs + carry
                 xs = xs.tail()
 
-            result = result.insert(z mod 10)
+            result = result.insert(z % 10)
             carry = z / 10
 
         return BigInt(result.reverse())

@@ -800,12 +800,53 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
 void SemanticAnalyzer::visit(BinopNode* node)
 {
     node->lhs->accept(this);
-    unify(node->lhs->type, _typeTable->Num, node->lhs);
-
     node->rhs->accept(this);
-    unify(node->rhs->type, _typeTable->Num, node->rhs);
-
     unify(node->lhs->type, node->rhs->type, node);
+
+    // Arithmetic on numerical types are built-in
+    if (!isSubtype(node->lhs->type, _typeTable->Num))
+    {
+        std::string traitName;
+        std::string methodName;
+        switch (node->op)
+        {
+            case BinopNode::kAdd:
+                traitName = "Add";
+                methodName = "add";
+                break;
+
+            case BinopNode::kSub:
+                traitName = "Sub";
+                methodName = "sub";
+                break;
+
+            case BinopNode::kMul:
+                traitName = "Mul";
+                methodName = "mul";
+                break;
+
+            case BinopNode::kDiv:
+                traitName = "kDiv";
+                methodName = "div";
+                break;
+
+            case BinopNode::kRem:
+                traitName = "kRem";
+                methodName = "rem";
+                break;
+        }
+
+        TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol(traitName));
+        assert(traitSymbol);
+
+        Trait* trait = traitSymbol->trait;
+
+        unify(node->lhs->type, trait, node->lhs);
+        unify(node->rhs->type, trait, node->rhs);
+
+        node->method = traitSymbol->methods[methodName];
+        assert(node->method);
+    }
 
     node->type = node->lhs->type;
 }

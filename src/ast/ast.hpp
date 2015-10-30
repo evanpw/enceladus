@@ -281,7 +281,7 @@ public:
 class BinopNode : public ExpressionNode
 {
 public:
-	enum Op {kAdd, kSub, kMul, kDiv, kMod};
+	enum Op {kAdd, kSub, kMul, kDiv, kRem};
 
 	BinopNode(AstContext* context, const YYLTYPE& location, ExpressionNode* lhs, Op op, ExpressionNode* rhs)
 	: ExpressionNode(context, location), lhs(lhs), op(op), rhs(rhs)
@@ -293,6 +293,9 @@ public:
 	ExpressionNode* lhs;
 	Op op;
 	ExpressionNode* rhs;
+
+	// Annotations
+	TraitMethodSymbol* method = nullptr;
 };
 
 class CastNode : public ExpressionNode

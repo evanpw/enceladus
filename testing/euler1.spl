@@ -1,6 +1,6 @@
 # Solves Project Euler #1
 
 def good(x: Int) -> Bool
-    return (x mod 3 == 0) or (x mod 5 == 0)
+    return (x % 3 == 0) or (x % 5 == 0)
 
 print $ show $ sum $ range(1, 1000).toList().filter(good)

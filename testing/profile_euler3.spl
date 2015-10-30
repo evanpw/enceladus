@@ -3,7 +3,7 @@
 def isPrime(x: Int) -> Bool
     i := 2
     while i * i <= x
-        if x mod i == 0
+        if x % i == 0
             return False
 
         i += 1
@@ -18,7 +18,7 @@ for n in range(0, 1000000)
     i := 2
     while i * i <= n
 
-    	if n mod i == 0 and isPrime(i)
+    	if n % i == 0 and isPrime(i)
             biggest = i
 
     	i += 1

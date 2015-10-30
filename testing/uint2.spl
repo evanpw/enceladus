@@ -3,6 +3,6 @@ x += 10u
 x -= 3u
 x *= 4u
 x /= 2u
-x = x mod 5u
+x = x % 5u
 
 print $ showUInt(x)

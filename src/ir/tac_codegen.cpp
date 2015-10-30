@@ -1208,8 +1208,17 @@ void TACCodeGen::visit(BinopNode* node)
 {
     Value* lhs = visitAndGet(node->lhs);
     Value* rhs = visitAndGet(node->rhs);
-
     node->value = createTemp(getValueType(node->type));
+
+    // Overloaded operators
+    if (node->method)
+    {
+        Value* method = getTraitMethodValue(node->lhs->type, node->method, node);
+        emit(new CallInst(node->value, method, {lhs, rhs}));
+        return;
+    }
+
+    // Otherwise, built-in numerical operator
 
     switch(node->op)
     {
@@ -1237,7 +1246,7 @@ void TACCodeGen::visit(BinopNode* node)
             break;
         }
 
-    case BinopNode::kMod:
+    case BinopNode::kRem:
         {
             emit(new BinaryOperationInst(node->value, lhs, BinaryOperation::MOD, rhs));
             break;

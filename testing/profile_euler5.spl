@@ -4,7 +4,7 @@ def gcd(a: Int, b: Int) -> Int
 	if b == 0
 		return a
 	else
-		return gcd(b, a mod b)
+		return gcd(b, a % b)
 
 def lcm(a: Int, b: Int) -> Int
     return (a * b) / gcd(a, b)

@@ -435,7 +435,8 @@ StatementNode* Parser::assign_or_expr()
     else if (peekType() == tPLUS_EQUAL ||
              peekType() == tMINUS_EQUAL ||
              peekType() == tTIMES_EQUAL ||
-             peekType() == tDIV_EQUAL)
+             peekType() == tDIV_EQUAL ||
+             peekType() == tREM_EQUAL)
     {
         BinopNode::Op op;
         switch (peekType())
@@ -458,6 +459,11 @@ StatementNode* Parser::assign_or_expr()
         case tDIV_EQUAL:
             expect(tDIV_EQUAL);
             op = BinopNode::kDiv;
+            break;
+
+        case tREM_EQUAL:
+            expect(tREM_EQUAL);
+            op = BinopNode::kRem;
             break;
 
         default:
@@ -1062,7 +1068,7 @@ ExpressionNode* Parser::multiplicative_expression()
 {
     ExpressionNode* result = concat_expression();
 
-    while (peekType() == '*' || peekType() == '/' || peekType() == tMOD)
+    while (peekType() == '*' || peekType() == '/' || peekType() == '%')
     {
         if (accept('*'))
         {
@@ -1074,8 +1080,8 @@ ExpressionNode* Parser::multiplicative_expression()
         }
         else
         {
-            expect(tMOD);
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kMod, concat_expression());
+            expect('%');
+            result = new BinopNode(_context, getLocation(), result, BinopNode::kRem, concat_expression());
         }
     }
 
