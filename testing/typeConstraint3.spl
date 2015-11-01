@@ -1,4 +1,4 @@
-def f<T: Num>(x: T) -> T
+def f(x: T) -> T where T: Num
     return x
 
 def g(x: T) -> T

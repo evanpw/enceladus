@@ -1,7 +1,7 @@
 trait Nothing
     def nothing(x: Self) -> Unit
 
-def getAnything<T: Nothing>() -> T
+def getAnything() -> T where T: Nothing
     panic $ "Nope"
 
 impl Nothing for Int

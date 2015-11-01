@@ -266,14 +266,17 @@ TypeAliasNode* Parser::type_alias_declaration()
     return new TypeAliasNode(_context, location, name.value.str, typeName);
 }
 
+/// function_definition
+///     : DEF ident params_and_types [ where where_clause ] suite
 FunctionDefNode* Parser::function_definition()
 {
     YYLTYPE location = getLocation();
 
     expect(tDEF);
     std::string name = ident();
-    std::vector<TypeParam> typeParams = constrained_type_params();
     std::pair<std::vector<std::string>, TypeName*> paramsAndTypes = params_and_types();
+
+    std::vector<TypeParam> typeParams = where_clause();
 
     StatementNode* body = suite();
     return new FunctionDefNode(_context, location, name, body, std::move(typeParams), paramsAndTypes.first, paramsAndTypes.second);
@@ -509,7 +512,7 @@ BreakNode* Parser::break_statement()
 }
 
 /// implementation_block
-///     : IMPL constrained_type_params type [ FOR type ] EOL INDENT [ method_definition { method_definition } DEDENT ]
+///     : IMPL type [ FOR type ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]
 ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
@@ -546,14 +549,16 @@ ImplNode* Parser::implementation_block()
     return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods), traitName);
 }
 
+/// method_definition
+///     : DEF ident params_and_types where_clause suite
 MethodDefNode* Parser::method_definition()
 {
     YYLTYPE location = getLocation();
 
     expect(tDEF);
     std::string name = ident();
-    auto typeParams = constrained_type_params();
     auto paramsAndTypes = params_and_types();
+    auto typeParams = where_clause();
 
     StatementNode* body = suite();
     return new MethodDefNode(_context, location, name, body, std::move(typeParams), paramsAndTypes.first, paramsAndTypes.second);

@@ -279,7 +279,7 @@ impl List<T>
 
         return result.reverse()
 
-    def map<S>(self: [T], f: T -> S) -> [S]
+    def map(self: [T], f: T -> S) -> [S]
         result := []
         for x in self
             result = result.insert(f(x))
@@ -307,7 +307,7 @@ def drop(x: T) -> Unit
     pass
 
 
-def sum<T: Num>(xs: [T]) -> T
+def sum(xs: [T]) -> T where T: Num
     result := 0
     for x in xs
         result += x
@@ -315,56 +315,56 @@ def sum<T: Num>(xs: [T]) -> T
     return result
 
 
-def product<T: Num>(xs: [T]) -> T
+def product(xs: [T]) -> T where T: Num
     if xs.empty()
         return 1
     else
         return xs.head() * product(xs.tail())
 
 
-def max<T: Num>(a: T, b: T) -> T
+def max(a: T, b: T) -> T where T: Num
     if a > b
         return a
     else
         return b
 
 
-def min<T: Num>(a: T, b: T) -> T
+def min(a: T, b: T) -> T where T: Num
     if a < b
         return a
     else
         return b
 
 
-def maximum<T: Num>(xs: [T]) -> T
+def maximum(xs: [T]) -> T where T: Num
     if xs.length() == 1
         return xs.head()
     else
         return max(xs.head(), maximum(xs.tail()))
 
 
-def minimum<T: Num>(xs: [T]) -> T
+def minimum(xs: [T]) -> T where T: Num
     if xs.length() == 1
         return xs.head()
     else
         return min(xs.head(), minimum(xs.tail()))
 
 
-def even<T: Num>(x: T) -> Bool
+def even(x: T) -> Bool where T: Num
     if x % 2 == 0
         return True
     else
         return False
 
 
-def odd<T: Num>(x: T) -> Bool
+def odd(x: T) -> Bool where T: Num
     if x % 2 == 0
         return False
     else
         return True
 
 
-def pow<T: Num>(a: T, b: UInt) -> T
+def pow(a: T, b: UInt) -> T where T: Num
     r := 1
     forever
         if b % 2 == 1

@@ -4,5 +4,5 @@ trait Nothing1
 trait Nothing2
     def nothing(self: Self) -> Unit
 
-def f<T: Nothing1 + Nothing2>(x: T) -> Unit
+def f(x: T) -> Unit where T: Nothing1 + Nothing2
     x.nothing()

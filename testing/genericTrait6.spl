@@ -1,4 +1,4 @@
-def getFirst<T: Num>(xs: Array<T>) -> T
+def getFirst(xs: Array<T>) -> T where T: Num
     return xs[0]
 
 xs := Array::make(10, 12i)

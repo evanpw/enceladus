@@ -9,7 +9,7 @@ impl Nothing for String
     def nothing(self: String) -> Unit
         pass
 
-def f<T: Nothing>(x: T) -> Unit
+def f(x: T) -> Unit where T: Nothing
     x.nothing()
 
 drop $ f("Hello")

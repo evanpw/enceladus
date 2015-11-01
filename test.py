@@ -277,17 +277,8 @@ class TestAcceptance(object):
     def test_repeatedTypeParam(self):
         self.run('repeatedTypeParam', build_error='Error: testing/repeatedTypeParam.spl:1:1: type parameter `T` is already defined')
 
-    def test_repeatedTypeParam2(self):
-        self.run('repeatedTypeParam2', build_error='Error: testing/repeatedTypeParam2.spl:1:1: type parameter `T` is already defined')
-
     def test_repeatedTypeParam3(self):
         self.run('repeatedTypeParam3', build_error='Error: testing/repeatedTypeParam3.spl:1:1: type parameter `T` is already defined')
-
-    def test_repeatedTypeParam4(self):
-        self.run('repeatedTypeParam4', build_error='Error: testing/repeatedTypeParam4.spl:2:5: type parameter `T` is already defined')
-
-    def test_repeatedTypeParam5(self):
-        self.run('repeatedTypeParam5', build_error='Error: testing/repeatedTypeParam5.spl:2:5: type parameter `T` is already defined')
 
     def test_memberMethodConflict(self):
         self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:5:5: type `Test` already has a method or member named `f`')

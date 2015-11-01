@@ -13,7 +13,7 @@ impl Trait1 for Int
         print $ "method1"
 
 
-def indirectCall<T: Trait1>(x: T) -> Unit
+def indirectCall(x: T) -> Unit where T: Trait1
     # Since every T: Trait1 is an instance of Trait2, this should be possible
     x.method2()
 

@@ -2,5 +2,5 @@ impl [T] where T: Num
     def nothing(self: [T]) -> Unit
         pass
 
-def f<T: Num>(x: [T]) -> Unit
+def f(x: [T]) -> Unit where T: Num
     x.nothing()

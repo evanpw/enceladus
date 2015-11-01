@@ -19,7 +19,7 @@ impl Trait1 for Int
         print $ "method1<Int>"
 
 
-def callMethod2<T: Trait2>(x: T) -> Unit
+def callMethod2(x: T) -> Unit where T: Trait2
     x.method2()
 
 callMethod2(1i)

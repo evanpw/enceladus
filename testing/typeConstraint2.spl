@@ -1,4 +1,4 @@
-def add<T: Num>(x: T, y: T) -> T
+def add(x: T, y: T) -> T where T: Num
     return x + y
 
 print $ show $ add(1, 2)
@@ -7,7 +7,7 @@ print $ showUInt $ add(3, 4)
 data Nothing = Nothing
 
 impl Nothing
-    def addTwoNumbers<T: Num>(self: Nothing, lhs: T, rhs: T) -> T
+    def addTwoNumbers(self: Nothing, lhs: T, rhs: T) -> T where T: Num
         return lhs + rhs
 
 x := Nothing

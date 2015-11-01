@@ -1,3 +1,0 @@
-impl Int
-    def f<T, T>(x: Int) -> Int
-        return x
