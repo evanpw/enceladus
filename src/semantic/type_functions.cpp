@@ -100,17 +100,19 @@ Type* instantiate(Type* type)
     return instantiate(type, replacements);
 }
 
-bool hasOverlappingInstance(Trait* trait, Type* type)
+Type* findOverlappingInstance(Trait* trait, Type* type)
 {
     for (const Trait::Instance& instance : trait->instances())
     {
         // TODO: Allow one type to be an instance of multiple instantiations of a trait
 
         if (overlap(type, instance.type))
-            return true;
+        {
+            return instance.type;
+        }
     }
 
-    return false;
+    return nullptr;
 }
 
 std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)

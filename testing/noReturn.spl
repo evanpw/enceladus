@@ -2,11 +2,13 @@ def shouldNotFail(path: Bool) -> Int
     if path
         return 1
     else
+
         return 2
 
-def shouldNotFail2() -> Int
-    forever
-        print $ "Hello"
+# Should this succeed?
+#def shouldNotFail2() -> Int
+#    forever
+#        print $ "Hello"
 
 x := shouldNotFail(True)
 print $ show(x)

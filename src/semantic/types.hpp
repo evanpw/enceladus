@@ -382,6 +382,11 @@ public:
         Type* type;
     };
 
+    std::string name() const
+    {
+        return _name;
+    }
+
     std::string str() const
     {
         std::stringstream ss;
@@ -456,7 +461,7 @@ private:
     std::vector<Instance> _instances;
 
     // Similar to constructed types, this is what defines identity for a trait.
-    // Set to this for the prototypical trait
+    // Set to "this" for the prototypical trait
     Trait* _prototype;
 };
 
@@ -517,6 +522,17 @@ public:
         _traits.emplace_back(trait);
 
         return trait;
+    }
+
+    std::vector<Trait*> traits() const
+    {
+        std::vector<Trait*> result;
+        for (auto& trait : _traits)
+        {
+            result.push_back(trait.get());
+        }
+
+        return result;
     }
 
     // For easy access to commonly-used types

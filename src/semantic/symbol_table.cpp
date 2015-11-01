@@ -96,7 +96,9 @@ Symbol* SymbolTable::find(const std::string& name, WhichTable whichTable)
     {
         auto i = scope->find(key);
         if (i != scope->end())
+        {
             return i->second;
+        }
     }
 
     return nullptr;

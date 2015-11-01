@@ -11,8 +11,6 @@
 #include <deque>
 #include <stdexcept>
 
-#define UNSUPPORTED(T) virtual void visit(T* node) { assert(false); }
-
 class TACCodeGen;
 
 class CodegenError : public std::exception

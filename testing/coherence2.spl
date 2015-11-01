@@ -1,0 +1,16 @@
+trait Trait1
+    def method1(self: Self) -> Unit
+
+impl<T> Trait1 for T
+    def method1(self: T) -> Unit
+        print $ "method1<T>"
+
+impl Trait1 for Int
+    def method1(self: Int) -> Unit
+        print $ "method1<Int>"
+
+def callMethod1<T: Trait1>(x: T) -> Unit
+    x.method1()
+
+1i.method1()
+callMethod1(1i)

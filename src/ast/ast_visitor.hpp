@@ -45,6 +45,8 @@ class TypeName;
 class VariableDefNode;
 class WhileNode;
 
+#define UNSUPPORTED(T) virtual void visit(T* node) { assert(false); }
+
 class AstVisitor
 {
 public:

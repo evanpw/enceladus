@@ -96,13 +96,13 @@ break_statement
     : BREAK EOL
 
 implementation_block
-    : IMPL constrained_type_params type [ FOR type ] EOL INDENT method_definition { method_definition } DEDENT
+    : IMPL constrained_type_params type [ FOR type ] EOL INDENT [ method_definition { method_definition } DEDENT ]
 
 method_definition
     : DEF ident constrained_type_params params_and_types suite
 
 trait_definition
-    : TRAIT UIDENT type_params EOL INDENT trait_method { trait_method } DEDENT
+    : TRAIT UIDENT type_params EOL [ INDENT trait_method { trait_method } DEDENT ]
 
 trait_method
     : DEF LIDENT params_and_types EOL

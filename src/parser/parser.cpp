@@ -509,7 +509,7 @@ BreakNode* Parser::break_statement()
 }
 
 /// implementation_block
-///     : IMPL constrained_type_params type [ FOR type ] EOL INDENT method_definition { method_definition } DEDENT
+///     : IMPL constrained_type_params type [ FOR type ] EOL INDENT [ method_definition { method_definition } DEDENT ]
 ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
@@ -528,18 +528,20 @@ ImplNode* Parser::implementation_block()
     }
 
     expect(tEOL);
-    expect(tINDENT);
 
     std::vector<MethodDefNode*> methods;
-    while (peekType() == tDEF)
+    if (accept(tINDENT))
     {
-        MethodDefNode* method = dynamic_cast<MethodDefNode*>(method_definition());
-        assert(method);
+        while (peekType() == tDEF)
+        {
+            MethodDefNode* method = dynamic_cast<MethodDefNode*>(method_definition());
+            assert(method);
 
-        methods.push_back(method);
+            methods.push_back(method);
+        }
+
+        expect(tDEDENT);
     }
-
-    expect(tDEDENT);
 
     return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods), traitName);
 }
@@ -558,7 +560,7 @@ MethodDefNode* Parser::method_definition()
 }
 
 /// trait_definition
-///     : TRAIT UIDENT type_params EOL INDENT trait_method { trait_method } DEDENT
+///     : TRAIT UIDENT type_params EOL [ INDENT trait_method { trait_method } DEDENT ]
 TraitDefNode* Parser::trait_definition()
 {
     YYLTYPE location = getLocation();
@@ -569,12 +571,15 @@ TraitDefNode* Parser::trait_definition()
     auto typeParams = type_params();
 
     expect(tEOL);
-    expect(tINDENT);
 
     std::vector<TraitMethodNode*> methods;
-    while (!accept(tDEDENT))
+
+    if (accept(tINDENT))
     {
-        methods.push_back(trait_method());
+        while (!accept(tDEDENT))
+        {
+            methods.push_back(trait_method());
+        }
     }
 
     return new TraitDefNode(_context, location, traitName.value.str, std::move(typeParams), std::move(methods));

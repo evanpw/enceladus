@@ -2,6 +2,7 @@
 #define SEMANTIC_HPP
 
 #include "ast/ast.hpp"
+#include "semantic/return_checker.hpp"
 #include "semantic/symbol_table.hpp"
 
 #include <map>
@@ -97,14 +98,19 @@ private:
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext);
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables);
 
+    void checkTraitCoherence();
+
     ProgramNode* _root;
     AstContext* _context;
     TypeTable* _typeTable;
     SymbolTable* _symbolTable;
+
     FunctionDefNode* _enclosingFunction;
     LoopNode* _enclosingLoop;
     ImplNode* _enclosingImplNode;
     TraitDefNode* _enclosingTraitDef;
+
+    ReturnChecker _returnChecker;
 };
 
 class TypeInferenceError : public std::exception

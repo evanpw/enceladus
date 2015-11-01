@@ -182,10 +182,10 @@ class TestAcceptance(object):
         self.run('noReturn', result='1')
 
     def test_noReturn2(self):
-        self.run('noReturn2', build_error='Error: testing/noReturn2.spl:1:1: cannot unify types Unit and Int')
+        self.run('noReturn2', build_error='Error: testing/noReturn2.spl:1:1: not every path through function returns a value')
 
     def test_noReturn3(self):
-        self.run('noReturn3', build_error='Error: testing/noReturn3.spl:1:1: cannot unify types Unit and Int')
+        self.run('noReturn3', build_error='Error: testing/noReturn3.spl:1:1: not every path through function returns a value')
 
     def test_fizzBuzz(self):
         self.run('fizzBuzz', result=open('testing/fizzBuzz.correct').read())
@@ -407,16 +407,16 @@ class TestAcceptance(object):
         self.run('constrainedImpl', '')
 
     def test_overlappingInstances(self):
-        self.run('overlappingInstances', build_error='Error: testing/overlappingInstances.spl:9:5: type `Int` already has a method or member named `isInteger`')
+        self.run('overlappingInstances', build_error='Error: testing/overlappingInstances.spl:8:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T` at testing/overlappingInstances.spl:4:1')
 
     def test_overlappingInstances2(self):
-        self.run('overlappingInstances2', build_error='Error: testing/overlappingInstances2.spl:9:5: type `Int` already has a method or member named `isInteger`')
+        self.run('overlappingInstances2', build_error='Error: testing/overlappingInstances2.spl:8:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T: Num` at testing/overlappingInstances2.spl:4:1')
 
     def test_overlappingInstances3(self):
-        self.run('overlappingInstances3', build_error='Error: testing/overlappingInstances3.spl:16:5: type `Int` already has a method or member named `isInteger`')
+        self.run('overlappingInstances3', build_error='Error: testing/overlappingInstances3.spl:15:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T: Marked` at testing/overlappingInstances3.spl:7:1')
 
     def test_overlappingInstances4(self):
-        self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.spl:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`')
+        self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.spl:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`\nPrevious impl for type `String` at testing/overlappingInstances4.spl:11:1')
 
     def test_methodResolution(self):
         good_tests = [2, 5, 7, 9, 12, 13, 15, 16]
@@ -427,7 +427,7 @@ class TestAcceptance(object):
         bad_tests = {
             '1': 'Error: testing/methodResolution1.spl:1:7: cannot infer concrete type of call to function Nil',
             '3': 'Error: testing/methodResolution3.spl:9:1: method call is ambiguous',
-            '4': 'Error: testing/methodResolution4.spl:17:1: method call is ambiguous',
+            '4': 'Error: testing/methodResolution4.spl:16:1: method call is ambiguous',
             '6': 'Error: testing/methodResolution6.spl:7:5: no method named `nothing` found for type `T`',
             '8': 'Error: testing/methodResolution8.spl:8:5: method call is ambiguous',
             '10': 'Error: testing/methodResolution10.spl:6:5: no method named `nothing` found for type `[T]`',
@@ -479,7 +479,7 @@ class TestAcceptance(object):
         self.run('genericTrait3', '72')
 
     def test_genericTrait4(self):
-        self.run('genericTrait4', build_error='Error: testing/genericTrait4.spl:9:5: type `Int` already has a method or member named `nothing`')
+        self.run('genericTrait4', build_error='Error: testing/genericTrait4.spl:8:1: trait `Test` already has an instance which would overlap with `Int`\nPrevious impl for type `Int` at testing/genericTrait4.spl:4:1')
 
     def test_genericTrait5(self):
         self.run('genericTrait5', '20\n10\n')
@@ -499,8 +499,14 @@ class TestAcceptance(object):
     def test_inferFromReturn(self):
         self.run('inferFromReturn', 'Test')
 
-    def test_strictCoherence(self):
-        self.run('strictCoherence', build_error=Regex('.+'))
+    def test_coherence(self):
+        self.run('coherence', build_error='Error: found overlapping instances for trait `Trait2`\nImpl for `T: Trait1` at testing/coherence.spl:7:1\nImpl for `Int` at testing/coherence.spl:11:1')
+
+    def test_coherence2(self):
+        self.run('coherence2', build_error='Error: testing/coherence2.spl:8:1: trait `Trait1` already has an instance which would overlap with `Int`\nPrevious impl for type `T` at testing/coherence2.spl:4:1')
+
+    def test_numInstance(self):
+        self.run('numInstance', build_error='Error: testing/numInstance.spl:4:1: can\'t create new instance for built-in trait `Num`')
 
     # Medium tests (100ms-1s)
 

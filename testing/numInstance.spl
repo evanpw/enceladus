@@ -1,0 +1,9 @@
+struct Test
+    x: Int
+
+impl Num for Test
+
+x := Test(1)
+y := Test(2)
+
+drop $ x + y

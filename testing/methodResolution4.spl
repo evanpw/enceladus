@@ -2,8 +2,7 @@ trait Nothing
     def nothing(x: Self) -> Unit
 
 def getAnything<T: Nothing>() -> T
-    forever
-        pass
+    panic $ "Nope"
 
 impl Nothing for Int
     def nothing(x: Int) -> Unit

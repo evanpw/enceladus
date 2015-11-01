@@ -116,6 +116,8 @@ public:
 
     std::unordered_map<std::string, TraitMethodSymbol*> methods;
 
+    std::unordered_map<Type*, AstNode*> instances;
+
 private:
     friend class SymbolTable;
     TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters);

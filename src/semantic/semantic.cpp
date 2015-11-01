@@ -148,6 +148,26 @@ void semanticError(const YYLTYPE& location, const std::string& str, Args... args
     throw SemanticError(ss.str());
 }
 
+static std::string instanceLocation(TraitSymbol* traitSymbol, Type* type)
+{
+    std::stringstream ss;
+
+    auto i = traitSymbol->instances.find(type);
+    if (i == traitSymbol->instances.end())
+    {
+        return "(builtin)";
+    }
+    else
+    {
+        AstNode* impl = i->second;
+        auto& location = impl->location;
+
+        std::stringstream ss;
+        ss << location.filename << ":" << location.first_line << ":" << location.first_column;
+        return ss.str();
+    }
+}
+
 Symbol* SemanticAnalyzer::resolveSymbol(const std::string& name)
 {
     return _symbolTable->find(name);
@@ -173,7 +193,12 @@ bool SemanticAnalyzer::analyze()
 {
 	try
 	{
+        _symbolTable->pushScope();
+
 		_root->accept(this);
+        checkTraitCoherence();
+
+        _symbolTable->popScope();
 	}
 	catch (std::exception& e)
 	{
@@ -208,7 +233,7 @@ void SemanticAnalyzer::injectSymbols()
     _symbolTable->createTypeSymbol("UInt8", _root, _typeTable->UInt8);
 
     Type* Self = _typeTable->createTypeVariable("Self", true);
-    _symbolTable->createTraitSymbol("Num", _root, _typeTable->Num, Self);
+    _symbolTable->createTraitSymbol("Num", nullptr, _typeTable->Num, Self);
 
     _symbolTable->createTypeSymbol("Bool", _root, _typeTable->Bool);
     _symbolTable->createTypeSymbol("Unit", _root, _typeTable->Unit);
@@ -407,7 +432,6 @@ void SemanticAnalyzer::resolveTypeParams(AstNode* node, const std::vector<TypePa
 
 void SemanticAnalyzer::visit(ProgramNode* node)
 {
-    _symbolTable->pushScope();
 	injectSymbols();
 
 	//// Recurse down into children
@@ -417,8 +441,6 @@ void SemanticAnalyzer::visit(ProgramNode* node)
     {
         unify(child->type, _typeTable->Unit, child);
     }
-
-    _symbolTable->popScope();
 
     node->type = _typeTable->Unit;
 }
@@ -493,6 +515,11 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
     _typeContexts.pop_back();
 
     node->type = _typeTable->Unit;
+
+    if (!equals(functionType->output(), _typeTable->Unit))
+    {
+        CHECK(_returnChecker.checkFunction(node), "not every path through function returns a value");
+    }
 }
 
 void SemanticAnalyzer::visit(ForeignDeclNode* node)
@@ -1460,6 +1487,8 @@ void SemanticAnalyzer::visit(ImplNode* node)
     if (node->traitName)
     {
         traitSymbol = resolveTrait(node->traitName, traitParameters);
+
+        CHECK(traitSymbol->node, "can't create new instance for built-in trait `{}`", node->traitName->name);
     }
 
     resolveTypeName(node->typeName);
@@ -1478,6 +1507,21 @@ void SemanticAnalyzer::visit(ImplNode* node)
 
     node->typeContext = typeContext;
 
+    if (traitSymbol)
+    {
+        Type* overlapping = findOverlappingInstance(traitSymbol->trait, node->typeName->type);
+        if (overlapping)
+        {
+            std::stringstream ss;
+            ss << "trait `" << traitSymbol->name
+               << "` already has an instance which would overlap with `"
+               << node->typeName->type->str() << "`" << std::endl;
+            ss << "Previous impl for type `" << overlapping->str() << "` at "
+               << instanceLocation(traitSymbol, overlapping);
+            semanticError(node->location, ss.str());
+        }
+    }
+
     // First pass: check prototype, and create symbol
     std::unordered_map<std::string, Type*> methods;
     for (auto& method : node->methods)
@@ -1490,11 +1534,6 @@ void SemanticAnalyzer::visit(ImplNode* node)
     // for each trait method
     if (traitSymbol)
     {
-        // Check for overlapping trait instances
-        CHECK(!hasOverlappingInstance(traitSymbol->trait, node->typeName->type),
-            "trait `{}` already has an instance which would overlap with `{}`",
-            traitSymbol->name, node->typeName->type->str());
-
         TypeAssignment traitSub;
         traitSub[traitSymbol->traitVar->get<TypeVariable>()] = node->typeName->type;
 
@@ -1516,6 +1555,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
         }
 
         traitSymbol->trait->addInstance(node->typeName->type, traitParameters);
+        traitSymbol->instances[node->typeName->type] = node;
     }
 
     // Second pass: check the method body
@@ -1594,6 +1634,11 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         _typeContexts.pop_back();
 
         node->type = _typeTable->Unit;
+    }
+
+    if (!equals(node->functionType->output(), _typeTable->Unit))
+    {
+        CHECK(_returnChecker.checkMethod(node), "not every path through method returns a value");
     }
 }
 
@@ -1674,4 +1719,42 @@ void SemanticAnalyzer::visit(TraitMethodNode* node)
 void SemanticAnalyzer::visit(PassNode* node)
 {
     node->type = _typeTable->Unit;
+}
+
+void SemanticAnalyzer::checkTraitCoherence()
+{
+    std::vector<Trait*> traits = _typeTable->traits();
+
+    for (Trait* trait : traits)
+    {
+        auto& instances = trait->instances();
+        size_t n = instances.size();
+
+        for (size_t i = 0; i + 1 < n; ++i)
+        {
+            for (size_t j = i + 1; j < n; ++j)
+            {
+                Type* instance1 = instances[i].type;
+                Type* instance2 = instances[j].type;
+
+                if (overlap(instance1, instance2))
+                {
+                    std::stringstream ss;
+
+                    ss << "found overlapping instances for trait `" << trait->name() << "`" << std::endl;
+
+                    Symbol* symbol = resolveTypeSymbol(trait->name());
+                    assert(symbol);
+
+                    TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(symbol);
+                    assert(traitSymbol);
+
+                    ss << "Impl for `" << instance1->str() << "` at " << instanceLocation(traitSymbol, instance1) << std::endl;
+                    ss << "Impl for `" << instance2->str() << "` at " << instanceLocation(traitSymbol, instance2);
+
+                    throw SemanticError(ss.str());
+                }
+            }
+        }
+    }
 }

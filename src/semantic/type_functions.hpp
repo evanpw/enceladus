@@ -11,7 +11,7 @@ Trait* instantiate(Trait* trait);
 
 Type* substitute(Type* original, const TypeAssignment& typeAssignment);
 
-bool hasOverlappingInstance(Trait* trait, Type* type);
+Type* findOverlappingInstance(Trait* trait, Type* type);
 
 std::pair<bool, std::string> bindVariable(Type* variable, Type* value);
 std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs);
