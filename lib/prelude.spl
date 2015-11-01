@@ -1,4 +1,4 @@
-foreign panic(msg: String) -> T
+foreign panic(msg: String)
 
 ## List ##
 data List<T> = Cons(T, List<T>) | Nil
@@ -25,7 +25,7 @@ trait Eq
     def eq(self, other: Self) -> Bool
     def ne(self, other: Self) -> Bool
 
-impl Eq for T where T: Num
+impl Eq for T: Num
     def eq(self, other: T) -> Bool
         return self == other
 
@@ -403,7 +403,7 @@ data Ordering = Less | Equal | Greater
 trait Ord
     def cmp(self, other: Self) -> Ordering
 
-impl Ord for T where T: Num
+impl Ord for T: Num
     def cmp(self, other: T) -> Ordering
         if self < other
             return Less
@@ -459,7 +459,7 @@ trait PartialOrd
     def gt(self, other: Self) -> Bool
     def ge(self, other: Self) -> Bool
 
-impl PartialOrd for T where T: Ord
+impl PartialOrd for T: Ord
     def lt(self, other: T) -> Bool
         match self.cmp(other)
             Less
@@ -501,35 +501,35 @@ impl PartialOrd for T where T: Ord
 trait Add
     def add(self, other: Self) -> Self
 
-impl Add for T where T: Num
+impl Add for T: Num
     def add(self, other: T) -> T
         return self + other
 
 trait Sub
     def sub(self, other: Self) -> Self
 
-impl Sub for T where T: Num
+impl Sub for T: Num
     def sub(self, other: T) -> T
         return self - other
 
 trait Mul
     def mul(self, other: Self) -> Self
 
-impl Mul for T where T: Num
+impl Mul for T: Num
     def mul(self, other: T) -> T
         return self * other
 
 trait Div
     def div(self, other: Self) -> Self
 
-impl Div for T where T: Num
+impl Div for T: Num
     def div(self, other: T) -> T
         return self / other
 
 trait Rem
     def rem(self, other: Self) -> Self
 
-impl Rem for T where T: Num
+impl Rem for T: Num
     def rem(self: T, other: T) -> T
         return self % other
 
@@ -566,7 +566,7 @@ impl Hash for String
 trait Default
     def default() -> Self
 
-impl Default for T where T: Num
+impl Default for T: Num
     def default() -> T
         return 0
 

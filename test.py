@@ -508,6 +508,9 @@ class TestAcceptance(object):
     def test_repeatedConstraint4(self):
         self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.spl:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')
 
+    def test_whereClause(self):
+        self.run('whereClause', build_error='Error: testing/whereClause.spl:4:1: `Int` does not name a type parameter')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

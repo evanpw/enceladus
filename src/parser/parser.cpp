@@ -512,7 +512,7 @@ BreakNode* Parser::break_statement()
 }
 
 /// implementation_block
-///     : IMPL type [ FOR type ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]
+///     : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]
 ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
@@ -528,7 +528,38 @@ ImplNode* Parser::implementation_block()
         typeName = type();
     }
 
+    // Implicit where clause syntax: "impl T: Trait2" == "impl T where T: Trait2"
+    std::vector<TypeParam> implicitParams;
+    if (accept(':'))
+    {
+        if (!typeName->parameters.empty() || typeName->name.size() > 1)
+        {
+            std::stringstream ss;
+
+            ss << location.filename << ":" << location.first_line
+               << ":" << location.first_column
+               << ": implicit where clause can only be applied to type variables";
+
+            throw LexerError(ss.str());
+        }
+
+        TypeParam implicitParam(typeName->name);
+
+        implicitParam.constraints.push_back(trait_name());
+
+        while (accept('+'))
+        {
+            implicitParam.constraints.push_back(trait_name());
+        }
+
+        implicitParams.push_back(implicitParam);
+    }
+
     std::vector<TypeParam> typeParams = where_clause();
+    if (!implicitParams.empty())
+    {
+        typeParams.push_back(implicitParams[0]);
+    }
 
     expect(tEOL);
 

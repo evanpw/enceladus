@@ -501,6 +501,7 @@ void SemanticAnalyzer::resolveWhereClause(AstNode* node, const std::vector<TypeP
         const std::string& typeParameter = item.name;
         const std::vector<TypeName*>& constraints = item.constraints;
 
+        CHECK(typeParameter.size() == 1, "`{}` does not name a type parameter", typeParameter);
         CHECK(!constraints.empty(), "type parameter `{}` appears in a where clause unconstrained", typeParameter);
 
         auto i = typeContext.find(typeParameter);

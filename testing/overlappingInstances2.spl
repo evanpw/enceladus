@@ -1,7 +1,7 @@
 trait IsInteger
     def isInteger(self) -> Bool
 
-impl IsInteger for T where T: Num
+impl IsInteger for T: Num
     def isInteger(self) -> Bool
         return False
 

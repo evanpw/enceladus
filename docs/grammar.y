@@ -96,7 +96,7 @@ break_statement
     : BREAK EOL
 
 implementation_block
-    : IMPL type [ FOR type ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]
+    : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]
 
 method_definition
     : DEF ident params_and_types where_clause suite

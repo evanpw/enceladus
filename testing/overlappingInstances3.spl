@@ -4,7 +4,7 @@ trait IsInteger
 trait Marked
     def doNothing(self)
 
-impl IsInteger for T where T: Marked
+impl IsInteger for T: Marked
     def isInteger(self) -> Bool
         return False
 

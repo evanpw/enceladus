@@ -4,7 +4,7 @@ trait Trait1
 trait Trait2
     def method2(self)
 
-impl Trait2 for T where T: Trait1
+impl Trait2 for T: Trait1
     def method2(self)
         print $ "method2"
 

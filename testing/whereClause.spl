@@ -1,0 +1,6 @@
+trait Test
+    def test(self)
+
+impl Test for Int where Int: Num
+    def test(self)
+        pass
