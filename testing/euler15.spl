@@ -8,7 +8,7 @@ impl Eq for Pair<Int, Int>
         return x1 == x2 and y1 == y2
 
     def ne(lhs: Pair<Int, Int>, rhs: Pair<Int, Int>) -> Bool
-        return not (lhs == rhs)
+        return not $ lhs == rhs
 
 impl Hash for Pair<Int, Int>
     def hash(self: Pair<Int, Int>) -> UInt

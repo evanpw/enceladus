@@ -45,7 +45,7 @@ def compute(progress: Progress, message: String, idx: UInt) -> Int
 
         # Close an existing emoticon
         for i in range(0, progress.nonempty.size)
-            if progress.nonempty[i] and not progress.closed[i]
+            if progress.nonempty[i] and not(progress.closed[i])
                 next := progress.copy()
                 next.closed.set(i, True)
                 total += compute(next, message, idx + 1)
@@ -53,7 +53,7 @@ def compute(progress: Progress, message: String, idx: UInt) -> Int
         assert c == '_'
 
         for i in range(0, progress.nonempty.size)
-            if not progress.closed[i]
+            if not $ progress.closed[i]
                 next := progress.copy()
                 next.nonempty.set(i, True)
                 total += compute(next, message, idx + 1)

@@ -195,7 +195,6 @@ multiplicative_expression
 negation_expression
     : cast_expression
     | '-' cast_expression
-    | NOT cast_expression
 
 cast_expression
     : method_member_idx_expression AS type

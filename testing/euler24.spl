@@ -11,7 +11,7 @@ def delete(x: UInt, xs: [UInt]) -> [UInt]
     initial := []
     xs' := xs
 
-    while not xs'.empty()
+    while not $ xs'.empty()
         if xs'.head() == x
             return initial.reverse() + xs'.tail()
         else

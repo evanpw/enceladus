@@ -1096,16 +1096,11 @@ ExpressionNode* Parser::multiplicative_expression()
 /// negation_expression
 ///     : cast_expression
 ///     | '-' cast_expression
-///     | NOT cast_expression
 ExpressionNode* Parser::negation_expression()
 {
     if (accept('-'))
     {
         return new BinopNode(_context, getLocation(), new IntNode(_context, getLocation(), 0, ""), BinopNode::kSub, cast_expression());
-    }
-    else if (accept(tNOT))
-    {
-        return new FunctionCallNode(_context, getLocation(), "not", {cast_expression()});
     }
     else
     {

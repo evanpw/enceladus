@@ -124,7 +124,7 @@ impl Eq for String
         return True
 
     def ne(lhs: String, rhs: String) -> Bool
-        return not (lhs == rhs)
+        return not $ lhs == rhs
 
 
 ## Array ##
@@ -246,7 +246,7 @@ impl<T> List<T>
         result := 0
         xs := self
 
-        while not xs.empty()
+        while not $ xs.empty()
             xs = xs.tail()
             result += 1
 
@@ -299,7 +299,7 @@ impl<T: Eq> Eq for [T]
             return self.tail() == other.tail()
 
     def ne(self: [T], other: [T]) -> Bool
-        return not (self == other)
+        return not $ self == other
 
 
 ## Native-language standard library
@@ -593,5 +593,5 @@ impl Default for Bool
 
 ## Miscellaneous
 def assertMessage(b: Bool, err: String) -> Unit
-    if not b
+    if not(b)
         panic $ "Assertion failed: " + err

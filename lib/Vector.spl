@@ -64,7 +64,7 @@ impl<T: Default> Iterator<T> for VectorIterator<T>
 
 def all(xs: Vector<Bool>) -> Bool
     for x in xs.iter()
-        if not x
+        if not(x)
             return False
 
     return True
