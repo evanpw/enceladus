@@ -1,0 +1,3 @@
+struct T
+    x: Int
+

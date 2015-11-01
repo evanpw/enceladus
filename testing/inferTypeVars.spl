@@ -1,0 +1,27 @@
+def f(x: T) -> T
+    return x
+
+struct Test<T: Num>
+    a: T
+
+def checkNum<T: Num>(x: T) -> Unit
+    pass
+
+def g(x: Test<T>) -> Unit
+    checkNum(x.a)
+
+foreign foreignTest(x: T) -> Unit
+
+trait Nothing1
+
+impl Nothing1 for [T]
+
+impl Nothing1 for Test<T>
+
+trait Nothing2<T>
+
+impl Nothing2<T> for [T]
+
+impl Int
+    def f(self: Int, other: T) -> T
+        return other

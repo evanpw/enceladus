@@ -1,4 +1,4 @@
-def mydrop<T>(n: Int, xs: [T]) -> [T]
+def mydrop(n: Int, xs: [T]) -> [T]
     if n == 0
         return xs
     else

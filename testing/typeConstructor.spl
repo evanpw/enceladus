@@ -10,7 +10,7 @@ result := b
 if c
     result += 1
 
-def identity<T>(x: T) -> T
+def identity(x: T) -> T
     return x
 
 result += identity(3)

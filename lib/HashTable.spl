@@ -3,7 +3,7 @@ struct HashTable<S: Eq + Hash, T>
     size: UInt
     capacity: UInt
 
-impl<S: Eq + Hash, T> HashTable<S, T>
+impl HashTable<S, T>
     def new() -> HashTable<S, T>
         return HashTable(Array::make(0, None), 0, 0)
 
@@ -74,6 +74,6 @@ impl<S: Eq + Hash, T> HashTable<S, T>
                 None
                     pass
 
-impl<S: Eq + Hash, T> Index<S, Option<T>> for HashTable<S, T>
+impl Index<S, Option<T>> for HashTable<S, T>
     def at(self: HashTable<S, T>, key: S) -> Option<T>
         return self.get(key)

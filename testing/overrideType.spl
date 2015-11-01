@@ -1,4 +1,4 @@
-def f<T>(x: T) -> T
+def f(x: T) -> T
     return x + 1234
 
 print $ show $ f(8)

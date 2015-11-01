@@ -1,7 +1,7 @@
 trait Trait1
     def method1(self: Self) -> Unit
 
-impl<T> Trait1 for T
+impl Trait1 for T
     def method1(self: T) -> Unit
         print $ "method1<T>"
 

@@ -7,7 +7,7 @@ struct VectorIterator<T: Default>
     v: Vector<T>
     idx: UInt
 
-impl<T: Default> Vector<T>
+impl Vector<T>
     def new() -> Vector<T>
         return Vector(Array::new(), 0, 0)
 
@@ -47,11 +47,11 @@ impl<T: Default> Vector<T>
     def iter(self: Vector<T>) -> VectorIterator<T>
         return VectorIterator(self, 0)
 
-impl<T: Default> Index<UInt, T> for Vector<T>
+impl Index<UInt, T> for Vector<T>
     def at(self: Vector<T>, n: UInt) -> T
         return self.content[n]
 
-impl<T: Default> Iterator<T> for VectorIterator<T>
+impl Iterator<T> for VectorIterator<T>
     def head(self: VectorIterator<T>) -> T
         assert self.idx < self.v.size
         return self.v.at(self.idx)

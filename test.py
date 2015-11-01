@@ -508,6 +508,9 @@ class TestAcceptance(object):
     def test_numInstance(self):
         self.run('numInstance', build_error='Error: testing/numInstance.spl:4:1: can\'t create new instance for built-in trait `Num`')
 
+    def test_inferTypeVars(self):
+        self.run('inferTypeVars', '')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

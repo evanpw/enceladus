@@ -1,9 +1,9 @@
-foreign panic<T>(msg: String) -> T
+foreign panic(msg: String) -> T
 
 ## List ##
 data List<T> = Cons(T, List<T>) | Nil
 
-impl<T> List<T>
+impl List<T>
     def insert(self: List<T>, x: T) -> List<T>
         return Cons(x, self)
 
@@ -38,10 +38,10 @@ struct Range<T: Num>
     start: T
     end: T
 
-def range<T: Num>(start: T, end: T) -> Range<T>
+def range(start: T, end: T) -> Range<T>
     return Range(start, end)
 
-impl<T: Num> Iterator<T> for Range<T>
+impl Iterator<T> for Range<T>
     def head(self: Range<T>) -> T
         assert self.start < self.end
         return self.start
@@ -53,7 +53,7 @@ impl<T: Num> Iterator<T> for Range<T>
     def empty(self: Range<T>) -> Bool
         return self.start >= self.end
 
-impl<T: Num> Range<T>
+impl Range<T>
     def toList(self: Range<T>) -> [T]
         result := []
 
@@ -129,12 +129,12 @@ impl Eq for String
 
 ## Array ##
 # FOR INTERNAL USE ONLY: Does not initialize the array
-foreign unsafeMakeArray<T>(size: UInt) -> Array<T>
-foreign unsafeArrayAt<T>(arr: Array<T>, n: UInt) -> T
-foreign unsafeArraySet<T>(arr: Array<T>, n: UInt, value: T) -> Unit
-foreign arrayLength<T>(arr: Array<T>) -> UInt
+foreign unsafeMakeArray(size: UInt) -> Array<T>
+foreign unsafeArrayAt(arr: Array<T>, n: UInt) -> T
+foreign unsafeArraySet(arr: Array<T>, n: UInt, value: T) -> Unit
+foreign arrayLength(arr: Array<T>) -> UInt
 
-impl<T> Array<T>
+impl Array<T>
     def new() -> Array<T>
         return unsafeMakeArray(0)
 
@@ -152,12 +152,12 @@ impl<T> Array<T>
         return arr
 
 # Method wrappers (methods can't be implemented in C)
-impl<T> Index<UInt, T> for Array<T>
+impl Index<UInt, T> for Array<T>
     def at(self: Array<T>, n: UInt) -> T
         assert n < arrayLength(self)
         return unsafeArrayAt(self, n)
 
-impl<T> Array<T>
+impl Array<T>
     def set(self: Array<T>, n: UInt, value: T) -> Unit
         assert n < arrayLength(self)
         unsafeArraySet(self, n, value)
@@ -169,7 +169,7 @@ impl<T> Array<T>
 ## Option ##
 data Option<T> = Some(T) | None
 
-impl<T> Option<T>
+impl Option<T>
     def isSome(self: Option<T>) -> Bool
         match self
             Some(_)
@@ -209,7 +209,7 @@ neverUsed = None
 
 
 ## List ##
-impl<T> Iterator<T> for List<T>
+impl Iterator<T> for List<T>
     def head(self: [T]) -> T
         match self
             Cons(x, _)
@@ -231,7 +231,7 @@ impl<T> Iterator<T> for List<T>
             Nil
                 return True
 
-impl<T> Index<UInt, T> for List<T>
+impl Index<UInt, T> for List<T>
     def at(self: [T], n: UInt) -> T
         xs := self
 
@@ -241,7 +241,7 @@ impl<T> Index<UInt, T> for List<T>
 
         return xs.head()
 
-impl<T> List<T>
+impl List<T>
     def length(self: [T]) -> UInt
         result := 0
         xs := self
@@ -303,7 +303,7 @@ impl<T: Eq> Eq for [T]
 
 
 ## Native-language standard library
-def drop<T>(x: T) -> Unit
+def drop(x: T) -> Unit
     pass
 
 
@@ -383,7 +383,7 @@ def pow<T: Num>(a: T, b: UInt) -> T
 ## Pair ##
 data Pair<S, T> = Pair(S, T)
 
-impl<S, T> Pair<S, T>
+impl Pair<S, T>
     def first(self: Pair<S, T>) -> S
         match self
             Pair(x, _) => return x
@@ -393,7 +393,7 @@ impl<S, T> Pair<S, T>
             Pair(_, x) => return x
 
 
-def splitAt<T>(n: UInt, xs: [T]) -> Pair<[T], [T]>
+def splitAt(n: UInt, xs: [T]) -> Pair<[T], [T]>
     return Pair(xs.take(n), xs.drop(n))
 
 
@@ -539,7 +539,7 @@ impl Add for String
     def add(self: String, other: String) -> String
         return strCat(self, other)
 
-impl<T> Add for [T]
+impl Add for [T]
     def add(self: [T], other: [T]) -> [T]
         result := other
 
@@ -578,7 +578,7 @@ impl Default for UInt8
     def default() -> UInt8
         return 0u8
 
-impl<T> Default for [T]
+impl Default for [T]
     def default() -> [T]
         return []
 

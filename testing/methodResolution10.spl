@@ -2,5 +2,5 @@ impl [Int]
     def nothing(self: [Int]) -> Unit
         pass
 
-def f<T>(x: [T]) -> Unit
+def f(x: [T]) -> Unit
     x.nothing()

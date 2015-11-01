@@ -1,6 +1,6 @@
 data MyOption<T> = MySome(T) | MyNone
 
-def isGood<T>(a: MyOption<T>) -> Int
+def isGood(a: MyOption<T>) -> Int
     match a
         MySome(b)
             return 1

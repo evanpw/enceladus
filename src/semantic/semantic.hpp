@@ -82,18 +82,21 @@ private:
 
     using TypeContext = std::unordered_map<std::string, Type*>;
     std::vector<TypeContext> _typeContexts;
+    std::vector<std::unordered_set<Type*>> _inferredVars; // Contains a subset of _typeContexts consisting only of inferred type variables
     Type* findInContext(const std::string& varName);
+    void pushTypeContext(TypeContext&& typeContext = {});
+    void popTypeContext();
 
     Type* getConstructedType(const TypeName* typeName);
     Type* getConstructedType(const YYLTYPE& location, const std::string& name);
-    void resolveBaseType(TypeName* typeName);
-    void resolveTypeName(TypeName* typeName);
+    void resolveBaseType(TypeName* typeName, bool inferVariables = false);
+    void resolveTypeName(TypeName* typeName, bool inferVariables = false);
 
     Symbol* resolveSymbol(const std::string& name);
     Symbol* resolveTypeSymbol(const std::string& name);
     void resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols);
 
-    TraitSymbol* resolveTrait(TypeName* traitName, std::vector<Type*>& traitParams);
+    TraitSymbol* resolveTrait(TypeName* traitName, std::vector<Type*>& traitParams, bool inferVariables = false);
     void addConstraints(TypeVariable* var, const std::vector<TypeName*>& constraints);
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext);
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables);

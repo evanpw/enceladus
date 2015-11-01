@@ -1,8 +1,8 @@
-impl<T> [T]
+impl [T]
     def nothing(self: [T]) -> Unit
         pass
 
-def f<T>(x: [T]) -> Unit
+def f(x: [T]) -> Unit
     x.nothing()
 
 drop $ f([1i, 2, 3])

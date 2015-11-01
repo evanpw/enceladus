@@ -1,4 +1,4 @@
-impl<T> [T]
+impl [T]
     def nothing(self: [T]) -> [T]
         return self
 

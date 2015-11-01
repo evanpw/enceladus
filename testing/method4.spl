@@ -1,4 +1,4 @@
-impl<T> [T]
+impl [T]
     def myAt(self: [T], n: Int) -> T
         xs := self
         while n > 0
