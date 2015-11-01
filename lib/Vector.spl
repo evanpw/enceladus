@@ -11,7 +11,7 @@ impl Vector<T>
     def new() -> Vector<T>
         return Vector(Array::new(), 0, 0)
 
-    def append(self, x: T) -> Unit
+    def append(self, x: T)
         if self.size < self.capacity
             self.content.set(self.size, x)
             self.size += 1
@@ -34,7 +34,7 @@ impl Vector<T>
 
         return value
 
-    def set(self, n: UInt, x: T) -> Unit
+    def set(self, n: UInt, x: T)
         self.content.set(n, x)
 
     def copy(self) -> Vector<T>

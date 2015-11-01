@@ -4,13 +4,13 @@ def f(x: T) -> T
 struct Test<T: Num>
     a: T
 
-def checkNum(x: T) -> Unit where T: Num
+def checkNum(x: T) where T: Num
     pass
 
-def g(x: Test<T>) -> Unit
+def g(x: Test<T>)
     checkNum(x.a)
 
-foreign foreignTest(x: T) -> Unit
+foreign foreignTest(x: T)
 
 trait Nothing1
 

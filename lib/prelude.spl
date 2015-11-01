@@ -131,7 +131,7 @@ impl Eq for String
 # FOR INTERNAL USE ONLY: Does not initialize the array
 foreign unsafeMakeArray(size: UInt) -> Array<T>
 foreign unsafeArrayAt(arr: Array<T>, n: UInt) -> T
-foreign unsafeArraySet(arr: Array<T>, n: UInt, value: T) -> Unit
+foreign unsafeArraySet(arr: Array<T>, n: UInt, value: T)
 foreign arrayLength(arr: Array<T>) -> UInt
 
 impl Array<T>
@@ -158,7 +158,7 @@ impl Index<UInt, T> for Array<T>
         return unsafeArrayAt(self, n)
 
 impl Array<T>
-    def set(self, n: UInt, value: T) -> Unit
+    def set(self, n: UInt, value: T)
         assert n < arrayLength(self)
         unsafeArraySet(self, n, value)
 
@@ -201,7 +201,7 @@ impl Option<T>
 ## I/O functions
 foreign read() -> Int
 foreign readLine() -> Option<String>
-foreign print(msg: String) -> Unit
+foreign print(msg: String)
 
 # HACK: Make sure these constructors exist for the C library to use
 neverUsed := Some("Hello")
@@ -303,7 +303,7 @@ impl Eq for [T] where T: Eq
 
 
 ## Native-language standard library
-def drop(x: T) -> Unit
+def drop(x: T)
     pass
 
 
@@ -584,6 +584,6 @@ impl Default for Bool
 
 
 ## Miscellaneous
-def assertMessage(b: Bool, err: String) -> Unit
+def assertMessage(b: Bool, err: String)
     if not(b)
         panic $ "Assertion failed: " + err

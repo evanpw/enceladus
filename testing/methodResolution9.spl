@@ -1,8 +1,8 @@
 impl [T]
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
-def f(x: [T]) -> Unit
+def f(x: [T])
     x.nothing()
 
 drop $ f([1i, 2, 3])

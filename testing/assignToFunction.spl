@@ -1,4 +1,4 @@
-def f() -> Unit
+def f()
     x := 4
 
 f = 8

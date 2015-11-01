@@ -1,15 +1,15 @@
 trait Trait1
-    def method1(self) -> Unit
+    def method1(self)
 
 impl Trait1 for T
-    def method1(self) -> Unit
+    def method1(self)
         print $ "method1<T>"
 
 impl Trait1 for Int
-    def method1(self) -> Unit
+    def method1(self)
         print $ "method1<Int>"
 
-def callMethod1(x: T) -> Unit where T: Trait1
+def callMethod1(x: T) where T: Trait1
     x.method1()
 
 1i.method1()

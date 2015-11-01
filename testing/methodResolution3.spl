@@ -1,9 +1,9 @@
 impl Int
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
 impl UInt
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
 1.nothing()

@@ -1,15 +1,15 @@
 trait Nothing
-    def nothing(self) -> Unit
+    def nothing(self)
 
 impl Nothing for Int
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
 impl Nothing for String
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
-def f(x: T) -> Unit where T: Nothing
+def f(x: T) where T: Nothing
     x.nothing()
 
 drop $ f("Hello")

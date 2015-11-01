@@ -1,4 +1,4 @@
-def f(s: String) -> Unit
+def f(s: String)
     print $ s
 
 x := 4

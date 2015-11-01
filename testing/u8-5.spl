@@ -1,6 +1,6 @@
 x := 10u8
 
-def changeIt() -> Unit
+def changeIt()
     x += 10
 
 changeIt()

@@ -1,10 +1,10 @@
 trait Test<T>
-    def nothing(self) -> Unit
+    def nothing(self)
 
 impl Test<Char> for Int
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
 impl Test<Int> for Int
-    def nothing(self) -> Unit
+    def nothing(self)
         pass

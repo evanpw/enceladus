@@ -1,19 +1,19 @@
 trait Trait1
-    def method1(self) -> Unit
+    def method1(self)
 
 trait Trait2
-    def method2(self) -> Unit
+    def method2(self)
 
 impl Trait2 for T where T: Trait1
-    def method2(self) -> Unit
+    def method2(self)
         print $ "method2"
 
 impl Trait1 for Int
-    def method1(self) -> Unit
+    def method1(self)
         print $ "method1"
 
 
-def indirectCall(x: T) -> Unit where T: Trait1
+def indirectCall(x: T) where T: Trait1
     # Since every T: Trait1 is an instance of Trait2, this should be possible
     x.method2()
 

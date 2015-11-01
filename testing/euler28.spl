@@ -9,7 +9,7 @@ i := 1
 def isDiagonal(x: Int, y: Int) -> Bool
     return (x == y) or (x == -y)
 
-def check(x: Int, y: Int) -> Unit
+def check(x: Int, y: Int)
     if isDiagonal(x, y)
         total += i
 

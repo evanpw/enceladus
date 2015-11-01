@@ -1,5 +1,5 @@
 impl Int
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
 x := 1              # Has type T: Num (unquantified)

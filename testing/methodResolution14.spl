@@ -1,6 +1,6 @@
 impl [Int]
-    def nothing(self) -> Unit
+    def nothing(self)
         pass
 
-def f(x: [T]) -> Unit where T: Num
+def f(x: [T]) where T: Num
     x.nothing()

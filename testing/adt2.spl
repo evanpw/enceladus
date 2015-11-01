@@ -14,7 +14,7 @@ y := MyNone
 z := MySome("Hello")
 
 # HACK
-def typeAssert(a: MyOption<Bool>) -> Unit
+def typeAssert(a: MyOption<Bool>)
     pass
 
 typeAssert(y)

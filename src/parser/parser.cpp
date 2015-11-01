@@ -883,10 +883,16 @@ std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types(bool isM
     }
 
     expect(')');
-    expect(tRARROW);
 
     // Return type
-    typeName->parameters.push_back(constructed_type());
+    if (accept(tRARROW))
+    {
+        typeName->parameters.push_back(constructed_type());
+    }
+    else
+    {
+        typeName->parameters.push_back(new TypeName(_context, location, "Unit"));
+    }
 
     return {params, typeName};
 }

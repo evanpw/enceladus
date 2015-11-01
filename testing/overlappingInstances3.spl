@@ -2,14 +2,14 @@ trait IsInteger
     def isInteger(self) -> Bool
 
 trait Marked
-    def doNothing(self) -> Unit
+    def doNothing(self)
 
 impl IsInteger for T where T: Marked
     def isInteger(self) -> Bool
         return False
 
 impl Marked for Int
-    def doNothing(self) -> Unit
+    def doNothing(self)
         pass
 
 impl IsInteger for Int

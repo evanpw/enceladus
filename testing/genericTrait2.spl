@@ -1,4 +1,4 @@
-def checkType(x: T) -> Unit where T: Iterator<Int>
+def checkType(x: T) where T: Iterator<Int>
     pass
 
 i := "Hello World".iter()

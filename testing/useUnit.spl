@@ -1,4 +1,4 @@
-def f() -> Unit
+def f()
     pass
 
 drop $ f()
