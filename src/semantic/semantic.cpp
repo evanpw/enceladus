@@ -426,15 +426,45 @@ TraitSymbol* SemanticAnalyzer::resolveTrait(TypeName* traitName, std::vector<Typ
     return traitSymbol;
 }
 
-void SemanticAnalyzer::addConstraints(TypeVariable* var, const std::vector<TypeName*>& constraints)
+std::pair<bool, std::string> SemanticAnalyzer::addConstraints(Type* lhs, const std::vector<TypeName*>& constraints)
 {
+    assert(lhs->isVariable());
+    TypeVariable* var = lhs->get<TypeVariable>();
+
     for (TypeName* constraint : constraints)
     {
         std::vector<Type*> traitParams;
         TraitSymbol* constraintSymbol = resolveTrait(constraint, traitParams);
 
-        var->addConstraint(constraintSymbol->trait->instantiate(std::move(traitParams)));
+        Trait* newConstraint = constraintSymbol->trait->instantiate(std::move(traitParams));
+
+        auto& oldConstraints = var->constraints();
+
+        bool found = false;
+        for (Trait* oldConstraint : oldConstraints)
+        {
+            if (oldConstraint->prototype() == newConstraint->prototype())
+            {
+                found = true;
+
+                auto result = tryUnify(oldConstraint, newConstraint);
+                if (!result.first)
+                {
+                    std::string msg = format("can't add constraint `{}` to type variable `{}`: conflicts with existing constraint `{}`", newConstraint->str(), var->name(), oldConstraint->str());
+                    return {false, msg};
+                }
+
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            var->addConstraint(newConstraint);
+        }
     }
+
+    return {true, ""};
 }
 
 void SemanticAnalyzer::resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext)
@@ -454,10 +484,32 @@ void SemanticAnalyzer::resolveTypeParams(AstNode* node, const std::vector<TypePa
         CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
         Type* var = _typeTable->createTypeVariable(typeParameter, true);
 
-        addConstraints(var->get<TypeVariable>(), constraints);
+        auto result = addConstraints(var, constraints);
+        CHECK(result.first, result.second);
 
         typeContext.emplace(typeParameter, var);
         variables.push_back(var);
+    }
+}
+
+void SemanticAnalyzer::resolveWhereClause(AstNode* node, const std::vector<TypeParam>& typeParams)
+{
+    auto& typeContext = _typeContexts.back();
+
+    for (auto& item : typeParams)
+    {
+        const std::string& typeParameter = item.name;
+        const std::vector<TypeName*>& constraints = item.constraints;
+
+        CHECK(!constraints.empty(), "type parameter `{}` appears in a where clause unconstrained", typeParameter);
+
+        auto i = typeContext.find(typeParameter);
+        CHECK(i != typeContext.end(), "type parameter `{}` was not previously defined", typeParameter);
+
+        Type* var = i->second;
+
+        auto result = addConstraints(var, constraints);
+        CHECK(result.first, result.second);
     }
 }
 
@@ -1489,10 +1541,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
     assert(!_enclosingImplNode);
     _enclosingImplNode = node;
 
-    // Create type variables for each type parameter
-    std::unordered_map<std::string, Type*> typeContext;
-    resolveTypeParams(node, node->typeParams, typeContext);
-    pushTypeContext(std::move(typeContext));
+    pushTypeContext();
 
     TraitSymbol* traitSymbol = nullptr;
     std::vector<Type*> traitParameters;
@@ -1504,6 +1553,9 @@ void SemanticAnalyzer::visit(ImplNode* node)
     }
 
     resolveTypeName(node->typeName, true);
+
+    // Handle the additional constraints imposed by the where clause
+    resolveWhereClause(node, node->typeParams);
 
     // Don't allow extraneous type variables, like this:
     // impl<T> Test. This also implies that if this is a trait impl block, then

@@ -33,7 +33,6 @@ public:
     {}
 
     virtual ~TypeImpl() {}
-    virtual std::string str() const = 0;
     virtual bool isBoxed() const = 0;
 
     TypeTable* table() const
@@ -72,6 +71,8 @@ protected:
     std::vector<ValueConstructor*> _valueConstructors;
 };
 
+std::string toString(const Trait* trait);
+std::string toString(const Type* trait);
 
 // Shared public interface for all types
 class Type
@@ -85,7 +86,7 @@ public:
 
     std::string str() const
     {
-        return _impl->str();
+        return toString(this);
     }
 
     // True if variables of this type are or may be stored on the heap. False
@@ -150,11 +151,6 @@ public:
         return _name;
     }
 
-    virtual std::string str() const
-    {
-        return _name;
-    }
-
     virtual bool isBoxed() const
     {
         return !_primitive;
@@ -193,8 +189,6 @@ private:
 class FunctionType : public TypeImpl
 {
 public:
-    virtual std::string str() const;
-
     virtual bool isBoxed() const
     {
         return true;
@@ -231,8 +225,6 @@ public:
     {
         return _name;
     }
-
-    virtual std::string str() const;
 
     virtual bool isBoxed() const
     {
@@ -276,7 +268,7 @@ private:
 class TypeVariable : public TypeImpl
 {
 public:
-    virtual std::string str() const;
+    virtual std::string name() const;
 
     virtual bool isVariable() const
     {
@@ -389,25 +381,7 @@ public:
 
     std::string str() const
     {
-        std::stringstream ss;
-
-        ss << _name;
-        if (!_params.empty())
-        {
-            ss << "<";
-
-            bool first = true;
-            for (Type* param : _params)
-            {
-                if (!first) ss << ", ";
-                ss << param->str();
-                first = false;
-            }
-
-            ss << ">";
-        }
-
-        return ss.str();
+        return toString(this);
     }
 
     TypeTable* table() const

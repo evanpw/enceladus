@@ -5,103 +5,103 @@ std::string tokenToString(TokenType t)
     switch(t)
     {
     case tNONE:
-        return "NONE";
+        return "`None`";
     case tAND:
-        return "AND";
+        return "`and`";
     case tAS:
-        return "tAS";
+        return "`and`";
     case tASSERT:
-        return "ASSERT";
+        return "`assert`";
     case tBREAK:
-        return "BREAK";
+        return "`break`";
     case tCOLON_EQUAL:
-        return "COLON_EQUAL";
+        return "`:=`";
     case tDARROW:
-        return "DARROW";
+        return "`=>`";
     case tDATA:
-        return "DATA";
+        return "`data`";
     case tDCOLON:
-        return "DCOLON";
+        return "`::`";
     case tDEDENT:
-        return "DEDENT";
+        return "dedentation";
     case tDEF:
-        return "DEF";
+        return "`def`";
     case tDIV_EQUAL:
-        return "DIV_EQUAL";
+        return "`/=`";
     case tELIF:
-        return "ELIF";
+        return "`elif`";
     case tELSE:
-        return "ELSE";
+        return "`else`";
     case tEOF:
-        return "EOF";
+        return "end-of-file";
     case tEOL:
-        return "EOL";
+        return "end-of-line";
     case tEQUALS:
-        return "EQUALS";
+        return "`==`";
     case tFALSE:
-        return "FALSE";
+        return "`False`";
     case tFOR:
-        return "FOR";
+        return "`for`";
     case tFOREIGN:
-        return "FOREIGN";
+        return "`foreign`";
     case tFOREVER:
-        return "FOREVER";
+        return "`forever`";
     case tGE:
-        return "GE";
+        return "`>=`";
     case tIF:
-        return "IF";
+        return "`if`";
     case tIMPL:
-        return "IMPL";
+        return "`impl`";
     case tIN:
-        return "IN";
+        return "in";
     case tINDENT:
-        return "INDENT";
+        return "indentation";
     case tINT_LIT:
-        return "INT_LIT";
+        return "integer literal";
     case tLE:
-        return "LE";
+        return "`<=`";
     case tLET:
-        return "LET";
+        return "`let`";
     case tLIDENT:
-        return "LIDENT";
+        return "identifier";
     case tMATCH:
-        return "MATCH";
+        return "`match`";
     case tMINUS_EQUAL:
-        return "MINUS_EQUAL";
-    case tMOD:
-        return "MOD";
+        return "`*=`";
     case tNE:
-        return "NE";
+        return "`!=`";
     case tOR:
-        return "OR";
+        return "`or`";
     case tPLUS_EQUAL:
-        return "PLUS_EQUAL";
+        return "`+=`";
     case tRARROW:
-        return "RARROW";
+        return "`->`";
     case tREM_EQUAL:
-        return "REM_EQUAL";
+        return "`%=`";
     case tRETURN:
-        return "RETURN";
+        return "`return`";
     case tSTRING_LIT:
-        return "STRING_LIT";
+        return "string literal";
     case tSTRUCT:
-        return "STRUCT";
+        return "`struct`";
     case tTIMES_EQUAL:
-        return "TIMES_EQUAL";
+        return "`*=`";
     case tTO:
-        return "TO";
+        return "`to`";
     case tTRAIT:
-        return "TRAIT";
+        return "`trait`";
     case tTRUE:
-        return "TRUE";
+        return "`True`";
     case tTYPE:
-        return "TYPE";
+        return "`type`";
     case tUIDENT:
-        return "UIDENT";
+        return "type identifier";
+    case tWHERE:
+        return "`where`";
     case tWHILE:
-        return "WHILE";
+        return "`while`";
     case tWHITESPACE:
-        return "WHITESPACE";
+        return "whitespace";
     default:
         char c = (char)t;
         return std::string(1, c);

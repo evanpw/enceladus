@@ -25,7 +25,7 @@ trait Eq
     def eq(lhs: Self, rhs: Self) -> Bool
     def ne(lhs: Self, rhs: Self) -> Bool
 
-impl<T: Num> Eq for T
+impl Eq for T where T: Num
     def eq(lhs: T, rhs: T) -> Bool
         return lhs == rhs
 
@@ -286,7 +286,7 @@ impl List<T>
 
         return result.reverse()
 
-impl<T: Eq> Eq for [T]
+impl Eq for [T] where T: Eq
     def eq(self: [T], other: [T]) -> Bool
         if self.empty()
             return other.empty()
@@ -403,7 +403,7 @@ data Ordering = Less | Equal | Greater
 trait Ord
     def cmp(self: Self, other: Self) -> Ordering
 
-impl<T: Num> Ord for T
+impl Ord for T where T: Num
     def cmp(self: T, other: T) -> Ordering
         if self < other
             return Less
@@ -412,7 +412,7 @@ impl<T: Num> Ord for T
         else
             return Equal
 
-impl<T: Ord> Ord for [T]
+impl Ord for [T] where T: Ord
     def cmp(self: [T], other: [T]) -> Ordering
         if self.empty()
             if other.empty()
@@ -459,7 +459,7 @@ trait PartialOrd
     def gt(self: Self, other: Self) -> Bool
     def ge(self: Self, other: Self) -> Bool
 
-impl<T: Ord> PartialOrd for T
+impl PartialOrd for T where T: Ord
     def lt(self: T, other: T) -> Bool
         match self.cmp(other)
             Less
@@ -501,35 +501,35 @@ impl<T: Ord> PartialOrd for T
 trait Add
     def add(self: Self, other: Self) -> Self
 
-impl<T: Num> Add for T
+impl Add for T where T: Num
     def add(self: T, other: T) -> T
         return self + other
 
 trait Sub
     def sub(self: Self, other: Self) -> Self
 
-impl<T: Num> Sub for T
+impl Sub for T where T: Num
     def sub(self: T, other: T) -> T
         return self - other
 
 trait Mul
     def mul(self: Self, other: Self) -> Self
 
-impl<T: Num> Mul for T
+impl Mul for T where T: Num
     def mul(self: T, other: T) -> T
         return self * other
 
 trait Div
     def div(self: Self, other: Self) -> Self
 
-impl<T: Num> Div for T
+impl Div for T where T: Num
     def div(self: T, other: T) -> T
         return self / other
 
 trait Rem
     def rem(self: Self, other: Self) -> Self
 
-impl<T: Num> Rem for T
+impl Rem for T where T: Num
     def rem(self: T, other: T) -> T
         return self % other
 
@@ -566,17 +566,9 @@ impl Hash for String
 trait Default
     def default() -> Self
 
-impl Default for Int
-    def default() -> Int
-        return 0i
-
-impl Default for UInt
-    def default() -> UInt
-        return 0u
-
-impl Default for UInt8
-    def default() -> UInt8
-        return 0u8
+impl Default for T where T: Num
+    def default() -> T
+        return 0
 
 impl Default for [T]
     def default() -> [T]

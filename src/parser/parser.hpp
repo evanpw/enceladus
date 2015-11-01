@@ -58,6 +58,7 @@ private:
     std::pair<std::vector<std::string>, TypeName*> params_and_types();
     std::vector<std::string> type_params();
     std::vector<TypeParam> constrained_type_params();
+    std::vector<TypeParam> where_clause();
     TypeParam constrained_type_param();
 
 

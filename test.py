@@ -289,9 +289,6 @@ class TestAcceptance(object):
     def test_repeatedTypeParam5(self):
         self.run('repeatedTypeParam5', build_error='Error: testing/repeatedTypeParam5.spl:2:5: type parameter `T` is already defined')
 
-    def test_repeatedTypeParam6(self):
-        self.run('repeatedTypeParam6', build_error='Error: testing/repeatedTypeParam6.spl:1:1: type parameter `T` is already defined')
-
     def test_memberMethodConflict(self):
         self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:5:5: type `Test` already has a method or member named `f`')
 
@@ -388,9 +385,6 @@ class TestAcceptance(object):
     def test_typeConstraint4(self):
         self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<String>`')
 
-    def test_typeConstraint5(self):
-        self.run('typeConstraint5', build_error='Error: testing/typeConstraint5.spl:5:9: `T` is not an instance of trait `Num`')
-
     def test_useUnit(self):
         self.run('useUnit', '')
 
@@ -399,9 +393,6 @@ class TestAcceptance(object):
 
     def test_wrongList(self):
         self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types [String] and [Int]')
-
-    def test_unusedTypeParam(self):
-        self.run('unusedTypeParam', build_error='Error: testing/unusedTypeParam.spl:1:1: type variable `T` doesn\'t occur in type `Int`')
 
     def test_constrainedImpl(self):
         self.run('constrainedImpl', '')
@@ -510,6 +501,21 @@ class TestAcceptance(object):
 
     def test_inferTypeVars(self):
         self.run('inferTypeVars', '')
+
+    def test_inferTypeVars2(self):
+        self.run('inferTypeVars2', build_error='Error: testing/inferTypeVars2.spl:3:37: Type variable `S` is not defined')
+
+    def test_repeatedConstraint(self):
+        self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.spl:3:17: cannot unify types T: Num and String')
+
+    def test_repeatedConstraint2(self):
+        self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.spl:1:1: can\'t add constraint `Iterator<String>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
+
+    def test_repeatedConstraint3(self):
+        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:17: cannot unify types T: Iterator<T> and String')
+
+    def test_repeatedConstraint4(self):
+        self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.spl:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')
 
     # Medium tests (100ms-1s)
 

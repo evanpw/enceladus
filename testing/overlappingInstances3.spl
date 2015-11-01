@@ -4,7 +4,7 @@ trait IsInteger
 trait Marked
     def doNothing(self: Self) -> Unit
 
-impl<T: Marked> IsInteger for T
+impl IsInteger for T where T: Marked
     def isInteger(self: T) -> Bool
         return False
 

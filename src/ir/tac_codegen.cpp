@@ -32,7 +32,7 @@ static std::string mangleTypeName(Type* type, std::vector<TypeVariable*>& variab
 
     if (BaseType* baseType = type->get<BaseType>())
     {
-        std::string name = baseType->str();
+        std::string name = type->str();
         ss << name.size() << name;
     }
     else if (FunctionType* functionType = type->get<FunctionType>())
@@ -426,7 +426,7 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
 
         if (BaseType* baseType = methodSymbol->parentType->get<BaseType>())
         {
-            ss << baseType->str();
+            ss << methodSymbol->parentType->str();
         }
         else if (ConstructedType* constructedType = methodSymbol->parentType->get<ConstructedType>())
         {

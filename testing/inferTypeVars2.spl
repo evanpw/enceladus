@@ -1,0 +1,3 @@
+trait Test
+
+impl Test for [T] where T: Iterator<S>

@@ -1,0 +1,3 @@
+impl T where T: Num + Num
+    def f(x: T) -> Unit
+        print $ x

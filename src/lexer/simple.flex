@@ -215,6 +215,7 @@ extern "C" int yywrap()
 "True"      { return tTRUE; }
 "trait"     { return tTRAIT; }
 "type"      { return tTYPE; }
+"where"     { return tWHERE; }
 "while"     { return tWHILE; }
 
  /* Eat whitespace */

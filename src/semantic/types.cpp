@@ -7,8 +7,150 @@
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include <unordered_set>
 
-std::string TypeVariable::str() const
+static std::string toString(const Trait* trait, std::unordered_set<const Type*>& varStack);
+
+static std::string toString(const Type* type, std::unordered_set<const Type*>& varStack)
+{
+    switch (type->tag())
+    {
+        case ttBase:
+            return type->get<BaseType>()->name();
+
+        case ttFunction:
+        {
+            FunctionType* functionType = type->get<FunctionType>();
+
+            std::stringstream ss;
+
+            if (functionType->inputs().empty())
+            {
+                ss << "||";
+            }
+            else
+            {
+                ss << "|";
+
+                bool first = true;
+                for (Type* input : functionType->inputs())
+                {
+                    if (!first) ss << ", ";
+                    ss << toString(input, varStack);
+                    first = false;
+                }
+
+                ss << "|";
+            }
+
+            ss << " -> " << toString(functionType->output(), varStack);
+
+            return ss.str();
+        }
+
+        case ttConstructed:
+        {
+            ConstructedType* constructedType = type->get<ConstructedType>();
+
+            std::stringstream ss;
+
+            if (constructedType->name() == "List")
+            {
+                assert(constructedType->typeParameters().size() == 1);
+                ss << "[" << toString(constructedType->typeParameters()[0]) << "]";
+            }
+            else
+            {
+                ss << constructedType->name();
+                ss << "<";
+
+                bool first = true;
+                for (const Type* param : constructedType->typeParameters())
+                {
+                    if (!first) ss << ", ";
+                    ss << toString(param, varStack);
+                    first = false;
+                }
+                ss << ">";
+            }
+
+            return ss.str();
+        }
+
+        case ttVariable:
+        {
+            TypeVariable* var = type->get<TypeVariable>();
+
+            if (var->constraints().empty())
+            {
+                return var->name();
+            }
+            else
+            {
+                std::stringstream ss;
+                ss << var->name();
+
+                if (varStack.find(type) == varStack.end())
+                {
+                    varStack.emplace(type);
+
+                    ss << ": ";
+
+                    bool first = true;
+                    for (const Trait* constraint : var->constraints())
+                    {
+                        if (!first) ss << " + ";
+                        ss << toString(constraint, varStack);
+                        first = false;
+                    }
+
+                    varStack.erase(type);
+                }
+
+                return ss.str();
+            }
+        }
+    }
+
+    assert(false);
+}
+
+std::string toString(const Type* type)
+{
+    std::unordered_set<const Type*> varStack;
+    return toString(type, varStack);
+}
+
+static std::string toString(const Trait* trait, std::unordered_set<const Type*>& varStack)
+{
+    std::stringstream ss;
+
+    ss << trait->name();
+    if (!trait->parameters().empty())
+    {
+        ss << "<";
+
+        bool first = true;
+        for (Type* param : trait->parameters())
+        {
+            if (!first) ss << ", ";
+            ss << toString(param, varStack);
+            first = false;
+        }
+
+        ss << ">";
+    }
+
+    return ss.str();
+}
+
+std::string toString(const Trait* trait)
+{
+    std::unordered_set<const Type*> varStack;
+    return toString(trait, varStack);
+}
+
+std::string TypeVariable::name() const
 {
     std::stringstream ss;
 
@@ -22,19 +164,6 @@ std::string TypeVariable::str() const
             ss << "'";
 
         ss << "T" << _index;
-    }
-
-    if (!_constraints.empty())
-    {
-        ss << ": ";
-
-        bool first = true;
-        for (Trait* constraint : _constraints)
-        {
-            if (!first) ss << " + ";
-            ss << constraint->str();
-            first = false;
-        }
     }
 
     return ss.str();
@@ -90,34 +219,6 @@ std::pair<size_t, ValueConstructor*> TypeImpl::getValueConstructor(const std::st
     return std::make_pair(0, nullptr);
 }
 
-std::string FunctionType::str() const
-{
-    std::stringstream ss;
-
-    if (_inputs.empty())
-    {
-        ss << "||";
-    }
-    else
-    {
-        ss << "|";
-
-        for (size_t i = 0; i < _inputs.size(); ++i)
-        {
-            ss << _inputs[i]->str();
-
-            if (i + 1 < _inputs.size())
-                ss << ", ";
-        }
-
-        ss << "|";
-    }
-
-    ss << " -> " << _output->str();
-
-    return ss.str();
-}
-
 ConstructedType::ConstructedType(TypeTable* table, const std::string& name, std::vector<Type*>&& typeParameters, const ConstructedType* prototype)
 : TypeImpl(table, ttConstructed), _name(name), _typeParameters(typeParameters), _prototype(prototype)
 {
@@ -133,33 +234,6 @@ Type* ConstructedType::instantiate(std::vector<Type*>&& typeParameters) const
     assert(_prototype == this);
 
     return _table->createConstructedType(_name, std::move(typeParameters), this);
-}
-
-std::string ConstructedType::str() const
-{
-    std::stringstream ss;
-
-    if (_name == "List")
-    {
-        assert(_typeParameters.size() == 1);
-        ss << "[" << _typeParameters[0]->str() << "]";
-    }
-    else
-    {
-        ss << _name;
-        ss << "<";
-
-        bool first = true;
-        for (const Type* type : _typeParameters)
-        {
-            if (!first) ss << ", ";
-            ss << type->str();
-            first = false;
-        }
-        ss << ">";
-    }
-
-    return ss.str();
 }
 
 // Passed through the prototype

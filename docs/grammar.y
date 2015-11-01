@@ -162,6 +162,10 @@ constrained_type_params
 constrained_type_param
     : UIDENT [':' UIDENT { '+' UIDENT }]
 
+where_clause
+    : WHERE constrained_type_param { ',' constrained_type_param }
+    | /* empty */
+
  //// Structures ///////////////////////////////////////////////////////////////
 
 members

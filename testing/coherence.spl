@@ -4,7 +4,7 @@ trait Trait1
 trait Trait2
     def method2(self: Self) -> Unit
 
-impl<T: Trait1> Trait2 for T
+impl Trait2 for T where T: Trait1
     def method2(self: T) -> Unit
         print $ "method2<T: Trait1>"
 

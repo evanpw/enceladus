@@ -503,3 +503,16 @@ TEST_CASE("generic trait checks", "[generic-trait]")
 
     delete table;
 }
+
+TEST_CASE("recursive type checks", "[recursive-type]")
+{
+    TypeTable* table = new TypeTable;
+
+    Type* S = table->createTypeVariable("S", true);
+    Trait* Iterator = table->createTrait("Iterator", {S});
+
+    Type* T = table->createTypeVariable("T", true);
+    T->get<TypeVariable>()->addConstraint(Iterator->instantiate({T}));
+
+    CHECK(T->str() == "T: Iterator<T>");
+}

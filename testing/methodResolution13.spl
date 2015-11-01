@@ -1,4 +1,4 @@
-impl<T: Num> [T]
+impl [T] where T: Num
     def nothing(self: [T]) -> Unit
         pass
 

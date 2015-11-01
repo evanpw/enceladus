@@ -516,8 +516,6 @@ ImplNode* Parser::implementation_block()
 
     expect(tIMPL);
 
-    std::vector<TypeParam> typeParams = constrained_type_params();
-
     TypeName* typeName = type();
     TypeName* traitName = nullptr;
 
@@ -526,6 +524,8 @@ ImplNode* Parser::implementation_block()
         traitName = typeName;
         typeName = type();
     }
+
+    std::vector<TypeParam> typeParams = where_clause();
 
     expect(tEOL);
 
@@ -919,6 +919,26 @@ std::vector<TypeParam> Parser::constrained_type_params()
     }
 
     expect('>');
+
+    return result;
+}
+
+/// where_clause
+///     : WHERE constrained_type_param { ',' constrained_type_param }
+///     | /* empty */
+std::vector<TypeParam> Parser::where_clause()
+{
+    std::vector<TypeParam> result;
+
+    if (!accept(tWHERE))
+        return result;
+
+    result.push_back(constrained_type_param());
+
+    while (accept(','))
+    {
+        result.push_back(constrained_type_param());
+    }
 
     return result;
 }

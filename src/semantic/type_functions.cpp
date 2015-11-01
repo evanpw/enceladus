@@ -157,8 +157,8 @@ std::pair<bool, std::string> bindVariable(Type* var, Type* value)
                     if (!isSubtype(value, constraint))
                     {
                         std::stringstream ss;
-                        ss << "Can't bind variable " << lhs->str()
-                           << " to quantified type variable " << rhs->str()
+                        ss << "Can't bind variable " << var->str()
+                           << " to quantified type variable " << value->str()
                            << ", because the latter isn't constrained by trait " << constraint->str();
 
                         return {false, ss.str()};
@@ -194,7 +194,7 @@ std::pair<bool, std::string> bindVariable(Type* var, Type* value)
         if (occurs(lhs, value))
         {
             std::stringstream ss;
-            ss << "variable " << lhs->str() << " already occurs in " << value->str();
+            ss << "variable " << var->str() << " already occurs in " << value->str();
 
             return {false, ss.str()};
         }

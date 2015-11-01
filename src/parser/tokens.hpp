@@ -38,7 +38,6 @@ enum TokenType : int
     tLIDENT,
     tMATCH,
     tMINUS_EQUAL,
-    tMOD,
     tNE,
     tOR,
     tPASS,
@@ -54,6 +53,7 @@ enum TokenType : int
     tTRUE,
     tTYPE,
     tUIDENT,
+    tWHERE,
     tWHILE,
     tWHITESPACE,
 };

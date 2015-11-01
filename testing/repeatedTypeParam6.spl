@@ -1,3 +1,0 @@
-impl<T, T> [T]
-    def f(x: [T]) -> [T]
-        return x

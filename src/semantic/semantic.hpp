@@ -97,9 +97,10 @@ private:
     void resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols);
 
     TraitSymbol* resolveTrait(TypeName* traitName, std::vector<Type*>& traitParams, bool inferVariables = false);
-    void addConstraints(TypeVariable* var, const std::vector<TypeName*>& constraints);
+    std::pair<bool, std::string> addConstraints(Type* lhs, const std::vector<TypeName*>& constraints);
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext);
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables);
+    void resolveWhereClause(AstNode* node, const std::vector<TypeParam>& typeParams);
 
     void checkTraitCoherence();
 
