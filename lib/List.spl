@@ -32,29 +32,7 @@ def sort<T: PartialOrd>(xs: [T]) -> [T]
 
 # Needs sub-traits to work correctly, so that Ord => PartialOrd and we can
 # call sort
-#def uniquify<T: Ord>(xs: [T]) -> [T]
-#    if xs.empty()
-#        return []
-
-#    xs = sort(xs)
-
-#    result := [xs.head()]
-#    last := xs.head()
-
-#    for x in xs.tail()
-#        match last.cmp(x)
-#            Equal
-#                pass
-#            Less
-#                result = result.insert(x)
-#            Greater
-#                result = result.insert(x)
-
-#        last = x
-
-#    return result
-
-def uniquify<T: PartialOrd + Eq>(xs: [T]) -> [T]
+def uniquify<T: Ord>(xs: [T]) -> [T]
     if xs.empty()
         return []
 
@@ -64,8 +42,13 @@ def uniquify<T: PartialOrd + Eq>(xs: [T]) -> [T]
     last := xs.head()
 
     for x in xs.tail()
-        if x != last
-            result = result.insert(x)
+        match last.cmp(x)
+            Equal
+                pass
+            Less
+                result = result.insert(x)
+            Greater
+                result = result.insert(x)
 
         last = x
 

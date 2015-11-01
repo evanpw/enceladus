@@ -107,6 +107,7 @@ bool TypeComparer::compare(Type* lhs, Trait* trait)
         }
         else
         {
+            // Case 1: T: Trait1 <= Trait1 directly
             for (Trait* constraint : getConstraints(lhsVariable))
             {
                 if (compare(constraint, trait))
@@ -116,7 +117,8 @@ bool TypeComparer::compare(Type* lhs, Trait* trait)
                 }
             }
 
-            return false;
+            // Case 2: impl<T: Trait1> Trait2 for T makes T: Trait1 <= Trait2,
+            // just like with a concrete type. Fall through for that check
         }
     }
 

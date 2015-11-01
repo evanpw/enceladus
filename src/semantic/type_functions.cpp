@@ -115,8 +115,11 @@ Type* findOverlappingInstance(Trait* trait, Type* type)
     return nullptr;
 }
 
-std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)
+std::pair<bool, std::string> bindVariable(Type* var, Type* value)
 {
+    assert(var->isVariable());
+    TypeVariable* lhs = var->get<TypeVariable>();
+
     // Check to see if the value is actually the same type variable, and don't
     // rebind
     if (value->tag() == ttVariable)
@@ -124,6 +127,9 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)
         TypeVariable* rhs = value->get<TypeVariable>();
         if (lhs == rhs)
             return {true, ""};
+
+        // If T: Ord is an instance of PartialOrd, then we want to be able to
+        // bind a variable 'T1: PartialOrd to T: Ord
 
         std::vector<Trait*> missingConstraints;
 
@@ -148,12 +154,15 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)
                 // process of unification (see overrideType test)
                 if (rhs->quantified())
                 {
-                    std::stringstream ss;
-                    ss << "Can't bind variable " << lhs->str()
-                       << " to quantified type variable " << rhs->str()
-                       << ", because the latter isn't constrained by trait " << constraint->str();
+                    if (!isSubtype(value, constraint))
+                    {
+                        std::stringstream ss;
+                        ss << "Can't bind variable " << lhs->str()
+                           << " to quantified type variable " << rhs->str()
+                           << ", because the latter isn't constrained by trait " << constraint->str();
 
-                    return {false, ss.str()};
+                        return {false, ss.str()};
+                    }
                 }
                 else
                 {
@@ -194,14 +203,6 @@ std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)
 
     lhs->assign(value);
     return {true, ""};
-}
-
-std::pair<bool, std::string> bindVariable(Type* variable, Type* value)
-{
-    assert(variable->tag() == ttVariable);
-    TypeVariable* lhs = variable->get<TypeVariable>();
-
-    return bindVariable(lhs, value);
 }
 
 std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs)
