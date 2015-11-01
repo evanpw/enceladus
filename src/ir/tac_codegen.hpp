@@ -41,7 +41,7 @@ public:
     UNSUPPORTED(BreakNode);
     UNSUPPORTED(CastNode);
     UNSUPPORTED(DataDeclaration);
-    UNSUPPORTED(ForeachNode);
+    UNSUPPORTED(ForNode);
     UNSUPPORTED(ForeverNode);
     UNSUPPORTED(FunctionDefNode);
     UNSUPPORTED(IfElseNode);
@@ -122,7 +122,7 @@ public:
     virtual void visit(CastNode* node);
     virtual void visit(ComparisonNode* node);
     virtual void visit(DataDeclaration* node);
-    virtual void visit(ForeachNode* node);
+    virtual void visit(ForNode* node);
     virtual void visit(ForeverNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);

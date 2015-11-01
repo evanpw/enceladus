@@ -379,23 +379,24 @@ public:
 	StatementNode* body;
 };
 
-class ForeachNode : public LoopNode
+class ForNode : public LoopNode
 {
 public:
-	ForeachNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* listExpression, StatementNode* body)
-	: LoopNode(context, location), varName(varName), listExpression(listExpression), body(body)
+	ForNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* iteratorExpression, StatementNode* body)
+	: LoopNode(context, location), varName(varName), iteratorExpression(iteratorExpression), body(body)
 	{}
 
 	AST_VISITABLE();
 
 	std::string varName;
-	ExpressionNode* listExpression;
+	ExpressionNode* iteratorExpression;
 	StatementNode* body;
 
 	// Annotations
-	// TODO: Use a real AST transformation
-	StatementNode* setupNode;
-	WhileNode* loopNode;
+	Symbol* symbol;
+	TraitMethodSymbol* head;
+	TraitMethodSymbol* empty;
+	TraitMethodSymbol* tail;
 };
 
 class ForeverNode : public LoopNode

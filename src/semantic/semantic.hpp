@@ -40,7 +40,7 @@ public:
     virtual void visit(ComparisonNode* node);
     virtual void visit(ConstructorSpec* node);
     virtual void visit(DataDeclaration* node);
-    virtual void visit(ForeachNode* node);
+    virtual void visit(ForNode* node);
     virtual void visit(ForeignDeclNode* node);
     virtual void visit(ForeverNode* node);
     virtual void visit(FunctionCallNode* node);

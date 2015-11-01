@@ -24,7 +24,7 @@ void ReturnChecker::visit(BlockNode* node)
     _alwaysReturns = false;
 }
 
-void ReturnChecker::visit(ForeachNode* node)
+void ReturnChecker::visit(ForNode* node)
 {
     _alwaysReturns = visitAndGet(node->body);
 }

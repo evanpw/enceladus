@@ -1083,58 +1083,33 @@ void SemanticAnalyzer::visit(WhileNode* node)
     unify(node->body->type, _typeTable->Unit, node);
 }
 
-void SemanticAnalyzer::visit(ForeachNode* node)
+void SemanticAnalyzer::visit(ForNode* node)
 {
-    // Check that listExpression is an instance of Iterator
-    node->listExpression->accept(this);
-    TraitSymbol* iteratorSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
-    Trait* Iterator = instantiate(iteratorSymbol->trait);
-    unify(node->listExpression->type, Iterator, node->listExpression);
+    node->iteratorExpression->accept(this);
 
-    // Poor-man's AST transformation:
+    TypeAssignment typeAssignment;
+    TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
+    Trait* trait = instantiate(traitSymbol->trait, typeAssignment);
+    unify(node->iteratorExpression->type, trait, node->iteratorExpression);
 
-    // for x in xs
-    //     body
+    node->head = traitSymbol->methods.at("head");
+    node->empty = traitSymbol->methods.at("empty");
+    node->tail = traitSymbol->methods.at("tail");
 
-    // =>
+    // Save the current inner-most loop so that we can restore it after
+    // visiting the children of this loop.
+    LoopNode* outerLoop = _enclosingLoop;
+    _enclosingLoop = node;
+    _symbolTable->pushScope();
 
-    // xs := iteratorExpr
-    // while not xs.empty()
-    //     x := xs.head()
+    node->symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
+    node->symbol->type = trait->parameters().at(0);
 
-    //     body
+    node->body->accept(this);
+    unify(node->body->type, _typeTable->Unit, node);
 
-    //     xs = xs.tail()
-
-    static size_t iteratorCount = 1;
-
-    std::stringstream ss;
-    ss << "_iterator" << iteratorCount++;
-    std::string iterName = ss.str();
-
-    node->setupNode = new VariableDefNode(_context, node->location, iterName, node->listExpression);
-
-    NullaryNode* xs = new NullaryNode(_context, node->location, iterName);
-    MethodCallNode* xsEmpty = new MethodCallNode(_context, node->location, xs, "empty", {});
-    FunctionCallNode* condition = new FunctionCallNode(_context, node->location, "not", {xsEmpty});
-
-    BlockNode* body = new BlockNode(_context, node->location);
-
-    node->loopNode = new WhileNode(_context, node->location, condition, body);
-
-    MethodCallNode* xsHead = new MethodCallNode(_context, node->location, xs, "head", {});
-    VariableDefNode* varDef = new VariableDefNode(_context, node->location, node->varName, xsHead);
-
-    MethodCallNode* xsTail = new MethodCallNode(_context, node->location, xs, "tail", {});
-    AssignNode* xsAssign = new AssignNode(_context, node->location, xs, xsTail);
-
-    body->children.push_back(varDef);
-    body->children.push_back(node->body);
-    body->children.push_back(xsAssign);
-
-
-    node->setupNode->accept(this);
-    node->loopNode->accept(this);
+    _symbolTable->popScope();
+    _enclosingLoop = outerLoop;
 
     node->type = _typeTable->Unit;
 }

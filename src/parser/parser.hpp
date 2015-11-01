@@ -27,7 +27,7 @@ private:
     DataDeclaration* data_declaration();
     TypeAliasNode* type_alias_declaration();
     FunctionDefNode* function_definition();
-    ForeachNode* for_statement();
+    ForNode* for_statement();
     ForeignDeclNode* foreign_declaration();
     ForeverNode* forever_statement();
     LetNode* let_statement();

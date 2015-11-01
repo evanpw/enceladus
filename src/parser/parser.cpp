@@ -279,7 +279,7 @@ FunctionDefNode* Parser::function_definition()
     return new FunctionDefNode(_context, location, name, body, std::move(typeParams), paramsAndTypes.first, paramsAndTypes.second);
 }
 
-ForeachNode* Parser::for_statement()
+ForNode* Parser::for_statement()
 {
     YYLTYPE location = getLocation();
 
@@ -287,10 +287,10 @@ ForeachNode* Parser::for_statement()
     Token loopVar = expect(tLIDENT);
 
     expect(tIN);
-    ExpressionNode* listExpression = expression();
+    ExpressionNode* iteratorExpression = expression();
     StatementNode* body = suite();
 
-    return new ForeachNode(_context, location, loopVar.value.str, listExpression, body);
+    return new ForNode(_context, location, loopVar.value.str, iteratorExpression, body);
 }
 
 ForeignDeclNode* Parser::foreign_declaration()

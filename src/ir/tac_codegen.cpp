@@ -979,10 +979,68 @@ void TACCodeGen::visit(WhileNode* node)
     setBlock(loopExit);
 }
 
-void TACCodeGen::visit(ForeachNode* node)
+void TACCodeGen::visit(ForNode* node)
 {
-    node->setupNode->accept(this);
-    node->loopNode->accept(this);
+    Value* initialIterator = visitAndGet(node->iteratorExpression);
+
+    Type* type = node->iteratorExpression->type;
+    Value* head = getTraitMethodValue(type, node->head, node);
+    Value* empty = getTraitMethodValue(type, node->empty, node);
+    Value* tail = getTraitMethodValue(type, node->tail, node);
+
+
+
+
+    BasicBlock* loopInit = createBlock();
+    BasicBlock* loopBegin = createBlock();
+    BasicBlock* loopExit = createBlock();
+    BasicBlock* loopBody = createBlock();
+
+    // Create an unnamed local variable to hold the iterator
+    Value* iteratorVar = _context->createLocal(ValueType::Reference, "");
+    _currentFunction->locals.push_back(iteratorVar);
+
+    emit(new JumpInst(loopInit));
+    setBlock(loopInit);
+
+    emit(new StoreInst(iteratorVar, initialIterator));
+
+    emit(new JumpInst(loopBegin));
+    setBlock(loopBegin);
+
+    // Loop while iterator is not empty
+    Value* currentIterator = createTemp(ValueType::Reference);
+    emit(new LoadInst(currentIterator, iteratorVar));
+    Value* isNull = createTemp(ValueType::U64);
+    emit(new CallInst(isNull, empty, {currentIterator}));
+    emit(new JumpIfInst(isNull, loopExit, loopBody));
+
+    // Push a new inner loop on the (implicit) stack
+    BasicBlock* prevLoopExit = _currentLoopExit;
+    _currentLoopExit = loopExit;
+
+    setBlock(loopBody);
+
+    // Assign the next value from the iterator to the induction variable
+    currentIterator = createTemp(ValueType::Reference);
+    emit(new LoadInst(currentIterator, iteratorVar));
+    Value* currentHead = createTemp(getValueType(node->symbol->type, _typeContext));
+    emit(new CallInst(currentHead, head, {currentIterator}));
+    emit(new StoreInst(getValue(node->symbol), currentHead));
+
+    // Advance the current iterator to the next value
+    Value* currentTail = createTemp(ValueType::Reference);
+    emit(new CallInst(currentTail, tail, {currentIterator}));
+    emit(new StoreInst(iteratorVar, currentTail));
+
+    node->body->accept(this);
+
+    if (!_currentBlock->isTerminated())
+        emit(new JumpInst(loopBegin));
+
+    _currentLoopExit = prevLoopExit;
+
+    setBlock(loopExit);
 }
 
 void TACCodeGen::visit(IndexNode* node)
