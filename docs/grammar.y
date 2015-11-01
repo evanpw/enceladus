@@ -151,6 +151,9 @@ param_and_type
 params_and_types
     : '(' [ param_and_type { ',' param_and_type } ] ')' RARROW constructed_type
 
+method_params_and_types
+    : '(' [ LIDENT [ ': type ] { ',' param_and_type } ] ')' RARROW constructed_type
+
 type_params
     : '<' UIDENT { ',' UIDENT } '>'
     | /* empty */

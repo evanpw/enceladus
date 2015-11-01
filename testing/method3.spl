@@ -1,5 +1,5 @@
 impl Int
-    def equal(self: Int, other: Int) -> Bool
+    def equal(self, other: Int) -> Bool
         return self == other
 
 if not $ 4.equal(5)

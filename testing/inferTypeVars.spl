@@ -23,5 +23,5 @@ trait Nothing2<T>
 impl Nothing2<T> for [T]
 
 impl Int
-    def f(self: Int, other: T) -> T
+    def f(self, other: T) -> T
         return other

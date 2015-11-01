@@ -55,7 +55,7 @@ private:
     TypeName* trait_name();
     ConstructorSpec* constructor_spec();
     std::pair<std::string, TypeName*> param_and_type();
-    std::pair<std::vector<std::string>, TypeName*> params_and_types();
+    std::pair<std::vector<std::string>, TypeName*> params_and_types(bool isMethod = false);
     std::vector<std::string> type_params();
     std::vector<TypeParam> constrained_type_params();
     std::vector<TypeParam> where_clause();

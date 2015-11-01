@@ -1,8 +1,8 @@
 trait Nothing1
-    def nothing(self: Self) -> Unit
+    def nothing(self) -> Unit
 
 trait Nothing2
-    def nothing(self: Self) -> Unit
+    def nothing(self) -> Unit
 
 def f(x: T) -> Unit where T: Nothing1 + Nothing2
     x.nothing()

@@ -9,11 +9,11 @@ impl Progress
     def new() -> Progress
         return Progress(Vector::new(), Vector::new())
 
-    def copy(self: Progress) -> Progress
+    def copy(self) -> Progress
         return Progress(self.nonempty.copy(), self.closed.copy())
 
 impl Vector<Bool>
-    def toString(self: Vector<Bool>) -> String
+    def toString(self) -> String
         result := []
         for x in self.iter()
             if x

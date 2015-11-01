@@ -1,5 +1,5 @@
 impl [T]
-    def nothing(self: [T]) -> [T]
+    def nothing(self) -> [T]
         return self
 
 x := [].nothing()

@@ -2,5 +2,5 @@ struct Test
     f: Int
 
 impl Test
-    def f(self: Test) -> Int
+    def f(self) -> Int
         return 0

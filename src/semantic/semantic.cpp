@@ -1644,15 +1644,16 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
 
         // Create type variables for each type parameter
         std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
+        Type* Self = _enclosingImplNode->typeName->type;
+        typeContext["Self"] = Self;
         resolveTypeParams(node, node->typeParams, typeContext);
 
         pushTypeContext(std::move(typeContext));
         resolveTypeName(node->typeName, true);
 
         std::vector<MemberSymbol*> symbols;
-        Type* parentType = _enclosingImplNode->typeName->type;
-        _symbolTable->resolveMemberSymbol(node->name, parentType, symbols);
-        CHECK(symbols.empty(), "type `{}` already has a method or member named `{}`", parentType->str(), node->name);
+        _symbolTable->resolveMemberSymbol(node->name, Self, symbols);
+        CHECK(symbols.empty(), "type `{}` already has a method or member named `{}`", Self->str(), node->name);
 
         Type* type = node->typeName->type;
         FunctionType* functionType = type->get<FunctionType>();
@@ -1662,7 +1663,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
 
         const std::vector<Type*>& paramTypes = functionType->inputs();
 
-        MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, parentType);
+        MethodSymbol* symbol = _symbolTable->createMethodSymbol(node->name, node, Self);
         symbol->type = type;
         node->symbol = symbol;
 

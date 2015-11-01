@@ -5,19 +5,19 @@ import String
 data Date = Date(Int, Int, Int, Int)
 
 impl Date
-    def year(self: Date) -> Int
+    def year(self) -> Int
         let Date(y, m, d, w) := self in y
 
-    def month(self: Date) -> Int
+    def month(self) -> Int
         let Date(y, m, d, w) := self in m
 
-    def day(self: Date) -> Int
+    def day(self) -> Int
         let Date(y, m, d, w) := self in d
 
-    def dayOfWeek(self: Date) -> Int
+    def dayOfWeek(self) -> Int
         let Date(y, m, d, w) := self in w
 
-    def isLeapYear(self: Date) -> Bool
+    def isLeapYear(self) -> Bool
         let Date(y, m, d, w) := self
 
         if y % 4 == 0
@@ -31,7 +31,7 @@ impl Date
         else
             return False
 
-    def daysInMonth(self: Date) -> Int
+    def daysInMonth(self) -> Int
         let Date(y, m, d, w) := self
 
         nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -42,7 +42,7 @@ impl Date
         else
             return nonLeap.at(m)
 
-    def increment(self: Date) -> Date
+    def increment(self) -> Date
         let Date(y, m, d, w) := self
 
         w = (w + 1) % 7

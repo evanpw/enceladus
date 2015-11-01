@@ -557,7 +557,7 @@ MethodDefNode* Parser::method_definition()
 
     expect(tDEF);
     std::string name = ident();
-    auto paramsAndTypes = params_and_types();
+    auto paramsAndTypes = params_and_types(true);
     auto typeParams = where_clause();
 
     StatementNode* body = suite();
@@ -598,7 +598,7 @@ TraitMethodNode* Parser::trait_method()
 
     expect(tDEF);
     Token methodName = expect(tLIDENT);
-    auto paramsAndTypes = params_and_types();
+    auto paramsAndTypes = params_and_types(true);
     expect(tEOL);
 
     return new TraitMethodNode(_context, location, methodName.value.str, std::move(paramsAndTypes.first), paramsAndTypes.second);
@@ -845,12 +845,12 @@ std::pair<std::string, TypeName*> Parser::param_and_type()
     return {param.value.str, typeName};
 }
 
-/// type_declaration
-///     : '(' [ LIDENT ':' type { ',' LIDENT ':' type } ] ')' RARROW constructed_type
+/// params_and_types
+///     : '(' [ param_and_type { ',' param_and_type } ] ')' RARROW constructed_type
 ///
-/// param_and_type
-///     : LIDENT ':' type
-std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types()
+/// method_params_and_types
+///     : '(' [ LIDENT [ ': type ] { ',' param_and_type } ] ')' RARROW constructed_type
+std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types(bool isMethod)
 {
     YYLTYPE location = getLocation();
 
@@ -861,13 +861,22 @@ std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types()
 
     if (peekType() == tLIDENT)
     {
-        std::pair<std::string, TypeName*> param_type = param_and_type();
-        params.push_back(param_type.first);
-        typeName->parameters.push_back(param_type.second);
+        if (peek2ndType() == ':' || !isMethod)
+        {
+            std::pair<std::string, TypeName*> param_type = param_and_type();
+            params.push_back(param_type.first);
+            typeName->parameters.push_back(param_type.second);
+        }
+        else
+        {
+            Token param = expect(tLIDENT);
+            params.push_back(param.value.str);
+            typeName->parameters.push_back(new TypeName(_context, location, "Self"));
+        }
 
         while (accept(','))
         {
-            param_type = param_and_type();
+            std::pair<std::string, TypeName*> param_type = param_and_type();
             params.push_back(param_type.first);
             typeName->parameters.push_back(param_type.second);
         }

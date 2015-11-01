@@ -1,5 +1,5 @@
 impl [T]
-    def myAt(self: [T], n: Int) -> T
+    def myAt(self, n: Int) -> T
         xs := self
         while n > 0
             xs = xs.tail()
@@ -8,5 +8,5 @@ impl [T]
         return xs.head()
 
 impl [Int]
-    def myAt(self: [Int], n: Int) -> Int
+    def myAt(self, n: Int) -> Int
         return 0

@@ -1,17 +1,17 @@
 import HashTable
 
 impl Eq for Pair<Int, Int>
-    def eq(lhs: Pair<Int, Int>, rhs: Pair<Int, Int>) -> Bool
-        let Pair(x1, y1) := lhs
-        let Pair(x2, y2) := rhs
+    def eq(self, other: Self) -> Bool
+        let Pair(x1, y1) := self
+        let Pair(x2, y2) := other
 
         return x1 == x2 and y1 == y2
 
-    def ne(lhs: Pair<Int, Int>, rhs: Pair<Int, Int>) -> Bool
-        return not $ lhs == rhs
+    def ne(self, other: Self) -> Bool
+        return not $ self == other
 
 impl Hash for Pair<Int, Int>
-    def hash(self: Pair<Int, Int>) -> UInt
+    def hash(self) -> UInt
         result := 20 * self.first() + self.second()
         return result as UInt
 

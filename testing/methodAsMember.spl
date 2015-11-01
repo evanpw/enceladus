@@ -2,7 +2,7 @@ struct Test
     test: Int
 
 impl Test
-    def doSomething(self: Test) -> Int
+    def doSomething(self) -> Int
         return self.test
 
 x := Test(1)

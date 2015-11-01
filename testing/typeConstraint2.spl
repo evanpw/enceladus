@@ -7,7 +7,7 @@ print $ showUInt $ add(3, 4)
 data Nothing = Nothing
 
 impl Nothing
-    def addTwoNumbers(self: Nothing, lhs: T, rhs: T) -> T where T: Num
+    def addTwoNumbers(self, lhs: T, rhs: T) -> T where T: Num
         return lhs + rhs
 
 x := Nothing

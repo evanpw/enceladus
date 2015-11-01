@@ -2,7 +2,7 @@ struct Test
     x: Int
 
 impl Test
-    def at(self: Test, n: UInt) -> Int
+    def at(self, n: UInt) -> Int
         return self.x
 
 test := Test(10)

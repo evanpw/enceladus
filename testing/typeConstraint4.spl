@@ -2,7 +2,7 @@ struct Test<T>
     x: T
 
 impl Test<T> where T: Num
-    def f(self: Test<T>, val: T) -> T
+    def f(self, val: T) -> T
         return self.x + val
 
 drop $ Test(1).f(2)

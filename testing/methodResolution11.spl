@@ -1,5 +1,5 @@
 impl [T] where T: Num
-    def nothing(self: [Int]) -> Unit
+    def nothing(self) -> Unit
         pass
 
 def f(x: [T]) -> Unit

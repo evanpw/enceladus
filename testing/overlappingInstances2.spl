@@ -1,10 +1,10 @@
 trait IsInteger
-    def isInteger(self: Self) -> Bool
+    def isInteger(self) -> Bool
 
 impl IsInteger for T where T: Num
-    def isInteger(self: T) -> Bool
+    def isInteger(self) -> Bool
         return False
 
 impl IsInteger for Int
-    def isInteger(self: Int) -> Bool
+    def isInteger(self) -> Bool
         return True

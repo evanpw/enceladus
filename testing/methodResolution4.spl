@@ -1,15 +1,15 @@
 trait Nothing
-    def nothing(x: Self) -> Unit
+    def nothing(self) -> Unit
 
 def getAnything() -> T where T: Nothing
     panic $ "Nope"
 
 impl Nothing for Int
-    def nothing(x: Int) -> Unit
+    def nothing(self) -> Unit
         pass
 
 impl Nothing for UInt
-    def nothing(x: UInt) -> Unit
+    def nothing(self) -> Unit
         pass
 
 x := getAnything()  # Has type T: Nothing (unquantified)

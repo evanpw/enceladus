@@ -1,19 +1,19 @@
 trait Trait1
-    def one(self: Self) -> Unit
+    def one(self) -> Unit
 
 impl Trait1 for String
-    def one(self: String) -> Unit
+    def one(self) -> Unit
         pass
 
 trait Trait2
-    def two(self: Self) -> Unit
+    def two(self) -> Unit
 
 impl Trait2 for String
-    def two(self: String) -> Unit
+    def two(self) -> Unit
         pass
 
 impl Trait2 for T where T: Trait1
-    def two(self: T) -> Unit
+    def two(self) -> Unit
         pass
 
 drop $ "Hello".two()

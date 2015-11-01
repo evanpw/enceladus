@@ -9,7 +9,7 @@ struct Date
     dayOfWeek: UInt
 
 impl Date
-    def isLeapYear(self: Date) -> Bool
+    def isLeapYear(self) -> Bool
         year := self.year
 
         if year % 4 == 0
@@ -23,7 +23,7 @@ impl Date
         else
             return False
 
-    def daysInMonth(self: Date) -> UInt
+    def daysInMonth(self) -> UInt
         nonLeap  := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         leapYear := [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -32,7 +32,7 @@ impl Date
         else
             return nonLeap.at(self.month)
 
-    def increment(self: Date) -> Date
+    def increment(self) -> Date
         let Date(y, m, d, w) := self
 
         d += 1
@@ -48,7 +48,7 @@ impl Date
 
         return Date(y, m, d, w)
 
-    def toString(self: Date) -> String
+    def toString(self) -> String
         monthNames := ["", "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"]
 

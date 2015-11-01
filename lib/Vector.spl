@@ -11,7 +11,7 @@ impl Vector<T>
     def new() -> Vector<T>
         return Vector(Array::new(), 0, 0)
 
-    def append(self: Vector<T>, x: T) -> Unit
+    def append(self, x: T) -> Unit
         if self.size < self.capacity
             self.content.set(self.size, x)
             self.size += 1
@@ -27,39 +27,39 @@ impl Vector<T>
             self.capacity = newCapacity
             self.size += 1
 
-    def pop(self: Vector<T>) -> T
+    def pop(self) -> T
         assert self.size > 0
         value := self.content[self.size - 1]
         self.size -= 1
 
         return value
 
-    def set(self: Vector<T>, n: UInt, x: T) -> Unit
+    def set(self, n: UInt, x: T) -> Unit
         self.content.set(n, x)
 
-    def copy(self: Vector<T>) -> Vector<T>
+    def copy(self) -> Vector<T>
         result := Vector(Array::make(self.capacity, T::default()), self.capacity, self.size)
         for i in range(0, self.size)
             result.content.set(i, self.content[i])
 
         return result
 
-    def iter(self: Vector<T>) -> VectorIterator<T>
+    def iter(self) -> VectorIterator<T>
         return VectorIterator(self, 0)
 
 impl Index<UInt, T> for Vector<T>
-    def at(self: Vector<T>, n: UInt) -> T
+    def at(self, n: UInt) -> T
         return self.content[n]
 
 impl Iterator<T> for VectorIterator<T>
-    def head(self: VectorIterator<T>) -> T
+    def head(self) -> T
         assert self.idx < self.v.size
         return self.v.at(self.idx)
 
-    def tail(self: VectorIterator<T>) -> VectorIterator<T>
+    def tail(self) -> VectorIterator<T>
         return VectorIterator(self.v, self.idx + 1)
 
-    def empty(self: VectorIterator<T>) -> Bool
+    def empty(self) -> Bool
         return self.idx >= self.v.size
 
 def all(xs: Vector<Bool>) -> Bool

@@ -10,11 +10,11 @@ def toBigInt(x: Int) -> BigInt
     return BigInt(result.reverse())
 
 impl BigInt
-    def digits(self: BigInt) -> [Int]
+    def digits(self) -> [Int]
         let BigInt(xs) := self
         return xs
 
-    def plus(self: BigInt, rhs: BigInt) -> BigInt
+    def plus(self, rhs: BigInt) -> BigInt
         xs := self.digits()
         ys := rhs.digits()
 
@@ -43,7 +43,7 @@ impl BigInt
 
         return BigInt(result.reverse())
 
-    def timesInt(self: BigInt, rhs: Int) -> BigInt
+    def timesInt(self, rhs: Int) -> BigInt
         xs := self.digits()
 
         carry := 0
@@ -63,7 +63,7 @@ impl BigInt
 
         return BigInt(result.reverse())
 
-    def shift(self: BigInt, n: UInt) -> BigInt
+    def shift(self, n: UInt) -> BigInt
         if n == 0
             return self
         else
@@ -73,7 +73,7 @@ impl BigInt
 
             return BigInt(newDigits)
 
-    def times(self: BigInt, rhs: BigInt) -> BigInt
+    def times(self, rhs: BigInt) -> BigInt
         ys := rhs.digits()
 
         result := toBigInt(0)
@@ -86,7 +86,7 @@ impl BigInt
 
         return result
 
-    def toString(self: BigInt) -> String
+    def toString(self) -> String
         s := []
         for x in self.digits()
             s = s.insert((x as UInt8) + '0')

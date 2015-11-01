@@ -5,7 +5,7 @@ def isSpace(c: Char) -> Bool
         return False
 
 impl String
-    def trimLeft(s: String) -> String
+    def trimLeft(s) -> String
         len := s.length()
 
         n := 0
@@ -14,7 +14,7 @@ impl String
 
         return s.slice(n, len - n)
 
-    def trim(s: String) -> String
+    def trim(s) -> String
         len := s.length()
 
         if len == 0
@@ -33,7 +33,7 @@ impl String
 
         return s.slice(pos, n)
 
-    def trimChar(s: String, c: Char) -> String
+    def trimChar(s, c: Char) -> String
         len := s.length()
 
         if len == 0
@@ -52,7 +52,7 @@ impl String
 
         return s.slice(pos, n)
 
-    def split(s: String) -> [String]
+    def split(s) -> [String]
         result := []
         start := 0
 
@@ -68,7 +68,7 @@ impl String
 
         return result.reverse()
 
-    def splitBy(s: String, sep: Char) -> [String]
+    def splitBy(s, sep: Char) -> [String]
         result := []
         start := 0
 
@@ -84,7 +84,7 @@ impl String
 
         return result.reverse()
 
-    def join(s: String, xs: [String]) -> String
+    def join(s, xs: [String]) -> String
         if xs.empty()
             return ""
         elif xs.length() == 1
@@ -92,7 +92,7 @@ impl String
         else
             return xs.head() + s + s.join(xs.tail())
 
-    def toInt(s: String) -> Option<Int>
+    def toInt(s) -> Option<Int>
         x := 0
         for i in range(0, s.length())
             digit := s.at(i)

@@ -4,33 +4,33 @@ foreign panic(msg: String) -> T
 data List<T> = Cons(T, List<T>) | Nil
 
 impl List<T>
-    def insert(self: List<T>, x: T) -> List<T>
+    def insert(self, x: T) -> List<T>
         return Cons(x, self)
 
 
 ## Iterator trait ##
 trait Iterator<T>
-    def head(self: Self) -> T
-    def tail(self: Self) -> Self
-    def empty(self: Self) -> Bool
+    def head(self)-> T
+    def tail(self) -> Self
+    def empty(self) -> Bool
 
 
 ## Index trait ##
 trait Index<S, T>
-    def at(self: Self, n: S) -> T
+    def at(self, n: S) -> T
 
 
 ## Eq trait ##
 trait Eq
-    def eq(lhs: Self, rhs: Self) -> Bool
-    def ne(lhs: Self, rhs: Self) -> Bool
+    def eq(self, other: Self) -> Bool
+    def ne(self, other: Self) -> Bool
 
 impl Eq for T where T: Num
-    def eq(lhs: T, rhs: T) -> Bool
-        return lhs == rhs
+    def eq(self, other: T) -> Bool
+        return self == other
 
-    def ne(lhs: T, rhs: T) -> Bool
-        return lhs != rhs
+    def ne(self, other: T) -> Bool
+        return self != other
 
 
 ## Range ##
@@ -42,19 +42,19 @@ def range(start: T, end: T) -> Range<T>
     return Range(start, end)
 
 impl Iterator<T> for Range<T>
-    def head(self: Range<T>) -> T
+    def head(self) -> T
         assert self.start < self.end
         return self.start
 
-    def tail(self: Range<T>) -> Range<T>
+    def tail(self) -> Range<T>
         assert self.start < self.end
         return Range(self.start + 1, self.end)
 
-    def empty(self: Range<T>) -> Bool
+    def empty(self) -> Bool
         return self.start >= self.end
 
 impl Range<T>
-    def toList(self: Range<T>) -> [T]
+    def toList(self) -> [T]
         result := []
 
         if self.empty()
@@ -85,46 +85,46 @@ struct StringIterator
 
 # Method wrappers (methods can't be implemented in C)
 impl String
-    def length(self: String) -> UInt
+    def length(self) -> UInt
         return strLength(self)
 
-    def slice(self: String, pos: UInt, len: UInt) -> String
+    def slice(self, pos: UInt, len: UInt) -> String
         return strSlice(self, pos, len)
 
-    def iter(self: String) -> StringIterator
+    def iter(self) -> StringIterator
         return StringIterator(self, 0u)
 
 impl Index<UInt, Char> for String
-    def at(self: String, n: UInt) -> UInt8
+    def at(self, n: UInt) -> UInt8
         return strAt(self, n)
 
 impl Iterator<Char> for StringIterator
-    def head(self: StringIterator) -> Char
+    def head(self) -> Char
         return self.str[self.offset]
 
-    def tail(self: StringIterator) -> StringIterator
+    def tail(self) -> StringIterator
         assert self.offset < self.str.length()
         return StringIterator(self.str, self.offset + 1u)
 
-    def empty(self: StringIterator) -> Bool
+    def empty(self) -> Bool
         return self.offset >= self.str.length()
 
 impl Eq for String
-    def eq(lhs: String, rhs: String) -> Bool
-        n1 := lhs.length()
-        n2 := rhs.length()
+    def eq(self, other: String) -> Bool
+        n1 := self.length()
+        n2 := other.length()
 
         if n1 != n2
             return False
 
         for i in range(0, n1)
-            if lhs.at(i) != rhs.at(i)
+            if self.at(i) != other.at(i)
                 return False
 
         return True
 
-    def ne(lhs: String, rhs: String) -> Bool
-        return not $ lhs == rhs
+    def ne(self, other: String) -> Bool
+        return not $ self == other
 
 
 ## Array ##
@@ -153,16 +153,16 @@ impl Array<T>
 
 # Method wrappers (methods can't be implemented in C)
 impl Index<UInt, T> for Array<T>
-    def at(self: Array<T>, n: UInt) -> T
+    def at(self, n: UInt) -> T
         assert n < arrayLength(self)
         return unsafeArrayAt(self, n)
 
 impl Array<T>
-    def set(self: Array<T>, n: UInt, value: T) -> Unit
+    def set(self, n: UInt, value: T) -> Unit
         assert n < arrayLength(self)
         unsafeArraySet(self, n, value)
 
-    def length(self: Array<T>) -> UInt
+    def length(self) -> UInt
         return arrayLength(self)
 
 
@@ -170,28 +170,28 @@ impl Array<T>
 data Option<T> = Some(T) | None
 
 impl Option<T>
-    def isSome(self: Option<T>) -> Bool
+    def isSome(self) -> Bool
         match self
             Some(_)
                 return True
             None
                 return False
 
-    def isNone(self: Option<T>) -> Bool
+    def isNone(self) -> Bool
         match self
             Some(_)
                 return False
             None
                 return True
 
-    def unwrap(self: Option<T>) -> T
+    def unwrap(self) -> T
         match self
             Some(y)
                 return y
             None
                 panic $ "Cannot unwrap None"
 
-    def unwrapOr(self: Option<T>, other: T) -> T
+    def unwrapOr(self, other: T) -> T
         match self
             Some(y)
                 return y
@@ -210,21 +210,21 @@ neverUsed = None
 
 ## List ##
 impl Iterator<T> for List<T>
-    def head(self: [T]) -> T
+    def head(self) -> T
         match self
             Cons(x, _)
                 return x
             Nil
                 panic $ "Called head on empty list"
 
-    def tail(self: [T]) -> [T]
+    def tail(self) -> [T]
         match self
             Cons(_, rest)
                 return rest
             Nil
                 panic $ "Called tail on empty list"
 
-    def empty(self: [T]) -> Bool
+    def empty(self) -> Bool
         match self
             Cons(_, _)
                 return False
@@ -232,7 +232,7 @@ impl Iterator<T> for List<T>
                 return True
 
 impl Index<UInt, T> for List<T>
-    def at(self: [T], n: UInt) -> T
+    def at(self, n: UInt) -> T
         xs := self
 
         while n > 0
@@ -242,7 +242,7 @@ impl Index<UInt, T> for List<T>
         return xs.head()
 
 impl List<T>
-    def length(self: [T]) -> UInt
+    def length(self) -> UInt
         result := 0
         xs := self
 
@@ -252,19 +252,19 @@ impl List<T>
 
         return result
 
-    def take(self: [T], n: UInt) -> [T]
+    def take(self, n: UInt) -> [T]
         if n == 0
             return []
         else
             return self.tail().take(n - 1).insert(self.head())
 
-    def drop(self: [T], n: UInt) -> [T]
+    def drop(self, n: UInt) -> [T]
         if n == 0
             return self
         else
             return self.tail().drop(n - 1)
 
-    def reverse(self: [T]) -> [T]
+    def reverse(self) -> [T]
         ys := []
         for x in self
             ys = ys.insert(x)
@@ -287,7 +287,7 @@ impl List<T>
         return result.reverse()
 
 impl Eq for [T] where T: Eq
-    def eq(self: [T], other: [T]) -> Bool
+    def eq(self, other: [T]) -> Bool
         if self.empty()
             return other.empty()
         elif other.empty()
@@ -298,7 +298,7 @@ impl Eq for [T] where T: Eq
         else
             return self.tail() == other.tail()
 
-    def ne(self: [T], other: [T]) -> Bool
+    def ne(self, other: [T]) -> Bool
         return not $ self == other
 
 
@@ -384,11 +384,11 @@ def pow(a: T, b: UInt) -> T where T: Num
 data Pair<S, T> = Pair(S, T)
 
 impl Pair<S, T>
-    def first(self: Pair<S, T>) -> S
+    def first(self) -> S
         match self
             Pair(x, _) => return x
 
-    def second(self: Pair<S, T>) -> T
+    def second(self) -> T
         match self
             Pair(_, x) => return x
 
@@ -401,10 +401,10 @@ def splitAt(n: UInt, xs: [T]) -> Pair<[T], [T]>
 data Ordering = Less | Equal | Greater
 
 trait Ord
-    def cmp(self: Self, other: Self) -> Ordering
+    def cmp(self, other: Self) -> Ordering
 
 impl Ord for T where T: Num
-    def cmp(self: T, other: T) -> Ordering
+    def cmp(self, other: T) -> Ordering
         if self < other
             return Less
         elif self > other
@@ -413,7 +413,7 @@ impl Ord for T where T: Num
             return Equal
 
 impl Ord for [T] where T: Ord
-    def cmp(self: [T], other: [T]) -> Ordering
+    def cmp(self, other: [T]) -> Ordering
         if self.empty()
             if other.empty()
                 return Equal
@@ -431,7 +431,7 @@ impl Ord for [T] where T: Ord
                     return self.tail().cmp(other.tail())
 
 impl Ord for String
-    def cmp(self: String, other: String) -> Ordering
+    def cmp(self, other: String) -> Ordering
         n1 := self.length()
         n2 := other.length()
 
@@ -454,13 +454,13 @@ impl Ord for String
 
 ## PartialOrd trait ##
 trait PartialOrd
-    def lt(self: Self, other: Self) -> Bool
-    def le(self: Self, other: Self) -> Bool
-    def gt(self: Self, other: Self) -> Bool
-    def ge(self: Self, other: Self) -> Bool
+    def lt(self, other: Self) -> Bool
+    def le(self, other: Self) -> Bool
+    def gt(self, other: Self) -> Bool
+    def ge(self, other: Self) -> Bool
 
 impl PartialOrd for T where T: Ord
-    def lt(self: T, other: T) -> Bool
+    def lt(self, other: T) -> Bool
         match self.cmp(other)
             Less
                 return True
@@ -469,7 +469,7 @@ impl PartialOrd for T where T: Ord
             Greater
                 return False
 
-    def le(self: T, other: T) -> Bool
+    def le(self, other: T) -> Bool
         match self.cmp(other)
             Less
                 return True
@@ -478,7 +478,7 @@ impl PartialOrd for T where T: Ord
             Greater
                 return False
 
-    def gt(self: T, other: T) -> Bool
+    def gt(self, other: T) -> Bool
         match self.cmp(other)
             Less
                 return False
@@ -487,7 +487,7 @@ impl PartialOrd for T where T: Ord
             Greater
                 return True
 
-    def ge(self: T, other: T) -> Bool
+    def ge(self, other: T) -> Bool
         match self.cmp(other)
             Less
                 return False
@@ -499,35 +499,35 @@ impl PartialOrd for T where T: Ord
 
 ## Add/Sub/Mul/Div traits ##
 trait Add
-    def add(self: Self, other: Self) -> Self
+    def add(self, other: Self) -> Self
 
 impl Add for T where T: Num
-    def add(self: T, other: T) -> T
+    def add(self, other: T) -> T
         return self + other
 
 trait Sub
-    def sub(self: Self, other: Self) -> Self
+    def sub(self, other: Self) -> Self
 
 impl Sub for T where T: Num
-    def sub(self: T, other: T) -> T
+    def sub(self, other: T) -> T
         return self - other
 
 trait Mul
-    def mul(self: Self, other: Self) -> Self
+    def mul(self, other: Self) -> Self
 
 impl Mul for T where T: Num
-    def mul(self: T, other: T) -> T
+    def mul(self, other: T) -> T
         return self * other
 
 trait Div
-    def div(self: Self, other: Self) -> Self
+    def div(self, other: Self) -> Self
 
 impl Div for T where T: Num
-    def div(self: T, other: T) -> T
+    def div(self, other: T) -> T
         return self / other
 
 trait Rem
-    def rem(self: Self, other: Self) -> Self
+    def rem(self, other: Self) -> Self
 
 impl Rem for T where T: Num
     def rem(self: T, other: T) -> T
@@ -536,11 +536,11 @@ impl Rem for T where T: Num
 
 ## Concatenation (abusing the Add trait)
 impl Add for String
-    def add(self: String, other: String) -> String
+    def add(self, other: String) -> String
         return strCat(self, other)
 
 impl Add for [T]
-    def add(self: [T], other: [T]) -> [T]
+    def add(self, other: [T]) -> [T]
         result := other
 
         for x in self.reverse()
@@ -551,14 +551,14 @@ impl Add for [T]
 
 ## Hash trait ##
 trait Hash
-    def hash(self: Self) -> UInt
+    def hash(self) -> UInt
 
 impl Hash for Int
-    def hash(self: Int) -> UInt
+    def hash(self) -> UInt
         return self as UInt
 
 impl Hash for String
-    def hash(self: String) -> UInt
+    def hash(self) -> UInt
         return strHash(self)
 
 

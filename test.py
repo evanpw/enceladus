@@ -503,7 +503,7 @@ class TestAcceptance(object):
         self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.spl:1:1: can\'t add constraint `Iterator<String>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
 
     def test_repeatedConstraint3(self):
-        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:17: cannot unify types T: Iterator<T> and String')
+        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:17: cannot unify types [T: Iterator<T>] and String')
 
     def test_repeatedConstraint4(self):
         self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.spl:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')

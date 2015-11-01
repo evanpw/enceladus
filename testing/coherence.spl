@@ -1,21 +1,21 @@
 trait Trait1
-    def method1(self: Self) -> Unit
+    def method1(self) -> Unit
 
 trait Trait2
-    def method2(self: Self) -> Unit
+    def method2(self) -> Unit
 
 impl Trait2 for T where T: Trait1
-    def method2(self: T) -> Unit
+    def method2(self) -> Unit
         print $ "method2<T: Trait1>"
 
 impl Trait2 for Int
-    def method2(self: Int) -> Unit
+    def method2(self) -> Unit
         print $ "method2<Int>"
 
 # After this impl, both of the two previous Trait2 impls apply to Int, breaking
 # coherence
 impl Trait1 for Int
-    def method1(self: Int) -> Unit
+    def method1(self) -> Unit
         print $ "method1<Int>"
 
 
