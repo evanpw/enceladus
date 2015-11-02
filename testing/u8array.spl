@@ -1,0 +1,7 @@
+xs := Array::make(10, 1u8)
+
+total := 0
+for x in xs.iter()
+    total += x
+
+print $ showUInt(total as UInt)

@@ -1247,9 +1247,15 @@ void TACCodeGen::visit(FunctionCallNode* node)
             Value* array = arguments[0];
             Value* index = arguments[1];
 
+            // Extract the type of the array elements
+            ConstructedType* arrayType = node->arguments[0]->type->get<ConstructedType>();
+            assert(arrayType->name() == "Array");
+            assert(arrayType->typeParameters().size() == 1);
+            ValueType eltType = getValueType(arrayType->typeParameters()[0]);
+
             Value* indexAfterHead = createTemp(ValueType::U64);
-            Value* eight = _context->createConstantInt(ValueType::U64, 8);
-            emit(new BinaryOperationInst(indexAfterHead, index, BinaryOperation::MUL, eight));
+            Value* bytesPerElt = _context->createConstantInt(ValueType::U64, getSize(eltType) / 8);
+            emit(new BinaryOperationInst(indexAfterHead, index, BinaryOperation::MUL, bytesPerElt));
 
             Value* indexInBytes = createTemp(ValueType::U64);
             Value* sizeOfHeader = _context->createConstantInt(ValueType::U64, sizeof(Array));
@@ -1267,9 +1273,15 @@ void TACCodeGen::visit(FunctionCallNode* node)
             Value* index = arguments[1];
             Value* value = arguments[2];
 
+            // Extract the type of the array elements
+            ConstructedType* arrayType = node->arguments[0]->type->get<ConstructedType>();
+            assert(arrayType->name() == "Array");
+            assert(arrayType->typeParameters().size() == 1);
+            ValueType eltType = getValueType(arrayType->typeParameters()[0]);
+
             Value* indexAfterHead = createTemp(ValueType::U64);
-            Value* eight = _context->createConstantInt(ValueType::U64, 8);
-            emit(new BinaryOperationInst(indexAfterHead, index, BinaryOperation::MUL, eight));
+            Value* bytesPerElt = _context->createConstantInt(ValueType::U64, getSize(eltType) / 8);
+            emit(new BinaryOperationInst(indexAfterHead, index, BinaryOperation::MUL, bytesPerElt));
 
             Value* indexInBytes = createTemp(ValueType::U64);
             Value* sizeOfHeader = _context->createConstantInt(ValueType::U64, sizeof(Array));
@@ -1588,14 +1600,14 @@ void TACCodeGen::builtin_unsafeMakeArray(Type* functionType)
     ConstructedType* arrayType = resultType->get<ConstructedType>();
     assert(arrayType->name() == "Array");
     assert(arrayType->typeParameters().size() == 1);
-    Type* eltType = arrayType->typeParameters()[0];
+    ValueType eltType = getValueType(arrayType->typeParameters()[0]);
 
     // For now, every member takes up exactly 8 bytes (either directly or as a pointer).
     Value* sizeAfterHead = createTemp(ValueType::U64);
-    Value* eight = _context->createConstantInt(ValueType::U64, 8);
+    Value* bytesPerElt = _context->createConstantInt(ValueType::U64, getSize(eltType) / 8);
     Value* tempSize = createTemp(ValueType::U64);
     emit(new LoadInst(tempSize, size));
-    emit(new BinaryOperationInst(sizeAfterHead, tempSize, BinaryOperation::MUL, eight));
+    emit(new BinaryOperationInst(sizeAfterHead, tempSize, BinaryOperation::MUL, bytesPerElt));
     Value* sizeInBytes = createTemp(ValueType::U64);
     Value* sizeOfHeader = _context->createConstantInt(ValueType::U64, sizeof(SplObject));
     emit(new BinaryOperationInst(sizeInBytes, sizeAfterHead, BinaryOperation::ADD, sizeOfHeader));
@@ -1610,7 +1622,7 @@ void TACCodeGen::builtin_unsafeMakeArray(Type* functionType)
     emit(inst);
 
     // Fill in the header information
-    uint64_t constructorTag = getValueType(eltType) == ValueType::Reference ? BOXED_ARRAY_TAG : UNBOXED_ARRAY_TAG;
+    uint64_t constructorTag = eltType == ValueType::Reference ? BOXED_ARRAY_TAG : UNBOXED_ARRAY_TAG;
 
     emit(new IndexedStoreInst(
         result,

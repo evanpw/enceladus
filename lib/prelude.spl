@@ -151,6 +151,10 @@ impl Index<UInt, T> for Array<T>
         assert n < arrayLength(self)
         return unsafeArrayAt(self, n)
 
+struct ArrayIterator<T>
+    arr: Array<T>
+    offset: UInt
+
 impl Array<T>
     def set(self, n: UInt, value: T)
         assert n < arrayLength(self)
@@ -158,6 +162,20 @@ impl Array<T>
 
     def length(self) -> UInt
         return arrayLength(self)
+
+    def iter(self) -> ArrayIterator<T>
+        return ArrayIterator(self, 0)
+
+impl Iterator<T> for ArrayIterator<T>
+    def head(self) -> T
+        return self.arr[self.offset]
+
+    def tail(self) -> ArrayIterator<T>
+        assert self.offset < self.arr.length()
+        return ArrayIterator(self.arr, self.offset + 1u)
+
+    def empty(self) -> Bool
+        return self.offset >= self.arr.length()
 
 
 ## Option ##

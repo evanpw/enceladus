@@ -511,6 +511,9 @@ class TestAcceptance(object):
     def test_whereClause(self):
         self.run('whereClause', build_error='Error: testing/whereClause.spl:4:1: `Int` does not name a type parameter')
 
+    def test_u8array(self):
+        self.run('u8array', '10')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
