@@ -5,9 +5,8 @@
 #include <stdlib.h>
 
 #define MAX_STRUCTURED_TAG      ((1L << 32) - 1)
-#define STRING_TAG              (MAX_STRUCTURED_TAG + 1)
-#define UNBOXED_ARRAY_TAG       (MAX_STRUCTURED_TAG + 2)
-#define BOXED_ARRAY_TAG         (MAX_STRUCTURED_TAG + 3)
+#define UNBOXED_ARRAY_TAG       (MAX_STRUCTURED_TAG + 1)
+#define BOXED_ARRAY_TAG         (MAX_STRUCTURED_TAG + 2)
 
 #define SplObject_HEAD \
     uint64_t constructorTag; \
@@ -31,10 +30,10 @@ typedef struct Array
     uint64_t numElements;       // Number of elements in the array (instead of numReferences)
 } Array;
 
-typedef SplObject String;
+typedef Array String;
 
-extern void* Some(void* value) asm("Some$A6StringE");
-extern void* None() asm("None$A6StringE");
+extern void* Some(void* value) asm("Some$A5ArrayL5UInt8EGE");
+extern void* None() asm("None$A5ArrayL5UInt8EGE");
 
 extern void* splcall0(void* f) asm("splcall0");
 extern void* splcall1(void* f, void* p1) asm("splcall1");

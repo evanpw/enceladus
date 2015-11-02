@@ -11,7 +11,7 @@ TEST_CASE("subtype checks", "[isSubtype]")
 
     // For concrete base types, the subtype relation is the same as equality
     REQUIRE(isSubtype(table->Int, table->Int));
-    REQUIRE(!isSubtype(table->String, table->Int));
+    REQUIRE(!isSubtype(table->Bool, table->Int));
 
     // Every type is a subtype of a quantified type variable
     Type* S = table->createTypeVariable("S", true);
@@ -51,7 +51,7 @@ TEST_CASE("subtype checks", "[isSubtype]")
     // is an instance of every constraint
     U->get<TypeVariable>()->addConstraint(table->Num);
     REQUIRE(isSubtype(U, table->Int));
-    REQUIRE(!isSubtype(U, table->String));
+    REQUIRE(!isSubtype(U, table->Bool));
 }
 
 TEST_CASE("concrete-type subtype checks", "[isSubtype-concrete]")
@@ -66,7 +66,7 @@ TEST_CASE("concrete-type subtype checks", "[isSubtype-concrete]")
     // compatible inputs and outputs
     Type* binaryFn1 = table->createFunctionType({table->Int, table->Int}, table->Int);
     Type* binaryFn2 = table->createFunctionType({table->Int, table->Int}, table->Int);
-    Type* binaryFn3 = table->createFunctionType({table->Int, table->String}, table->Int);
+    Type* binaryFn3 = table->createFunctionType({table->Int, table->Bool}, table->Int);
     Type* unaryFn = table->createFunctionType({table->Int}, table->Int);
     REQUIRE(isSubtype(binaryFn1, binaryFn2));
     REQUIRE(!isSubtype(binaryFn1, binaryFn3));
@@ -79,7 +79,7 @@ TEST_CASE("concrete-type subtype checks", "[isSubtype-concrete]")
 
     Type* intList1 = List->instantiate({table->Int});
     Type* intList2 = List->instantiate({table->Int});
-    Type* stringList = List->instantiate({table->String});
+    Type* stringList = List->instantiate({table->Bool});
     REQUIRE(isSubtype(intList1, intList2));
     REQUIRE(!isSubtype(intList1, stringList));
 
@@ -130,7 +130,7 @@ TEST_CASE("generic-type subtype checks", "[isSubtype-generic]")
     REQUIRE(!isSubtype(unequalPair, equalPair));
 
     Type* twoInts = Pair->instantiate({table->Int, table->Int});
-    Type* intString = Pair->instantiate({table->Int, table->String});
+    Type* intString = Pair->instantiate({table->Int, table->Bool});
     REQUIRE(isSubtype(twoInts, equalPair));
     REQUIRE(!isSubtype(intString, equalPair));
     REQUIRE(isSubtype(twoInts, unequalPair));
@@ -150,9 +150,9 @@ TEST_CASE("generic-type subtype checks", "[isSubtype-generic]")
     // First two slots require T1=T2 and T3=T2. Next two test whether the
     // compatibility check correctly determines that T1=T3
     Type* type1 = P4->instantiate({S, V, S, U});
-    Type* type2 = P4->instantiate({T, T, table->Int, table->String});
-    Type* type3 = P4->instantiate({table->Int, table->String, table->Int, table->String});
-    Type* type4 = P4->instantiate({table->String, table->String, table->Int, table->String});
+    Type* type2 = P4->instantiate({T, T, table->Int, table->Bool});
+    Type* type3 = P4->instantiate({table->Int, table->Bool, table->Int, table->Bool});
+    Type* type4 = P4->instantiate({table->Bool, table->Bool, table->Int, table->Bool});
     REQUIRE(!isSubtype(type1, type2));
     REQUIRE(!isSubtype(type2, type1));
     REQUIRE(isSubtype(type3, type1));
@@ -209,7 +209,7 @@ TEST_CASE("constrained pair subtype checks", "[isSubtype-constrained-pairs]")
     ConstructedType* Pair = table->createConstructedType("Pair", {U, V})->get<ConstructedType>();
 
     // Pair<'S, 'S> <= Pair<T: Num, String>?
-    CHECK(!isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->String})));
+    CHECK(!isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->Bool})));
 
     // Pair<'S, 'S> <= Pair<T: Num, T: Num>?
     CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, T})));
@@ -237,7 +237,7 @@ TEST_CASE("constrained generic-type subtype checks", "[isSubtype-constrained]")
     // of the constraining type
     varNum->get<TypeVariable>()->addConstraint(table->Num);
     REQUIRE(isSubtype(table->Int, varNum));
-    REQUIRE(!isSubtype(table->String, varNum));
+    REQUIRE(!isSubtype(table->Bool, varNum));
 
     // Multiple constraints
     Type* varSignedNum = table->createTypeVariable("T", true);
@@ -248,7 +248,7 @@ TEST_CASE("constrained generic-type subtype checks", "[isSubtype-constrained]")
 
     Type* type1a = Pair->instantiate({varNum, varNum});
     Type* type2a = Pair->instantiate({table->Int, table->Int});
-    Type* type3a = Pair->instantiate({table->String, table->String});
+    Type* type3a = Pair->instantiate({table->Bool, table->Bool});
     REQUIRE(isSubtype(type2a, type1a));
     REQUIRE(!isSubtype(type3a, type1a));
     REQUIRE(!isSubtype(type1a, type2a));
@@ -281,10 +281,10 @@ TEST_CASE("complex subtype checks", "[isSubtype-complex]")
     ConstructedType* Pair = table->createConstructedType("Pair", {W, X})->get<ConstructedType>();
 
     // Make String: Iterator<Char> for the purposes of this test
-    Iterator->addInstance(table->String, {table->UInt8});
+    Iterator->addInstance(table->Bool, {table->UInt8});
 
     // Pair<'S, 'S> <= Pair<T: Iterator<U>, String>?
-    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->String})));
+    CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->Bool})));
 
     // 'T1: Iterator<Int> <= T: Iterator<U>?
     CHECK(isSubtype(T1, T));
@@ -383,21 +383,21 @@ TEST_CASE("type overlap checks", "[type-overlap]")
 
     // For base types, overlap <=> equality
     REQUIRE(overlap(table->Int, table->Int));
-    REQUIRE(!overlap(table->Int, table->String));
+    REQUIRE(!overlap(table->Int, table->Bool));
 
     // A type variable matches every type that meets its constraints
     REQUIRE(overlap(T, table->Int));
     REQUIRE(overlap(table->Int, T));
     REQUIRE(overlap(S, T));
     T->get<TypeVariable>()->addConstraint(table->Num);
-    REQUIRE(!overlap(T, table->String));
-    REQUIRE(!overlap(table->String, T));
+    REQUIRE(!overlap(T, table->Bool));
+    REQUIRE(!overlap(table->Bool, T));
     REQUIRE(overlap(S, T));
 
     // Must be a *consistent* choice of type variables
     ConstructedType* Pair = table->createConstructedType("Pair", {S, T})->get<ConstructedType>();
     Type* t1 = Pair->instantiate({T, T});
-    Type* t2 = Pair->instantiate({table->Int, table->String});
+    Type* t2 = Pair->instantiate({table->Int, table->Bool});
     REQUIRE(!overlap(t1, t2));
     Type* t3 = Pair->instantiate({table->Int, table->Int});
     REQUIRE(overlap(t1, t3));
@@ -409,7 +409,7 @@ TEST_CASE("type overlap checks", "[type-overlap]")
 
     ConstructedType* P4 = table->createConstructedType("P4", {S, T, U, V})->get<ConstructedType>();
     Type* t6 = P4->instantiate({S, T, S, T});
-    Type* t7 = P4->instantiate({U, U, table->Int, table->String});
+    Type* t7 = P4->instantiate({U, U, table->Int, table->Bool});
     REQUIRE(!overlap(t6, t7));
 
     delete table;

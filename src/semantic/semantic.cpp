@@ -237,7 +237,6 @@ void SemanticAnalyzer::injectSymbols()
 
     _symbolTable->createTypeSymbol("Bool", _root, _typeTable->Bool);
     _symbolTable->createTypeSymbol("Unit", _root, _typeTable->Unit);
-    _symbolTable->createTypeSymbol("String", _root, _typeTable->String);
 
     _symbolTable->createTypeSymbol("Function", _root, _typeTable->Function);
     _symbolTable->createTypeSymbol("Array", _root, _typeTable->Array);
@@ -1159,6 +1158,7 @@ void SemanticAnalyzer::visit(AssertNode* node)
 
     // HACK: Give the code generator access to these symbols
     node->panicSymbol = dynamic_cast<FunctionSymbol*>(resolveSymbol("panic"));
+    assert(node->panicSymbol);
 
     node->type = _typeTable->Unit;
 }
@@ -1271,7 +1271,8 @@ void SemanticAnalyzer::visit(BoolNode* node)
 
 void SemanticAnalyzer::visit(StringLiteralNode* node)
 {
-    node->type = _typeTable->String;
+    Type* String = resolveTypeSymbol("String")->type;
+    node->type = String;
 
     std::string name = "__staticString" + std::to_string(node->counter);
     VariableSymbol* symbol = _symbolTable->createVariableSymbol(name, node, nullptr, true);

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string.h>
 #include <sys/mman.h>
 
 void fail(const char* str)
@@ -27,17 +28,19 @@ char* strContent(String* s)
 
 String* makeStr(const char* data)
 {
-    String* result = gcAllocate(sizeof(SplObject) + strlen(data) + 1);
-    result->constructorTag = STRING_TAG;
-    result->numReferences = 0; // Unstructured data
-    strcpy(strContent(result), data);
+    size_t n = strlen(data);
+
+    String* result = gcAllocate(sizeof(SplObject) + n);
+    result->constructorTag = UNBOXED_ARRAY_TAG;
+    result->numElements = n;
+    memcpy(strContent(result), data, n);
 
     return result;
 }
 
 uint64_t strLength(String* s)
 {
-    return strlen(strContent(s));
+    return s->numElements;
 }
 
 String* strSlice(String* s, uint64_t pos, uint64_t length)
@@ -51,29 +54,27 @@ String* strSlice(String* s, uint64_t pos, uint64_t length)
         fail("*** Exception: String slice length out of range");
     }
 
-    String* result = gcAllocate(sizeof(SplObject) + length + 1);
-    result->constructorTag = STRING_TAG;
-    result->numReferences = 0;
+    String* result = gcAllocate(sizeof(SplObject) + length);
+    result->constructorTag = UNBOXED_ARRAY_TAG;
+    result->numElements = length;
 
-    strncpy(strContent(result), strContent(s) + pos, length);
-    strContent(result)[length] = '\0';
+    memcpy(strContent(result), strContent(s) + pos, length);
 
     return result;
 }
 
 String* strCat(String* lhs, String* rhs)
 {
-    size_t n1 = strlen(strContent(lhs));
-    size_t n2 = strlen(strContent(rhs));
+    size_t n1 = strLength(lhs);
+    size_t n2 = strLength(rhs);
 
-    String* result = gcAllocate(sizeof(SplObject) + n1 + n2 + 1);
-    result->constructorTag = STRING_TAG;
-    result->numReferences = 0;
+    String* result = gcAllocate(sizeof(SplObject) + n1 + n2);
+    result->constructorTag = UNBOXED_ARRAY_TAG;
+    result->numElements = n1 + n2;
 
     char* dest = strContent(result);
-    strncpy(dest, strContent(lhs), n1);
-    strncpy(dest + n1, strContent(rhs), n2);
-    *(dest + n1 + n2) = '\0';
+    memcpy(dest, strContent(lhs), n1);
+    memcpy(dest + n1, strContent(rhs), n2);
 
     return result;
 }
@@ -101,9 +102,9 @@ String* strFromList(List* list)
         ++length;
     }
 
-    String* result = gcAllocate(sizeof(SplObject) + length + 1);
-    result->constructorTag = STRING_TAG;
-    result->numReferences = 0;
+    String* result = gcAllocate(sizeof(SplObject) + length);
+    result->constructorTag = UNBOXED_ARRAY_TAG;
+    result->numElements = length;
 
     char* out = strContent(result);
     while (!IS_EMPTY(list))
@@ -118,29 +119,23 @@ String* strFromList(List* list)
         list = list->next;
     }
 
-    *out++ = '\0';
-
     return result;
 }
 
 String* show(int64_t value)
 {
-    String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
-    result->constructorTag = STRING_TAG;
-    result->numReferences = 0;
+    char buffer[21];
+    sprintf(buffer, "%" PRId64, value);
 
-    sprintf(strContent(result), "%" PRId64, value);
-    return result;
+    return makeStr(buffer);
 }
 
 String* showUInt(uint64_t value)
 {
-    String* result = gcAllocate(sizeof(SplObject) + 20 + 1);
-    result->constructorTag = STRING_TAG;
-    result->numReferences = 0;
+    char buffer[21];
+    sprintf(buffer, "%" PRIu64, value);
 
-    sprintf(strContent(result), "%" PRIu64, value);
-    return result;
+    return makeStr(buffer);
 }
 
 // FNV-1a 64-bit
@@ -194,12 +189,28 @@ void* readLine()
 
 void print(String* s)
 {
-    printf("%s\n", strContent(s));
+    size_t n = strLength(s);
+
+    char* buffer = malloc(n + 1);
+    memcpy(buffer, strContent(s), n + 1);
+    buffer[n] = '\0';
+
+    printf("%s\n", buffer);
+
+    free(buffer);
 }
 
 void panic(String* s)
 {
-    fprintf(stderr, "*** Exception: %s\n", strContent(s));
+    size_t n = strLength(s);
+
+    char* buffer = malloc(n + 1);
+    memcpy(buffer, strContent(s), n + 1);
+    buffer[n] = '\0';
+
+    fprintf(stderr, "*** Exception: %s\n", buffer);
+
+    free(buffer);
     exit(1);
 }
 

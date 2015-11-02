@@ -1,3 +1,5 @@
+type Char = UInt8
+type String = Array<Char>
 foreign panic(msg: String)
 
 ## List ##
@@ -68,65 +70,6 @@ impl Range<T>
         return result
 
 
-## String ##
-type Char = UInt8
-foreign strLength(s: String) -> UInt
-foreign strSlice(s: String, pos: UInt, len: UInt) -> String
-foreign strAt(s: String, n: UInt) -> Char
-foreign strFromList(s: [Char]) -> String
-foreign strCat(lhs: String, rhs: String) -> String
-foreign strHash(s: String) -> UInt
-foreign show(x: Int) -> String
-foreign showUInt(x: UInt) -> String
-
-struct StringIterator
-    str: String
-    offset: UInt
-
-# Method wrappers (methods can't be implemented in C)
-impl String
-    def length(self) -> UInt
-        return strLength(self)
-
-    def slice(self, pos: UInt, len: UInt) -> String
-        return strSlice(self, pos, len)
-
-    def iter(self) -> StringIterator
-        return StringIterator(self, 0u)
-
-impl Index<UInt, Char> for String
-    def at(self, n: UInt) -> UInt8
-        return strAt(self, n)
-
-impl Iterator<Char> for StringIterator
-    def head(self) -> Char
-        return self.str[self.offset]
-
-    def tail(self) -> StringIterator
-        assert self.offset < self.str.length()
-        return StringIterator(self.str, self.offset + 1u)
-
-    def empty(self) -> Bool
-        return self.offset >= self.str.length()
-
-impl Eq for String
-    def eq(self, other: String) -> Bool
-        n1 := self.length()
-        n2 := other.length()
-
-        if n1 != n2
-            return False
-
-        for i in range(0, n1)
-            if self.at(i) != other.at(i)
-                return False
-
-        return True
-
-    def ne(self, other: String) -> Bool
-        return not $ self == other
-
-
 ## Array ##
 impl Array<T>
     def new() -> Array<T>
@@ -176,6 +119,39 @@ impl Iterator<T> for ArrayIterator<T>
 
     def empty(self) -> Bool
         return self.offset >= self.arr.length()
+
+
+## String ##
+foreign strLength(s: String) -> UInt
+foreign strSlice(s: String, pos: UInt, len: UInt) -> String
+foreign strAt(s: String, n: UInt) -> Char
+foreign strFromList(s: [Char]) -> String
+foreign strCat(lhs: String, rhs: String) -> String
+foreign strHash(s: String) -> UInt
+foreign show(x: Int) -> String
+foreign showUInt(x: UInt) -> String
+
+# Method wrappers (methods can't be implemented in C)
+impl String
+    def slice(self, pos: UInt, len: UInt) -> String
+        return strSlice(self, pos, len)
+
+impl Eq for String
+    def eq(self, other: String) -> Bool
+        n1 := self.length()
+        n2 := other.length()
+
+        if n1 != n2
+            return False
+
+        for i in range(0, n1)
+            if self.at(i) != other.at(i)
+                return False
+
+        return True
+
+    def ne(self, other: String) -> Bool
+        return not $ self == other
 
 
 ## Option ##

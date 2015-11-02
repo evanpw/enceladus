@@ -200,7 +200,6 @@ TypeTable::TypeTable()
 
     Bool = createBaseType("Bool", true);
     Unit = createBaseType("Unit", true);
-    String = createBaseType("String", false);
 
     Function = createConstructedType("Function", {createTypeVariable("T", true)});
     Array = createConstructedType("Array", {createTypeVariable("T", true)});

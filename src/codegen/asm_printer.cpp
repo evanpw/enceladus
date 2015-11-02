@@ -37,8 +37,8 @@ void AsmPrinter::printProgram(MachineContext* context)
         const std::string& content = item.second;
 
         _out << "$" << name << ":" << std::endl;
-        _out << "\tdq " << STRING_TAG << ", 0" << std::endl;
-        _out << "\tdb \"" << content << "\", 0" << std::endl;
+        _out << "\tdq " << UNBOXED_ARRAY_TAG << ", " << content.size() << std::endl;
+        _out << "\tdb \"" << content << "\"" << std::endl;
     }
 
     // Stack map (for the GC)
