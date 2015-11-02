@@ -1297,6 +1297,7 @@ ExpressionNode* Parser::func_call_expression()
 
 /// static_function_call_expression
 ///     : type '::' LIDENT '(' [ expression { ',' expression } ] ')'
+///     | type '::' LIDENT '$' expression
 ///     | unary_expression
 ExpressionNode* Parser::static_function_call_expression()
 {
@@ -1322,18 +1323,26 @@ ExpressionNode* Parser::static_function_call_expression()
     Token functionName = expect(tLIDENT);
 
     std::vector<ExpressionNode*> argList;
-    expect('(');
 
-    if (!accept(')'))
+    if (accept('$'))
     {
         argList.push_back(expression());
+    }
+    else
+    {
+        expect('(');
 
-        while (accept(','))
+        if (!accept(')'))
         {
             argList.push_back(expression());
-        }
 
-        expect(')');
+            while (accept(','))
+            {
+                argList.push_back(expression());
+            }
+
+            expect(')');
+        }
     }
 
     return new FunctionCallNode(_context, location, functionName.value.str, std::move(argList), typeName);

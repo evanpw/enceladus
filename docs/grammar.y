@@ -220,6 +220,7 @@ func_call_expression
 
 static_function_call_expression
     : type '::' LIDENT '(' [ expression { ',' expression } ] ')'
+    | type '::' LIDENT '$' expression
     | unary_expression
 
 unary_expression

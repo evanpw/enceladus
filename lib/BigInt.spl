@@ -91,7 +91,7 @@ impl BigInt
         for x in self.digits()
             s = s.insert((x as UInt8) + '0')
 
-        return strFromList(s)
+        return String::fromList(s)
 
 # Computes a^b
 def bigPower(a: Int, b: Int) -> BigInt

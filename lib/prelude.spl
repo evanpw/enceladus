@@ -122,19 +122,20 @@ impl Iterator<T> for ArrayIterator<T>
 
 
 ## String ##
-foreign strLength(s: String) -> UInt
-foreign strSlice(s: String, pos: UInt, len: UInt) -> String
-foreign strAt(s: String, n: UInt) -> Char
-foreign strFromList(s: [Char]) -> String
-foreign strCat(lhs: String, rhs: String) -> String
 foreign strHash(s: String) -> UInt
-foreign show(x: Int) -> String
-foreign showUInt(x: UInt) -> String
 
 # Method wrappers (methods can't be implemented in C)
 impl String
     def slice(self, pos: UInt, len: UInt) -> String
-        return strSlice(self, pos, len)
+        assert pos < self.length()
+        assert pos + len <= self.length()    # TODO: Check for overflow
+
+        result := unsafeMakeArray(len)
+
+        for i in range(0, len)
+            result.set(i, self[pos + i])
+
+        return result
 
 impl Eq for String
     def eq(self, other: String) -> Bool
@@ -288,6 +289,52 @@ impl Eq for [T] where T: Eq
 
     def ne(self, other: [T]) -> Bool
         return not $ self == other
+
+impl String
+    def fromList(chars: [Char]) -> String
+        n := chars.length()
+
+        result := unsafeMakeArray(n)
+
+        for i in range(0, n)
+            result.set(i, chars.head())
+            chars = chars.tail()
+
+        return result
+
+def show(x: Int) -> String
+    if x == -9223372036854775808
+        return "-9223372036854775808"
+
+    negative := x < 0
+    if negative
+        x = -x
+
+    digits := []
+
+    while x != 0
+        digits = digits.insert((x % 10) as UInt8 + '0')
+        x /= 10
+
+    if digits.empty()
+        return "0"
+    else
+        if negative
+            digits = digits.insert('-')
+
+        return String::fromList(digits)
+
+def showUInt(x: UInt) -> String
+    digits := []
+
+    while x != 0
+        digits = digits.insert((x % 10) as UInt8 + '0')
+        x /= 10
+
+    if digits.empty()
+        return "0"
+    else
+        return String::fromList(digits)
 
 
 ## Native-language standard library
@@ -525,7 +572,18 @@ impl Rem for T: Num
 ## Concatenation (abusing the Add trait)
 impl Add for String
     def add(self, other: String) -> String
-        return strCat(self, other)
+        n1 := self.length()
+        n2 := other.length()
+
+        result := unsafeMakeArray(n1 + n2)
+
+        for i in range(0, n1)
+            result.set(i, self[i])
+
+        for i in range(0, n2)
+            result.set(n1 + i, other[i])
+
+        return result
 
 impl Add for [T]
     def add(self, other: [T]) -> [T]

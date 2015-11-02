@@ -21,7 +21,7 @@ impl Vector<Bool>
             else
                 result = result.insert('0')
 
-        return strFromList(result.reverse())
+        return String::fromList $ result.reverse()
 
 def compute(progress: Progress, message: String, idx: UInt) -> Int
     assert progress.nonempty.size == progress.closed.size

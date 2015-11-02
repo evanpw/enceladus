@@ -29,7 +29,7 @@ def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
 
         newCache = newCache.insert(c)
 
-    return Pair(strFromList(newCache.reverse()), k * k)
+    return Pair(String::fromList $ newCache.reverse(), k * k)
 
 def zeroCache(m: UInt) -> String
     result := ""
