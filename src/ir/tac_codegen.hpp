@@ -152,6 +152,10 @@ public:
     virtual void visit(TypeAliasNode* node) {}
 
 private:
+    // Built-in functions
+    void builtin_unsafeMakeArray(Type* functionType);
+
+private:
     // We cache the Value corresponding to each symbol so that the value
     // uniquely identifies a location
     std::unordered_map<const Symbol*, Value*> _globalNames;

@@ -479,12 +479,13 @@ struct StoreInst : public Instruction
 
 struct IndexedLoadInst : public Instruction
 {
-    IndexedLoadInst(Value* lhs, Value* rhs, int64_t offset)
+    IndexedLoadInst(Value* lhs, Value* rhs, Value* offset)
     : lhs(lhs), rhs(rhs), offset(offset)
     {
         lhs->definition = this;
 
         rhs->uses.insert(this);
+        offset->uses.insert(this);
     }
 
     virtual void dropReferences()
@@ -493,6 +494,7 @@ struct IndexedLoadInst : public Instruction
             lhs->definition = nullptr;
 
         rhs->uses.erase(this);
+        offset->uses.erase(this);
     }
 
     virtual void replaceReferences(Value* from, Value* to)
@@ -500,6 +502,7 @@ struct IndexedLoadInst : public Instruction
         assert(lhs != from);
 
         replaceReference(rhs, from, to);
+        replaceReference(offset, from, to);
     }
 
     MAKE_VISITABLE();
@@ -507,13 +510,13 @@ struct IndexedLoadInst : public Instruction
     virtual std::string str() const
     {
         std::stringstream ss;
-        ss << lhs->str() << " = " << "[" << rhs->str() << " + " << offset << "]";
+        ss << lhs->str() << " = " << "[" << rhs->str() << " + " << offset->str() << "]";
         return ss.str();
     }
 
     Value* lhs;
     Value* rhs;
-    int64_t offset;
+    Value* offset;
 };
 
 struct IndexedStoreInst : public Instruction

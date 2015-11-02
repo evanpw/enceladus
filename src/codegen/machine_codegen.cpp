@@ -506,10 +506,11 @@ void MachineCodeGen::visit(IndexedLoadInst* inst)
 {
     MachineOperand* dest = getOperand(inst->lhs);
     MachineOperand* base = getOperand(inst->rhs);
-    MachineOperand* offset = _context->createImmediate(inst->offset, ValueType::I64);
+    MachineOperand* offset = getOperand(inst->offset);
 
     assert(dest->isRegister());
     assert(base->isAddress() || base->isRegister());
+    assert(offset->isImmediate() || offset->isRegister());
 
     emit(Opcode::MOVrm, {dest}, {base, offset});
 }
@@ -529,7 +530,6 @@ void MachineCodeGen::visit(IndexedStoreInst* inst)
     MachineOperand* base = getOperand(inst->lhs);
     MachineOperand* offset = getOperand(inst->offset);
     MachineOperand* src = getOperand(inst->rhs);
-    assert(offset->isImmediate());
 
     emitMovmd(base, src, offset);
 }

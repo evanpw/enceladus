@@ -247,6 +247,20 @@ void SemanticAnalyzer::injectSymbols()
     FunctionSymbol* notFn = createBuiltin("not");
 	notFn->type = _typeTable->createFunctionType({_typeTable->Bool}, _typeTable->Bool);
 
+    FunctionSymbol* unsafeMakeArray = createBuiltin("unsafeMakeArray");
+    Type* T = _typeTable->createTypeVariable("T", true);
+    Type* ArrayT = _typeTable->Array->get<ConstructedType>()->instantiate({T});
+    unsafeMakeArray->type = _typeTable->createFunctionType({_typeTable->UInt}, ArrayT);
+
+    FunctionSymbol* arrayLength = createBuiltin("arrayLength");
+    arrayLength->type = _typeTable->createFunctionType({ArrayT}, _typeTable->UInt);
+
+    FunctionSymbol* unsafeArrayAt = createBuiltin("unsafeArrayAt");
+    unsafeArrayAt->type = _typeTable->createFunctionType({ArrayT, _typeTable->UInt}, T);
+
+    FunctionSymbol* unsafeArraySet = createBuiltin("unsafeArraySet");
+    unsafeArraySet->type = _typeTable->createFunctionType({ArrayT, _typeTable->UInt, T}, _typeTable->Unit);
+
 
 	//// These definitions are only needed so that we list them as external
 	//// symbols in the output assembly file. They can't be called from

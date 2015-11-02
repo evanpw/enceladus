@@ -584,15 +584,43 @@ void TACCodeGen::visit(ProgramNode* node)
         }
         else
         {
-            const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
-            assert(constructorSymbol);
+            const FunctionSymbol* functionSymbol = dynamic_cast<const FunctionSymbol*>(symbol);
 
-            Function* function = (Function*)getFunctionValue(constructorSymbol, nullptr, typeContext);
-            _currentFunction = function;
-            setBlock(createBlock());
+            if (functionSymbol->isBuiltin)
+            {
+                Function* function = (Function*)getFunctionValue(functionSymbol, nullptr, typeContext);
 
-            _typeContext.clear();
-            createConstructor(constructorSymbol, typeContext);
+                TypeAssignment realAssignment = combine(_typeContext, typeContext);
+                Type* functionType = substitute(functionSymbol->type, realAssignment);
+
+                _currentFunction = function;
+                _localNames.clear();
+                _typeContext = typeContext;
+                setBlock(createBlock());
+
+                // TODO: Make this into some kind of map
+                if (symbol->name == "unsafeMakeArray")
+                {
+                    builtin_unsafeMakeArray(functionType);
+                }
+                else
+                {
+                    assert(false);
+                }
+            }
+            else
+            {
+                assert(functionSymbol->isConstructor);
+                const ConstructorSymbol* constructorSymbol = dynamic_cast<const ConstructorSymbol*>(symbol);
+                assert(constructorSymbol);
+
+                Function* function = (Function*)getFunctionValue(constructorSymbol, nullptr, typeContext);
+                _currentFunction = function;
+                setBlock(createBlock());
+
+                _typeContext.clear();
+                createConstructor(constructorSymbol, typeContext);
+            }
         }
     }
 }
@@ -1137,7 +1165,8 @@ void TACCodeGen::visit(LetNode* node)
             ValueType type = getValueType(member->type);
 
             Value* tmp = createTemp(type);
-            emit(new IndexedLoadInst(tmp, body, sizeof(SplObject) + 8 * layout[i]));
+            Value* offset = _context->createConstantInt(ValueType::I64, sizeof(SplObject) + 8 * layout[i]);
+            emit(new IndexedLoadInst(tmp, body, offset));
             emit(new StoreInst(getValue(member), tmp));
         }
     }
@@ -1167,13 +1196,12 @@ void TACCodeGen::visit(FunctionCallNode* node)
         arguments.push_back(i->value);
     }
 
-    node->value = createTemp();
-    Value* result = node->value;
-
     if (node->symbol->kind == kFunction && dynamic_cast<FunctionSymbol*>(node->symbol)->isBuiltin)
     {
         if (node->target == "not")
         {
+            node->value = createTemp();
+
             assert(arguments.size() == 1);
 
             BasicBlock* trueBranch = createBlock();
@@ -1194,41 +1222,66 @@ void TACCodeGen::visit(FunctionCallNode* node)
             phi->addSource(falseBranch, _context->True);
             emit(phi);
 
-            result->type = getValueType(node->type);
+            node->value->type = getValueType(node->type);
             return;
-
         }
-        else
+        else if (node->target == "arrayLength")
         {
-            assert(false);
+            assert(arguments.size() == 1);
+
+            node->value = createTemp();
+
+            Value* array = arguments[0];
+            Value* offset = _context->createConstantInt(ValueType::I64, offsetof(Array, numElements));
+            emit(new IndexedLoadInst(node->value, array, offset));
+
+            node->value->type = ValueType::U64;
+            return;
+        }
+        else if (node->target == "unsafeArrayAt")
+        {
+            assert(arguments.size() == 2);
+
+            node->value = createTemp();
+
+            Value* array = arguments[0];
+            Value* index = arguments[1];
+
+            Value* indexAfterHead = createTemp(ValueType::U64);
+            Value* eight = _context->createConstantInt(ValueType::U64, 8);
+            emit(new BinaryOperationInst(indexAfterHead, index, BinaryOperation::MUL, eight));
+
+            Value* indexInBytes = createTemp(ValueType::U64);
+            Value* sizeOfHeader = _context->createConstantInt(ValueType::U64, sizeof(Array));
+            emit(new BinaryOperationInst(indexInBytes, indexAfterHead, BinaryOperation::ADD, sizeOfHeader));
+
+            emit(new IndexedLoadInst(node->value, array, indexInBytes));
+            node->value->type = getValueType(node->type);
+            return;
+        }
+        else if (node->target == "unsafeArraySet")
+        {
+            assert(arguments.size() == 3);
+
+            Value* array = arguments[0];
+            Value* index = arguments[1];
+            Value* value = arguments[2];
+
+            Value* indexAfterHead = createTemp(ValueType::U64);
+            Value* eight = _context->createConstantInt(ValueType::U64, 8);
+            emit(new BinaryOperationInst(indexAfterHead, index, BinaryOperation::MUL, eight));
+
+            Value* indexInBytes = createTemp(ValueType::U64);
+            Value* sizeOfHeader = _context->createConstantInt(ValueType::U64, sizeof(Array));
+            emit(new BinaryOperationInst(indexInBytes, indexAfterHead, BinaryOperation::ADD, sizeOfHeader));
+
+            emit(new IndexedStoreInst(array, indexInBytes, value));
+            return;
         }
     }
 
-    if (node->target == "unsafeMakeArray") // TODO: Identify this better
-    {
-        assert(node->symbol->kind == kFunction);
-        assert(dynamic_cast<FunctionSymbol*>(node->symbol)->isExternal);
-
-        Type* arrayType = node->type;
-        ConstructedType* constructedType = arrayType->get<ConstructedType>();
-        assert(constructedType);
-        assert(constructedType->name() == "Array");
-
-        Type* internalType = constructedType->typeParameters()[0];
-
-        // unsafeMakeArray has an implicit final argument that tells the function
-        // whether the underlying type is boxed or unboxed
-        if (getValueType(internalType) == ValueType::Reference)
-        {
-            arguments.push_back(_context->createConstantInt(ValueType::U64, BOXED_ARRAY_TAG));
-        }
-        else
-        {
-            arguments.push_back(_context->createConstantInt(ValueType::U64, UNBOXED_ARRAY_TAG));
-        }
-
-        // Fall through
-    }
+    node->value = createTemp();
+    Value* result = node->value;
 
     if (node->symbol->kind == kFunction)
     {
@@ -1259,7 +1312,8 @@ void TACCodeGen::visit(FunctionCallNode* node)
         Value* functionAddress = createTemp(ValueType::NonHeapAddress);
         Value* closure = createTemp(ValueType::Reference);
         emit(new LoadInst(closure, getValue(node->symbol)));
-        emit(new IndexedLoadInst(functionAddress, closure, sizeof(SplObject)));
+        Value* offset = _context->createConstantInt(ValueType::I64, sizeof(SplObject));
+        emit(new IndexedLoadInst(functionAddress, closure, offset));
 
         CallInst* inst = new CallInst(result, functionAddress, arguments);
         emit(inst);
@@ -1363,7 +1417,8 @@ void TACCodeGen::visit(MemberAccessNode* node)
     std::vector<size_t> layout = getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
 
     Value* structure = node->object->value;
-    emit(new IndexedLoadInst(node->value, structure, sizeof(SplObject) + 8 * layout[node->memberIndex]));
+    Value* offset = _context->createConstantInt(ValueType::I64, sizeof(SplObject) + 8 * layout[node->memberIndex]);
+    emit(new IndexedLoadInst(node->value, structure, offset));
 }
 
 void TACCodeGen::visit(DataDeclaration* node)
@@ -1393,7 +1448,8 @@ void TACCodeGen::visit(MatchNode* node)
     // TODO: Handle case where all constructors are parameter-less
 
     Value* tag = createTemp(ValueType::U64);
-    emit(new IndexedLoadInst(tag, expr, offsetof(SplObject, constructorTag)));
+    Value* offset = _context->createConstantInt(ValueType::I64, offsetof(SplObject, constructorTag));
+    emit(new IndexedLoadInst(tag, expr, offset));
 
     // Jump to the appropriate case based on the tag
     BasicBlock* nextTest = _currentBlock;
@@ -1451,7 +1507,8 @@ void TACCodeGen::visit(MatchArm* node)
         if (member)
         {
             Value* tmp = createTemp(getValueType(member->type));
-            emit(new IndexedLoadInst(tmp, _currentSwitchExpr, sizeof(SplObject) + 8 * layout[i]));
+            Value* offset = _context->createConstantInt(ValueType::I64, sizeof(SplObject) + 8 * layout[i]);
+            emit(new IndexedLoadInst(tmp, _currentSwitchExpr, offset));
             emit(new StoreInst(getValue(member), tmp));
         }
     }
@@ -1515,4 +1572,54 @@ void TACCodeGen::createConstructor(const ConstructorSymbol* symbol, const TypeAs
 void TACCodeGen::visit(ImplNode* node)
 {
     AstVisitor::visit(node);
+}
+
+
+void TACCodeGen::builtin_unsafeMakeArray(Type* functionType)
+{
+    // Only argument = size in elements
+    Value* size = _context->createArgument(ValueType::U64, "size");
+    _currentFunction->params.push_back(size);
+
+    // Extract the type of the array elements
+    assert(functionType->tag() == ttFunction);
+    Type* resultType = functionType->get<FunctionType>()->output();
+    assert(resultType->tag() == ttConstructed);
+    ConstructedType* arrayType = resultType->get<ConstructedType>();
+    assert(arrayType->name() == "Array");
+    assert(arrayType->typeParameters().size() == 1);
+    Type* eltType = arrayType->typeParameters()[0];
+
+    // For now, every member takes up exactly 8 bytes (either directly or as a pointer).
+    Value* sizeAfterHead = createTemp(ValueType::U64);
+    Value* eight = _context->createConstantInt(ValueType::U64, 8);
+    Value* tempSize = createTemp(ValueType::U64);
+    emit(new LoadInst(tempSize, size));
+    emit(new BinaryOperationInst(sizeAfterHead, tempSize, BinaryOperation::MUL, eight));
+    Value* sizeInBytes = createTemp(ValueType::U64);
+    Value* sizeOfHeader = _context->createConstantInt(ValueType::U64, sizeof(SplObject));
+    emit(new BinaryOperationInst(sizeInBytes, sizeAfterHead, BinaryOperation::ADD, sizeOfHeader));
+
+    // Allocate room for the object
+    Value* result = createTemp(ValueType::Reference);
+    CallInst* inst = new CallInst(
+        result,
+        _context->createExternFunction("gcAllocate"), // TODO: Fix this
+        {sizeInBytes});
+    inst->regpass = true;
+    emit(inst);
+
+    // Fill in the header information
+    uint64_t constructorTag = getValueType(eltType) == ValueType::Reference ? BOXED_ARRAY_TAG : UNBOXED_ARRAY_TAG;
+
+    emit(new IndexedStoreInst(
+        result,
+        _context->createConstantInt(ValueType::U64, offsetof(Array, constructorTag)),
+        _context->createConstantInt(ValueType::U64, constructorTag)));
+
+    emit(new IndexedStoreInst(result,
+        _context->createConstantInt(ValueType::U64, offsetof(Array, numElements)),
+        tempSize));
+
+    emit(new ReturnInst(result));
 }

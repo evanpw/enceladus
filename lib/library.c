@@ -18,39 +18,6 @@ void fail(const char* str)
 }
 
 
-//// Arrays ////////////////////////////////////////////////////////////////////
-
-Array* unsafeMakeArray(uint64_t size, uint64_t tag)
-{
-    Array* result = gcAllocate(sizeof(Array) + size * 8);
-    result->constructorTag = tag;
-    result->numElements = size;
-
-    return result;
-}
-
-uint64_t arrayLength(Array* array)
-{
-    return array->numElements;
-}
-
-inline uint64_t* arrayContent(Array* s)
-{
-    return (uint64_t*)(s + 1);
-}
-
-uint64_t unsafeArrayAt(Array* arr, uint64_t index)
-{
-    uint64_t* p = arrayContent(arr);
-    return p[index];
-}
-
-void unsafeArraySet(Array* arr, uint64_t index, uint64_t value)
-{
-    uint64_t* p = arrayContent(arr);
-    p[index] = value;
-}
-
 //// Strings ///////////////////////////////////////////////////////////////////
 
 char* strContent(String* s)

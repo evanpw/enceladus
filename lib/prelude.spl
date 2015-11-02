@@ -128,12 +128,6 @@ impl Eq for String
 
 
 ## Array ##
-# FOR INTERNAL USE ONLY: Does not initialize the array
-foreign unsafeMakeArray(size: UInt) -> Array<T>
-foreign unsafeArrayAt(arr: Array<T>, n: UInt) -> T
-foreign unsafeArraySet(arr: Array<T>, n: UInt, value: T)
-foreign arrayLength(arr: Array<T>) -> UInt
-
 impl Array<T>
     def new() -> Array<T>
         return unsafeMakeArray(0)
