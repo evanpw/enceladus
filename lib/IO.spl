@@ -25,4 +25,4 @@ def readLine() -> Option<String>
     if v.length() == 0
         return None
     else
-        return Some $ String::fromVector(v)
+        return Some $ v.toArray()

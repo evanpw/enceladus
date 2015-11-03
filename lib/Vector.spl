@@ -1,6 +1,5 @@
 struct Vector<T: Default>
     content: Array<T>
-    capacity: UInt
     size: UInt
 
 struct VectorIterator<T: Default>
@@ -9,14 +8,14 @@ struct VectorIterator<T: Default>
 
 impl Vector<T>
     def new() -> Vector<T>
-        return Vector(Array::new(), 0, 0)
+        return Vector(Array::new(), 0)
 
     def append(self, x: T)
-        if self.size < self.capacity
+        if self.size < self.content.length()
             self.content.set(self.size, x)
             self.size += 1
         else
-            newCapacity := self.capacity * 2 + 1
+            newCapacity := self.content.length() * 2 + 1
             newContent := Array::make(newCapacity, T::default())
             for i in range(0, self.size)
                 newContent.set(i, self.content[i])
@@ -24,7 +23,6 @@ impl Vector<T>
             newContent.set(self.size, x)
 
             self.content = newContent
-            self.capacity = newCapacity
             self.size += 1
 
     def pop(self) -> T
@@ -37,12 +35,15 @@ impl Vector<T>
     def set(self, n: UInt, x: T)
         self.content.set(n, x)
 
-    def copy(self) -> Vector<T>
-        result := Vector(Array::make(self.capacity, T::default()), self.capacity, self.size)
+    def toArray(self) -> Array<T>
+        result := Array::make(self.size, T::default())
         for i in range(0, self.size)
-            result.content.set(i, self.content[i])
+            result.set(i, self.content[i])
 
         return result
+
+    def copy(self) -> Vector<T>
+        return Vector(self.toArray(), self.size)
 
     def iter(self) -> VectorIterator<T>
         return VectorIterator(self, 0)
@@ -78,12 +79,3 @@ def any(xs: Vector<Bool>) -> Bool
             return True
 
     return False
-
-impl String
-    def fromVector(v: Vector<Char>) -> String
-        result := unsafeMakeArray(v.size)
-
-        for i in range(0, v.size)
-            result.set(i, v.content[i])
-
-        return result
