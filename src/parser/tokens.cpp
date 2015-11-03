@@ -32,6 +32,8 @@ std::string tokenToString(TokenType t)
         return "`elif`";
     case tELSE:
         return "`else`";
+    case tEND:
+        return "end-of-input";
     case tEOF:
         return "end-of-file";
     case tEOL:

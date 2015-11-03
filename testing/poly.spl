@@ -3,8 +3,8 @@ ys := [4, 3]
 
 if xs.head()
     print $ show $ ys.head()
- else
-    if null $ xs.tail()
+else
+    if xs.tail().empty()
         print $ show $ ys.tail().head()
     else
         print $ show(-1)

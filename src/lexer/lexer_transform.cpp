@@ -14,24 +14,34 @@ YYLTYPE yylloc;
 YYSTYPE yylval;
 
 std::stack<int> indentation({0});
-std::deque<Token> token_queue;
+std::deque<Token> tokenQueue;
 
 // The scanner function seen by the parser. Handles initial whitespace
 // and python-style indentation
 Token yylex()
 {
-    static Token last_token(tEOL);
-    static Token last_returned_token(tEOL);
+    static Token lastToken(tEOL);
+    static Token lastReturnedToken(tEOL);
+    static bool finished = false;
+
+    if (finished)
+    {
+        return lastReturnedToken;
+    }
 
     while (true)
     {
         // Always consume the tokens on the queue before reading new ones
-        if (!token_queue.empty())
+        if (!tokenQueue.empty())
         {
-            Token token = token_queue.front();
-            token_queue.pop_front();
+            Token token = tokenQueue.front();
+            tokenQueue.pop_front();
 
-            last_returned_token = last_token = token;
+            lastReturnedToken = lastToken = token;
+
+            if (token.type == tEND)
+                finished = true;
+
             return token;
         }
 
@@ -41,69 +51,71 @@ Token yylex()
         token.location = yylloc;
 
         // Handle unfinished indentation blocks when EOF is reached
-        if (token.type == 0)
+        if (token.type == tEOF || token.type == tEND)
         {
-            if (last_returned_token.type != tEOL)
-                token_queue.emplace_back(tEOL, token.location);
+            if (lastReturnedToken.type != tEOL)
+                tokenQueue.emplace_back(tEOL, token.location);
 
             while (indentation.top() > 0)
             {
                 indentation.pop();
-                token_queue.emplace_back(tDEDENT, token.location);
+                tokenQueue.emplace_back(tDEDENT, token.location);
             }
 
-            token_queue.emplace_back(tEOF, token.location);
+            if (token.type == tEND)
+                tokenQueue.push_back(token);
+
             continue;
         }
 
-        if (last_token.type == tEOL)
+        if (lastToken.type == tEOL)
         {
             // Non-whitespace following an tEOL means that the indentation level is 0
-            int new_level = 0;
+            int newLevel = 0;
             if (token.type == tWHITESPACE)
             {
-                new_level = token.value.unsignedInt;
+                newLevel = token.value.unsignedInt;
             }
 
-            if (new_level > indentation.top())
+            if (newLevel > indentation.top())
             {
                 // Increase of indentation -> tINDENT
-                indentation.push(new_level);
-                token_queue.emplace_back(tINDENT, token.location);
+                indentation.push(newLevel);
+                tokenQueue.emplace_back(tINDENT, token.location);
                 continue;
             }
-            else if (new_level < indentation.top())
+            else if (newLevel < indentation.top())
             {
                 // Decrease of indentation -> tDEDENT(s)
-                while (new_level < indentation.top())
+                while (newLevel < indentation.top())
                 {
                     indentation.pop();
-                    token_queue.emplace_back(tDEDENT, token.location);
+                    tokenQueue.emplace_back(tDEDENT, token.location);
                 }
 
                 // Dedenting to a level we have seen before is an error
-                if (new_level != indentation.top())
+                if (newLevel != indentation.top())
                 {
                     //TODO: throw SyntaxError("Unexpected indentation level on line X");
-                    token_queue.emplace_back(tEOF, token.location);
+                    tokenQueue.emplace_back(tEOF, token.location);
                     continue;
                 }
             }
 
             if (token.type != tWHITESPACE)
             {
-                token_queue.push_back(token);
+                tokenQueue.push_back(token);
             }
             else
             {
-                last_token = Token(tWHITESPACE);
+                lastToken = Token(tWHITESPACE);
             }
         }
         else
         {
             if (token.type != tWHITESPACE)
             {
-                token_queue.push_back(token);
+                tokenQueue.push_back(token);
             }
         }
     }

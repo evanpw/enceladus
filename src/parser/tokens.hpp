@@ -6,7 +6,7 @@
 enum TokenType : int
 {
     tNONE = -1,
-    tEOF = 0,
+    tEND = 0,
 
     tAND = 256,
     tAS,
@@ -21,6 +21,7 @@ enum TokenType : int
     tDIV_EQUAL,
     tELIF,
     tELSE,
+    tEOF,
     tEOL,
     tEQUALS,
     tFALSE,

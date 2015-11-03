@@ -251,6 +251,8 @@ extern "C" int yywrap()
     {
         yyterminate();
     }
+
+    return tEOF;
 }
 
  /* String and char literals */

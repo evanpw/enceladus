@@ -97,7 +97,7 @@ ProgramNode* Parser::program()
 {
     ProgramNode* node = new ProgramNode(_context, getLocation());
 
-    while (!accept(tEOF))
+    while (!accept(tEND))
     {
         node->children.push_back(statement());
     }
