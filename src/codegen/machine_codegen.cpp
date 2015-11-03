@@ -476,17 +476,34 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     MachineOperand* ifFalse = getOperand(inst->ifFalse);
     assert(ifTrue->isLabel() && ifFalse->isLabel());
 
+    bool sign = isSigned(inst->lhs->type);
+
+    Opcode opcode;
     if (inst->op == ">")
     {
-        emit(Opcode::JG, {}, {ifTrue});
+        if (sign)
+        {
+            opcode = Opcode::JG;
+        }
+        else
+        {
+            opcode = Opcode::JA;
+        }
     }
     else if (inst->op == "<")
     {
-        emit(Opcode::JL, {}, {ifTrue});
+        if (sign)
+        {
+            opcode = Opcode::JL;
+        }
+        else
+        {
+            opcode = Opcode::JB;
+        }
     }
     else if (inst->op == "==")
     {
-        emit(Opcode::JE, {}, {ifTrue});
+        opcode = Opcode::JE;
     }
     else if (inst->op == "!=")
     {
@@ -494,17 +511,32 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     }
     else if (inst->op == ">=")
     {
-        emit(Opcode::JGE, {}, {ifTrue});
+        if (sign)
+        {
+            opcode = Opcode::JGE;
+        }
+        else
+        {
+            opcode = Opcode::JAE;
+        }
     }
     else if (inst->op == "<=")
     {
-        emit(Opcode::JLE, {}, {ifTrue});
+        if (sign)
+        {
+            opcode = Opcode::JLE;
+        }
+        else
+        {
+            opcode = Opcode::JBE;
+        }
     }
     else
     {
         assert(false);
     }
 
+    emit(opcode, {}, {ifTrue});
     emit(Opcode::JMP, {}, {ifFalse});
 }
 

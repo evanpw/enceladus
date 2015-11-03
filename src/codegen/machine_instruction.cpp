@@ -13,6 +13,10 @@ const char* opcodeNames[] = {
     "IDIV",
     "IMUL",
     "INC",
+    "JA",
+    "JAE",
+    "JB",
+    "JBE",
     "JE",
     "JG",
     "JGE",
@@ -21,9 +25,9 @@ const char* opcodeNames[] = {
     "JMP",
     "JNE",
     "LEA",
+    "MOVmd",
     "MOVrd",
     "MOVrm",
-    "MOVmd",
     "MOVSXrr",
     "MOVZXrr",
     "POP",
@@ -39,6 +43,10 @@ bool MachineInst::isJump() const
 {
     switch (opcode)
     {
+        case Opcode::JA:
+        case Opcode::JAE:
+        case Opcode::JB:
+        case Opcode::JBE:
         case Opcode::JE:
         case Opcode::JG:
         case Opcode::JGE:

@@ -421,6 +421,30 @@ void AsmPrinter::printInstruction(MachineInst* inst)
             printJump("jne", inst->inputs[0]);
             break;
 
+        case Opcode::JA:
+            assert(inst->outputs.size() == 0);
+            assert(inst->inputs.size() == 1);
+            printJump("ja", inst->inputs[0]);
+            break;
+
+        case Opcode::JAE:
+            assert(inst->outputs.size() == 0);
+            assert(inst->inputs.size() == 1);
+            printJump("jae", inst->inputs[0]);
+            break;
+
+        case Opcode::JB:
+            assert(inst->outputs.size() == 0);
+            assert(inst->inputs.size() == 1);
+            printJump("jb", inst->inputs[0]);
+            break;
+
+        case Opcode::JBE:
+            assert(inst->outputs.size() == 0);
+            assert(inst->inputs.size() == 1);
+            printJump("jbe", inst->inputs[0]);
+            break;
+
 
         // Memory access
         case Opcode::MOVrm:

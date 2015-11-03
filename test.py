@@ -514,6 +514,9 @@ class TestAcceptance(object):
     def test_u8array(self):
         self.run('u8array', '10')
 
+    def test_unsignedComparison(self):
+        self.run('unsignedComparison', 'positive')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
