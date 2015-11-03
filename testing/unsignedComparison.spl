@@ -1,0 +1,4 @@
+if 9223372036854775808u < 0u
+    println $ "negative"
+else
+    println $ "positive"

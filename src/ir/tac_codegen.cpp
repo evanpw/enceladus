@@ -161,8 +161,23 @@ static bool isConcrete(Type* original)
             // Any leftover 'T: Num variables are assumed to be Int
             TypeVariable* var = original->get<TypeVariable>();
 
-            if (!var->quantified() && var->constraints().size() == 1 && isSubtype(original, var->table()->Num))
+            if (!var->quantified())
             {
+                bool numFound = false;
+                for (Trait* constraint : var->constraints())
+                {
+                    if (constraint->prototype() == var->table()->Num)
+                        numFound = true;
+
+                    if (!isSubtype(var->table()->Int, constraint))
+                    {
+                        return false;
+                    }
+                }
+
+                if (!numFound)
+                    return false;
+
                 var->assign(var->table()->Int);
                 return true;
             }

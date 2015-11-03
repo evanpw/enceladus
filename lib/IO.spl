@@ -1,5 +1,3 @@
-import Vector
-
 foreign getchar() -> Int    # Really should be Int32
 
 def readChar() -> Option<Char>

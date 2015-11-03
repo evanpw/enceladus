@@ -1,4 +1,4 @@
 println $ show(1u as Int)
-println $ showUInt(2i as UInt)
-println $ showUInt(3u as UInt)
+println $ show(2i as UInt)
+println $ show(3u as UInt)
 println $ "hello" as String

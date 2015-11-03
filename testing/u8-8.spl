@@ -1,5 +1,3 @@
-import Vector
-
 v := Vector::new()
 
 for x in range(1u8, 10u8)

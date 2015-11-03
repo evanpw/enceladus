@@ -55,7 +55,7 @@ impl Date
         dayNames := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
             "Friday", "Saturday"]
 
-        return "".join([monthNames.at(self.month), " ", showUInt(self.day), ", ", showUInt(self.year), " (", dayNames.at(self.dayOfWeek), ")"])
+        return "".join([monthNames.at(self.month), " ", show(self.day), ", ", show(self.year), " (", dayNames.at(self.dayOfWeek), ")"])
 
 current := Date(1900, 1, 1, 1)
 

@@ -4,4 +4,4 @@ total := 0
 for x in xs.iter()
     total += x
 
-println $ showUInt(total as UInt)
+println $ show(total)

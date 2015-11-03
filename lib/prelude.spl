@@ -63,9 +63,13 @@ impl Range<T>
             return result
 
         i := self.end - 1
-        while i >= self.start
+        forever
             result = result.insert(i)
-            i -= 1
+
+            if self.start < i
+                i -= 1
+            else
+                break
 
         return result
 
@@ -310,39 +314,142 @@ impl String
 
         return result
 
-def show(x: Int) -> String
-    if x == -9223372036854775808
-        return "-9223372036854775808"
 
-    negative := x < 0
-    if negative
-        x = -x
+## Default trait ##
+trait Default
+    def default() -> Self
 
-    digits := []
+impl Default for T: Num
+    def default() -> T
+        return 0
 
-    while x != 0
-        digits = digits.insert((x % 10) as UInt8 + '0')
-        x /= 10
+impl Default for [T]
+    def default() -> [T]
+        return []
 
-    if digits.empty()
+impl Default for String
+    def default() -> String
+        return ""
+
+impl Default for Bool
+    def default() -> Bool
+        return False
+
+
+## Vector ##
+struct Vector<T: Default>
+    content: Array<T>
+    size: UInt
+
+struct VectorIterator<T: Default>
+    v: Vector<T>
+    idx: UInt
+
+impl Vector<T>
+    def new() -> Vector<T>
+        return Vector(Array::new(), 0)
+
+    def append(self, x: T)
+        if self.size < self.content.length()
+            self.content.set(self.size, x)
+            self.size += 1
+        else
+            newCapacity := self.content.length() * 2 + 1
+            newContent := Array::make(newCapacity, T::default())
+            for i in range(0, self.size)
+                newContent.set(i, self.content[i])
+
+            newContent.set(self.size, x)
+
+            self.content = newContent
+            self.size += 1
+
+    def pop(self) -> T
+        assert self.size > 0
+        value := self.content[self.size - 1]
+        self.size -= 1
+
+        return value
+
+    def set(self, n: UInt, x: T)
+        self.content.set(n, x)
+
+    def toArray(self) -> Array<T>
+        result := Array::make(self.size, T::default())
+        for i in range(0, self.size)
+            result.set(i, self.content[i])
+
+        return result
+
+    def copy(self) -> Vector<T>
+        return Vector(self.toArray(), self.size)
+
+    def iter(self) -> VectorIterator<T>
+        return VectorIterator(self, 0)
+
+    def length(self) -> UInt
+        return self.size
+
+    # Reverses in-place
+    def reverse(self)
+        n := self.size
+
+        for i in range(0, n / 2)
+            x := self.content[n - i - 1]
+            self.set(n - i - 1, self.content[i])
+            self.set(i, x)
+
+impl Index<UInt, T> for Vector<T>
+    def at(self, n: UInt) -> T
+        return self.content[n]
+
+impl Iterator<T> for VectorIterator<T>
+    def head(self) -> T
+        assert self.idx < self.v.size
+        return self.v.at(self.idx)
+
+    def tail(self) -> VectorIterator<T>
+        return VectorIterator(self.v, self.idx + 1)
+
+    def empty(self) -> Bool
+        return self.idx >= self.v.size
+
+def all(xs: Vector<Bool>) -> Bool
+    for x in xs.iter()
+        if not(x)
+            return False
+
+    return True
+
+def any(xs: Vector<Bool>) -> Bool
+    for x in xs.iter()
+        if x
+            return True
+
+    return False
+
+
+def show(x: T) -> String where T: Num
+    digits := Vector::new()
+
+    plusx := x as UInt
+    negative := False
+    if x < 0
+        plusx = -x as UInt
+        negative = True
+
+    while plusx != 0
+        digits.append((plusx % 10) as UInt8 + '0')
+        plusx /= 10
+
+    if digits.length() == 0
         return "0"
     else
         if negative
-            digits = digits.insert('-')
+            digits.append('-')
 
-        return String::fromList(digits)
-
-def showUInt(x: UInt) -> String
-    digits := []
-
-    while x != 0
-        digits = digits.insert((x % 10) as UInt8 + '0')
-        x /= 10
-
-    if digits.empty()
-        return "0"
-    else
-        return String::fromList(digits)
+        digits.reverse()
+        return digits.toArray()
 
 impl Int
     # Does not check for integer overflow
@@ -649,27 +756,6 @@ impl Hash for Int
 impl Hash for String
     def hash(self) -> UInt
         return strHash(self)
-
-
-## Default trait ##
-trait Default
-    def default() -> Self
-
-impl Default for T: Num
-    def default() -> T
-        return 0
-
-impl Default for [T]
-    def default() -> [T]
-        return []
-
-impl Default for String
-    def default() -> String
-        return ""
-
-impl Default for Bool
-    def default() -> Bool
-        return False
 
 
 ## Miscellaneous

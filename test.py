@@ -361,9 +361,6 @@ class TestAcceptance(object):
     def test_badCast1(self):
         self.run('badCast1', build_error='Error: testing/badCast1.spl:1:8: Cannot cast from type UInt to Array<UInt8>')
 
-    def test_badCast2(self):
-        self.run('badCast2', build_error=Regex('Error: testing/badCast2.spl:1:8: Cannot cast from type \'T\d+: Num to Int'))
-
     def test_typeConstraint(self):
         self.run('typeConstraint', build_error="Error: testing/typeConstraint.spl:5:3: Type Array<UInt8> is not an instance of trait Num")
 

@@ -1,6 +1,4 @@
 # Single Round Match 671 Round 1 - Division I, Level One
-import Vector
-
 struct Progress
     nonempty: Vector<Bool>
     closed: Vector<Bool>

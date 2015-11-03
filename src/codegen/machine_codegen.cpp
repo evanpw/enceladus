@@ -507,7 +507,7 @@ void MachineCodeGen::visit(ConditionalJumpInst* inst)
     }
     else if (inst->op == "!=")
     {
-        emit(Opcode::JNE, {}, {ifTrue});
+        opcode = Opcode::JNE;
     }
     else if (inst->op == ">=")
     {

@@ -29,7 +29,10 @@ def isSumOfTwo(y: Int, xs: Array<Int>) -> Bool
         if s == y
             return True
         elif s > y
-            j -= 1
+            if j == 0
+                return False
+            else
+                j -= 1
         else
             i += 1
 
