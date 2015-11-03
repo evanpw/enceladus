@@ -16,4 +16,4 @@ for i in range(2, n)
             maybePrime.set(j, False)
             j += i
 
-print $ showUInt(primeSum)
+println $ showUInt(primeSum)

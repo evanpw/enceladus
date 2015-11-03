@@ -1,2 +1,2 @@
 x := 150u8 + 150u8
-print $ showUInt $ x as UInt
+println $ showUInt $ x as UInt

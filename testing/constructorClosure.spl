@@ -1,4 +1,4 @@
 f := Pair
 p := f(1, 2)
 
-print $ show $ p.first() + p.second()
+println $ show $ p.first() + p.second()

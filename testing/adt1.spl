@@ -11,4 +11,4 @@ def extract(val: MyOption) -> Int
 
     return 0
 
-print $ show(extract(x) + extract(y))
+println $ show $ extract(x) + extract(y)

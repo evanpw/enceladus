@@ -8,4 +8,4 @@ result += -1 + 2
 # Order of operations
 result += 1 + 2 * 3
 
-print $ show(result)
+println $ show(result)

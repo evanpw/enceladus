@@ -3,4 +3,4 @@ def getFour() -> UInt
 
 x := getFour()
 y := x as UInt8
-print $ showUInt(y as UInt)
+println $ showUInt(y as UInt)

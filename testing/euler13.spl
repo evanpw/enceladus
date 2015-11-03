@@ -1,12 +1,20 @@
 # Solves Project Euler 13
-
 import BigInt
+import IO
+import String
 
 def readNumber() -> BigInt
     ys := []
 
-    for j in range(0, 50)
-        ys = ys.insert(read())
+    line := readLine()
+    pieces := line.unwrap().split()
+
+    assert pieces.length() == 50
+
+    # TODO: This would be better solved with map, but lambdas don't exist / work
+    # very well yet
+    for piece in pieces
+        ys = ys.insert(Int::fromString(piece).unwrap())
 
     return BigInt(ys)
 
@@ -18,4 +26,4 @@ n := 0
 for x in xs.digits().reverse().take(10)
     n = (n * 10) + x
 
-print $ show(n)
+println $ show(n)

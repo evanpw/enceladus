@@ -8,6 +8,6 @@ table.insert("Three", 3)
 
 match table.get("Two")
     Some(x)
-        print $ show(x)
+        println $ show(x)
     None
-        print $ "None"
+        println $ "None"

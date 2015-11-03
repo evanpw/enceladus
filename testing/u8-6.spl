@@ -2,19 +2,19 @@ x := 1u8
 y := 2u8
 
 if x < y
-    print $ "x < y"
+    println $ "x < y"
 
 if x <= y
-    print $ "x <= y"
+    println $ "x <= y"
 
 if x > y
-    print $ "x > y"
+    println $ "x > y"
 
 if x >= y
-    print $ "x >= y"
+    println $ "x >= y"
 
 if x == y
-    print $ "x == y"
+    println $ "x == y"
 
 if x != y
-    print $ "x != y"
+    println $ "x != y"

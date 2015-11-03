@@ -66,4 +66,4 @@ while current.year <= 2000
 
     current = current.increment()
 
-print $ show(dayCount)
+println $ show(dayCount)

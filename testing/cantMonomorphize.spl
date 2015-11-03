@@ -1,5 +1,5 @@
 xs := []
 if xs.empty()
-    print $ "Empty"
+    println $ "Empty"
 else
-    print $ "Not Empty"
+    println $ "Not Empty"

@@ -3,11 +3,11 @@ trait Trait1
 
 impl Trait1 for T
     def method1(self)
-        print $ "method1<T>"
+        println $ "method1<T>"
 
 impl Trait1 for Int
     def method1(self)
-        print $ "method1<Int>"
+        println $ "method1<Int>"
 
 def callMethod1(x: T) where T: Trait1
     x.method1()

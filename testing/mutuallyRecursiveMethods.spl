@@ -14,4 +14,4 @@ impl Test
             return self.f(x + 1)
 
 t := Test()
-print $ show $ t.f(10)
+println $ show $ t.f(10)

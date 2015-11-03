@@ -6,7 +6,7 @@ struct Test
 
 t := Test(1, 2, 3, 4)
 
-print $ show(t.x as Int)
-print $ show(t.y as Int)
-print $ show(t.z)
-print $ show(t.w as Int)
+println $ show(t.x as Int)
+println $ show(t.y as Int)
+println $ show(t.z)
+println $ show(t.w as Int)

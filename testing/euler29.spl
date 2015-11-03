@@ -11,4 +11,4 @@ for a in range(2, 101)
         values = values.insert(n.digits())
 
 values = uniquify(values)
-print $ showUInt $ values.length()
+println $ showUInt $ values.length()

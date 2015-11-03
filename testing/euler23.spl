@@ -58,5 +58,5 @@ for k in range(1, 28124)
     if not $ isSumOfTwo(k, abundants)
         total += k
 
-print $ show(total)
+println $ show(total)
 

@@ -6,4 +6,4 @@ for y in ys
     if y
         count += 1
 
-print $ show(count)
+println $ show(count)

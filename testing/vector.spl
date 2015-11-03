@@ -21,4 +21,4 @@ v2.append(False)
 if v2[0]
     total += 1
 
-print $ show(total)
+println $ show(total)

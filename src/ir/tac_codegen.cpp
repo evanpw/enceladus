@@ -966,7 +966,7 @@ void TACCodeGen::visit(AssertNode* node)
     auto location = node->location;
     std::string name = "__assertMessage" + std::to_string(counter++);
     std::stringstream contents;
-    contents << "*** Exception: Assertion failed at "
+    contents << "Assertion failed at "
              << location.filename << ":"
              << location.first_line << ":"
              << location.first_column;

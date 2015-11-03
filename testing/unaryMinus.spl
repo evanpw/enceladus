@@ -2,4 +2,4 @@ def plusOne(x: Int) -> Int
     return x + 1
 
 y := -plusOne(4)
-print $ show(y)
+println $ show(y)

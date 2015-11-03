@@ -47,4 +47,4 @@ vertical := allRuns(range(0, 20), range(0, 17), 0, 1)
 diagonal1 := allRuns(range(0, 17), range(0, 17), 1, 1)
 diagonal2 := allRuns(range(0, 17), range(3, 20), 1, -1)
 
-print $ showUInt $ maximum $ horizontal + vertical + diagonal1 + diagonal2
+println $ showUInt $ maximum $ horizontal + vertical + diagonal1 + diagonal2

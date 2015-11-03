@@ -44,4 +44,4 @@ for a in range(-1000, 1001)
             best = count
             bestProduct = a * b
 
-print $ show(bestProduct)
+println $ show(bestProduct)

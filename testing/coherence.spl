@@ -6,17 +6,17 @@ trait Trait2
 
 impl Trait2 for T: Trait1
     def method2(self)
-        print $ "method2<T: Trait1>"
+        println $ "method2<T: Trait1>"
 
 impl Trait2 for Int
     def method2(self)
-        print $ "method2<Int>"
+        println $ "method2<Int>"
 
 # After this impl, both of the two previous Trait2 impls apply to Int, breaking
 # coherence
 impl Trait1 for Int
     def method1(self)
-        print $ "method1<Int>"
+        println $ "method1<Int>"
 
 
 def callMethod2(x: T) where T: Trait2

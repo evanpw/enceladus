@@ -60,51 +60,6 @@ uint64_t strHash(String* s)
 
 //// I/O ///////////////////////////////////////////////////////////////////////
 
-int64_t read()
-{
-    int64_t result;
-    int n = scanf("%" PRId64, &result);
-    if (n != 1)
-    {
-        fail("*** Exception: Invalid input");
-    }
-
-    return result;
-}
-
-void* readLine()
-{
-    char* line = NULL;
-    size_t len = 0;
-
-    ssize_t read = getline(&line, &len, stdin);
-
-    if (read == -1)
-    {
-        return splcall0(None);
-    }
-    else
-    {
-        String* result = makeStr(line);
-        free(line);
-
-        return splcall1(Some, result);
-    }
-}
-
-void print(String* s)
-{
-    size_t n = strLength(s);
-
-    char* buffer = malloc(n + 1);
-    memcpy(buffer, strContent(s), n + 1);
-    buffer[n] = '\0';
-
-    printf("%s\n", buffer);
-
-    free(buffer);
-}
-
 void panic(String* s)
 {
     size_t n = strLength(s);

@@ -13,4 +13,4 @@ while pair{current} < 4000000
 
     pair = Pair{last = pair{current}, current = pair{current} + pair{last}}
 
-print $ show(total)
+println $ show(total)

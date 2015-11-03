@@ -1,5 +1,5 @@
 for x in [1, 2]
-    print $ show(x)
+    println $ show(x)
 
 for x in [3, 4]
-    print $ show(x)
+    println $ show(x)

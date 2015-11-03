@@ -3,6 +3,6 @@ x := MySome(4)
 
 match x
     MySome(a)
-        print $ show(a)
+        println $ show(a)
     MySome(b)
-        print $ show(b)
+        println $ show(b)

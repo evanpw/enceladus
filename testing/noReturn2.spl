@@ -1,5 +1,5 @@
 def shouldFail() -> Int
-    print $ "Hello"
+    println $ "Hello"
 
 x := shouldFail()
-print $ show(x)
+println $ show(x)

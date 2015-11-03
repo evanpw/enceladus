@@ -1,4 +1,4 @@
 def f(xs: [Int])
-    print $ show $ xs.head()
+    println $ show $ xs.head()
 
 f(["a", "b", "c"])

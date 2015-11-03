@@ -1,2 +1,2 @@
 arr := Array::make(10, 12345)
-print $ show(arr[0])
+println $ show(arr[0])

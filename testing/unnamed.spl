@@ -16,4 +16,4 @@ let MyPair(_, b) := y
 
 x += b
 
-print $ show(x)
+println $ show(x)

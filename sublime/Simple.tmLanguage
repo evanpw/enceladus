@@ -13,27 +13,6 @@
 	<key>patterns</key>
 	<array>
 		<dict>
-			<key>captures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>punctuation.definition.entity.simple</string>
-				</dict>
-				<key>2</key>
-				<dict>
-					<key>name</key>
-					<string>punctuation.definition.entity.simple</string>
-				</dict>
-			</dict>
-			<key>comment</key>
-			<string>In case this regex seems unusual for an infix operator, note that Simple allows any ordinary function application (elem 4 [1..10]) to be rewritten as an infix expression (4 `elem` [1..10]).</string>
-			<key>match</key>
-			<string>(`)[a-zA-Z_']*?(`)</string>
-			<key>name</key>
-			<string>keyword.operator.function.infix.simple</string>
-		</dict>
-		<dict>
 			<key>match</key>
 			<string>\[\]</string>
 			<key>name</key>
@@ -50,7 +29,7 @@
 				</dict>
 			</dict>
 			<key>match</key>
-			<string>\b(print|die|assert)\b</string>
+			<string>\b(print|println|die|assert)\b</string>
 		</dict>
 
 		<dict>

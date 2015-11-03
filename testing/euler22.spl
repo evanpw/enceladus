@@ -1,5 +1,5 @@
 # Solves Project Euler #22
-
+import IO
 import List
 import String
 
@@ -31,4 +31,4 @@ for i in range(0, names.length())
 
     total += ((i + 1) as Int) * score(name)
 
-print $ show(total)
+println $ show(total)

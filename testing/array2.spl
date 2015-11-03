@@ -3,4 +3,4 @@ arr := Array::make(100, 0)
 for i in range(0, 100)
     arr.set(i, i)
 
-print $ showUInt(arr[15])
+println $ showUInt(arr[15])

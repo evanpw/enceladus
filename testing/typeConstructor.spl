@@ -18,4 +18,4 @@ result += identity(3)
 if not $ identity(False)
     result += 1
 
-print $ show(result)
+println $ show(result)

@@ -19,4 +19,4 @@ def typeAssert(a: MyOption<Bool>)
 
 typeAssert(y)
 
-print $ show(isGood(x) + isGood(y) + isGood(z))
+println $ show $ isGood(x) + isGood(y) + isGood(z)

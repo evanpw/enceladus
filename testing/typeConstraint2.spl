@@ -1,8 +1,8 @@
 def add(x: T, y: T) -> T where T: Num
     return x + y
 
-print $ show $ add(1, 2)
-print $ showUInt $ add(3, 4)
+println $ show $ add(1, 2)
+println $ showUInt $ add(3, 4)
 
 data Nothing = Nothing
 
@@ -11,5 +11,5 @@ impl Nothing
         return lhs + rhs
 
 x := Nothing
-print $ show $ x.addTwoNumbers(5, 6)
-print $ showUInt $ x.addTwoNumbers(7, 8)
+println $ show $ x.addTwoNumbers(5, 6)
+println $ showUInt $ x.addTwoNumbers(7, 8)

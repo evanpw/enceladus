@@ -4,4 +4,4 @@ def apply(f: |T, T| -> T, x: T, y: T) -> T
 def add(a: Int, b: Int) -> Int
     return a + b
 
-print $ show $ apply(add, 7, 5)
+println $ show $ apply(add, 7, 5)

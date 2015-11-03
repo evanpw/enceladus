@@ -2,4 +2,4 @@ def getHead(x: T) -> Char where T: Iterator<Char>
     return x.head()
 
 i := "Hello World".iter()
-print $ show $ getHead(i) as Int
+println $ show $ getHead(i) as Int

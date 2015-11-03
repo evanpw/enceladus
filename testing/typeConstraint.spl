@@ -1,5 +1,5 @@
 def f(s: String)
-    print $ s
+    println $ s
 
 x := 4
 f(x)

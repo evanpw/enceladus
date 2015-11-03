@@ -4,6 +4,6 @@ a := Left(1)
 
 match a
     Left(x)
-        print $ show(x)
+        println $ show(x)
     Right(x)
-        print $ show(x)
+        println $ show(x)

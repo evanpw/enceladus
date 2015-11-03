@@ -8,16 +8,16 @@ oneFifty := getOneFifty()
 ten := getTen()
 
 result := oneFifty + oneFifty
-print $ showUInt(result as UInt)
+println $ showUInt(result as UInt)
 
 result = ten - oneFifty
-print $ showUInt(result as UInt)
+println $ showUInt(result as UInt)
 
 result = ten * oneFifty
-print $ showUInt(result as UInt)
+println $ showUInt(result as UInt)
 
 result = oneFifty / ten
-print $ showUInt(result as UInt)
+println $ showUInt(result as UInt)
 
 result = oneFifty % ten
-print $ showUInt(result as UInt)
+println $ showUInt(result as UInt)

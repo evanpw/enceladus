@@ -5,4 +5,4 @@ def divide(lhs: UInt, rhs: UInt) -> UInt
 # 18446744073709551615u has the same representation as -1
 # Signed division will yield -10 => 18446744073709551606L
 # Unsigned division will yield 0
-print $ showUInt $ divide(10u, 18446744073709551615u)
+println $ showUInt $ divide(10u, 18446744073709551615u)

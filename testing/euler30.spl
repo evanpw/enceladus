@@ -19,4 +19,4 @@ for i in range(2, top + 1)
     if i == digitPowerSum(i)
         total += i
 
-print $ show(total)
+println $ show(total)

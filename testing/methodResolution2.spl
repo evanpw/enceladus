@@ -1,5 +1,5 @@
 xs := []
 if not $ xs.empty()
-    print $ "Hello"
+    println $ "Hello"
 
 xs = xs.insert(1i)

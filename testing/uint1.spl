@@ -4,4 +4,4 @@ def f(x: UInt) -> UInt
 x := 18446744073709551615u
 drop $ f(x)
 
-print $ showUInt(x)
+println $ showUInt(x)

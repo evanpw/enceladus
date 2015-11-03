@@ -9,4 +9,4 @@ def only(value: T) -> [T]
 
     return ys
 
-print $ show $ only(4).head()
+println $ show $ only(4).head()

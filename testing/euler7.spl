@@ -20,4 +20,4 @@ forever
 
     x += 1
 
-print $ show(x)
+println $ show(x)

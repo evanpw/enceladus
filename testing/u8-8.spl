@@ -9,4 +9,4 @@ total := 0
 for i in range(0, v.size)
     total += v.at(i) as Int
 
-print $ show(total)
+println $ show(total)

@@ -3,6 +3,6 @@ impl Int
         return self == other
 
 if not $ 4.equal(5)
-    print $ "Different"
+    println $ "Different"
 else
-    print $ "Same"
+    println $ "Same"

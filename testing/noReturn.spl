@@ -8,7 +8,7 @@ def shouldNotFail(path: Bool) -> Int
 # Should this succeed?
 #def shouldNotFail2() -> Int
 #    forever
-#        print $ "Hello"
+#        println $ "Hello"
 
 x := shouldNotFail(True)
-print $ show(x)
+println $ show(x)

@@ -2,10 +2,10 @@ xs := [True]
 ys := [4, 3]
 
 if xs.head()
-    print $ show $ ys.head()
+    println $ show $ ys.head()
 else
     if xs.tail().empty()
-        print $ show $ ys.tail().head()
+        println $ show $ ys.tail().head()
     else
-        print $ show(-1)
+        println $ show(-1)
 

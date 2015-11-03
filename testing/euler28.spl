@@ -45,4 +45,4 @@ while 2 * n + 1 <= 1001
 
     n += 1
 
-print $ show(total)
+println $ show(total)

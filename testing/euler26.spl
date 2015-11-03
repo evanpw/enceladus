@@ -59,4 +59,4 @@ for d in range(2, 1000)
         longest = period
         longestIndex = d
 
-print $ show(longestIndex)
+println $ show(longestIndex)

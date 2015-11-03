@@ -14,4 +14,4 @@ ys := [True, False, True]
 if ys.myAt(2)
     result += 1
 
-print $ show(result)
+println $ show(result)

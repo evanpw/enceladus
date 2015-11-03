@@ -188,9 +188,17 @@ impl Option<T>
                 return other
 
 ## I/O functions
-foreign read() -> Int
-foreign readLine() -> Option<String>
-foreign print(msg: String)
+foreign putchar(c: Char)
+
+def print(s: String)
+    for c in s.iter()
+        putchar(c)
+
+def println(s: String)
+    for c in s.iter()
+        putchar(c)
+
+    putchar(10) # '\n'
 
 # HACK: Make sure these constructors exist for the C library to use
 neverUsed := Some("Hello")
@@ -335,6 +343,41 @@ def showUInt(x: UInt) -> String
         return "0"
     else
         return String::fromList(digits)
+
+impl Int
+    # Does not check for integer overflow
+    def fromString(s: String) -> Option<Int>
+        if s.length() == 0
+            return None
+
+        start := 0
+        negative := False
+        limit := 9223372036854775807
+
+        if s[0] == '-'
+            start = 1
+            negative = True
+            limit = 9223372036854775808
+
+        result := 0
+        for i in range(start, s.length())
+            c := s[i]
+            if c >= '0' and c <= '9'
+                digit := (c - '0') as UInt
+
+                # Check for overflow
+                if result > (limit - digit) / 10
+                    return None
+
+                result *= 10
+                result += digit
+            else
+                return None
+
+        if negative
+            result = -result
+
+        return Some(result as Int)
 
 
 ## Native-language standard library

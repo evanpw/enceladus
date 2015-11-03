@@ -3,8 +3,8 @@ struct Test
 
 x := Test(4)
 
-print $ show(x.value)
+println $ show(x.value)
 
 x.value = 5
 
-print $ show(x.value)
+println $ show(x.value)

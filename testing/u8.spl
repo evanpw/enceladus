@@ -1,2 +1,2 @@
 x := 10u8
-print $ showUInt(x as UInt)
+println $ showUInt(x as UInt)

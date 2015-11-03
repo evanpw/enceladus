@@ -4,4 +4,4 @@ def changeIt()
     x += 10
 
 changeIt()
-print $ showUInt(x as UInt)
+println $ showUInt(x as UInt)

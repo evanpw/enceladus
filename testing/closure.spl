@@ -11,4 +11,4 @@ result += f(2)
 result += applyToOne(addOne)
 result += applyToOne(f)
 
-print $ show(result)
+println $ show(result)

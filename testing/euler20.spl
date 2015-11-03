@@ -6,4 +6,4 @@ x := toBigInt(1)
 for i in range(2, 101)
     x = x.timesInt(i)
 
-print $ show $ sum(x.digits())
+println $ show $ sum $ x.digits()

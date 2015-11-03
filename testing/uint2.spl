@@ -5,4 +5,4 @@ x *= 4u
 x /= 2u
 x = x % 5u
 
-print $ showUInt(x)
+println $ showUInt(x)

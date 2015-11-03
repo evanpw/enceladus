@@ -13,4 +13,4 @@ while current.digits().length() < 1000
 
     index += 1
 
-print $ show(index)
+println $ show(index)

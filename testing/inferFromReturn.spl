@@ -2,4 +2,4 @@ def none() -> Option<S>
     return None
 
 x := none()
-print $ x.unwrapOr("Test")
+println $ x.unwrapOr("Test")

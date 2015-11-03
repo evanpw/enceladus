@@ -60,4 +60,4 @@ def firstNumber(m: Int) -> Int
 
         i += 1
 
-print $ show $ firstNumber(500)
+println $ show $ firstNumber(500)

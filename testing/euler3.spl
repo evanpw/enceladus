@@ -22,4 +22,4 @@ while i * i <= n
 
 	i += 1
 
-print $ show(biggest)
+println $ show(biggest)

@@ -4,4 +4,4 @@ def f() -> Int
     x := 2
     return x
 
-print $ show $ x + f()
+println $ show $ x + f()

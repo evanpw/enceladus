@@ -23,4 +23,4 @@ for n in range(2, 1000001)
         best = n
         longest = newLength
 
-print $ show(best)
+println $ show(best)

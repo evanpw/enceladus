@@ -47,6 +47,9 @@ impl Vector<T>
     def iter(self) -> VectorIterator<T>
         return VectorIterator(self, 0)
 
+    def length(self) -> UInt
+        return self.size
+
 impl Index<UInt, T> for Vector<T>
     def at(self, n: UInt) -> T
         return self.content[n]
@@ -75,3 +78,12 @@ def any(xs: Vector<Bool>) -> Bool
             return True
 
     return False
+
+impl String
+    def fromVector(v: Vector<Char>) -> String
+        result := unsafeMakeArray(v.size)
+
+        for i in range(0, v.size)
+            result.set(i, v.content[i])
+
+        return result

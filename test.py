@@ -227,16 +227,16 @@ class TestAcceptance(object):
         self.run('mainStackRoots', result='1')
 
     def test_scopes1(self):
-        self.run('scopes1', build_error='Error: testing/scopes1.spl:4:14: symbol `x` is not defined in this scope')
+        self.run('scopes1', build_error='Error: testing/scopes1.spl:4:16: symbol `x` is not defined in this scope')
 
     def test_scopes2(self):
-        self.run('scopes2', build_error='Error: testing/scopes2.spl:6:14: symbol `x` is not defined in this scope')
+        self.run('scopes2', build_error='Error: testing/scopes2.spl:6:16: symbol `x` is not defined in this scope')
 
     def test_scopes3(self):
-        self.run('scopes3', build_error='Error: testing/scopes3.spl:4:14: symbol `x` is not defined in this scope')
+        self.run('scopes3', build_error='Error: testing/scopes3.spl:4:16: symbol `x` is not defined in this scope')
 
     def test_scopes4(self):
-        self.run('scopes4', build_error='Error: testing/scopes4.spl:5:14: symbol `x` is not defined in this scope')
+        self.run('scopes4', build_error='Error: testing/scopes4.spl:5:16: symbol `x` is not defined in this scope')
 
     def test_scopes5(self):
         self.run('scopes5', result='1')
@@ -497,13 +497,13 @@ class TestAcceptance(object):
         self.run('inferTypeVars2', build_error='Error: testing/inferTypeVars2.spl:3:37: Type variable `S` is not defined')
 
     def test_repeatedConstraint(self):
-        self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.spl:3:17: cannot unify types T: Num and Array<UInt8>')
+        self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.spl:3:19: cannot unify types T: Num and Array<UInt8>')
 
     def test_repeatedConstraint2(self):
         self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.spl:1:1: can\'t add constraint `Iterator<Array<UInt8>>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
 
     def test_repeatedConstraint3(self):
-        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:17: cannot unify types [T: Iterator<T>] and Array<UInt8>')
+        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:19: cannot unify types [T: Iterator<T>] and Array<UInt8>')
 
     def test_repeatedConstraint4(self):
         self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.spl:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')

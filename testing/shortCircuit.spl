@@ -1,9 +1,9 @@
 def f() -> Bool
-    print $ "Hello"
+    println $ "Hello"
     return True
 
 def g() -> Bool
-    print $ "World"
+    println $ "World"
     return False
 
 x := f() or g()

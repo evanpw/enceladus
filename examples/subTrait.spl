@@ -6,11 +6,11 @@ trait Trait2
 
 impl Trait2 for T: Trait1
     def method2(self)
-        print $ "method2"
+        println $ "method2"
 
 impl Trait1 for Int
     def method1(self)
-        print $ "method1"
+        println $ "method1"
 
 
 def indirectCall(x: T) where T: Trait1

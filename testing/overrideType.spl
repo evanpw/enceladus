@@ -1,4 +1,4 @@
 def f(x: T) -> T
     return x + 1234
 
-print $ show $ f(8)
+println $ show $ f(8)

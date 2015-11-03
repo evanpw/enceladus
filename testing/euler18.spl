@@ -1,5 +1,5 @@
 # Solves Project Euler 18
-
+import IO
 import String
 
 def readInput() -> [[Int]]
@@ -35,4 +35,4 @@ def bestRouteFrom(x: UInt, y: UInt, pyramid: [[Int]]) -> Int
 
         return max(left, right) + here
 
-print $ show $ bestRouteFrom(0, 0, readInput())
+println $ show $ bestRouteFrom(0, 0, readInput())

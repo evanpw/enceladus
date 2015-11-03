@@ -3,4 +3,4 @@ y := Pair(x, x)
 
 let Pair(a, b) := y
 
-print $ show(sum(a) + sum(b))
+println $ show(sum(a) + sum(b))

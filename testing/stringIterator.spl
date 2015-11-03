@@ -4,4 +4,4 @@ total := 0
 for c in messages.iter()
     total += c as Int
 
-print $ show(total)
+println $ show(total)

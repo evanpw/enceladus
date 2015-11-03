@@ -6,5 +6,5 @@ struct Location
     name: String
     country: String
 
-print $ show $ Person("Evan", 30).age
-print $ Location("Eiffel Tower", "France").country
+println $ show $ Person("Evan", 30).age
+println $ Location("Eiffel Tower", "France").country

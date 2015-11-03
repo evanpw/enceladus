@@ -6,4 +6,4 @@ def doSomething(test: Test) -> Int
     return test.left + test.right
 
 test := Test(3, 4)
-print $ show $ doSomething(test)
+println $ show $ doSomething(test)

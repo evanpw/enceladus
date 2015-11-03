@@ -3,4 +3,4 @@ x := 10
 def addX(y: Int) -> Int
     return x + y
 
-print $ show $ addX(5)
+println $ show $ addX(5)

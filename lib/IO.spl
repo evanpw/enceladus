@@ -1,0 +1,28 @@
+import Vector
+
+foreign getchar() -> Int    # Really should be Int32
+
+def readChar() -> Option<Char>
+    c := getchar()
+
+    if c == 4294967295 # -1 as a 32-bit integer
+        return None
+    else
+        return Some(c as Char)
+
+def readLine() -> Option<String>
+    v := Vector::new()
+
+    forever
+        match readChar()
+            Some(c)
+                v.append(c)
+                if c == 10 # '\n'
+                    break
+            None
+                break
+
+    if v.length() == 0
+        return None
+    else
+        return Some $ String::fromVector(v)

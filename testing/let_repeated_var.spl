@@ -6,4 +6,4 @@ forever
     let Only(x) := Only(x + 1)
     break
 
-print $ show(x)
+println $ show(x)

@@ -1,2 +1,2 @@
 arr := Array::make(10, "Hello")
-print $ arr[5]
+println $ arr[5]

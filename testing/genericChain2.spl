@@ -4,4 +4,4 @@ def g(x: T) -> T
 def f(x: T) -> T
     return g(x)
 
-print $ show $ f(4)
+println $ show $ f(4)

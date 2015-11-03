@@ -2,4 +2,4 @@ def getTen() -> UInt8
     return 10u8
 
 x := getTen()
-print $ showUInt(x as UInt)
+println $ showUInt(x as UInt)

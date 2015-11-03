@@ -11,6 +11,6 @@ n := ys.head()
 zs := [True, True, True, False, False, False]
 us := mydrop(n, zs)
 if us.head()
-   print $ "True"
+   println $ "True"
 else
-   print $ "False"
+   println $ "False"

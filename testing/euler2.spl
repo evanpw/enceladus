@@ -15,4 +15,4 @@ while current < 4000000
 	last = current
 	current = next
 
-print $ show(total)
+println $ show(total)
