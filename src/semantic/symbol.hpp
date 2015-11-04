@@ -81,7 +81,7 @@ protected:
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
 };
 
-struct MemberVarSymbol;
+class MemberVarSymbol;
 
 class ConstructorSymbol : public FunctionSymbol
 {
@@ -149,7 +149,7 @@ protected:
     MethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType);
 };
 
-struct TraitMethodSymbol : public MemberSymbol
+class TraitMethodSymbol : public MemberSymbol
 {
 public:
     virtual bool isTraitMethod() { return true; }
@@ -161,7 +161,7 @@ private:
     TraitMethodSymbol(const std::string& name, AstNode* node, TraitSymbol* traitSymbol);
 };
 
-struct MemberVarSymbol : public MemberSymbol
+class MemberVarSymbol : public MemberSymbol
 {
 public:
     ConstructorSymbol* constructorSymbol = nullptr;
