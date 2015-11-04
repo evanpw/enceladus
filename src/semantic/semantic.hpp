@@ -76,6 +76,8 @@ public:
     virtual void visit(TraitMethodNode* node);
 
 private:
+    friend class LValueAnalyzer;
+
     //// General semantic analysis /////////////////////////////////////////////
     FunctionSymbol* createBuiltin(const std::string& name);
     FunctionSymbol* createExternal(const std::string& name);
@@ -116,6 +118,23 @@ private:
     TraitDefNode* _enclosingTraitDef;
 
     ReturnChecker _returnChecker;
+};
+
+class LValueAnalyzer : public AstVisitor
+{
+public:
+    LValueAnalyzer(SemanticAnalyzer* mainAnalyzer)
+    : _mainAnalyzer(mainAnalyzer)
+    {}
+
+    virtual void visit(NullaryNode* node);
+    virtual void visit(MemberAccessNode* node);
+
+    bool good() const { return _good; }
+
+private:
+    bool _good = false;
+    SemanticAnalyzer* _mainAnalyzer;
 };
 
 class TypeInferenceError : public std::exception

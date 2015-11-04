@@ -296,7 +296,7 @@ class TestAcceptance(object):
         self.run('vector', result='37')
 
     def test_assignToFunction(self):
-        self.run('assignToFunction', build_error='Error: testing/assignToFunction.spl:4:1: symbol `f` is not a variable')
+        self.run('assignToFunction', build_error='Error: testing/assignToFunction.spl:4:1: left-hand side of assignment statement is not an lvalue')
 
     def test_mutateStruct(self):
         self.run('mutateStruct', result='4\n5')

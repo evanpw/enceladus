@@ -29,39 +29,10 @@ private:
     std::string _description;
 };
 
-class TACConditionalCodeGen : public AstVisitor
+class TACConditionalCodeGen : public SparseAstVisitor
 {
 public:
     TACConditionalCodeGen(TACCodeGen* mainCodeGen);
-
-    UNSUPPORTED(AssertNode);
-    UNSUPPORTED(AssignNode);
-    UNSUPPORTED(BinopNode);
-    UNSUPPORTED(BlockNode);
-    UNSUPPORTED(BreakNode);
-    UNSUPPORTED(ContinueNode);
-    UNSUPPORTED(CastNode);
-    UNSUPPORTED(DataDeclaration);
-    UNSUPPORTED(ForNode);
-    UNSUPPORTED(ForeverNode);
-    UNSUPPORTED(FunctionDefNode);
-    UNSUPPORTED(IfElseNode);
-    UNSUPPORTED(IfNode);
-    UNSUPPORTED(ImplNode);
-    UNSUPPORTED(IntNode);
-    UNSUPPORTED(LetNode);
-    UNSUPPORTED(MatchArm);
-    UNSUPPORTED(MatchNode);
-    UNSUPPORTED(MemberDefNode);
-    UNSUPPORTED(MethodDefNode);
-    UNSUPPORTED(PassNode);
-    UNSUPPORTED(ProgramNode);
-    UNSUPPORTED(ReturnNode);
-    UNSUPPORTED(StringLiteralNode);
-    UNSUPPORTED(StructDefNode);
-    UNSUPPORTED(TypeAliasNode);
-    UNSUPPORTED(VariableDefNode);
-    UNSUPPORTED(WhileNode);
 
     virtual void visit(BoolNode* node) { wrapper(node); }
     virtual void visit(MemberAccessNode* node) { wrapper(node); }
@@ -105,6 +76,21 @@ private:
 
     TACCodeGen* _mainCodeGen;
     TACContext* _context;
+};
+
+class TACAssignmentCodeGen : public SparseAstVisitor
+{
+public:
+    TACAssignmentCodeGen(TACCodeGen* mainCG, Value* value)
+    : _mainCG(mainCG), _value(value)
+    {}
+
+    virtual void visit(NullaryNode* node);
+    virtual void visit(MemberAccessNode* node);
+
+private:
+    TACCodeGen* _mainCG;
+    Value* _value;
 };
 
 class TACCodeGen : public AstVisitor
@@ -158,6 +144,8 @@ private:
     void builtin_unsafeMakeArray(Type* functionType);
 
 private:
+    friend class TACAssignmentCodeGen;
+
     // We cache the Value corresponding to each symbol so that the value
     // uniquely identifies a location
     std::unordered_map<const Symbol*, Value*> _globalNames;

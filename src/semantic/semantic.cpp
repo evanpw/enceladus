@@ -811,31 +811,42 @@ void SemanticAnalyzer::visit(LetNode* node)
 
 void SemanticAnalyzer::visit(AssignNode* node)
 {
-    node->lhs->accept(this);
+    LValueAnalyzer lvalueAnalyzer(this);
+    node->lhs->accept(&lvalueAnalyzer);
 
-    Symbol* symbol;
-    if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
-    {
-        symbol = lhs->symbol;
-    }
-    else if (MemberAccessNode* lhs = dynamic_cast<MemberAccessNode*>(node->lhs))
-    {
-        symbol = lhs->symbol;
-    }
-    else
+    if (!lvalueAnalyzer.good())
     {
         semanticError(node->location, "left-hand side of assignment statement is not an lvalue");
         return;
     }
-
-    CHECK(symbol->kind == kVariable || symbol->kind == kMemberVar, "symbol `{}` is not a variable", symbol->name);
-    node->symbol = symbol;
 
 	node->rhs->accept(this);
 
     unify(node->lhs->type, node->rhs->type, node);
 
     node->type = _typeTable->Unit;
+}
+
+void LValueAnalyzer::visit(NullaryNode* node)
+{
+    const std::string& name = node->name;
+
+    Symbol* symbol = _mainAnalyzer->resolveSymbol(name);
+    CHECK(symbol, "symbol `{}` is not defined in this scope. Did you mean to define it here?", name);
+
+    if (symbol->kind != kVariable)
+        return;
+
+    node->symbol = symbol;
+    node->type = symbol->type;
+    node->kind = NullaryNode::VARIABLE;
+    _good = true;
+}
+
+void LValueAnalyzer::visit(MemberAccessNode* node)
+{
+    node->accept(_mainAnalyzer);
+    _good = true;
 }
 
 void SemanticAnalyzer::visit(FunctionCallNode* node)

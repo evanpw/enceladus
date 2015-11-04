@@ -443,9 +443,6 @@ public:
 
 	ExpressionNode* lhs;
 	ExpressionNode* rhs;
-
-	// Annotations
-	Symbol* symbol = nullptr;
 };
 
 class VariableDefNode : public StatementNode

@@ -1,6 +1,7 @@
 #ifndef AST_VISITOR_HPP
 #define AST_VISITOR_HPP
 
+#include <cassert>
 #include <vector>
 
 class AssertNode;
@@ -95,6 +96,52 @@ public:
 	virtual void visit(TraitMethodNode* node) {}
 	virtual void visit(TypeAliasNode* node) {}
 	virtual void visit(TypeName* node) {}
+};
+
+class SparseAstVisitor : public AstVisitor
+{
+public:
+	UNSUPPORTED(AssertNode);
+	UNSUPPORTED(AssignNode);
+	UNSUPPORTED(BinopNode);
+	UNSUPPORTED(BlockNode);
+	UNSUPPORTED(BoolNode);
+	UNSUPPORTED(BreakNode);
+	UNSUPPORTED(CastNode);
+	UNSUPPORTED(ComparisonNode);
+	UNSUPPORTED(ConstructorSpec);
+	UNSUPPORTED(ContinueNode);
+	UNSUPPORTED(DataDeclaration);
+	UNSUPPORTED(ForeignDeclNode);
+	UNSUPPORTED(ForeverNode);
+	UNSUPPORTED(ForNode);
+	UNSUPPORTED(FunctionCallNode);
+	UNSUPPORTED(FunctionDefNode);
+	UNSUPPORTED(IfElseNode);
+	UNSUPPORTED(IfNode);
+	UNSUPPORTED(ImplNode);
+	UNSUPPORTED(IndexNode);
+	UNSUPPORTED(IntNode);
+	UNSUPPORTED(LetNode);
+	UNSUPPORTED(LogicalNode);
+	UNSUPPORTED(MatchArm);
+	UNSUPPORTED(MatchNode);
+	UNSUPPORTED(MemberAccessNode);
+	UNSUPPORTED(MemberDefNode);
+	UNSUPPORTED(MethodCallNode);
+	UNSUPPORTED(MethodDefNode);
+	UNSUPPORTED(NullaryNode);
+	UNSUPPORTED(PassNode);
+	UNSUPPORTED(ProgramNode);
+	UNSUPPORTED(ReturnNode);
+	UNSUPPORTED(StringLiteralNode);
+	UNSUPPORTED(StructDefNode);
+	UNSUPPORTED(TraitDefNode);
+	UNSUPPORTED(TraitMethodNode);
+	UNSUPPORTED(TypeAliasNode);
+	UNSUPPORTED(TypeName);
+	UNSUPPORTED(VariableDefNode);
+	UNSUPPORTED(WhileNode);
 };
 
 #endif

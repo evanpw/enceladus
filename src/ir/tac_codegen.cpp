@@ -1132,26 +1132,29 @@ void TACCodeGen::visit(AssignNode* node)
 {
     Value* value = visitAndGet(node->rhs);
 
-    // TODO: Is there a less-hacky way of doing this?
-    Symbol* symbol;
-    if (NullaryNode* lhs = dynamic_cast<NullaryNode*>(node->lhs))
-    {
-        Value* dest = getValue(lhs->symbol);
-        emit(new StoreInst(dest, value));
-    }
-    else if (MemberAccessNode* lhs = dynamic_cast<MemberAccessNode*>(node->lhs))
-    {
-        lhs->object->accept(this);
+    TACAssignmentCodeGen assignCG(this, value);
+    node->lhs->accept(&assignCG);
+}
 
-        Value* structure = lhs->object->value;
+void TACAssignmentCodeGen::visit(NullaryNode* node)
+{
+    Symbol* symbol = node->symbol;
+    assert(symbol->kind == kVariable);
 
-        std::vector<size_t> layout = getConstructorLayout(lhs->constructorSymbol, lhs, lhs->typeAssignment);
-        emit(new IndexedStoreInst(structure, _context->createConstantInt(ValueType::U64, sizeof(SplObject) + 8 * layout[lhs->memberIndex]), value));
-    }
-    else
-    {
-        assert(false);
-    }
+    Value* dest = _mainCG->getValue(symbol);
+    _mainCG->emit(new StoreInst(dest, _value));
+}
+
+void TACAssignmentCodeGen::visit(MemberAccessNode* node)
+{
+    node->object->accept(_mainCG);
+
+    Value* structure = node->object->value;
+
+    std::vector<size_t> layout = _mainCG->getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
+    uint64_t offsetInt = sizeof(SplObject) + 8 * layout[node->memberIndex];
+    Value* offset = _mainCG->_context->createConstantInt(ValueType::U64, offsetInt);
+    _mainCG->emit(new IndexedStoreInst(structure, offset, _value));
 }
 
 void TACCodeGen::visit(VariableDefNode* node)
