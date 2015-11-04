@@ -28,6 +28,7 @@ statement
     | variable_declaration
     | while_statement
     | break_statement
+    | continue_statement
     | pass_statement
     | implementation_block
     | assign_or_expr
@@ -81,7 +82,7 @@ match_arm
     : UIDENT parameters ( '=>' statement | EOL INDENT statement_list DEDENT)
 
 return_statement
-    : RETURN expression EOL
+    : RETURN [ expression ] EOL
 
 struct_declaration
     : STRUCT UIDENT constrained_type_params '=' members
@@ -94,6 +95,9 @@ while_statement
 
 break_statement
     : BREAK EOL
+
+continue_statement
+    : CONTINUE EOL
 
 implementation_block
     : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]

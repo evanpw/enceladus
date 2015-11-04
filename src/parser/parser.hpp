@@ -39,6 +39,7 @@ private:
     StatementNode* assign_or_expr();
     VariableDefNode* variable_declaration();
     BreakNode* break_statement();
+    ContinueNode* continue_statement();
     ImplNode* implementation_block();
     MethodDefNode* method_definition();
     TraitDefNode* trait_definition();

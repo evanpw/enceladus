@@ -232,6 +232,13 @@ impl Iterator<T> for List<T>
             Nil
                 return True
 
+def reversed(iter: S) -> List<T> where S: Iterator<T>
+    xs := []
+    for x in iter
+        xs = xs.insert(x)
+
+    return xs
+
 impl Index<UInt, T> for List<T>
     def at(self, n: UInt) -> T
         xs := self

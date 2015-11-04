@@ -421,6 +421,16 @@ public:
 	AST_VISITABLE();
 };
 
+class ContinueNode : public StatementNode
+{
+public:
+	ContinueNode(AstContext* context, const YYLTYPE& location)
+	: StatementNode(context, location)
+	{}
+
+	AST_VISITABLE();
+};
+
 class AssignNode : public StatementNode
 {
 public:
@@ -649,7 +659,7 @@ public:
 class ReturnNode : public StatementNode
 {
 public:
-	ReturnNode(AstContext* context, const YYLTYPE& location, ExpressionNode* expression)
+	ReturnNode(AstContext* context, const YYLTYPE& location, ExpressionNode* expression = nullptr)
 	: StatementNode(context, location), expression(expression)
 	{}
 

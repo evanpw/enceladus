@@ -572,12 +572,9 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	const std::string& name = node->name;
     CHECK_UNDEFINED(name);
 
-    // Create type variables for each type parameter
-    std::unordered_map<std::string, Type*> typeContext;
-    resolveTypeParams(node, node->typeParams, typeContext);
-
-    pushTypeContext(std::move(typeContext));
+    pushTypeContext();
     resolveTypeName(node->typeName, true);
+    resolveWhereClause(node, node->typeParams);
 
     Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();
@@ -1237,6 +1234,12 @@ void SemanticAnalyzer::visit(BreakNode* node)
     node->type = _typeTable->Unit;
 }
 
+void SemanticAnalyzer::visit(ContinueNode* node)
+{
+    CHECK(_enclosingLoop, "continue statement must be within a loop");
+    node->type = _typeTable->Unit;
+}
+
 void SemanticAnalyzer::visit(IntNode* node)
 {
     if (node->suffix == "u")
@@ -1283,15 +1286,20 @@ void SemanticAnalyzer::visit(ReturnNode* node)
 {
     CHECK(_enclosingFunction, "Cannot return from top level");
 
-    node->expression->accept(this);
-
     Type* type = _enclosingFunction->symbol->type;
-    assert(type->tag() == ttFunction);
-
-    // Value of expression must equal the return type of the enclosing function.
     FunctionType* functionType = type->get<FunctionType>();
+    assert(functionType);
 
-    unify(node->expression->type, functionType->output(), node);
+    if (node->expression)
+    {
+        node->expression->accept(this);
+        unify(node->expression->type, functionType->output(), node);
+    }
+    else
+    {
+        unify(_typeTable->Unit, functionType->output(), node);
+    }
+
     node->type = _typeTable->Unit;
 }
 
@@ -1567,8 +1575,6 @@ void SemanticAnalyzer::visit(ImplNode* node)
     }
 
     resolveTypeName(node->typeName, true);
-
-    // Handle the additional constraints imposed by the where clause
     resolveWhereClause(node, node->typeParams);
 
     // Don't allow extraneous type variables, like this:
@@ -1656,14 +1662,13 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         CHECK(!_enclosingFunction, "methods cannot be nested");
         CHECK(_enclosingImplNode, "methods can only appear inside impl blocks");
 
-        // Create type variables for each type parameter
-        std::unordered_map<std::string, Type*> typeContext = _enclosingImplNode->typeContext;
         Type* Self = _enclosingImplNode->typeName->type;
+        TypeContext typeContext;
         typeContext["Self"] = Self;
-        resolveTypeParams(node, node->typeParams, typeContext);
 
         pushTypeContext(std::move(typeContext));
         resolveTypeName(node->typeName, true);
+        resolveWhereClause(node, node->typeParams);
 
         std::vector<MemberSymbol*> symbols;
         _symbolTable->resolveMemberSymbol(node->name, Self, symbols);

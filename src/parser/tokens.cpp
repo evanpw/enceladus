@@ -16,6 +16,8 @@ std::string tokenToString(TokenType t)
         return "`break`";
     case tCOLON_EQUAL:
         return "`:=`";
+    case tCONTINUE:
+        return "`continue`";
     case tDARROW:
         return "`=>`";
     case tDATA:

@@ -194,6 +194,7 @@ extern "C" int yywrap()
 "assert"    { return tASSERT; }
 "as"        { return tAS; }
 "break"     { return tBREAK; }
+"continue"  { return tCONTINUE; }
 "data"      { return tDATA; }
 "def"       { return tDEF; }
 "import"    { BEGIN(import); }

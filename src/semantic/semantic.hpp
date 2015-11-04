@@ -66,6 +66,7 @@ public:
     // Leaf nodes
     virtual void visit(BoolNode* node);
     virtual void visit(BreakNode* node);
+    virtual void visit(ContinueNode* node);
     virtual void visit(IntNode* node);
     virtual void visit(MemberDefNode* node);
     virtual void visit(NullaryNode* node);

@@ -12,11 +12,12 @@ class BreakNode;
 class CastNode;
 class ComparisonNode;
 class ConstructorSpec;
+class ContinueNode;
 class DataDeclaration;
 class ExternalFunctionCallNode;
-class ForNode;
 class ForeignDeclNode;
 class ForeverNode;
+class ForNode;
 class FunctionCallNode;
 class FunctionDefNode;
 class IfElseNode;
@@ -84,6 +85,7 @@ public:
 	virtual void visit(BoolNode* node) {}
 	virtual void visit(BreakNode* node) {}
 	virtual void visit(ConstructorSpec* node) {}
+	virtual void visit(ContinueNode* node) {}
 	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}
 	virtual void visit(MemberDefNode* node) {}

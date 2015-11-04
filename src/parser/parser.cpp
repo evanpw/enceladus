@@ -156,6 +156,9 @@ StatementNode* Parser::statement()
     case tBREAK:
         return break_statement();
 
+    case tCONTINUE:
+        return continue_statement();
+
     case tIMPL:
         return implementation_block();
 
@@ -383,15 +386,24 @@ MatchArm* Parser::match_arm()
     }
 }
 
+/// return_statement
+///     : RETURN [ expression ] EOL
 ReturnNode* Parser::return_statement()
 {
     YYLTYPE location = getLocation();
 
     expect(tRETURN);
-    ExpressionNode* value = expression();
-    expect(tEOL);
 
-    return new ReturnNode(_context, location, value);
+    if (accept(tEOL))
+    {
+        return new ReturnNode(_context, location);
+    }
+    else
+    {
+        ExpressionNode* value = expression();
+        expect(tEOL);
+        return new ReturnNode(_context, location, value);
+    }
 }
 
 /// struct_declaration
@@ -509,6 +521,16 @@ BreakNode* Parser::break_statement()
     expect(tEOL);
 
     return new BreakNode(_context, location);
+}
+
+ContinueNode* Parser::continue_statement()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tCONTINUE);
+    expect(tEOL);
+
+    return new ContinueNode(_context, location);
 }
 
 /// implementation_block
@@ -1412,7 +1434,7 @@ ExpressionNode* Parser::unary_expression()
         std::stringstream ss;
 
         ss << location.filename << ":" << location.first_line << ":" << location.first_column
-           << ": token " << tokenToString(peekType()) << " cannot start a unary expression.";
+           << ": expected expression but got " << tokenToString(peekType());
 
         throw LexerError(ss.str());
     }

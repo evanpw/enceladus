@@ -1,0 +1,89 @@
+# Brainfuck interpreter
+# see https://en.wikipedia.org/wiki/Brainfuck
+import IO
+
+
+struct State
+    memory: Array<UInt8>
+    dp: UInt
+    ip: UInt
+
+
+impl State
+    def new(memSize: UInt) -> State
+        arr := Array::make(memSize, 0)
+        return State(arr, 0, 0)
+
+
+def step(state: State, program: String)
+    c := program[state.ip]
+
+    if c == '>'
+        state.dp = (state.dp + 1) % state.memory.length()
+
+    elif c == '<'
+        state.dp -= 1
+
+        if state.dp < 0
+            state.dp += state.memory.length()
+
+    elif c == '+'
+        state.memory.set(state.dp, state.memory[state.dp] + 1)
+
+    elif c == '-'
+        state.memory.set(state.dp, state.memory[state.dp] - 1)
+
+    elif c == '.'
+        putchar(state.memory[state.dp])
+
+    elif c == ','
+        state.memory.set(state.dp, readChar().unwrap())
+
+    elif c == '['
+        if state.memory[state.dp] == 0
+
+            matchingBracket := 0
+            nesting := 1
+
+            for i in range(state.ip + 1, program.length())
+                if program[i] == '['
+                    nesting += 1
+
+                elif program[i] == ']'
+                    nesting -= 1
+                    if nesting == 0
+                        matchingBracket = i
+                        break
+
+            assert nesting == 0
+            state.ip = matchingBracket + 1
+            return
+
+    elif c == ']'
+        if state.memory[state.dp] != 0
+
+            matchingBracket := 0
+            nesting := 1
+
+            for i in reversed(range(0, state.ip - 1))
+                if program[i] == ']'
+                    nesting += 1
+
+                elif program[i] == '['
+                    nesting -= 1
+                    if nesting == 0
+                        matchingBracket = i
+                        break
+
+            assert nesting == 0
+            state.ip = matchingBracket + 1
+            return
+
+    state.ip += 1
+
+
+program := readAll()
+state := State::new(30000)
+
+while state.ip < program.length()
+    step(state, program)

@@ -39,6 +39,7 @@ public:
     UNSUPPORTED(BinopNode);
     UNSUPPORTED(BlockNode);
     UNSUPPORTED(BreakNode);
+    UNSUPPORTED(ContinueNode);
     UNSUPPORTED(CastNode);
     UNSUPPORTED(DataDeclaration);
     UNSUPPORTED(ForNode);
@@ -121,9 +122,10 @@ public:
     virtual void visit(BreakNode* node);
     virtual void visit(CastNode* node);
     virtual void visit(ComparisonNode* node);
+    virtual void visit(ContinueNode* node);
     virtual void visit(DataDeclaration* node);
-    virtual void visit(ForNode* node);
     virtual void visit(ForeverNode* node);
+    virtual void visit(ForNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(IfNode* node);
@@ -174,7 +176,8 @@ private:
     std::vector<size_t> getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
     size_t getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment);
 
-    // The exit label of the current loop (used by break statements)
+    // The entry / exit labels of the current loop (used by break & continue)
+    BasicBlock* _currentLoopEntry;
     BasicBlock* _currentLoopExit;
 
     // Visit the given node and return its value

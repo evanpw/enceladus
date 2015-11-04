@@ -231,7 +231,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(do|if|then|else|while|for|return|break|forever|elif|pass)\b</string>
+			<string>\b(do|if|then|else|while|for|return|break|forever|elif|pass|continue)\b</string>
 			<key>name</key>
 			<string>keyword.control.simple</string>
 		</dict>

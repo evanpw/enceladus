@@ -1,5 +1,6 @@
 foreign getchar() -> Int    # Really should be Int32
 
+
 def readChar() -> Option<Char>
     c := getchar()
 
@@ -7,6 +8,7 @@ def readChar() -> Option<Char>
         return None
     else
         return Some(c as Char)
+
 
 def readLine() -> Option<String>
     v := Vector::new()
@@ -24,3 +26,16 @@ def readLine() -> Option<String>
         return None
     else
         return Some $ v.toArray()
+
+
+def readAll() -> String
+    v := Vector::new()
+
+    forever
+        match readChar()
+            Some(c)
+                v.append(c)
+            None
+                break
+
+    return v.toArray()

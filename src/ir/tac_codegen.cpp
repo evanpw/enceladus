@@ -927,7 +927,7 @@ void TACCodeGen::visit(IfElseNode* node)
     BasicBlock* continueAt = nullptr;
 
     setBlock(trueBranch);
-    Value* bodyValue = visitAndGet(node->body);
+    node->body->accept(this);
     if (!_currentBlock->isTerminated())
     {
         continueAt = createBlock();
@@ -937,7 +937,7 @@ void TACCodeGen::visit(IfElseNode* node)
     }
 
     setBlock(falseBranch);
-    Value* elseValue = visitAndGet(node->elseBody);
+    node->elseBody->accept(this);
     if (!_currentBlock->isTerminated())
     {
         if (!continueAt)
@@ -950,16 +950,6 @@ void TACCodeGen::visit(IfElseNode* node)
     if (continueAt)
     {
         setBlock(continueAt);
-        if (bodyValue)
-        {
-            assert(elseValue);
-
-            node->value = createTemp(bodyValue->type);
-            PhiInst* phi = new PhiInst(node->value);
-            phi->addSource(trueBranch, bodyValue);
-            phi->addSource(falseBranch, elseValue);
-            emit(phi);
-        }
     }
 }
 
@@ -1004,12 +994,14 @@ void TACCodeGen::visit(WhileNode* node)
     emit(new JumpInst(loopBegin));
     setBlock(loopBegin);
 
-    BasicBlock* loopBody = createBlock();
-    _conditionalCodeGen.visitCondition(*node->condition, loopBody, loopExit);
-
     // Push a new inner loop on the (implicit) stack
     BasicBlock* prevLoopExit = _currentLoopExit;
+    BasicBlock* prevLoopEntry = _currentLoopEntry;
     _currentLoopExit = loopExit;
+    _currentLoopEntry = loopBegin;
+
+    BasicBlock* loopBody = createBlock();
+    _conditionalCodeGen.visitCondition(*node->condition, loopBody, loopExit);
 
     setBlock(loopBody);
     node->body->accept(this);
@@ -1017,6 +1009,7 @@ void TACCodeGen::visit(WhileNode* node)
     if (!_currentBlock->isTerminated())
         emit(new JumpInst(loopBegin));
 
+    _currentLoopEntry = prevLoopEntry;
     _currentLoopExit = prevLoopExit;
 
     setBlock(loopExit);
@@ -1060,7 +1053,9 @@ void TACCodeGen::visit(ForNode* node)
 
     // Push a new inner loop on the (implicit) stack
     BasicBlock* prevLoopExit = _currentLoopExit;
+    BasicBlock* prevLoopEntry = _currentLoopEntry;
     _currentLoopExit = loopExit;
+    _currentLoopEntry = loopBegin;
 
     setBlock(loopBody);
 
@@ -1081,6 +1076,7 @@ void TACCodeGen::visit(ForNode* node)
     if (!_currentBlock->isTerminated())
         emit(new JumpInst(loopBegin));
 
+    _currentLoopEntry = prevLoopEntry;
     _currentLoopExit = prevLoopExit;
 
     setBlock(loopExit);
@@ -1107,13 +1103,16 @@ void TACCodeGen::visit(ForeverNode* node)
 
     // Push a new inner loop on the (implicit) stack
     BasicBlock* prevLoopExit = _currentLoopExit;
+    BasicBlock* prevLoopEntry = _currentLoopEntry;
     _currentLoopExit = loopExit;
+    _currentLoopEntry = loopBody;
 
     node->body->accept(this);
 
     if (!_currentBlock->isTerminated())
         emit(new JumpInst(loopBody));
 
+    _currentLoopEntry = prevLoopEntry;
     _currentLoopExit = prevLoopExit;
 
     setBlock(loopExit);
@@ -1122,6 +1121,11 @@ void TACCodeGen::visit(ForeverNode* node)
 void TACCodeGen::visit(BreakNode* node)
 {
     emit(new JumpInst(_currentLoopExit));
+}
+
+void TACCodeGen::visit(ContinueNode* node)
+{
+    emit(new JumpInst(_currentLoopEntry));
 }
 
 void TACCodeGen::visit(AssignNode* node)
@@ -1431,7 +1435,7 @@ void TACCodeGen::visit(MethodCallNode* node)
 
 void TACCodeGen::visit(ReturnNode* node)
 {
-    Value* result = visitAndGet(node->expression);
+    Value* result = node->expression ? visitAndGet(node->expression) : nullptr;
     emit(new ReturnInst(result));
 }
 
