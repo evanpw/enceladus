@@ -1,6 +1,6 @@
 arr := Array::make(100, 0)
 
 for i in range(0, 100)
-    arr.set(i, i)
+    arr[i] = i
 
 println $ show(arr[15])

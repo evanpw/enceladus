@@ -13,7 +13,7 @@ for i in range(2, n)
         # below has already been eliminated)
         j := i * i
         while j < n
-            maybePrime.set(j, False)
+            maybePrime[j] = False
             j += i
 
 println $ show(primeSum)

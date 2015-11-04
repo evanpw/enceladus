@@ -2,7 +2,7 @@ n := 10000
 arr := Array::make(n, 0)
 
 for i in range(0, n)
-    arr.set(i, i)
+    arr[i] = i
 
 # Trigger GC
 xs := range(1, 1000000).toList()

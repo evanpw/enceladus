@@ -123,18 +123,20 @@ private:
 class LValueAnalyzer : public AstVisitor
 {
 public:
-    LValueAnalyzer(SemanticAnalyzer* mainAnalyzer)
-    : _mainAnalyzer(mainAnalyzer)
+    LValueAnalyzer(SemanticAnalyzer* mainAnalyzer, AstNode* rhs)
+    : _mainAnalyzer(mainAnalyzer), _rhs(rhs)
     {}
 
     virtual void visit(NullaryNode* node);
     virtual void visit(MemberAccessNode* node);
+    virtual void visit(IndexNode* node);
 
     bool good() const { return _good; }
 
 private:
     bool _good = false;
     SemanticAnalyzer* _mainAnalyzer;
+    AstNode* _rhs;
 };
 
 class TypeInferenceError : public std::exception

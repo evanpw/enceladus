@@ -19,7 +19,10 @@ trait Iterator<T>
 
 ## Index trait ##
 trait Index<S, T>
-    def at(self, n: S) -> T
+    def at(self, key: S) -> T
+
+trait IndexSet<S, T>
+    def set(self, key: S, value: T)
 
 
 ## Eq trait ##
@@ -98,15 +101,16 @@ impl Index<UInt, T> for Array<T>
         assert n < arrayLength(self)
         return unsafeArrayAt(self, n)
 
+impl IndexSet<UInt, T> for Array<T>
+    def set(self, n: UInt, value: T)
+        assert n < arrayLength(self)
+        unsafeArraySet(self, n, value)
+
 struct ArrayIterator<T>
     arr: Array<T>
     offset: UInt
 
 impl Array<T>
-    def set(self, n: UInt, value: T)
-        assert n < arrayLength(self)
-        unsafeArraySet(self, n, value)
-
     def length(self) -> UInt
         return arrayLength(self)
 
@@ -137,7 +141,7 @@ impl String
         result := unsafeMakeArray(len)
 
         for i in range(0, len)
-            result.set(i, self[pos + i])
+            result[i] = self[pos + i]
 
         return result
 
@@ -316,7 +320,7 @@ impl String
         result := unsafeMakeArray(n)
 
         for i in range(0, n)
-            result.set(i, chars.head())
+            result[i] = chars.head()
             chars = chars.tail()
 
         return result
@@ -358,15 +362,15 @@ impl Vector<T>
 
     def append(self, x: T)
         if self.size < self.content.length()
-            self.content.set(self.size, x)
+            self.content[self.size] = x
             self.size += 1
         else
             newCapacity := self.content.length() * 2 + 1
             newContent := Array::make(newCapacity, T::default())
             for i in range(0, self.size)
-                newContent.set(i, self.content[i])
+                newContent[i] = self.content[i]
 
-            newContent.set(self.size, x)
+            newContent[self.size] = x
 
             self.content = newContent
             self.size += 1
@@ -378,13 +382,10 @@ impl Vector<T>
 
         return value
 
-    def set(self, n: UInt, x: T)
-        self.content.set(n, x)
-
     def toArray(self) -> Array<T>
         result := Array::make(self.size, T::default())
         for i in range(0, self.size)
-            result.set(i, self.content[i])
+            result[i] = self.content[i]
 
         return result
 
@@ -403,12 +404,16 @@ impl Vector<T>
 
         for i in range(0, n / 2)
             x := self.content[n - i - 1]
-            self.set(n - i - 1, self.content[i])
-            self.set(i, x)
+            self.content[n - i - 1] = self.content[i]
+            self.content[i] = x
 
 impl Index<UInt, T> for Vector<T>
     def at(self, n: UInt) -> T
         return self.content[n]
+
+impl IndexSet<UInt, T> for Vector<T>
+    def set(self, n: UInt, x: T)
+        self.content[n] = x
 
 impl Iterator<T> for VectorIterator<T>
     def head(self) -> T
@@ -735,10 +740,10 @@ impl Add for String
         result := unsafeMakeArray(n1 + n2)
 
         for i in range(0, n1)
-            result.set(i, self[i])
+            result[i] = self[i]
 
         for i in range(0, n2)
-            result.set(n1 + i, other[i])
+            result[n1 + i] = other[i]
 
         return result
 

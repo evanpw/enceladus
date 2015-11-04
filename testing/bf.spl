@@ -28,16 +28,16 @@ def step(state: State, program: String)
             state.dp += state.memory.length()
 
     elif c == '+'
-        state.memory.set(state.dp, state.memory[state.dp] + 1)
+        state.memory[state.dp] += 1
 
     elif c == '-'
-        state.memory.set(state.dp, state.memory[state.dp] - 1)
+        state.memory[state.dp] -= 1
 
     elif c == '.'
         putchar(state.memory[state.dp])
 
     elif c == ','
-        state.memory.set(state.dp, readChar().unwrap())
+        state.memory[state.dp] = readChar().unwrap()
 
     elif c == '['
         if state.memory[state.dp] == 0

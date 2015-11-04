@@ -1,0 +1,5 @@
+x := Vector::new()
+x.append(10)
+x[0] = 20
+
+println $ show(x[0])

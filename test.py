@@ -167,7 +167,7 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error="Error: testing/importSemantic.spl:4:1: Type Bool is not an instance of trait Num")
+        self.run('importSemantic', build_error="Error: testing/importSemantic.spl:4:5: Type Bool is not an instance of trait Num")
 
     def test_syntaxError(self):
         self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:1: left-hand side of assignment statement is not an lvalue')
@@ -513,6 +513,9 @@ class TestAcceptance(object):
 
     def test_unsignedComparison(self):
         self.run('unsignedComparison', 'positive')
+
+    def test_mutateVector(self):
+        self.run('mutateVector', '20')
 
     # Medium tests (100ms-1s)
 

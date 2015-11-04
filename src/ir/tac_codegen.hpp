@@ -87,6 +87,7 @@ public:
 
     virtual void visit(NullaryNode* node);
     virtual void visit(MemberAccessNode* node);
+    virtual void visit(IndexNode* node);
 
 private:
     TACCodeGen* _mainCG;

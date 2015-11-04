@@ -811,7 +811,9 @@ void SemanticAnalyzer::visit(LetNode* node)
 
 void SemanticAnalyzer::visit(AssignNode* node)
 {
-    LValueAnalyzer lvalueAnalyzer(this);
+    node->rhs->accept(this);
+
+    LValueAnalyzer lvalueAnalyzer(this, node->rhs);
     node->lhs->accept(&lvalueAnalyzer);
 
     if (!lvalueAnalyzer.good())
@@ -819,10 +821,6 @@ void SemanticAnalyzer::visit(AssignNode* node)
         semanticError(node->location, "left-hand side of assignment statement is not an lvalue");
         return;
     }
-
-	node->rhs->accept(this);
-
-    unify(node->lhs->type, node->rhs->type, node);
 
     node->type = _typeTable->Unit;
 }
@@ -840,12 +838,46 @@ void LValueAnalyzer::visit(NullaryNode* node)
     node->symbol = symbol;
     node->type = symbol->type;
     node->kind = NullaryNode::VARIABLE;
+
+    unify(_rhs->type, node->type, _rhs);
+
     _good = true;
 }
 
 void LValueAnalyzer::visit(MemberAccessNode* node)
 {
     node->accept(_mainAnalyzer);
+    unify(_rhs->type, node->type, _rhs);
+
+    _good = true;
+}
+
+void LValueAnalyzer::visit(IndexNode* node)
+{
+    node->object->accept(_mainAnalyzer);
+    node->index->accept(_mainAnalyzer);
+
+    TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(_mainAnalyzer->resolveTypeSymbol("IndexSet"));
+    assert(traitSymbol);
+
+    TypeAssignment typeAssignment;
+    Trait* trait = instantiate(traitSymbol->trait, typeAssignment);
+    assert(trait);
+
+    node->method = traitSymbol->methods["set"];
+    assert(node->method);
+
+    FunctionType* methodType = instantiate(node->method->type, typeAssignment)->get<FunctionType>();
+    assert(methodType);
+
+    assert(methodType->inputs().size() == 3);
+    unify(methodType->inputs()[0], node->object->type, node);
+    unify(methodType->inputs()[1], node->index->type, node);
+    unify(methodType->inputs()[2], _rhs->type, _rhs);
+
+    assert(equals(methodType->output(), _mainAnalyzer->_typeTable->Unit));
+    node->type = _mainAnalyzer->_typeTable->Unit;
+
     _good = true;
 }
 

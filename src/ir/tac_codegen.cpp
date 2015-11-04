@@ -1157,6 +1157,15 @@ void TACAssignmentCodeGen::visit(MemberAccessNode* node)
     _mainCG->emit(new IndexedStoreInst(structure, offset, _value));
 }
 
+void TACAssignmentCodeGen::visit(IndexNode* node)
+{
+    Value* object = _mainCG->visitAndGet(node->object);
+    Value* index = _mainCG->visitAndGet(node->index);
+    Value* method = _mainCG->getTraitMethodValue(node->object->type, node->method, node);
+
+    _mainCG->emit(new CallInst(_mainCG->createTemp(), method, {object, index, _value}));
+}
+
 void TACCodeGen::visit(VariableDefNode* node)
 {
     if (!node->symbol)

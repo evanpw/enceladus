@@ -53,7 +53,7 @@ for j in range(0, n)
     x := reversedList.head()
     reversedList = reversedList.tail()
 
-    abundants.set(n - j - 1, x)
+    abundants[n - j - 1] = x
 
 # Find all numbers in the range which are the sum of two abundants
 total := 0
