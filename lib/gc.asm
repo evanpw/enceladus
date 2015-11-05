@@ -5,12 +5,14 @@ global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
 global addRoot, removeRoots
 extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _panic, panic, splmain
 extern initializeHeap
-extern _malloc, _free, malloc, free
+extern _malloc, _free, malloc, free, saveCommandLine
 
 main:
 _main:
     push rbp
     mov rbp, rsp
+
+    call saveCommandLine
 
     ; Allocate a stack for C code
     mov rdi, 0x400000

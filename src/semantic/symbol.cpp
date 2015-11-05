@@ -1,6 +1,11 @@
 #include "semantic/symbol.hpp"
 #include "ast/ast.hpp"
 
+DummySymbol::DummySymbol(const std::string& name, AstNode* node)
+: Symbol(name, kDummy, node, nullptr, true)
+{
+}
+
 VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
 : Symbol(name, kVariable, node, enclosingFunction, global)
 {

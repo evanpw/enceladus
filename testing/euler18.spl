@@ -6,7 +6,7 @@ def readInput() -> [[Int]]
     pyramid := []
 
     forever
-        maybeLine := readLine()
+        maybeLine := readLine(stdin)
 
         match maybeLine
             Some(line)

@@ -227,6 +227,10 @@ FunctionSymbol* SemanticAnalyzer::createExternal(const std::string& name)
 
 void SemanticAnalyzer::injectSymbols()
 {
+    //// Dummy symbols /////////////////////////////////////////////////////////
+    _symbolTable->createDummySymbol("Else", _root);
+
+
     //// Built-in types ////////////////////////////////////////////////////////
     _symbolTable->createTypeSymbol("Int", _root, _typeTable->Int);
     _symbolTable->createTypeSymbol("UInt", _root, _typeTable->UInt);
@@ -694,12 +698,20 @@ void SemanticAnalyzer::visit(MatchNode* node)
         arm->matchType = type;
         arm->accept(this);
 
-        bool notDuplicate = (constructorTags.find(arm->constructorTag) == constructorTags.end());
-        CHECK_AT(arm->location, notDuplicate, "cannot repeat constructors in match statement");
-        constructorTags.insert(arm->constructorTag);
+        if (!arm->constructorSymbol)
+        {
+            CHECK_AT(arm->location, !node->catchallArm, "cannot have more than one catch-all pattern");
+            node->catchallArm = arm;
+        }
+        else
+        {
+            bool notDuplicate = (constructorTags.find(arm->constructorTag) == constructorTags.end());
+            CHECK_AT(arm->location, notDuplicate, "cannot repeat constructors in match statement");
+            constructorTags.insert(arm->constructorTag);
+        }
     }
 
-    CHECK(constructorTags.size() == type->valueConstructors().size(), "switch statement is not exhaustive");
+    CHECK(node->catchallArm || constructorTags.size() == type->valueConstructors().size(), "switch statement is not exhaustive");
 
     node->type = _typeTable->Unit;
 }
@@ -707,13 +719,23 @@ void SemanticAnalyzer::visit(MatchNode* node)
 void SemanticAnalyzer::visit(MatchArm* node)
 {
     const std::string& constructorName = node->constructor;
+
+    // Catch-all pattern
+    if (constructorName == "Else")
+    {
+        node->body->accept(this);
+        unify(node->body->type, _typeTable->Unit, node->body);
+        node->type = _typeTable->Unit;
+        return;
+    }
+
+    Symbol* symbol = resolveSymbol(constructorName);
+    CHECK(symbol, "constructor `{}` is not defined", constructorName);
+
     std::pair<size_t, ValueConstructor*> result = node->matchType->getValueConstructor(constructorName);
     CHECK(result.second, "type `{}` has no value constructor named `{}`", node->matchType->str(), constructorName);
     node->constructorTag = result.first;
     node->valueConstructor = result.second;
-
-    Symbol* symbol = resolveSymbol(constructorName);
-    CHECK(symbol, "constructor `{}` is not defined", constructorName);
 
     ConstructorSymbol* constructorSymbol = dynamic_cast<ConstructorSymbol*>(symbol);
     assert(constructorSymbol);

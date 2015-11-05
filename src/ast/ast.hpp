@@ -580,7 +580,7 @@ public:
 	StatementNode* body;
 
 	// Annotations
-	ConstructorSymbol* constructorSymbol;
+	ConstructorSymbol* constructorSymbol = nullptr;
 	TypeAssignment typeAssignment;
 
 	Type* matchType;
@@ -600,6 +600,7 @@ public:
 
 	ExpressionNode* expr;
 	std::vector<MatchArm*> arms;
+	MatchArm* catchallArm = nullptr;
 };
 
 class DataDeclaration : public StatementNode

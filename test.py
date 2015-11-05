@@ -20,7 +20,7 @@ def assert_matches(result, expected):
 
 
 class TestAcceptance(object):
-    def run(self, name, result=None, build_error=None, runtime_error=None, input_file=None):
+    def run(self, name, result=None, build_error=None, runtime_error=None, input_file=None, command=None):
         build_cmd = './sbuild {}'.format(name)
         build_proc = subprocess.Popen(build_cmd, shell=True, stderr=subprocess.PIPE)
 
@@ -35,6 +35,9 @@ class TestAcceptance(object):
             run_cmd = 'build/{} < {}'.format(name, input_file)
         else:
             run_cmd = 'build/{}'.format(name)
+
+        if command:
+            run_cmd += ' ' + command
 
         run_proc = subprocess.Popen(run_cmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
@@ -516,6 +519,9 @@ class TestAcceptance(object):
 
     def test_mutateVector(self):
         self.run('mutateVector', '20')
+
+    def test_bf(self):
+        self.run('bf', result='Hello World!', command='testing/hello.bf')
 
     # Medium tests (100ms-1s)
 

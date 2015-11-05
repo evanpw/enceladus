@@ -6,7 +6,7 @@ import String
 def readNumber() -> BigInt
     ys := []
 
-    line := readLine()
+    line := readLine(stdin)
     pieces := line.unwrap().split()
 
     assert pieces.length() == 50

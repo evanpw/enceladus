@@ -126,7 +126,31 @@ void MachineCodeGen::emitMovrd(MachineOperand* dest, MachineOperand* src)
     }
     else if (src->isImmediate())
     {
-        assert(dest->size() >= src->size());
+        if (dest->size() < src->size())
+        {
+            uint64_t value = dynamic_cast<Immediate*>(src)->value;
+
+            switch (dest->size())
+            {
+                case 32:
+                    value = uint32_t(value);
+                    break;
+
+                case 16:
+                    value = uint16_t(value);
+                    break;
+
+                case 8:
+                    value = uint8_t(value);
+                    break;
+
+                default:
+                    assert(false);
+            }
+
+            src = _context->createImmediate(value, src->type);
+        }
+
         emit(Opcode::MOVrd, {dest}, {src});
     }
     else

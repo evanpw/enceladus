@@ -12,7 +12,7 @@ class TraitDefNode;
 class SymbolTable;
 
 
-enum Kind {kVariable, kFunction, kType, kMethod, kMemberVar, kTrait, kTraitMethod};
+enum Kind {kDummy, kVariable, kFunction, kType, kMethod, kMemberVar, kTrait, kTraitMethod};
 
 class Symbol
 {
@@ -46,6 +46,13 @@ protected:
     {}
 };
 
+// Symbol type for syntactic elements that we dont' want overridden (e.g., Else)
+class DummySymbol : public Symbol
+{
+private:
+    friend class SymbolTable;
+    DummySymbol(const std::string& name, AstNode* node);
+};
 
 class VariableSymbol : public Symbol
 {

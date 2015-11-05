@@ -20,6 +20,8 @@ public:
     TraitSymbol* createTraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters = {});
     TypeSymbol* createTypeSymbol(const std::string& name, AstNode* node, Type* type);
 
+    DummySymbol* createDummySymbol(const std::string& name, AstNode* node);
+
     void pushScope();
     void popScope();
 

@@ -15,75 +15,222 @@ impl State
         return State(arr, 0, 0)
 
 
-def step(state: State, program: String)
-    c := program[state.ip]
+# IR Instructions
+data Instruction = Add(UInt) | Sub(UInt) | Right(UInt) | Left(UInt) | Out | In | Open | Close
 
-    if c == '>'
-        state.dp = (state.dp + 1) % state.memory.length()
+# Should be able to derive these for simple types
+impl Default for Instruction
+    def default() -> Instruction
+        return Add(0)
 
-    elif c == '<'
-        state.dp -= 1
+# This is all horrendously ugly
+impl Instruction
+    def tag(self: Instruction) -> UInt
+        match self
+            Add(_) => return 0
+            Sub(_) => return 1
+            Right(_) => return 2
+            Left(_) => return 3
+            Out => return 4
+            In => return 5
+            Open => return 6
+            Close => return 7
 
-        if state.dp < 0
-            state.dp += state.memory.length()
+    def getAdd(self: Instruction) -> Option<UInt>
+        match self
+            Add(n) => return Some(n)
+            Else => return None
 
-    elif c == '+'
-        state.memory[state.dp] += 1
+    def getSub(self: Instruction) -> Option<UInt>
+        match self
+            Sub(n) => return Some(n)
+            Else => return None
 
-    elif c == '-'
-        state.memory[state.dp] -= 1
+    def getRight(self: Instruction) -> Option<UInt>
+        match self
+            Right(n) => return Some(n)
+            Else => return None
 
-    elif c == '.'
-        putchar(state.memory[state.dp])
+    def getLeft(self: Instruction) -> Option<UInt>
+        match self
+            Left(n) => return Some(n)
+            Else => return None
 
-    elif c == ','
-        state.memory[state.dp] = readChar().unwrap()
+impl Eq for Instruction
+    def eq(self: Instruction, other: Instruction) -> Bool
+        return self.tag() == other.tag()
 
-    elif c == '['
-        if state.memory[state.dp] == 0
+    def ne(self: Instruction, other: Instruction) -> Bool
+        return self.tag() != other.tag()
 
-            matchingBracket := 0
-            nesting := 1
 
-            for i in range(state.ip + 1, program.length())
-                if program[i] == '['
-                    nesting += 1
+def compile(program: String) -> Vector<Instruction>
+    result := Vector::new()
 
-                elif program[i] == ']'
-                    nesting -= 1
-                    if nesting == 0
-                        matchingBracket = i
-                        break
+    for c in program.iter()
+        if c == '+'
+            result.append(Add(1))
 
-            assert nesting == 0
-            state.ip = matchingBracket + 1
-            return
+        elif c == '-'
+            result.append(Sub(1))
 
-    elif c == ']'
-        if state.memory[state.dp] != 0
+        elif c == '>'
+            result.append(Right(1))
 
-            matchingBracket := 0
-            nesting := 1
+        elif c == '<'
+            result.append(Left(1))
 
-            for i in reversed(range(0, state.ip - 1))
-                if program[i] == ']'
-                    nesting += 1
+        elif c == '.'
+            result.append(Out)
 
-                elif program[i] == '['
-                    nesting -= 1
-                    if nesting == 0
-                        matchingBracket = i
-                        break
+        elif c == ','
+            result.append(In)
 
-            assert nesting == 0
-            state.ip = matchingBracket + 1
-            return
+        elif c == '['
+            result.append(Open)
+
+        elif c == ']'
+            result.append(Close)
+
+    return result
+
+
+def optimize(program: Vector<Instruction>) -> Vector<Instruction>
+    if program.length() == 0
+        return program
+
+    result := Vector::new()
+    result.append(program[0])
+
+    # Combine consecutive Add, Sub, Left, and Right instructions
+    for i in range(1, program.length())
+        last := result[result.length() - 1]
+
+        match program[i]
+            Add(n)
+                match last.getAdd()
+                    Some(m)
+                        result[result.length() - 1] = Add(n + m)
+                    None
+                        result.append(program[i])
+            Sub(n)
+                match last.getSub()
+                    Some(m)
+                        result[result.length() - 1] = Sub(n + m)
+                    None
+                        result.append(program[i])
+            Right(n)
+                match last.getRight()
+                    Some(m)
+                        result[result.length() - 1] = Right(n + m)
+                    None
+                        result.append(program[i])
+            Left(n)
+                match last.getLeft()
+                    Some(m)
+                        result[result.length() - 1] = Left(n + m)
+                    None
+                        result.append(program[i])
+            Out
+                result.append(Out)
+            In
+                result.append(In)
+            Open
+                result.append(Open)
+            Close
+                result.append(Close)
+
+    return result
+
+def step(state: State, program: Vector<Instruction>)
+    match program[state.ip]
+        Add(n)
+            state.memory[state.dp] += n as UInt8
+
+        Sub(n)
+            state.memory[state.dp] -= n as UInt8
+
+        Right(n)
+            state.dp += n
+            assert state.dp < state.memory.length()
+
+        Left(n)
+            assert state.dp >= n
+            state.dp -= n
+
+        Out
+            putchar(state.memory[state.dp])
+
+        In
+            match readChar(stdin)
+                Some(c)
+                    state.memory[state.dp] = c
+                None
+                    state.memory[state.dp] = -1 as UInt8
+
+        Open
+            if state.memory[state.dp] == 0
+
+                matchingBracket := 0
+                nesting := 1
+
+                for i in range(state.ip + 1, program.length())
+                    if program[i] == Open
+                        nesting += 1
+
+                    elif program[i] == Close
+                        nesting -= 1
+                        if nesting == 0
+                            matchingBracket = i
+                            break
+
+                assert nesting == 0
+                state.ip = matchingBracket + 1
+                return
+
+        Close
+            if state.memory[state.dp] != 0
+
+                matchingBracket := 0
+                nesting := 1
+
+                for i in reversed(range(0, state.ip - 1))
+                    if program[i] == Close
+                        nesting += 1
+
+                    elif program[i] == Open
+                        nesting -= 1
+                        if nesting == 0
+                            matchingBracket = i
+                            break
+
+                assert nesting == 0
+                state.ip = matchingBracket + 1
+                return
 
     state.ip += 1
 
 
-program := readAll()
-state := State::new(30000)
+def run(program: Vector<Instruction>)
+    state := State::new(30000)
 
-while state.ip < program.length()
-    step(state, program)
+    while state.ip < program.length()
+        step(state, program)
+
+
+argc := getArgc()
+if argc < 2
+    panic $ "Must specify path of source file"
+
+fname := getArgv(1)
+
+match openFile(fname, "r")
+    Some(file)
+        source := readAll(file)
+        code := compile(source)
+        code = optimize(code)
+        run(code)
+        closeFile(file)
+
+    None
+        panic $ "File not found: '" + fname + "'"

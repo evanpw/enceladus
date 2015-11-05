@@ -1479,10 +1479,10 @@ void TACCodeGen::visit(StructDefNode* node)
 
 void TACCodeGen::visit(MatchNode* node)
 {
-    std::vector<BasicBlock*> caseLabels;
+    std::unordered_map<MatchArm*, BasicBlock*> caseLabels;
     for (size_t i = 0; i < node->arms.size(); ++i)
     {
-        caseLabels.push_back(createBlock());
+        caseLabels.emplace(node->arms[i], createBlock());
     }
     BasicBlock* continueAt = createBlock();
 
@@ -1496,29 +1496,41 @@ void TACCodeGen::visit(MatchNode* node)
 
     // Jump to the appropriate case based on the tag
     BasicBlock* nextTest = _currentBlock;
-    for (size_t i = 0; i < node->arms.size(); ++i)
+    for (auto& item : caseLabels)
     {
-        auto& arm = node->arms[i];
+        MatchArm* arm = item.first;
+        BasicBlock* block = item.second;
         size_t armTag = arm->constructorTag;
+
+        if (arm == node->catchallArm)
+            continue;
 
         setBlock(nextTest);
         nextTest = createBlock();
-        emit(new ConditionalJumpInst(tag, "==", _context->createConstantInt(ValueType::U64, armTag), caseLabels[i], nextTest));
+        emit(new ConditionalJumpInst(tag, "==", _context->createConstantInt(ValueType::U64, armTag), block, nextTest));
     }
 
-    // Match must be exhaustive, so we should never fail all tests
     setBlock(nextTest);
-    emit(new UnreachableInst);
+    if (node->catchallArm)
+    {
+        emit(new JumpInst(caseLabels[node->catchallArm]));
+    }
+    else
+    {
+        // Match must be exhaustive, so we should never fail all tests
+        emit(new UnreachableInst);
+    }
 
     // Individual arms
     Value* lastSwitchExpr = _currentSwitchExpr;
     _currentSwitchExpr = expr;
     bool canReach = false;
-    for (size_t i = 0; i < node->arms.size(); ++i)
+    for (auto& item : caseLabels)
     {
-        auto& arm = node->arms[i];
+        MatchArm* arm = item.first;
+        BasicBlock* block = item.second;
 
-        setBlock(caseLabels[i]);
+        setBlock(block);
         arm->accept(this);
 
         if (!_currentBlock->isTerminated())
@@ -1539,20 +1551,23 @@ void TACCodeGen::visit(MatchNode* node)
 
 void TACCodeGen::visit(MatchArm* node)
 {
-    ValueConstructor* constructor = node->valueConstructor;
-
-    std::vector<size_t> layout = getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
-
-    // Copy over each of the members of the constructor pattern
-    for (size_t i = 0; i < node->symbols.size(); ++i)
+    if (node->constructorSymbol)
     {
-        const Symbol* member = node->symbols.at(i);
-        if (member)
+        ValueConstructor* constructor = node->valueConstructor;
+
+        std::vector<size_t> layout = getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
+
+        // Copy over each of the members of the constructor pattern
+        for (size_t i = 0; i < node->symbols.size(); ++i)
         {
-            Value* tmp = createTemp(getValueType(member->type));
-            Value* offset = _context->createConstantInt(ValueType::I64, sizeof(SplObject) + 8 * layout[i]);
-            emit(new IndexedLoadInst(tmp, _currentSwitchExpr, offset));
-            emit(new StoreInst(getValue(member), tmp));
+            const Symbol* member = node->symbols.at(i);
+            if (member)
+            {
+                Value* tmp = createTemp(getValueType(member->type));
+                Value* offset = _context->createConstantInt(ValueType::I64, sizeof(SplObject) + 8 * layout[i]);
+                emit(new IndexedLoadInst(tmp, _currentSwitchExpr, offset));
+                emit(new StoreInst(getValue(member), tmp));
+            }
         }
     }
 

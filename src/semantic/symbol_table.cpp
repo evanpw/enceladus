@@ -78,6 +78,13 @@ TraitSymbol* SymbolTable::createTraitSymbol(const std::string& name, AstNode* no
     return symbol;
 }
 
+DummySymbol* SymbolTable::createDummySymbol(const std::string& name, AstNode* node)
+{
+    DummySymbol* symbol = new DummySymbol(name, node);
+    insert(symbol, SymbolTable::TYPE);
+    return symbol;
+}
+
 void SymbolTable::pushScope()
 {
     _scopes.push_back({});

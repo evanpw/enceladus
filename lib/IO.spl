@@ -1,8 +1,32 @@
-foreign getchar() -> Int    # Really should be Int32
+# Represents a FILE*
+type File = UInt
 
+foreign fgetc(file: File) -> Int    # Really should be Int32
+foreign getchar() -> Int
 
-def readChar() -> Option<Char>
-    c := getchar()
+foreign getStdin() -> File
+foreign getStderr() -> File
+
+stdin := getStdin()
+stderr := getStderr()
+
+# Internal use only: use openFile and closeFile instead
+foreign fopenWrapper(filename: String, mode: String) -> File
+foreign fclose(file: File)
+
+def openFile(filename: String, mode: String) -> Option<File>
+    file := fopenWrapper(filename, mode)
+
+    if file == 0 # Null pointer
+        return None
+    else
+        return Some(file)
+
+def closeFile(file: File)
+    fclose(file)
+
+def readChar(file: File) -> Option<Char>
+    c := fgetc(file)
 
     if c == 4294967295 # -1 as a 32-bit integer
         return None
@@ -10,11 +34,11 @@ def readChar() -> Option<Char>
         return Some(c as Char)
 
 
-def readLine() -> Option<String>
+def readLine(file: File) -> Option<String>
     v := Vector::new()
 
     forever
-        match readChar()
+        match readChar(file)
             Some(c)
                 v.append(c)
                 if c == 10 # '\n'
@@ -28,11 +52,11 @@ def readLine() -> Option<String>
         return Some $ v.toArray()
 
 
-def readAll() -> String
+def readAll(file: File) -> String
     v := Vector::new()
 
     forever
-        match readChar()
+        match readChar(file)
             Some(c)
                 v.append(c)
             None

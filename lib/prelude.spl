@@ -661,36 +661,28 @@ impl PartialOrd for T: Ord
         match self.cmp(other)
             Less
                 return True
-            Equal
-                return False
-            Greater
+            Else
                 return False
 
     def le(self, other: T) -> Bool
         match self.cmp(other)
-            Less
-                return True
-            Equal
-                return True
             Greater
                 return False
+            Else
+                return True
 
     def gt(self, other: T) -> Bool
         match self.cmp(other)
-            Less
-                return False
-            Equal
-                return False
             Greater
                 return True
+            Else
+                return False
 
     def ge(self, other: T) -> Bool
         match self.cmp(other)
             Less
                 return False
-            Equal
-                return True
-            Greater
+            Else
                 return True
 
 
@@ -774,3 +766,6 @@ impl Hash for String
 def assertMessage(b: Bool, err: String)
     if not(b)
         panic $ "Assertion failed: " + err
+
+foreign getArgc() -> Int
+foreign getArgv(n: UInt) -> String

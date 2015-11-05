@@ -58,15 +58,69 @@ uint64_t strHash(String* s)
     return hash;
 }
 
+
+//// Command-line arguments  ///////////////////////////////////////////////////
+
+int argc;
+char** argv;
+
+void saveCommandLine(int pargc, char** pargv)
+{
+    argc = pargc;
+    argv = pargv;
+}
+
+int64_t getArgc()
+{
+    return argc;
+}
+
+String* getArgv(int64_t index)
+{
+    if (index < 0 || index >= argc)
+        fail("*** Exception: command-line argument index out of range");
+
+    return makeStr(argv[index]);
+}
+
 //// I/O ///////////////////////////////////////////////////////////////////////
+
+FILE* getStdin()
+{
+    return stdin;
+}
+
+FILE* getStderr()
+{
+    return stderr;
+}
+
+char* toCString(String* s)
+{
+    size_t n = strLength(s);
+    char* buffer = malloc(n + 1);
+    memcpy(buffer, strContent(s), n);
+    buffer[n] = '\0';
+
+    return buffer;
+}
+
+FILE* fopenWrapper(String* filename, String* mode)
+{
+    char* cfilename = toCString(filename);
+    char* cmode = toCString(mode);
+
+    FILE* result = fopen(cfilename, cmode);
+
+    free(cfilename);
+    free(cmode);
+
+    return result;
+}
 
 void panic(String* s)
 {
-    size_t n = strLength(s);
-
-    char* buffer = malloc(n + 1);
-    memcpy(buffer, strContent(s), n + 1);
-    buffer[n] = '\0';
+    char* buffer = toCString(s);
 
     fprintf(stderr, "*** Exception: %s\n", buffer);
 

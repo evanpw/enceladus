@@ -45,9 +45,7 @@ def uniquify(xs: [T]) -> [T] where T: Ord
         match last.cmp(x)
             Equal
                 pass
-            Less
-                result = result.insert(x)
-            Greater
+            Else
                 result = result.insert(x)
 
         last = x
