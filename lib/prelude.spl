@@ -77,6 +77,31 @@ impl Range<T>
         return result
 
 
+## Range ##
+struct StepRange<T: Num>
+    start: T
+    end: T
+    step: T
+
+def rangeBy(start: T, end: T, stepBy: T) -> StepRange<T>
+    assert stepBy != 0
+    return StepRange(start, end, stepBy)
+
+impl Iterator<T> for StepRange<T>
+    def head(self) -> T
+        assert self.start != self.end
+        return self.start
+
+    def tail(self) -> StepRange<T>
+        return StepRange(self.start + self.step, self.end, self.step)
+
+    def empty(self) -> Bool
+        if self.step > 0
+            return self.start - self.end > self.step
+        else
+            return self.start - self.end < self.step
+
+
 ## Array ##
 impl Array<T>
     def new() -> Array<T>

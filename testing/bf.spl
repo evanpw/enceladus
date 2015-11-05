@@ -16,7 +16,7 @@ impl State
 
 
 # IR Instructions
-data Instruction = Add(UInt) | Sub(UInt) | Right(UInt) | Left(UInt) | Out | In | Open | Close
+data Instruction = Add(UInt) | Sub(UInt) | Right(UInt) | Left(UInt) | Out | In | Open | Close | Clear
 
 # Should be able to derive these for simple types
 impl Default for Instruction
@@ -25,43 +25,25 @@ impl Default for Instruction
 
 # This is all horrendously ugly
 impl Instruction
-    def tag(self: Instruction) -> UInt
+    def isSub(self: Instruction) -> Bool
         match self
-            Add(_) => return 0
-            Sub(_) => return 1
-            Right(_) => return 2
-            Left(_) => return 3
-            Out => return 4
-            In => return 5
-            Open => return 6
-            Close => return 7
+            Sub(_) => return True
+            Else   => return False
 
-    def getAdd(self: Instruction) -> Option<UInt>
+    def isAdd(self: Instruction) -> Bool
         match self
-            Add(n) => return Some(n)
-            Else => return None
+            Add(_) => return True
+            Else   => return False
 
-    def getSub(self: Instruction) -> Option<UInt>
+    def isOpen(self: Instruction) -> Bool
         match self
-            Sub(n) => return Some(n)
-            Else => return None
+            Open    => return True
+            Else    => return False
 
-    def getRight(self: Instruction) -> Option<UInt>
+    def isClose(self: Instruction) -> Bool
         match self
-            Right(n) => return Some(n)
-            Else => return None
-
-    def getLeft(self: Instruction) -> Option<UInt>
-        match self
-            Left(n) => return Some(n)
-            Else => return None
-
-impl Eq for Instruction
-    def eq(self: Instruction, other: Instruction) -> Bool
-        return self.tag() == other.tag()
-
-    def ne(self: Instruction, other: Instruction) -> Bool
-        return self.tag() != other.tag()
+            Close    => return True
+            Else     => return False
 
 
 def compile(program: String) -> Vector<Instruction>
@@ -94,51 +76,64 @@ def compile(program: String) -> Vector<Instruction>
 
     return result
 
+def optimize1(program: Vector<Instruction>) -> Vector<Instruction>
+    if program.length() == 0
+        return program
 
-def optimize(program: Vector<Instruction>) -> Vector<Instruction>
+    result := Vector::new()
+
+    # Convert [-] and [+] to Clear
+    i := 0
+    while i < program.length()
+        if i + 2 < program.length() and program[i].isOpen() and program[i + 2].isClose()
+            if program[i + 1].isSub() or program[i + 1].isAdd()
+                result.append(Clear)
+                i += 3
+                continue
+
+        result.append(program[i])
+        i += 1
+
+    return result
+
+def optimize2(program: Vector<Instruction>) -> Vector<Instruction>
     if program.length() == 0
         return program
 
     result := Vector::new()
     result.append(program[0])
 
-    # Combine consecutive Add, Sub, Left, and Right instructions
+    # Combine repeated +, -, <, or > instructions
     for i in range(1, program.length())
         last := result[result.length() - 1]
 
         match program[i]
             Add(n)
-                match last.getAdd()
-                    Some(m)
+                match last
+                    Add(m)
                         result[result.length() - 1] = Add(n + m)
-                    None
+                    Else
                         result.append(program[i])
             Sub(n)
-                match last.getSub()
-                    Some(m)
+                match last
+                    Sub(m)
                         result[result.length() - 1] = Sub(n + m)
-                    None
+                    Else
                         result.append(program[i])
             Right(n)
-                match last.getRight()
-                    Some(m)
+                match last
+                    Right(m)
                         result[result.length() - 1] = Right(n + m)
-                    None
+                    Else
                         result.append(program[i])
             Left(n)
-                match last.getLeft()
-                    Some(m)
+                match last
+                    Left(m)
                         result[result.length() - 1] = Left(n + m)
-                    None
+                    Else
                         result.append(program[i])
-            Out
-                result.append(Out)
-            In
-                result.append(In)
-            Open
-                result.append(Open)
-            Close
-                result.append(Close)
+            Else
+                result.append(program[i])
 
     return result
 
@@ -175,10 +170,10 @@ def step(state: State, program: Vector<Instruction>)
                 nesting := 1
 
                 for i in range(state.ip + 1, program.length())
-                    if program[i] == Open
+                    if program[i].isOpen()
                         nesting += 1
 
-                    elif program[i] == Close
+                    elif program[i].isClose()
                         nesting -= 1
                         if nesting == 0
                             matchingBracket = i
@@ -194,11 +189,11 @@ def step(state: State, program: Vector<Instruction>)
                 matchingBracket := 0
                 nesting := 1
 
-                for i in reversed(range(0, state.ip - 1))
-                    if program[i] == Close
+                for i in rangeBy(state.ip - 1, 0, -1)
+                    if program[i].isClose()
                         nesting += 1
 
-                    elif program[i] == Open
+                    elif program[i].isOpen()
                         nesting -= 1
                         if nesting == 0
                             matchingBracket = i
@@ -207,6 +202,9 @@ def step(state: State, program: Vector<Instruction>)
                 assert nesting == 0
                 state.ip = matchingBracket + 1
                 return
+
+        Clear
+            state.memory[state.dp] = 0
 
     state.ip += 1
 
@@ -228,7 +226,21 @@ match openFile(fname, "r")
     Some(file)
         source := readAll(file)
         code := compile(source)
-        code = optimize(code)
+        code = optimize2 $ optimize1(code)
+
+        #println $ "Optimized program:"
+        #for instruction in code.iter()
+        #    match instruction
+        #        Add(n)   => println $ "Add " + show(n)
+        #        Sub(n)   => println $ "Sub " + show(n)
+        #        Right(n) => println $ "Right " + show(n)
+        #        Left(n)  => println $ "Left " + show(n)
+        #        Out      => println $ "Out"
+        #        In       => println $ "In"
+        #        Open     => println $ "Open"
+        #        Close    => println $ "Close"
+        #        Clear    => println $ "Clear"
+
         run(code)
         closeFile(file)
 
