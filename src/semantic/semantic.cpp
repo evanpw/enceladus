@@ -813,7 +813,7 @@ void SemanticAnalyzer::visit(AssignNode* node)
 {
     node->rhs->accept(this);
 
-    LValueAnalyzer lvalueAnalyzer(this, node->rhs);
+    LValueAnalyzer lvalueAnalyzer(this);
     node->lhs->accept(&lvalueAnalyzer);
 
     if (!lvalueAnalyzer.good())
@@ -822,6 +822,7 @@ void SemanticAnalyzer::visit(AssignNode* node)
         return;
     }
 
+    unify(node->lhs->type, node->rhs->type, node->rhs);
     node->type = _typeTable->Unit;
 }
 
@@ -839,16 +840,12 @@ void LValueAnalyzer::visit(NullaryNode* node)
     node->type = symbol->type;
     node->kind = NullaryNode::VARIABLE;
 
-    unify(_rhs->type, node->type, _rhs);
-
     _good = true;
 }
 
 void LValueAnalyzer::visit(MemberAccessNode* node)
 {
     node->accept(_mainAnalyzer);
-    unify(_rhs->type, node->type, _rhs);
-
     _good = true;
 }
 
@@ -864,19 +861,18 @@ void LValueAnalyzer::visit(IndexNode* node)
     Trait* trait = instantiate(traitSymbol->trait, typeAssignment);
     assert(trait);
 
-    node->method = traitSymbol->methods["set"];
-    assert(node->method);
+    node->setMethod = traitSymbol->methods["set"];
+    assert(node->setMethod);
 
-    FunctionType* methodType = instantiate(node->method->type, typeAssignment)->get<FunctionType>();
+    FunctionType* methodType = instantiate(node->setMethod->type, typeAssignment)->get<FunctionType>();
     assert(methodType);
 
     assert(methodType->inputs().size() == 3);
     unify(methodType->inputs()[0], node->object->type, node);
     unify(methodType->inputs()[1], node->index->type, node);
-    unify(methodType->inputs()[2], _rhs->type, _rhs);
+    node->type = methodType->inputs()[2];
 
     assert(equals(methodType->output(), _mainAnalyzer->_typeTable->Unit));
-    node->type = _mainAnalyzer->_typeTable->Unit;
 
     _good = true;
 }
@@ -1586,10 +1582,10 @@ void SemanticAnalyzer::visit(IndexNode* node)
     Trait* trait = instantiate(traitSymbol->trait, typeAssignment);
     assert(trait);
 
-    node->method = traitSymbol->methods["at"];
-    assert(node->method);
+    node->atMethod = traitSymbol->methods["at"];
+    assert(node->atMethod);
 
-    FunctionType* methodType = instantiate(node->method->type, typeAssignment)->get<FunctionType>();
+    FunctionType* methodType = instantiate(node->atMethod->type, typeAssignment)->get<FunctionType>();
     assert(methodType);
 
     assert(methodType->inputs().size() == 2);

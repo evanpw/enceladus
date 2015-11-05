@@ -678,7 +678,8 @@ public:
 	ExpressionNode* index;
 
 	// Annotations
-	TraitMethodSymbol* method = nullptr;
+	TraitMethodSymbol* atMethod = nullptr;
+	TraitMethodSymbol* setMethod = nullptr;
 };
 
 //// Structures ////////////////////////////////////////////////////////////////

@@ -1086,7 +1086,7 @@ void TACCodeGen::visit(IndexNode* node)
 {
     Value* object = visitAndGet(node->object);
     Value* index = visitAndGet(node->index);
-    Value* method = getTraitMethodValue(node->object->type, node->method, node);
+    Value* method = getTraitMethodValue(node->object->type, node->atMethod, node);
 
     node->value = createTemp(getValueType(node->type));
 
@@ -1161,7 +1161,7 @@ void TACAssignmentCodeGen::visit(IndexNode* node)
 {
     Value* object = _mainCG->visitAndGet(node->object);
     Value* index = _mainCG->visitAndGet(node->index);
-    Value* method = _mainCG->getTraitMethodValue(node->object->type, node->method, node);
+    Value* method = _mainCG->getTraitMethodValue(node->object->type, node->setMethod, node);
 
     _mainCG->emit(new CallInst(_mainCG->createTemp(), method, {object, index, _value}));
 }

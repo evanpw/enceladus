@@ -102,34 +102,15 @@ int main(int argc, char* argv[])
 		ToSSA toSSA(function);
 		toSSA.run();
 
-		// std::cerr << function->name << ":" << std::endl;
-		// for (BasicBlock* block : function->blocks)
-		// {
-		// 	std::cerr << block->str() << std::endl;
-		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
-		//     {
-		//     	std::cerr << "\t" << inst->str() << std::endl;
-		//     }
-		// }
-		// std::cerr << std::endl;
-
 		ConstantFolding constantFolding(function);
 		constantFolding.run();
-
-		// std::cerr << function->name << ":" << std::endl;
-		// for (BasicBlock* block : function->blocks)
-		// {
-		// 	std::cerr << block->str() << std::endl;
-		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
-		//     {
-		//     	std::cerr << "\t" << inst->str() << std::endl;
-		//     }
-		// }
-		// std::cerr << std::endl;
 
 		KillDeadValues killDeadValues(function);
 		killDeadValues.run();
 
+		FromSSA fromSSA(function);
+		fromSSA.run();
+
 		// std::cerr << function->name << ":" << std::endl;
 		// for (BasicBlock* block : function->blocks)
 		// {
@@ -140,9 +121,6 @@ int main(int argc, char* argv[])
 		//     }
 		// }
 		// std::cerr << std::endl;
-
-		FromSSA fromSSA(function);
-		fromSSA.run();
 	}
 
 

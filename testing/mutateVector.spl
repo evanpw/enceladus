@@ -1,5 +1,6 @@
 x := Vector::new()
 x.append(10)
-x[0] = 20
+x[0] = 5
+x[0] += 15
 
 println $ show(x[0])

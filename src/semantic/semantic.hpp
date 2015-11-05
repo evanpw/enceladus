@@ -120,11 +120,15 @@ private:
     ReturnChecker _returnChecker;
 };
 
+// WARNING: Both the main analyzer and the lvalue analyzer can run on the same
+// node (e.g., in += statements), so they need to be compatible. In other
+// words, if both analyzers write to the same annotation (e.g., the type),
+// they must give it the same value
 class LValueAnalyzer : public AstVisitor
 {
 public:
-    LValueAnalyzer(SemanticAnalyzer* mainAnalyzer, AstNode* rhs)
-    : _mainAnalyzer(mainAnalyzer), _rhs(rhs)
+    LValueAnalyzer(SemanticAnalyzer* mainAnalyzer)
+    : _mainAnalyzer(mainAnalyzer)
     {}
 
     virtual void visit(NullaryNode* node);
@@ -136,7 +140,6 @@ public:
 private:
     bool _good = false;
     SemanticAnalyzer* _mainAnalyzer;
-    AstNode* _rhs;
 };
 
 class TypeInferenceError : public std::exception
