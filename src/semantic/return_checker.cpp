@@ -29,11 +29,6 @@ void ReturnChecker::visit(ForNode* node)
     _alwaysReturns = visitAndGet(node->body);
 }
 
-void ReturnChecker::visit(ForeverNode* node)
-{
-    _alwaysReturns = visitAndGet(node->body);
-}
-
 void ReturnChecker::visit(FunctionCallNode* node)
 {
     // HACK
@@ -42,12 +37,13 @@ void ReturnChecker::visit(FunctionCallNode* node)
 
 void ReturnChecker::visit(IfElseNode* node)
 {
-    _alwaysReturns = visitAndGet(node->body) && visitAndGet(node->elseBody);
+    _alwaysReturns = visitAndGet(node->body) && node->elseBody && visitAndGet(node->elseBody);
 }
 
-void ReturnChecker::visit(IfNode* node)
+void ReturnChecker::visit(ForeverNode* node)
 {
-    _alwaysReturns = visitAndGet(node->body);
+    LoopEscapeChecker loopChecker(node);
+    _alwaysReturns = !loopChecker.canEscape() || visitAndGet(node->body);
 }
 
 void ReturnChecker::visit(MatchArm* node)

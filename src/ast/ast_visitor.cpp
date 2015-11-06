@@ -39,17 +39,13 @@ void AstVisitor::visit(FunctionCallNode* node)
 	}
 }
 
-void AstVisitor::visit(IfNode* node)
-{
-	node->condition->accept(this);
-	node->body->accept(this);
-}
-
 void AstVisitor::visit(IfElseNode* node)
 {
 	node->condition->accept(this);
 	node->body->accept(this);
-	node->elseBody->accept(this);
+
+	if (node->elseBody)
+		node->elseBody->accept(this);
 }
 
 void AstVisitor::visit(AssertNode* node)

@@ -324,23 +324,10 @@ public:
 	AST_VISITABLE();
 };
 
-class IfNode : public StatementNode
-{
-public:
-	IfNode(AstContext* context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body)
-	: StatementNode(context, location), condition(condition), body(body)
-	{}
-
-	AST_VISITABLE();
-
-	ExpressionNode* condition;
-	StatementNode* body;
-};
-
 class IfElseNode : public StatementNode
 {
 public:
-	IfElseNode(AstContext* context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* elseBody)
+	IfElseNode(AstContext* context, const YYLTYPE& location, ExpressionNode* condition, StatementNode* body, StatementNode* elseBody = nullptr)
 	: StatementNode(context, location), condition(condition), body(body), elseBody(elseBody)
 	{}
 
@@ -419,6 +406,9 @@ public:
 	{}
 
 	AST_VISITABLE();
+
+	// Annotations
+	LoopNode* loop = nullptr;
 };
 
 class ContinueNode : public StatementNode
@@ -429,6 +419,9 @@ public:
 	{}
 
 	AST_VISITABLE();
+
+	// Annotations
+	LoopNode* loop = nullptr;
 };
 
 class AssignNode : public StatementNode

@@ -46,7 +46,6 @@ public:
     virtual void visit(FunctionCallNode* node);
     virtual void visit(FunctionDefNode* node);
     virtual void visit(IfElseNode* node);
-    virtual void visit(IfNode* node);
     virtual void visit(ImplNode* node);
     virtual void visit(IndexNode* node);
     virtual void visit(LetNode* node);

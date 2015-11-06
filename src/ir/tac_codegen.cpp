@@ -901,22 +901,6 @@ void TACCodeGen::visit(BlockNode* node)
     }
 }
 
-void TACCodeGen::visit(IfNode* node)
-{
-    BasicBlock* trueBranch = createBlock();
-    BasicBlock* continueAt = createBlock();
-
-    _conditionalCodeGen.visitCondition(*node->condition, trueBranch, continueAt);
-
-    setBlock(trueBranch);
-    node->body->accept(this);
-
-    if (!_currentBlock->isTerminated())
-        emit(new JumpInst(continueAt));
-
-    setBlock(continueAt);
-}
-
 void TACCodeGen::visit(IfElseNode* node)
 {
     BasicBlock* trueBranch = createBlock();
@@ -930,21 +914,30 @@ void TACCodeGen::visit(IfElseNode* node)
     node->body->accept(this);
     if (!_currentBlock->isTerminated())
     {
-        continueAt = createBlock();
+        if (!node->elseBody)
+        {
+            continueAt = falseBranch;
+        }
+        else
+        {
+            continueAt = createBlock();
+        }
 
-        trueBranch = _currentBlock;
         emit(new JumpInst(continueAt));
     }
 
     setBlock(falseBranch);
-    node->elseBody->accept(this);
-    if (!_currentBlock->isTerminated())
+    if (node->elseBody)
     {
-        if (!continueAt)
-            continueAt = createBlock();
+        node->elseBody->accept(this);
 
-        falseBranch = _currentBlock;
-        emit(new JumpInst(continueAt));
+        if (!_currentBlock->isTerminated())
+        {
+            if (!continueAt)
+                continueAt = createBlock();
+
+            emit(new JumpInst(continueAt));
+        }
     }
 
     if (continueAt)

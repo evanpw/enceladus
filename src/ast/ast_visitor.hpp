@@ -22,7 +22,6 @@ class ForNode;
 class FunctionCallNode;
 class FunctionDefNode;
 class IfElseNode;
-class IfNode;
 class ImplNode;
 class IndexNode;
 class IntNode;
@@ -65,7 +64,6 @@ public:
 	virtual void visit(FunctionCallNode* node);
 	virtual void visit(FunctionDefNode* node);
 	virtual void visit(IfElseNode* node);
-	virtual void visit(IfNode* node);
 	virtual void visit(ImplNode* node);
 	virtual void visit(IndexNode* node);
 	virtual void visit(LetNode* node);
@@ -118,7 +116,6 @@ public:
 	UNSUPPORTED(FunctionCallNode);
 	UNSUPPORTED(FunctionDefNode);
 	UNSUPPORTED(IfElseNode);
-	UNSUPPORTED(IfNode);
 	UNSUPPORTED(ImplNode);
 	UNSUPPORTED(IndexNode);
 	UNSUPPORTED(IntNode);

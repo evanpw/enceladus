@@ -6,7 +6,7 @@
 
 #define NORETURN(T) virtual void visit(T* node) { _alwaysReturns = false; }
 
-class ReturnChecker : public AstVisitor
+class ReturnChecker : public SparseAstVisitor
 {
 public:
     bool checkFunction(FunctionDefNode* function);
@@ -14,48 +14,34 @@ public:
 
     // Relevant nodes
     virtual void visit(BlockNode* node);
-    virtual void visit(ForNode* node);
     virtual void visit(ForeverNode* node);
+    virtual void visit(ForNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(IfElseNode* node);
-    virtual void visit(IfNode* node);
     virtual void visit(MatchArm* node);
     virtual void visit(MatchNode* node);
     virtual void visit(ReturnNode* node);
     virtual void visit(WhileNode* node);
 
     // Nodes that can never contain a return
+    NORETURN(AssertNode);
+    NORETURN(AssignNode);
+    NORETURN(BinopNode);
     NORETURN(BoolNode);
+    NORETURN(BreakNode);
+    NORETURN(CastNode);
+    NORETURN(ComparisonNode);
+    NORETURN(ContinueNode);
+    NORETURN(IndexNode);
     NORETURN(IntNode);
+    NORETURN(LetNode);
+    NORETURN(LogicalNode);
+    NORETURN(MemberAccessNode);
+    NORETURN(MethodCallNode);
     NORETURN(NullaryNode);
     NORETURN(PassNode);
     NORETURN(StringLiteralNode);
-    NORETURN(AssertNode);
-    NORETURN(AssignNode);
-    NORETURN(LetNode);
     NORETURN(VariableDefNode);
-    NORETURN(MemberAccessNode);
-    NORETURN(MethodCallNode);
-    NORETURN(IndexNode);
-    NORETURN(LogicalNode);
-    NORETURN(CastNode);
-    NORETURN(ComparisonNode);
-    NORETURN(BinopNode);
-    NORETURN(BreakNode);
-
-    // Top-level nodes: should never occur within a function
-    UNSUPPORTED(ConstructorSpec);
-    UNSUPPORTED(DataDeclaration);
-    UNSUPPORTED(ForeignDeclNode);
-    UNSUPPORTED(FunctionDefNode);
-    UNSUPPORTED(ImplNode);
-    UNSUPPORTED(MemberDefNode);
-    UNSUPPORTED(MethodDefNode);
-    UNSUPPORTED(ProgramNode);
-    UNSUPPORTED(StructDefNode);
-    UNSUPPORTED(TraitDefNode);
-    UNSUPPORTED(TraitMethodNode);
-    UNSUPPORTED(TypeAliasNode);
 
 private:
     bool _alwaysReturns;
@@ -65,6 +51,33 @@ private:
         node->accept(this);
         return _alwaysReturns;
     }
+};
+
+// Is there a break statement that allows a forever loop to be escaped?
+class LoopEscapeChecker : public AstVisitor
+{
+public:
+    LoopEscapeChecker(ForeverNode* loop)
+    : _loop(loop)
+    {}
+
+    bool canEscape()
+    {
+        _loop->accept(this);
+        return _loopEscapes;
+    }
+
+    virtual void visit(BreakNode* node)
+    {
+        if (node->loop == _loop)
+        {
+            _loopEscapes = true;
+        }
+    }
+
+private:
+    ForeverNode* _loop;
+    bool _loopEscapes = false;
 };
 
 #endif

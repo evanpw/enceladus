@@ -190,6 +190,9 @@ class TestAcceptance(object):
     def test_noReturn3(self):
         self.run('noReturn3', build_error='Error: testing/noReturn3.spl:1:1: not every path through function returns a value')
 
+    def test_noReturn4(self):
+        self.run('noReturn4', build_error='Error: testing/noReturn4.spl:1:1: not every path through function returns a value')
+
     def test_fizzBuzz(self):
         self.run('fizzBuzz', result=open('testing/fizzBuzz.correct').read())
 

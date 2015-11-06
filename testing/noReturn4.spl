@@ -1,0 +1,6 @@
+def shouldFail() -> Int
+    if False
+        return 0
+
+x := shouldFail()
+println $ show(x)

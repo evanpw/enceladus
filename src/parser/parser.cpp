@@ -206,7 +206,7 @@ StatementNode* Parser::if_helper(const YYLTYPE& location)
     }
     else
     {
-        return new IfNode(_context, location, condition, ifBody);
+        return new IfElseNode(_context, location, condition, ifBody);
     }
 }
 

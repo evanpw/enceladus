@@ -1177,33 +1177,28 @@ void SemanticAnalyzer::visit(BlockNode* node)
     node->type = _typeTable->Unit;
 }
 
-void SemanticAnalyzer::visit(IfNode* node)
-{
-    node->condition->accept(this);
-    unify(node->condition->type, _typeTable->Bool, node);
-
-    _symbolTable->pushScope();
-    node->body->accept(this);
-    _symbolTable->popScope();
-    unify(node->body->type, _typeTable->Unit, node);
-
-    node->type = _typeTable->Unit;
-}
-
 void SemanticAnalyzer::visit(IfElseNode* node)
 {
     node->condition->accept(this);
     unify(node->condition->type, _typeTable->Bool, node);
 
     _symbolTable->pushScope();
+
     node->body->accept(this);
+    unify(node->body->type, _typeTable->Unit, node->body);
+
     _symbolTable->popScope();
 
-    _symbolTable->pushScope();
-    node->elseBody->accept(this);
-    _symbolTable->popScope();
+    if (node->elseBody)
+    {
+        _symbolTable->pushScope();
 
-    unify(node->body->type, node->elseBody->type, node);
+        node->elseBody->accept(this);
+        unify(node->elseBody->type, _typeTable->Unit, node->elseBody);
+
+        _symbolTable->popScope();
+    }
+
     node->type = node->body->type;
 }
 
@@ -1292,12 +1287,16 @@ void SemanticAnalyzer::visit(ForeverNode* node)
 void SemanticAnalyzer::visit(BreakNode* node)
 {
     CHECK(_enclosingLoop, "break statement must be within a loop");
+
+    node->loop = _enclosingLoop;
     node->type = _typeTable->Unit;
 }
 
 void SemanticAnalyzer::visit(ContinueNode* node)
 {
     CHECK(_enclosingLoop, "continue statement must be within a loop");
+
+    node->loop = _enclosingLoop;
     node->type = _typeTable->Unit;
 }
 
