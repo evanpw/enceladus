@@ -7,4 +7,4 @@ def genericSum(xs: T) -> UInt8 where T: Iterator<UInt8>
     return total
 
 println $ show $ genericSum("hello".iter()) as Int
-println $ show $ genericSum([1u8, 2, 3, 4]) as Int
+println $ show $ genericSum([1u8, 2, 3, 4].iter()) as Int

@@ -33,18 +33,18 @@ def makeRun(x: UInt, y: UInt, dx: UInt, dy: UInt) -> UInt
 
     return x1 * x2 * x3 * x4
 
-def allRuns(xrange: Range<UInt>, yrange: Range<UInt>, dx: UInt, dy: UInt) -> [UInt]
+def allRuns(xlower: UInt, xupper: UInt, ylower: UInt, yupper: UInt, dx: UInt, dy: UInt) -> [UInt]
     xs := []
 
-    for x in xrange
-        for y in yrange
+    for x in range(xlower, xupper)
+        for y in range(ylower, yupper)
             xs = xs.insert(makeRun(x, y, dx, dy))
 
     return xs
 
-horizontal := allRuns(range(0, 17), range(0, 20), 1, 0)
-vertical := allRuns(range(0, 20), range(0, 17), 0, 1)
-diagonal1 := allRuns(range(0, 17), range(0, 17), 1, 1)
-diagonal2 := allRuns(range(0, 17), range(3, 20), 1, -1)
+horizontal := allRuns(0, 17, 0, 20, 1, 0)
+vertical := allRuns(0, 20, 0, 17, 0, 1)
+diagonal1 := allRuns(0, 17, 0, 17, 1, 1)
+diagonal2 := allRuns(0, 17, 3, 20, 1, -1)
 
 println $ show $ maximum $ horizontal + vertical + diagonal1 + diagonal2

@@ -1258,9 +1258,10 @@ void SemanticAnalyzer::visit(ForNode* node)
     Trait* trait = instantiate(traitSymbol->trait, typeAssignment);
     unify(node->iteratorExpression->type, trait, node->iteratorExpression);
 
-    node->head = traitSymbol->methods.at("head");
-    node->empty = traitSymbol->methods.at("empty");
-    node->tail = traitSymbol->methods.at("tail");
+    node->next = traitSymbol->methods.at("next");
+
+    Type* Option = dynamic_cast<TypeSymbol*>(resolveTypeSymbol("Option"))->type;
+    node->optionType = Option->get<ConstructedType>()->instantiate({trait->parameters()[0]});
 
     // Save the current inner-most loop so that we can restore it after
     // visiting the children of this loop.

@@ -1,6 +1,6 @@
 # List operations
 def isIn(x: T, ys: [T]) -> Bool where T: Eq
-    for y in ys
+    for y in ys.iter()
         if x == y
             return True
 
@@ -11,7 +11,7 @@ def splitList(xs: [T], pivot: T) -> Pair<[T], [T]> where T: PartialOrd
     lhs := []
     rhs := []
 
-    for x in xs
+    for x in xs.iter()
         if x < pivot
             lhs = lhs.insert(x)
         else
@@ -41,7 +41,7 @@ def uniquify(xs: [T]) -> [T] where T: Ord
     result := [xs.head()]
     last := xs.head()
 
-    for x in xs.tail()
+    for x in xs.tail().iter()
         match last.cmp(x)
             Equal
                 pass

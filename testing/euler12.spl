@@ -44,7 +44,7 @@ def countDivisors(x: Int) -> Int
     primeCounts := countGroups $ factor(x)
     count := 1
 
-    for n in primeCounts
+    for n in primeCounts.iter()
         count *= (n + 1)
 
     return count

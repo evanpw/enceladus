@@ -1,5 +1,5 @@
-for x in [1, 2]
+for x in [1, 2].iter()
     println $ show(x)
 
-for x in [3, 4]
+for x in [3, 4].iter()
     println $ show(x)

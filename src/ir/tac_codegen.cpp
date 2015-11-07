@@ -1010,59 +1010,40 @@ void TACCodeGen::visit(WhileNode* node)
 
 void TACCodeGen::visit(ForNode* node)
 {
-    Value* initialIterator = visitAndGet(node->iteratorExpression);
-
+    Value* iterator = visitAndGet(node->iteratorExpression);
     Type* type = node->iteratorExpression->type;
-    Value* head = getTraitMethodValue(type, node->head, node);
-    Value* empty = getTraitMethodValue(type, node->empty, node);
-    Value* tail = getTraitMethodValue(type, node->tail, node);
+    Value* next = getTraitMethodValue(type, node->next, node);
 
-
-
-
-    BasicBlock* loopInit = createBlock();
     BasicBlock* loopBegin = createBlock();
     BasicBlock* loopExit = createBlock();
-    BasicBlock* loopBody = createBlock();
-
-    // Create an unnamed local variable to hold the iterator
-    Value* iteratorVar = _context->createLocal(ValueType::Reference, "");
-    _currentFunction->locals.push_back(iteratorVar);
-
-    emit(new JumpInst(loopInit));
-    setBlock(loopInit);
-
-    emit(new StoreInst(iteratorVar, initialIterator));
+    BasicBlock* isSome = createBlock();
 
     emit(new JumpInst(loopBegin));
     setBlock(loopBegin);
 
-    // Loop while iterator is not empty
-    Value* currentIterator = createTemp(ValueType::Reference);
-    emit(new LoadInst(currentIterator, iteratorVar));
-    Value* isNull = createTemp(ValueType::U64);
-    emit(new CallInst(isNull, empty, {currentIterator}));
-    emit(new JumpIfInst(isNull, loopExit, loopBody));
+    // Call iter.next()
+    Value* nextOption = createTemp(getValueType(node->optionType, _typeContext));
+    emit(new CallInst(nextOption, next, {iterator}));
+
+    // Check for Some tag, and otherwise exit the loop
+    size_t SomeTag = node->optionType->getValueConstructor("Some").first;
+    Value* tag = createTemp(ValueType::U64);
+    Value* tagOffset = _context->createConstantInt(ValueType::I64, offsetof(SplObject, constructorTag));
+    emit(new IndexedLoadInst(tag, nextOption, tagOffset));
+    emit(new ConditionalJumpInst(tag, "==", _context->createConstantInt(ValueType::U64, SomeTag), isSome, loopExit));
+
+    // Extract x from Some(x)
+    setBlock(isSome);
+    Value* varTemp = createTemp(getValueType(node->symbol->type, _typeContext));
+    Value* varOffset = _context->createConstantInt(ValueType::I64, sizeof(SplObject));
+    emit(new IndexedLoadInst(varTemp, nextOption, varOffset));
+    emit(new StoreInst(getValue(node->symbol), varTemp));
 
     // Push a new inner loop on the (implicit) stack
     BasicBlock* prevLoopExit = _currentLoopExit;
     BasicBlock* prevLoopEntry = _currentLoopEntry;
     _currentLoopExit = loopExit;
     _currentLoopEntry = loopBegin;
-
-    setBlock(loopBody);
-
-    // Assign the next value from the iterator to the induction variable
-    currentIterator = createTemp(ValueType::Reference);
-    emit(new LoadInst(currentIterator, iteratorVar));
-    Value* currentHead = createTemp(getValueType(node->symbol->type, _typeContext));
-    emit(new CallInst(currentHead, head, {currentIterator}));
-    emit(new StoreInst(getValue(node->symbol), currentHead));
-
-    // Advance the current iterator to the next value
-    Value* currentTail = createTemp(ValueType::Reference);
-    emit(new CallInst(currentTail, tail, {currentIterator}));
-    emit(new StoreInst(iteratorVar, currentTail));
 
     node->body->accept(this);
 

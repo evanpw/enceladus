@@ -9,7 +9,7 @@ def readNames() -> [String]
     pieces := line.unwrap().splitBy(',')
 
     result := []
-    for piece in pieces
+    for piece in pieces.iter()
         result = result.insert(piece.trimChar('"'))
 
     return result

@@ -2,6 +2,9 @@ type Char = UInt8
 type String = Array<Char>
 foreign panic(msg: String)
 
+## Option ##
+data Option<T> = Some(T) | None
+
 ## List ##
 data List<T> = Cons(T, List<T>) | Nil
 
@@ -12,9 +15,7 @@ impl List<T>
 
 ## Iterator trait ##
 trait Iterator<T>
-    def head(self)-> T
-    def tail(self) -> Self
-    def empty(self) -> Bool
+    def next(self) -> Option<T>
 
 
 ## Index trait ##
@@ -46,19 +47,25 @@ struct Range<T: Num>
 def range(start: T, end: T) -> Range<T>
     return Range(start, end)
 
+def upTo(end: T) -> Range<T>
+    if end + 1 > 0
+        return Range(0, end + 1)
+    else
+        return Range(0, 0)
+
 impl Iterator<T> for Range<T>
-    def head(self) -> T
-        assert self.start < self.end
-        return self.start
+    def next(self) -> Option<T>
+        if self.start < self.end
+            result := self.start
+            self.start += 1
+            return Some(result)
+        else
+            return None
 
-    def tail(self) -> Range<T>
-        assert self.start < self.end
-        return Range(self.start + 1, self.end)
-
+impl Range<T>
     def empty(self) -> Bool
         return self.start >= self.end
 
-impl Range<T>
     def toList(self) -> [T]
         result := []
 
@@ -87,19 +94,20 @@ def rangeBy(start: T, end: T, stepBy: T) -> StepRange<T>
     assert stepBy != 0
     return StepRange(start, end, stepBy)
 
+def downFrom(start: Int) -> StepRange<Int>
+    if start > 0
+        return StepRange(start, -1, -1)
+    else
+        return StepRange(0, 0, 1)
+
 impl Iterator<T> for StepRange<T>
-    def head(self) -> T
-        assert self.start != self.end
-        return self.start
-
-    def tail(self) -> StepRange<T>
-        return StepRange(self.start + self.step, self.end, self.step)
-
-    def empty(self) -> Bool
-        if self.step > 0
-            return self.start - self.end > self.step
+    def next(self) -> Option<T>
+        if (self.step > 0 and self.start < self.end) or (self.step < 0 and self.start > self.end)
+            result := self.start
+            self.start += self.step
+            return Some(result)
         else
-            return self.start - self.end < self.step
+            return None
 
 
 ## Array ##
@@ -143,15 +151,30 @@ impl Array<T>
         return ArrayIterator(self, 0)
 
 impl Iterator<T> for ArrayIterator<T>
-    def head(self) -> T
-        return self.arr[self.offset]
+    def next(self) -> Option<T>
+        if self.offset < self.arr.length()
+            result := self.arr[self.offset]
+            self.offset += 1
+            return Some(result)
+        else
+            return None
 
-    def tail(self) -> ArrayIterator<T>
-        assert self.offset < self.arr.length()
-        return ArrayIterator(self.arr, self.offset + 1u)
+impl Range<T>
+    def toArray(self) -> Array<T>
+        if self.empty()
+            return Array::new()
 
-    def empty(self) -> Bool
-        return self.offset >= self.arr.length()
+        size := (self.end - self.start) as UInt
+        result := Array::make(size, 0)
+
+        x := self.start
+        i := 0
+        while x < self.end
+            result[i] = x
+            i += 1
+            x += 1
+
+        return result
 
 
 ## String ##
@@ -189,8 +212,6 @@ impl Eq for String
 
 
 ## Option ##
-data Option<T> = Some(T) | None
-
 impl Option<T>
     def isSome(self) -> Bool
         match self
@@ -235,27 +256,39 @@ def println(s: String)
 
 
 ## List ##
-impl Iterator<T> for List<T>
+struct ListIterator<T>
+    current: List<T>
+
+impl List<T>
+    def iter(self) -> ListIterator<T>
+        return ListIterator(self)
+
     def head(self) -> T
-        match self
-            Cons(x, _)
-                return x
-            Nil
-                panic $ "Called head on empty list"
+        if let Cons(x, _) := self
+            return x
+        else
+            panic $ "Called head on empty list"
 
     def tail(self) -> [T]
-        match self
-            Cons(_, rest)
-                return rest
-            Nil
-                panic $ "Called tail on empty list"
+        if let Cons(_, rest) := self
+            return rest
+        else
+            panic $ "Called tail on empty list"
 
     def empty(self) -> Bool
-        match self
-            Cons(_, _)
-                return False
+        if let Nil := self
+            return True
+        else
+            return False
+
+impl Iterator<T> for ListIterator<T>
+    def next(self) -> Option<T>
+        match self.current
+            Cons(head, tail)
+                self.current = tail
+                return Some(head)
             Nil
-                return True
+                return None
 
 def reversed(iter: S) -> List<T> where S: Iterator<T>
     xs := []
@@ -299,14 +332,14 @@ impl List<T>
 
     def reverse(self) -> [T]
         ys := []
-        for x in self
+        for x in self.iter()
             ys = ys.insert(x)
 
         return ys
 
     def filter(self: [T], f: T -> Bool) -> [T]
         result := []
-        for x in self
+        for x in self.iter()
             if f(x)
                 result = result.insert(x)
 
@@ -314,7 +347,7 @@ impl List<T>
 
     def map(self: [T], f: T -> S) -> [S]
         result := []
-        for x in self
+        for x in self.iter()
             result = result.insert(f(x))
 
         return result.reverse()
@@ -437,15 +470,13 @@ impl IndexSet<UInt, T> for Vector<T>
         self.content[n] = x
 
 impl Iterator<T> for VectorIterator<T>
-    def head(self) -> T
-        assert self.idx < self.v.size
-        return self.v.at(self.idx)
-
-    def tail(self) -> VectorIterator<T>
-        return VectorIterator(self.v, self.idx + 1)
-
-    def empty(self) -> Bool
-        return self.idx >= self.v.size
+    def next(self) -> Option<T>
+        if self.idx < self.v.size
+            result := self.v[self.idx]
+            self.idx += 1
+            return Some(result)
+        else
+            return None
 
 def all(xs: Vector<Bool>) -> Bool
     for x in xs.iter()
@@ -527,7 +558,7 @@ def drop(x: T)
 
 def sum(xs: [T]) -> T where T: Num
     result := 0
-    for x in xs
+    for x in xs.iter()
         result += x
 
     return result
@@ -764,7 +795,7 @@ impl Add for [T]
     def add(self, other: [T]) -> [T]
         result := other
 
-        for x in self.reverse()
+        for x in self.reverse().iter()
             result = result.insert(x)
 
         return result

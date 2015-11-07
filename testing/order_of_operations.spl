@@ -8,9 +8,6 @@
 # TST: Add tests for library functions
 # LANG: Make destructuring look more like a normal variable definition?
 # LIB: Deque data structure
-# LANG: Set array elements using the same array[offset] syntax as getting
-# LANG: Add continue keyword
-# LIB: String comparison
 
 import List
 import HashTable
@@ -42,7 +39,7 @@ def fullCache(instructions: [String]) -> String
     m := instructions.head().length()
     cache := zeroCache(m)
 
-    for inst in instructions
+    for inst in instructions.iter()
         cache = simulateInstruction(cache, inst).first()
 
     return cache
@@ -54,7 +51,7 @@ def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) 
 
     # Examine each successor of this cache value
     costs := []
-    for inst in instructions
+    for inst in instructions.iter()
         let Pair(nextCache, instCost) := simulateInstruction(cache, inst)
 
         if cache != nextCache

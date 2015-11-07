@@ -403,9 +403,8 @@ public:
 
 	// Annotations
 	Symbol* symbol;
-	TraitMethodSymbol* head;
-	TraitMethodSymbol* empty;
-	TraitMethodSymbol* tail;
+	TraitMethodSymbol* next;
+	Type* optionType;	// Return value of next
 };
 
 class ForeverNode : public LoopNode

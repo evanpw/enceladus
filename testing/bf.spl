@@ -2,12 +2,10 @@
 # see https://en.wikipedia.org/wiki/Brainfuck
 import IO
 
-
 struct State
     memory: Array<UInt8>
     dp: UInt
     ip: UInt
-
 
 impl State
     def new(memSize: UInt) -> State
@@ -42,21 +40,7 @@ impl Instruction
                 return "Clear"
 
 
-struct BetterStringIterator
-    str: String
-    i: UInt
-
-impl BetterStringIterator
-    def next(self: Self) -> Option<Char>
-        if self.i >= self.str.length()
-            return None
-        else
-            result := self.str[self.i]
-            self.i += 1
-            return Some(result)
-
-
-def compileNext(iter: BetterStringIterator) -> Option<Instruction>
+def compileNext(iter: ArrayIterator<Char>) -> Option<Instruction>
     while let Some(c) := iter.next()
         if c == '+'
             return Some(Add(1))
@@ -87,7 +71,7 @@ def compileNext(iter: BetterStringIterator) -> Option<Instruction>
 def compile(program: String) -> Vector<Instruction>
     result := Vector::new()
 
-    iter := BetterStringIterator(program, 0)
+    iter := program.iter()
 
     while let Some(inst) := compileNext(iter)
         result.append(inst)
@@ -196,7 +180,7 @@ def step(state: State, program: Vector<Instruction>)
                 matchingBracket := 0
                 nesting := 1
 
-                for i in rangeBy(state.ip - 1, 0, -1)
+                for i in rangeBy(state.ip - 1, -1, -1)
                     if let Close := program[i]
                         nesting += 1
 
