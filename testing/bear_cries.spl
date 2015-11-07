@@ -13,7 +13,7 @@ impl Progress
 impl Vector<Bool>
     def toString(self) -> String
         result := []
-        for x in self.iter()
+        for x in self
             if x
                 result = result.insert('1')
             else

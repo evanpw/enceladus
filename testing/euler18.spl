@@ -11,7 +11,7 @@ def readInput() -> [[Int]]
         match maybeLine
             Some(line)
                 xs := []
-                for s in line.split().iter()
+                for s in line.split()
                     xs = xs.insert(s.toInt().unwrap())
 
                 row := xs.reverse()

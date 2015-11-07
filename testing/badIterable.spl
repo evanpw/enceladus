@@ -1,0 +1,14 @@
+struct Test1
+    x: Int
+
+struct Test2
+    x: Int
+
+impl Iterable<Test1, Int> for Test2
+    def iter(self) -> Test1
+        return Test1(self.x)
+
+a := Test2(10)
+
+for z in a
+    pass

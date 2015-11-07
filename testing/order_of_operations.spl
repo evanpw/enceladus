@@ -39,7 +39,7 @@ def fullCache(instructions: [String]) -> String
     m := instructions.head().length()
     cache := zeroCache(m)
 
-    for inst in instructions.iter()
+    for inst in instructions
         cache = simulateInstruction(cache, inst).first()
 
     return cache
@@ -51,7 +51,7 @@ def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) 
 
     # Examine each successor of this cache value
     costs := []
-    for inst in instructions.iter()
+    for inst in instructions
         let Pair(nextCache, instCost) := simulateInstruction(cache, inst)
 
         if cache != nextCache

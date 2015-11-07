@@ -13,10 +13,32 @@ impl List<T>
         return Cons(x, self)
 
 
-## Iterator trait ##
+## Iterator / Iterable traits ##
 trait Iterator<T>
     def next(self) -> Option<T>
 
+# TODO: Allow one of these implementations
+#trait Iterable<T>
+#    type IteratorType: Iterator<T>
+#    def iter(self) -> IteratorType
+#
+#trait Iterable<S> where S: Iterator<T>
+#    def iter(self) -> S
+#
+#trait Iterable<S, T> where S: Iterator<T>
+#    def iter(self) -> S
+
+trait Iterable<S, T>
+    def iter(self) -> S
+
+impl Iterable<S, T> for S where S: Iterator<T>
+    def iter(self) -> S
+        return self
+
+# TODO: Better implemenation
+#impl Iterable<T> for S where S: Iterator<T>
+#    def iter(self) -> S
+#        return self
 
 ## Index trait ##
 trait Index<S, T>
@@ -147,6 +169,7 @@ impl Array<T>
     def length(self) -> UInt
         return arrayLength(self)
 
+impl Iterable<ArrayIterator<T>, T> for Array<T>
     def iter(self) -> ArrayIterator<T>
         return ArrayIterator(self, 0)
 
@@ -245,11 +268,11 @@ impl Option<T>
 foreign putchar(c: Char)
 
 def print(s: String)
-    for c in s.iter()
+    for c in s
         putchar(c)
 
 def println(s: String)
-    for c in s.iter()
+    for c in s
         putchar(c)
 
     putchar(10) # '\n'
@@ -259,10 +282,11 @@ def println(s: String)
 struct ListIterator<T>
     current: List<T>
 
-impl List<T>
+impl Iterable<ListIterator<T>, T> for List<T>
     def iter(self) -> ListIterator<T>
         return ListIterator(self)
 
+impl List<T>
     def head(self) -> T
         if let Cons(x, _) := self
             return x
@@ -290,12 +314,13 @@ impl Iterator<T> for ListIterator<T>
             Nil
                 return None
 
-def reversed(iter: S) -> List<T> where S: Iterator<T>
-    xs := []
-    for x in iter
-        xs = xs.insert(x)
+# TODO: Allow this definition, or something better
+#def reversed(iter: S) -> List<T> where S: Iterable<U, T>
+#    xs := []
+#    for x in iter
+#        xs = xs.insert(x)
 
-    return xs
+#    return xs
 
 impl Index<UInt, T> for List<T>
     def at(self, n: UInt) -> T
@@ -332,14 +357,14 @@ impl List<T>
 
     def reverse(self) -> [T]
         ys := []
-        for x in self.iter()
+        for x in self
             ys = ys.insert(x)
 
         return ys
 
     def filter(self: [T], f: T -> Bool) -> [T]
         result := []
-        for x in self.iter()
+        for x in self
             if f(x)
                 result = result.insert(x)
 
@@ -347,7 +372,7 @@ impl List<T>
 
     def map(self: [T], f: T -> S) -> [S]
         result := []
-        for x in self.iter()
+        for x in self
             result = result.insert(f(x))
 
         return result.reverse()
@@ -446,9 +471,6 @@ impl Vector<T>
     def copy(self) -> Vector<T>
         return Vector(self.toArray(), self.size)
 
-    def iter(self) -> VectorIterator<T>
-        return VectorIterator(self, 0)
-
     def length(self) -> UInt
         return self.size
 
@@ -460,6 +482,10 @@ impl Vector<T>
             x := self.content[n - i - 1]
             self.content[n - i - 1] = self.content[i]
             self.content[i] = x
+
+impl Iterable<VectorIterator<T>, T> for Vector<T>
+    def iter(self) -> VectorIterator<T>
+        return VectorIterator(self, 0)
 
 impl Index<UInt, T> for Vector<T>
     def at(self, n: UInt) -> T
@@ -479,14 +505,14 @@ impl Iterator<T> for VectorIterator<T>
             return None
 
 def all(xs: Vector<Bool>) -> Bool
-    for x in xs.iter()
+    for x in xs
         if not(x)
             return False
 
     return True
 
 def any(xs: Vector<Bool>) -> Bool
-    for x in xs.iter()
+    for x in xs
         if x
             return True
 
@@ -558,7 +584,7 @@ def drop(x: T)
 
 def sum(xs: [T]) -> T where T: Num
     result := 0
-    for x in xs.iter()
+    for x in xs
         result += x
 
     return result
@@ -795,7 +821,7 @@ impl Add for [T]
     def add(self, other: [T]) -> [T]
         result := other
 
-        for x in self.reverse().iter()
+        for x in self.reverse()
             result = result.insert(x)
 
         return result

@@ -1254,14 +1254,22 @@ void SemanticAnalyzer::visit(ForNode* node)
     node->iteratorExpression->accept(this);
 
     TypeAssignment typeAssignment;
-    TraitSymbol* traitSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
-    Trait* trait = instantiate(traitSymbol->trait, typeAssignment);
-    unify(node->iteratorExpression->type, trait, node->iteratorExpression);
+    TraitSymbol* iterableSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterable"));
+    Trait* Iterable = instantiate(iterableSymbol->trait, typeAssignment);
+    unify(node->iteratorExpression->type, Iterable, node->iteratorExpression);
 
-    node->next = traitSymbol->methods.at("next");
+    node->iter = iterableSymbol->methods.at("iter");
+    node->iteratorType = Iterable->parameters()[0];
+
+    TraitSymbol* iteratorSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
+    Trait* Iterator = instantiate(iteratorSymbol->trait, typeAssignment);
+    unify(node->iteratorType, Iterator, node->iteratorExpression);
+
+    node->next = iteratorSymbol->methods.at("next");
 
     Type* Option = dynamic_cast<TypeSymbol*>(resolveTypeSymbol("Option"))->type;
-    node->optionType = Option->get<ConstructedType>()->instantiate({trait->parameters()[0]});
+    Type* varType = Iterator->parameters()[0];
+    node->optionType = Option->get<ConstructedType>()->instantiate({varType});
 
     // Save the current inner-most loop so that we can restore it after
     // visiting the children of this loop.
@@ -1270,7 +1278,7 @@ void SemanticAnalyzer::visit(ForNode* node)
     _symbolTable->pushScope();
 
     node->symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
-    node->symbol->type = trait->parameters().at(0);
+    node->symbol->type = varType;
 
     node->body->accept(this);
     unify(node->body->type, _typeTable->Unit, node);

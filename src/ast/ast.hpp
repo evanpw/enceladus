@@ -403,8 +403,10 @@ public:
 
 	// Annotations
 	Symbol* symbol;
+	TraitMethodSymbol* iter;
 	TraitMethodSymbol* next;
-	Type* optionType;	// Return value of next
+	Type* iteratorType;	// Return value of iter()
+	Type* optionType;	// Return value of next()
 };
 
 class ForeverNode : public LoopNode

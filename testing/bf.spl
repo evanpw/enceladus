@@ -76,7 +76,7 @@ def compile(program: String) -> Vector<Instruction>
     while let Some(inst) := compileNext(iter)
         result.append(inst)
 
-    #for inst in result.iter()
+    #for inst in result
     #    println $ inst.toString()
 
     return result

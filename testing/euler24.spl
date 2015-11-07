@@ -2,7 +2,7 @@
 
 def toUInt(xs: [UInt]) -> UInt
     result := 0
-    for x in xs.iter()
+    for x in xs
         result = (result * 10) + x
 
     return result
@@ -36,7 +36,7 @@ def permutationAt(n: UInt, digits: [UInt]) -> [UInt]
 
     subCount := factorial(digits.length() - 1)
 
-    for digit in digits.iter()
+    for digit in digits
         if subCount <= n
             n -= subCount
         else

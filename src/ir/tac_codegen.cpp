@@ -455,7 +455,8 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
                 ss << "L";
                 for (const Trait* constraint : typeVariable->constraints())
                 {
-                    std::string name = constraint->str();
+                    // TODO: This may be ambiguous
+                    std::string name = constraint->name();
                     ss << name.size() << name;
                 }
                 ss << "G";
@@ -1010,13 +1011,17 @@ void TACCodeGen::visit(WhileNode* node)
 
 void TACCodeGen::visit(ForNode* node)
 {
-    Value* iterator = visitAndGet(node->iteratorExpression);
-    Type* type = node->iteratorExpression->type;
-    Value* next = getTraitMethodValue(type, node->next, node);
+    Value* iterable = visitAndGet(node->iteratorExpression);
+    Value* iter = getTraitMethodValue(node->iteratorExpression->type, node->iter, node);
+    Value* next = getTraitMethodValue(node->iteratorType, node->next, node);
 
     BasicBlock* loopBegin = createBlock();
     BasicBlock* loopExit = createBlock();
     BasicBlock* isSome = createBlock();
+
+    // Call rhs.iter()
+    Value* iterator = createTemp(getValueType(node->iteratorType, _typeContext));
+    emit(new CallInst(iterator, iter, {iterable}));
 
     emit(new JumpInst(loopBegin));
     setBlock(loopBegin);

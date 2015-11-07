@@ -1,5 +1,5 @@
 def getHead(x: T) -> Char where T: Iterator<Char>
     return x.next().unwrap()
 
-i := "Hello World".iter()
-println $ show $ getHead(i) as Int
+i := "Hello World"
+println $ show $ getHead(i.iter()) as Int

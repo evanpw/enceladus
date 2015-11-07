@@ -1,7 +1,7 @@
 xs := Array::make(10, 1u8)
 
 total := 0
-for x in xs.iter()
+for x in xs
     total += x
 
 println $ show(total)

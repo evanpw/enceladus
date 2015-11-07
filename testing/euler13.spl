@@ -13,7 +13,7 @@ def readNumber() -> BigInt
 
     # TODO: This would be better solved with map, but lambdas don't exist / work
     # very well yet
-    for piece in pieces.iter()
+    for piece in pieces
         ys = ys.insert(Int::fromString(piece).unwrap())
 
     return BigInt(ys)
@@ -23,7 +23,7 @@ for i in range(0, 100)
     xs = xs.plus(readNumber())
 
 n := 0
-for x in xs.digits().reverse().take(10).iter()
+for x in xs.digits().reverse().take(10)
     n = (n * 10) + x
 
 println $ show(n)

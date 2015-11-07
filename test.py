@@ -473,10 +473,10 @@ class TestAcceptance(object):
         self.run('genericTrait6', '12')
 
     def test_iterateInt(self):
-        self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterator<\'T\d+>'))
+        self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterable<\'T\d+, \'T\d+>'))
 
     def test_fakeIterator(self):
-        self.run('fakeIterator', build_error=Regex('Error: testing/fakeIterator.spl:9:10: Type Test is not an instance of trait Iterator<\'T\d+>'))
+        self.run('fakeIterator', build_error=Regex('Error: testing/fakeIterator.spl:9:10: Type Test is not an instance of trait Iterable<\'T\d+, \'T\d+>'))
 
     def test_bearCries(self):
         self.run('bear_cries', '')

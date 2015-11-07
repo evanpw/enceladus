@@ -286,6 +286,17 @@ std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs)
     return {false, ""};
 }
 
+bool occurs(const TypeVariable* variable, Trait* trait)
+{
+    for (Type* param : trait->parameters())
+    {
+        if (occurs(variable, param))
+            return true;
+    }
+
+    return false;
+}
+
 bool occurs(const TypeVariable* variable, Type* value)
 {
     Type* rhs = value;
@@ -298,7 +309,20 @@ bool occurs(const TypeVariable* variable, Type* value)
         case ttVariable:
         {
             TypeVariable* typeVariable = rhs->get<TypeVariable>();
-            return typeVariable == variable;
+            if (typeVariable == variable)
+            {
+                return true;
+            }
+            else
+            {
+                for (Trait* constraint : typeVariable->constraints())
+                {
+                    if (occurs(variable, constraint))
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         case ttFunction:
