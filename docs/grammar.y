@@ -34,7 +34,7 @@ statement
     | assign_or_expr
 
 if_statement
-    : IF expression suite { ELIF expression suite } [ ELSE suite ]
+    : IF ( expression | let_expression ) { ELIF ( expression | let_expression ) } [ ELSE suite ]
 
 assert_statement
     : ASSERT expression EOL
@@ -72,6 +72,12 @@ forever_statement
 let_statement
     : LET UIDENT parameters COLON_EQUAL expression EOL
 
+let_expression
+    : LET UIDENT parameters COLON_EQUAL expression
+
+let_statement
+    : let_expression EOL
+
 match_statement
     : MATCH expression EOL match_body
 
@@ -91,7 +97,7 @@ variable_declaration
     : LIDENT COLON_EQUAL expression EOL
 
 while_statement
-    : WHILE expression suite
+    : WHILE ( expression | let_expression ) suite
 
 break_statement
     : BREAK EOL

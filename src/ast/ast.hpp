@@ -312,6 +312,28 @@ public:
 	TypeName* typeName;
 };
 
+class LetNode : public ExpressionNode
+{
+public:
+	LetNode(AstContext* context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, ExpressionNode* body)
+	: ExpressionNode(context, location), constructor(constructor), params(params), body(body)
+	{}
+
+	AST_VISITABLE();
+
+	std::string constructor;
+	std::vector<std::string> params;
+	ExpressionNode* body;
+	bool isExpression = true;
+
+	// Annotations
+	ConstructorSymbol* constructorSymbol;
+	TypeAssignment typeAssignment;
+
+	std::vector<Symbol*> symbols;
+	ValueConstructor* valueConstructor;
+};
+
 ////// Statement nodes /////////////////////////////////////////////////////////
 
 class PassNode : public StatementNode
@@ -536,27 +558,6 @@ public:
 
 	// Annotations
 	TraitSymbol* traitSymbol = nullptr;
-};
-
-class LetNode : public StatementNode
-{
-public:
-	LetNode(AstContext* context, const YYLTYPE& location, const std::string& constructor, const std::vector<std::string>& params, ExpressionNode* body)
-	: StatementNode(context, location), constructor(constructor), params(params), body(body)
-	{}
-
-	AST_VISITABLE();
-
-	std::string constructor;
-	std::vector<std::string> params;
-	ExpressionNode* body;
-
-	// Annotations
-	ConstructorSymbol* constructorSymbol;
-	TypeAssignment typeAssignment;
-
-	std::vector<Symbol*> symbols;
-	ValueConstructor* valueConstructor;
 };
 
 class MatchArm : public AstNode

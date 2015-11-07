@@ -30,6 +30,7 @@ private:
     ForNode* for_statement();
     ForeignDeclNode* foreign_declaration();
     ForeverNode* forever_statement();
+    LetNode* let_expression();
     LetNode* let_statement();
     MatchNode* match_statement();
     MatchArm* match_arm();

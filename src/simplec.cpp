@@ -99,6 +99,17 @@ int main(int argc, char* argv[])
 
 	for (Function* function : tacContext->functions)
 	{
+		// std::cerr << function->name << ":" << std::endl;
+		// for (BasicBlock* block : function->blocks)
+		// {
+		// 	std::cerr << block->str() << std::endl;
+		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
+		//     {
+		//     	std::cerr << "\t" << inst->str() << std::endl;
+		//     }
+		// }
+		// std::cerr << std::endl;
+
 		ToSSA toSSA(function);
 		toSSA.run();
 
@@ -110,17 +121,6 @@ int main(int argc, char* argv[])
 
 		FromSSA fromSSA(function);
 		fromSSA.run();
-
-		// std::cerr << function->name << ":" << std::endl;
-		// for (BasicBlock* block : function->blocks)
-		// {
-		// 	std::cerr << block->str() << std::endl;
-		// 	for (Instruction* inst = block->first; inst != nullptr; inst = inst->next)
-		//     {
-		//     	std::cerr << "\t" << inst->str() << std::endl;
-		//     }
-		// }
-		// std::cerr << std::endl;
 	}
 
 

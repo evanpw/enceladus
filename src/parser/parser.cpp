@@ -187,10 +187,20 @@ PassNode* Parser::pass_statement()
     return new PassNode(_context, location);
 }
 
-// Like an if statement, but doesn't match IF first
+/// if_statement
+///     : IF ( expression | let_expression ) { ELIF ( expression | let_expression ) } [ ELSE suite ]
 StatementNode* Parser::if_helper(const YYLTYPE& location)
 {
-    ExpressionNode* condition = expression();
+    ExpressionNode* condition;
+    if (peekType() == tLET)
+    {
+        condition = let_expression();
+    }
+    else
+    {
+        condition = expression();
+    }
+
     StatementNode* ifBody = suite();
 
     YYLTYPE intermediateLocation = getLocation();
@@ -322,7 +332,9 @@ ForeverNode* Parser::forever_statement()
     return new ForeverNode(_context, location, body);
 }
 
-LetNode* Parser::let_statement()
+/// let_expression
+///     : LET UIDENT parameters COLON_EQUAL expression
+LetNode* Parser::let_expression()
 {
     YYLTYPE location = getLocation();
 
@@ -331,9 +343,20 @@ LetNode* Parser::let_statement()
     std::vector<std::string> params = parameters();
     expect(tCOLON_EQUAL);
     ExpressionNode* body = expression();
-    expect(tEOL);
 
     return new LetNode(_context, location, constructor.value.str, params, body);
+}
+
+/// let_statement
+///     : let_expression EOL
+LetNode* Parser::let_statement()
+{
+    YYLTYPE location = getLocation();
+    LetNode* letNode = let_expression();
+    letNode->isExpression = false;
+    expect(tEOL);
+
+    return letNode;
 }
 
 /// match_statement: MATCH expression EOL match_body
@@ -422,12 +445,14 @@ StructDefNode* Parser::struct_declaration()
     return new StructDefNode(_context, location, name.value.str, std::move(memberList), std::move(typeParams));
 }
 
+/// while_statement
+///     : WHILE ( expression | let_expression ) suite
 WhileNode* Parser::while_statement()
 {
     YYLTYPE location = getLocation();
 
     expect(tWHILE);
-    ExpressionNode* condition = expression();
+    ExpressionNode* condition = (peekType() == tLET) ? let_expression() : expression();
     StatementNode* body = suite();
 
     return new WhileNode(_context, location, condition, body);

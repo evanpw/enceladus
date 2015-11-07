@@ -32,9 +32,6 @@ typedef struct Array
 
 typedef Array String;
 
-extern void* Some(void* value) asm("Some$A5ArrayL5UInt8EGE");
-extern void* None() asm("None$A5ArrayL5UInt8EGE");
-
 extern void* splcall0(void* f) asm("splcall0");
 extern void* splcall1(void* f, void* p1) asm("splcall1");
 extern void* splcall2(void* f, void* p1, void* p2) asm("splcall2");

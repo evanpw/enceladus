@@ -233,10 +233,6 @@ def println(s: String)
 
     putchar(10) # '\n'
 
-# HACK: Make sure these constructors exist for the C library to use
-neverUsed := Some("Hello")
-neverUsed = None
-
 
 ## List ##
 impl Iterator<T> for List<T>

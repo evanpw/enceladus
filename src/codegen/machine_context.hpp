@@ -21,10 +21,10 @@ public:
     HardwareRegister* rbx = new HardwareRegister("rbx", "ebx", "bx", "bl");
     HardwareRegister* rcx = new HardwareRegister("rcx", "ecx", "cx", "cl");
     HardwareRegister* rdx = new HardwareRegister("rdx", "edx", "dx", "dl");
-    HardwareRegister* rsi = new HardwareRegister("rsi", "esi", "si", "");
-    HardwareRegister* rdi = new HardwareRegister("rdi", "edi", "di", "");
-    HardwareRegister* rbp = new HardwareRegister("rbp", "ebp", "bp", "");
-    HardwareRegister* rsp = new HardwareRegister("rsp", "esp", "sp", "");
+    HardwareRegister* rsi = new HardwareRegister("rsi", "esi", "si", "sil");
+    HardwareRegister* rdi = new HardwareRegister("rdi", "edi", "di", "dil");
+    HardwareRegister* rbp = new HardwareRegister("rbp", "ebp", "bp", "bpl");
+    HardwareRegister* rsp = new HardwareRegister("rsp", "esp", "sp", "spl");
     HardwareRegister* r8 = new HardwareRegister("r8", "r8d", "r8w", "r8b");
     HardwareRegister* r9 = new HardwareRegister("r9", "r9d", "r9w", "r9b");
     HardwareRegister* r10 = new HardwareRegister("r10", "r10d", "r10w", "r10b");

@@ -802,10 +802,15 @@ void SemanticAnalyzer::visit(LetNode* node)
 	FunctionType* functionType = instantiatedType->get<FunctionType>();
 	Type* constructedType = functionType->output();
 
-    CHECK(constructedType->valueConstructors().size() == 1, "let statement pattern matching only applies to types with a single constructor");
+    // When used as a statement, let cannot fail to match
+    if (!node->isExpression)
+    {
+        CHECK(constructedType->valueConstructors().size() == 1, "let statement pattern matching only applies to types with a single constructor");
+    }
+
     CHECK(functionType->inputs().size() == node->params.size(), "constructor pattern `{}` does not have the correct number of arguments", constructor);
 
-    node->valueConstructor = constructedType->valueConstructors()[0];
+    node->valueConstructor = constructorSymbol->constructor;
 
     bool global = _symbolTable->isTopScope();
 
@@ -828,7 +833,15 @@ void SemanticAnalyzer::visit(LetNode* node)
 	}
 
 	unify(node->body->type, functionType->output(), node);
-    node->type = _typeTable->Unit;
+
+    if (node->isExpression)
+    {
+        node->type = _typeTable->Bool;
+    }
+    else
+    {
+        node->type = _typeTable->Unit;
+    }
 }
 
 void SemanticAnalyzer::visit(AssignNode* node)
@@ -1179,10 +1192,10 @@ void SemanticAnalyzer::visit(BlockNode* node)
 
 void SemanticAnalyzer::visit(IfElseNode* node)
 {
+    _symbolTable->pushScope();
+
     node->condition->accept(this);
     unify(node->condition->type, _typeTable->Bool, node);
-
-    _symbolTable->pushScope();
 
     node->body->accept(this);
     unify(node->body->type, _typeTable->Unit, node->body);

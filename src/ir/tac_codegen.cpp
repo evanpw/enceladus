@@ -1173,11 +1173,8 @@ void TACCodeGen::visit(VariableDefNode* node)
     }
 }
 
-void TACCodeGen::visit(LetNode* node)
+void TACCodeGen::letHelper(LetNode* node, Value* rhs)
 {
-    Value* body = visitAndGet(node->body);
-    ValueConstructor* constructor = node->valueConstructor;
-
     std::vector<size_t> layout = getConstructorLayout(node->constructorSymbol, node, node->typeAssignment);
 
     // Copy over each of the members of the constructor pattern
@@ -1190,10 +1187,39 @@ void TACCodeGen::visit(LetNode* node)
 
             Value* tmp = createTemp(type);
             Value* offset = _context->createConstantInt(ValueType::I64, sizeof(SplObject) + 8 * layout[i]);
-            emit(new IndexedLoadInst(tmp, body, offset));
+            emit(new IndexedLoadInst(tmp, rhs, offset));
             emit(new StoreInst(getValue(member), tmp));
         }
     }
+}
+
+void TACConditionalCodeGen::visit(LetNode* node)
+{
+    assert(node->isExpression);
+
+    Value* rhs = visitAndGet(node->body);
+
+    Value* tag = _mainCodeGen->createTemp(ValueType::U64);
+    Value* offset = _context->createConstantInt(ValueType::I64, offsetof(SplObject, constructorTag));
+    emit(new IndexedLoadInst(tag, rhs, offset));
+
+    ValueConstructor* constructor = node->valueConstructor;
+    size_t expectedTag = constructor->constructorTag();
+
+    BasicBlock* setupBranch = createBlock();
+    emit(new ConditionalJumpInst(tag, "==", _context->createConstantInt(ValueType::U64, expectedTag), setupBranch, _falseBranch));
+
+    setBlock(setupBranch);
+    _mainCodeGen->letHelper(node, rhs);
+    emit(new JumpInst(_trueBranch));
+}
+
+void TACCodeGen::visit(LetNode* node)
+{
+    assert(!node->isExpression);
+
+    Value* rhs = visitAndGet(node->body);
+    letHelper(node, rhs);
 }
 
 void TACConditionalCodeGen::visit(FunctionCallNode* node)

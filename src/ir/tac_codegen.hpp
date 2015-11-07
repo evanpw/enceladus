@@ -35,13 +35,14 @@ public:
     TACConditionalCodeGen(TACCodeGen* mainCodeGen);
 
     virtual void visit(BoolNode* node) { wrapper(node); }
-    virtual void visit(MemberAccessNode* node) { wrapper(node); }
-    virtual void visit(NullaryNode* node) { wrapper(node); }
-    virtual void visit(MethodCallNode* node) { wrapper(node); }
     virtual void visit(IndexNode* node) { wrapper(node); }
+    virtual void visit(MemberAccessNode* node) { wrapper(node); }
+    virtual void visit(MethodCallNode* node) { wrapper(node); }
+    virtual void visit(NullaryNode* node) { wrapper(node); }
 
-    virtual void visit(FunctionCallNode* node);
     virtual void visit(ComparisonNode* node);
+    virtual void visit(FunctionCallNode* node);
+    virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
 
     void visitCondition(AstNode& node, BasicBlock* trueBranch, BasicBlock* falseBranch)
@@ -140,8 +141,9 @@ public:
     virtual void visit(TypeAliasNode* node) {}
 
 private:
-    // Built-in functions
     void builtin_unsafeMakeArray(Type* functionType);
+
+    void letHelper(LetNode* node, Value* rhs);
 
 private:
     friend class TACAssignmentCodeGen;

@@ -16,87 +16,115 @@ impl State
 
 
 # IR Instructions
-data Instruction = Add(UInt) | Sub(UInt) | Right(UInt) | Left(UInt) | Out | In | Open | Close | Clear
+data Instruction = Add(Int) | MovePtr(Int) | Out | In | Open | Close | Clear
 
 # Should be able to derive these for simple types
 impl Default for Instruction
     def default() -> Instruction
         return Add(0)
 
-# This is all horrendously ugly
 impl Instruction
-    def isSub(self: Instruction) -> Bool
+    def toString(self: Instruction) -> String
         match self
-            Sub(_) => return True
-            Else   => return False
+            Add(m)
+                return "Add(" + show(m) + ")"
+            MovePtr(m)
+                return "MovePtr(" + show(m) + ")"
+            Out
+                return "Out"
+            In
+                return "In"
+            Open
+                return "Open"
+            Close
+                return "Close"
+            Clear
+                return "Clear"
 
-    def isAdd(self: Instruction) -> Bool
-        match self
-            Add(_) => return True
-            Else   => return False
 
-    def isOpen(self: Instruction) -> Bool
-        match self
-            Open    => return True
-            Else    => return False
+struct BetterStringIterator
+    str: String
+    i: UInt
 
-    def isClose(self: Instruction) -> Bool
-        match self
-            Close    => return True
-            Else     => return False
+impl BetterStringIterator
+    def next(self: Self) -> Option<Char>
+        if self.i >= self.str.length()
+            return None
+        else
+            result := self.str[self.i]
+            self.i += 1
+            return Some(result)
 
+
+def compileNext(iter: BetterStringIterator) -> Option<Instruction>
+    while let Some(c) := iter.next()
+        if c == '+'
+            return Some(Add(1))
+
+        elif c == '-'
+            return Some(Add(-1))
+
+        elif c == '>'
+            return Some(MovePtr(1))
+
+        elif c == '<'
+            return Some(MovePtr(-1))
+
+        elif c == '.'
+            return Some(Out)
+
+        elif c == ','
+            return Some(In)
+
+        elif c == '['
+            return Some(Open)
+
+        elif c == ']'
+            return Some(Close)
+
+    return None
 
 def compile(program: String) -> Vector<Instruction>
     result := Vector::new()
 
-    for c in program.iter()
-        if c == '+'
-            result.append(Add(1))
+    iter := BetterStringIterator(program, 0)
 
-        elif c == '-'
-            result.append(Sub(1))
+    while let Some(inst) := compileNext(iter)
+        result.append(inst)
 
-        elif c == '>'
-            result.append(Right(1))
-
-        elif c == '<'
-            result.append(Left(1))
-
-        elif c == '.'
-            result.append(Out)
-
-        elif c == ','
-            result.append(In)
-
-        elif c == '['
-            result.append(Open)
-
-        elif c == ']'
-            result.append(Close)
+    #for inst in result.iter()
+    #    println $ inst.toString()
 
     return result
 
-def optimize1(program: Vector<Instruction>) -> Vector<Instruction>
-    if program.length() == 0
+def clearLoop(program: Vector<Instruction>) -> Vector<Instruction>
+    if program.length() < 3
         return program
 
     result := Vector::new()
+    result.append(program[0])
+    result.append(program[1])
 
     # Convert [-] and [+] to Clear
-    i := 0
-    while i < program.length()
-        if i + 2 < program.length() and program[i].isOpen() and program[i + 2].isClose()
-            if program[i + 1].isSub() or program[i + 1].isAdd()
-                result.append(Clear)
-                i += 3
-                continue
+    for i in range(2, program.length())
+        a := program[i - 2]
+        b := program[i - 1]
+        c := program[i]
 
-        result.append(program[i])
-        i += 1
+        if let Open := a
+            if let Close := c
+                if let Add(n) := b
+                    assert n == 1 or n == -1
+                    drop $ result.pop()
+                    drop $ result.pop()
+                    result.append(Clear)
+                    continue
+
+        result.append(c)
 
     return result
 
-def optimize2(program: Vector<Instruction>) -> Vector<Instruction>
+def combineIncrements(program: Vector<Instruction>) -> Vector<Instruction>
     if program.length() == 0
         return program
 
@@ -105,35 +133,20 @@ def optimize2(program: Vector<Instruction>) -> Vector<Instruction>
 
     # Combine repeated +, -, <, or > instructions
     for i in range(1, program.length())
+        current := program[i]
         last := result[result.length() - 1]
 
-        match program[i]
-            Add(n)
-                match last
-                    Add(m)
-                        result[result.length() - 1] = Add(n + m)
-                    Else
-                        result.append(program[i])
-            Sub(n)
-                match last
-                    Sub(m)
-                        result[result.length() - 1] = Sub(n + m)
-                    Else
-                        result.append(program[i])
-            Right(n)
-                match last
-                    Right(m)
-                        result[result.length() - 1] = Right(n + m)
-                    Else
-                        result.append(program[i])
-            Left(n)
-                match last
-                    Left(m)
-                        result[result.length() - 1] = Left(n + m)
-                    Else
-                        result.append(program[i])
-            Else
-                result.append(program[i])
+        if let Add(n) := current
+            if let Add(m) := last
+                result[result.length() - 1] = Add(n + m)
+                continue
+
+        if let MovePtr(n) := current
+            if let MovePtr(m) := last
+                result[result.length() - 1] = MovePtr(n + m)
+                continue
+
+        result.append(program[i])
 
     return result
 
@@ -142,16 +155,10 @@ def step(state: State, program: Vector<Instruction>)
         Add(n)
             state.memory[state.dp] += n as UInt8
 
-        Sub(n)
-            state.memory[state.dp] -= n as UInt8
-
-        Right(n)
-            state.dp += n
-            assert state.dp < state.memory.length()
-
-        Left(n)
-            assert state.dp >= n
-            state.dp -= n
+        MovePtr(n)
+            newDP := (state.dp as Int) + n
+            assert newDP >= 0 and newDP < state.memory.length() as Int
+            state.dp = newDP as UInt
 
         Out
             putchar(state.memory[state.dp])
@@ -170,10 +177,10 @@ def step(state: State, program: Vector<Instruction>)
                 nesting := 1
 
                 for i in range(state.ip + 1, program.length())
-                    if program[i].isOpen()
+                    if let Open := program[i]
                         nesting += 1
 
-                    elif program[i].isClose()
+                    elif let Close := program[i]
                         nesting -= 1
                         if nesting == 0
                             matchingBracket = i
@@ -190,10 +197,10 @@ def step(state: State, program: Vector<Instruction>)
                 nesting := 1
 
                 for i in rangeBy(state.ip - 1, 0, -1)
-                    if program[i].isClose()
+                    if let Close := program[i]
                         nesting += 1
 
-                    elif program[i].isOpen()
+                    elif let Open := program[i]
                         nesting -= 1
                         if nesting == 0
                             matchingBracket = i
@@ -226,20 +233,7 @@ match openFile(fname, "r")
     Some(file)
         source := readAll(file)
         code := compile(source)
-        code = optimize2 $ optimize1(code)
-
-        #println $ "Optimized program:"
-        #for instruction in code.iter()
-        #    match instruction
-        #        Add(n)   => println $ "Add " + show(n)
-        #        Sub(n)   => println $ "Sub " + show(n)
-        #        Right(n) => println $ "Right " + show(n)
-        #        Left(n)  => println $ "Left " + show(n)
-        #        Out      => println $ "Out"
-        #        In       => println $ "In"
-        #        Open     => println $ "Open"
-        #        Close    => println $ "Close"
-        #        Clear    => println $ "Clear"
+        code = combineIncrements $ clearLoop(code)
 
         run(code)
         closeFile(file)

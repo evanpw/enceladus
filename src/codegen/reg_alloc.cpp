@@ -523,15 +523,6 @@ bool RegAlloc::findColorFor(const IntGraph& graph, Reg* reg)
         }
     }
 
-    // These four registers are not byte-addressable
-    if (reg->size() == 8)
-    {
-        used.insert(colorOfHreg(_context->rsi));
-        used.insert(colorOfHreg(_context->rdi));
-        used.insert(colorOfHreg(_context->rsp));
-        used.insert(colorOfHreg(_context->rbp));
-    }
-
     // Handle pre-colored vertices
     auto itr = _precolored.find(reg);
     if (itr != _precolored.end())

@@ -378,21 +378,7 @@ void MachineCodeGen::visit(CallInst* inst)
             MachineOperand* param = getOperand(inst->params[i]);
             assert(param->isAddress() || param->isImmediate() || param->isRegister());
 
-            // rdi and rsi aren't byte addressable, so just extend the arguments
             ValueType type = param->type;
-            if (i <= 1 && getSize(type) == 8)
-            {
-                assert(isInteger(type));
-
-                if (isSigned(type))
-                {
-                    type = ValueType::I64;
-                }
-                else
-                {
-                    type = ValueType::U64;
-                }
-            }
 
             VirtualRegister* arg = _function->createPrecoloredReg(registerArgs[i], type);
             emitMovrd(arg, param);
