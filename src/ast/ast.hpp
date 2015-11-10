@@ -391,14 +391,14 @@ public:
 class ForNode : public LoopNode
 {
 public:
-	ForNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* iteratorExpression, StatementNode* body)
-	: LoopNode(context, location), varName(varName), iteratorExpression(iteratorExpression), body(body)
+	ForNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* iterableExpression, StatementNode* body)
+	: LoopNode(context, location), varName(varName), iterableExpression(iterableExpression), body(body)
 	{}
 
 	AST_VISITABLE();
 
 	std::string varName;
-	ExpressionNode* iteratorExpression;
+	ExpressionNode* iterableExpression;
 	StatementNode* body;
 
 	// Annotations

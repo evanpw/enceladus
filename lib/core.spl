@@ -1,0 +1,48 @@
+# These are the definitions that the compiler depends on internally. Changing
+# any of these may cause the compiler to crash
+
+type Char = UInt8
+type String = Array<Char>
+foreign panic(msg: String)
+
+data Option<T> = Some(T) | None
+
+trait Iterator<T>
+    def next(self) -> Option<T>
+
+trait Iterable<T>
+    type IteratorType: Iterator<T>
+
+    def iter(self) -> IteratorType
+
+trait Index<S, T>
+    def at(self, key: S) -> T
+
+trait IndexSet<S, T>
+    def set(self, key: S, value: T)
+
+trait Eq
+    def eq(self, other: Self) -> Bool
+    def ne(self, other: Self) -> Bool
+
+trait PartialOrd
+    def lt(self, other: Self) -> Bool
+    def le(self, other: Self) -> Bool
+    def gt(self, other: Self) -> Bool
+    def ge(self, other: Self) -> Bool
+
+trait Add
+    def add(self, other: Self) -> Self
+
+trait Sub
+    def sub(self, other: Self) -> Self
+
+trait Mul
+    def mul(self, other: Self) -> Self
+
+trait Div
+    def div(self, other: Self) -> Self
+
+trait Rem
+    def rem(self, other: Self) -> Self
+

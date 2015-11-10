@@ -303,10 +303,10 @@ ForNode* Parser::for_statement()
     Token loopVar = expect(tLIDENT);
 
     expect(tIN);
-    ExpressionNode* iteratorExpression = expression();
+    ExpressionNode* iterableExpression = expression();
     StatementNode* body = suite();
 
-    return new ForNode(_context, location, loopVar.value.str, iteratorExpression, body);
+    return new ForNode(_context, location, loopVar.value.str, iterableExpression, body);
 }
 
 ForeignDeclNode* Parser::foreign_declaration()

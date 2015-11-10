@@ -1012,9 +1012,9 @@ void TACCodeGen::visit(WhileNode* node)
 
 void TACCodeGen::visit(ForNode* node)
 {
-    Value* iterable = visitAndGet(node->iteratorExpression);
-    Value* iter = getTraitMethodValue(node->iteratorExpression->type, node->iter, node);
-    Type* iterableType = getConcreteType(node->iteratorExpression->type);
+    Value* iterable = visitAndGet(node->iterableExpression);
+    Value* iter = getTraitMethodValue(node->iterableExpression->type, node->iter, node);
+    Type* iterableType = getConcreteType(node->iterableExpression->type);
     Type* iteratorType = _astContext->symbolTable()->resolveAssociatedType("IteratorType", iterableType, node->iterableSymbol);
     assert(iteratorType);
     Value* next = getTraitMethodValue(iteratorType, node->next, node);

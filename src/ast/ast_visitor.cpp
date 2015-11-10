@@ -61,7 +61,7 @@ void AstVisitor::visit(WhileNode* node)
 
 void AstVisitor::visit(ForNode* node)
 {
-	node->iteratorExpression->accept(this);
+	node->iterableExpression->accept(this);
 	node->body->accept(this);
 }
 

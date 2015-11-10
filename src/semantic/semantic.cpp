@@ -1256,12 +1256,12 @@ void SemanticAnalyzer::visit(WhileNode* node)
 
 void SemanticAnalyzer::visit(ForNode* node)
 {
-    node->iteratorExpression->accept(this);
+    node->iterableExpression->accept(this);
 
     TypeAssignment typeAssignment;
     node->iterableSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterable"));
     Trait* Iterable = instantiate(node->iterableSymbol->trait, typeAssignment);
-    unify(node->iteratorExpression->type, Iterable, node->iteratorExpression);
+    unify(node->iterableExpression->type, Iterable, node->iterableExpression);
 
     node->iter = node->iterableSymbol->methods.at("iter");
     Type* varType = Iterable->parameters()[0];

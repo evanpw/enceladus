@@ -1,9 +1,4 @@
-type Char = UInt8
-type String = Array<Char>
-foreign panic(msg: String)
-
-## Option ##
-data Option<T> = Some(T) | None
+import core
 
 ## List ##
 data List<T> = Cons(T, List<T>) | Nil
@@ -14,14 +9,6 @@ impl List<T>
 
 
 ## Iterator / Iterable traits ##
-trait Iterator<T>
-    def next(self) -> Option<T>
-
-trait Iterable<T>
-    type IteratorType: Iterator<T>
-
-    def iter(self) -> IteratorType
-
 impl Iterable<T> for S where S: Iterator<T>
     type IteratorType = S
 
@@ -29,19 +16,7 @@ impl Iterable<T> for S where S: Iterator<T>
         return self
 
 
-## Index trait ##
-trait Index<S, T>
-    def at(self, key: S) -> T
-
-trait IndexSet<S, T>
-    def set(self, key: S, value: T)
-
-
 ## Eq trait ##
-trait Eq
-    def eq(self, other: Self) -> Bool
-    def ne(self, other: Self) -> Bool
-
 impl Eq for T: Num
     def eq(self, other: T) -> Bool
         return self == other
@@ -723,12 +698,6 @@ impl Ord for String
 
 
 ## PartialOrd trait ##
-trait PartialOrd
-    def lt(self, other: Self) -> Bool
-    def le(self, other: Self) -> Bool
-    def gt(self, other: Self) -> Bool
-    def ge(self, other: Self) -> Bool
-
 impl PartialOrd for T: Ord
     def lt(self, other: T) -> Bool
         match self.cmp(other)
@@ -760,36 +729,21 @@ impl PartialOrd for T: Ord
 
 
 ## Add/Sub/Mul/Div traits ##
-trait Add
-    def add(self, other: Self) -> Self
-
 impl Add for T: Num
     def add(self, other: T) -> T
         return self + other
-
-trait Sub
-    def sub(self, other: Self) -> Self
 
 impl Sub for T: Num
     def sub(self, other: T) -> T
         return self - other
 
-trait Mul
-    def mul(self, other: Self) -> Self
-
 impl Mul for T: Num
     def mul(self, other: T) -> T
         return self * other
 
-trait Div
-    def div(self, other: Self) -> Self
-
 impl Div for T: Num
     def div(self, other: T) -> T
         return self / other
-
-trait Rem
-    def rem(self, other: Self) -> Self
 
 impl Rem for T: Num
     def rem(self: T, other: T) -> T
