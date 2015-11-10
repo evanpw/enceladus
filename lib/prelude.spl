@@ -17,28 +17,17 @@ impl List<T>
 trait Iterator<T>
     def next(self) -> Option<T>
 
-# TODO: Allow one of these implementations
-#trait Iterable<T>
-#    type IteratorType: Iterator<T>
-#    def iter(self) -> IteratorType
-#
-#trait Iterable<S> where S: Iterator<T>
-#    def iter(self) -> S
-#
-#trait Iterable<S, T> where S: Iterator<T>
-#    def iter(self) -> S
+trait Iterable<T>
+    type IteratorType: Iterator<T>
 
-trait Iterable<S, T>
-    def iter(self) -> S
+    def iter(self) -> IteratorType
 
-impl Iterable<S, T> for S where S: Iterator<T>
+impl Iterable<T> for S where S: Iterator<T>
+    type IteratorType = S
+
     def iter(self) -> S
         return self
 
-# TODO: Better implemenation
-#impl Iterable<T> for S where S: Iterator<T>
-#    def iter(self) -> S
-#        return self
 
 ## Index trait ##
 trait Index<S, T>
@@ -169,10 +158,6 @@ impl Array<T>
     def length(self) -> UInt
         return arrayLength(self)
 
-impl Iterable<ArrayIterator<T>, T> for Array<T>
-    def iter(self) -> ArrayIterator<T>
-        return ArrayIterator(self, 0)
-
 impl Iterator<T> for ArrayIterator<T>
     def next(self) -> Option<T>
         if self.offset < self.arr.length()
@@ -181,6 +166,12 @@ impl Iterator<T> for ArrayIterator<T>
             return Some(result)
         else
             return None
+
+impl Iterable<T> for Array<T>
+    type IteratorType = ArrayIterator<T>
+
+    def iter(self) -> ArrayIterator<T>
+        return ArrayIterator(self, 0)
 
 impl Range<T>
     def toArray(self) -> Array<T>
@@ -282,7 +273,18 @@ def println(s: String)
 struct ListIterator<T>
     current: List<T>
 
-impl Iterable<ListIterator<T>, T> for List<T>
+impl Iterator<T> for ListIterator<T>
+    def next(self) -> Option<T>
+        match self.current
+            Cons(head, tail)
+                self.current = tail
+                return Some(head)
+            Nil
+                return None
+
+impl Iterable<T> for List<T>
+    type IteratorType = ListIterator<T>
+
     def iter(self) -> ListIterator<T>
         return ListIterator(self)
 
@@ -305,17 +307,8 @@ impl List<T>
         else
             return False
 
-impl Iterator<T> for ListIterator<T>
-    def next(self) -> Option<T>
-        match self.current
-            Cons(head, tail)
-                self.current = tail
-                return Some(head)
-            Nil
-                return None
-
 # TODO: Allow this definition, or something better
-#def reversed(iter: S) -> List<T> where S: Iterable<U, T>
+#def reversed(iter: S) -> List<T> where S: Iterable<T>
 #    xs := []
 #    for x in iter
 #        xs = xs.insert(x)
@@ -483,10 +476,6 @@ impl Vector<T>
             self.content[n - i - 1] = self.content[i]
             self.content[i] = x
 
-impl Iterable<VectorIterator<T>, T> for Vector<T>
-    def iter(self) -> VectorIterator<T>
-        return VectorIterator(self, 0)
-
 impl Index<UInt, T> for Vector<T>
     def at(self, n: UInt) -> T
         return self.content[n]
@@ -503,6 +492,12 @@ impl Iterator<T> for VectorIterator<T>
             return Some(result)
         else
             return None
+
+impl Iterable<T> for Vector<T>
+    type IteratorType = VectorIterator<T>
+
+    def iter(self) -> VectorIterator<T>
+        return VectorIterator(self, 0)
 
 def all(xs: Vector<Bool>) -> Bool
     for x in xs

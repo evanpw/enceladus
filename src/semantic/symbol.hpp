@@ -2,6 +2,7 @@
 #define SYMBOL_HPP
 
 #include "semantic/types.hpp"
+#include "utility.hpp"
 
 #include <cassert>
 #include <vector>
@@ -101,6 +102,8 @@ private:
     ConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor, const std::vector<MemberVarSymbol*>& memberSymbols);
 };
 
+class MethodSymbol;
+
 class TypeSymbol : public Symbol
 {
 private:
@@ -109,6 +112,21 @@ private:
 };
 
 class TraitMethodSymbol;
+
+class TraitInstance
+{
+public:
+    TraitInstance(Type* type, AstNode* implNode, Trait* trait, std::unordered_map<std::string, MethodSymbol*>&& methods, std::unordered_map<std::string, Type*>&& associatedTypes)
+    : type(type), implNode(implNode), trait(trait), methods(methods), associatedTypes(associatedTypes)
+    {}
+
+    Type* type;
+    AstNode* implNode;
+    Trait* trait;
+
+    std::unordered_map<std::string, MethodSymbol*> methods;
+    std::unordered_map<std::string, Type*> associatedTypes;
+};
 
 class TraitSymbol : public Symbol
 {
@@ -122,12 +140,34 @@ public:
     std::vector<Type*> typeParameters;
 
     std::unordered_map<std::string, TraitMethodSymbol*> methods;
+    std::unordered_map<std::string, Type*> associatedTypes;
 
-    std::unordered_map<Type*, AstNode*> instances;
+    TraitInstance* addInstance(Type* type, AstNode* implNode, std::unordered_map<std::string, MethodSymbol*>&& methods, std::unordered_map<std::string, Type*>&& associatedTypes)
+    {
+        TraitInstance* instance = new TraitInstance(type, implNode, trait, std::move(methods), std::move(associatedTypes));
+        _instances[type].reset(instance);
+
+        return instance;
+    }
+
+    TraitInstance* getInstance(Type* type)
+    {
+        auto i = _instances.find(type);
+        if (i == _instances.end())
+        {
+            return nullptr;
+        }
+        else
+        {
+            return i->second.get();
+        }
+    }
 
 private:
     friend class SymbolTable;
     TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters);
+
+    std::unordered_map<Type*, std::unique_ptr<TraitInstance>> _instances;
 };
 
 class MemberSymbol : public Symbol
@@ -161,6 +201,7 @@ class TraitMethodSymbol : public MemberSymbol
 public:
     virtual bool isTraitMethod() { return true; }
 
+    TraitSymbol* traitSymbol;
     Trait* trait;
 
 private:

@@ -165,16 +165,29 @@ void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType,
     }
 }
 
-MethodSymbol* SymbolTable::resolveConcreteMethod(const std::string& name, Type* objectType)
+MethodSymbol* SymbolTable::resolveTraitInstanceMethod(const std::string& name, Type* objectType, TraitSymbol* traitSymbol)
 {
-    auto i = _members.find(name);
-    if (i == _members.end()) return nullptr;
-
-    for (MemberSymbol* symbol : i->second)
+    for (auto& item : traitSymbol->_instances)
     {
-        if (symbol->kind == kMethod && isSubtype(objectType, symbol->parentType))
+        if (isSubtype(objectType, item.second->type))
         {
-            return dynamic_cast<MethodSymbol*>(symbol);
+            return item.second->methods.at(name);
+        }
+    }
+
+    return nullptr;
+}
+
+Type* SymbolTable::resolveAssociatedType(const std::string& name, Type* objectType, TraitSymbol* traitSymbol)
+{
+    for (auto& item : traitSymbol->_instances)
+    {
+        TypeComparer comparer;
+
+        if (comparer.compare(objectType, item.second->type))
+        {
+            Type* rawType = item.second->associatedTypes.at(name);
+            return substitute(rawType, comparer.rhsSubs());
         }
     }
 

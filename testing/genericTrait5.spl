@@ -1,4 +1,4 @@
-def genericSum(xs: T) -> UInt8 where T: Iterator<UInt8>
+def genericSum(xs: T) -> UInt8 where T: Iterable<UInt8>
     total := 0
 
     for x in xs

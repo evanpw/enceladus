@@ -36,8 +36,8 @@ public:
     void findMembers(const std::string& name, std::vector<MemberSymbol*>& result);
     void resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols);
 
-    // Will return the first compatible method symbol, or null if none exists
-    MethodSymbol* resolveConcreteMethod(const std::string& name, Type* objectType);
+    MethodSymbol* resolveTraitInstanceMethod(const std::string& name, Type* objectType, TraitSymbol* traitSymbol);
+    Type* resolveAssociatedType(const std::string& name, Type* objectType, TraitSymbol* traitSymbol);
 
     bool isTopScope() const { return _scopes.size() == 1; }
 

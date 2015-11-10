@@ -403,9 +403,9 @@ public:
 
 	// Annotations
 	Symbol* symbol;
+	TraitSymbol* iterableSymbol;
 	TraitMethodSymbol* iter;
 	TraitMethodSymbol* next;
-	Type* iteratorType;	// Return value of iter()
 	Type* optionType;	// Return value of next()
 };
 
@@ -512,29 +512,50 @@ public:
 	bool firstPassFinished = false;  // semantic analysis takes two passes for method definitions
 };
 
+class TypeAliasNode : public StatementNode
+{
+public:
+	TypeAliasNode(AstContext* context, const YYLTYPE& location, const std::string& name, TypeName* underlying)
+	: StatementNode(context, location), name(name), underlying(underlying)
+	{}
+
+	AST_VISITABLE();
+
+	std::string name;
+	TypeName* underlying;
+};
+
 class ImplNode : public StatementNode
 {
 public:
-	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<TypeParam>&& typeParams, TypeName* typeName, std::vector<MethodDefNode*>&& methods, TypeName* traitName)
-	: StatementNode(context, location), typeParams(typeParams), typeName(typeName), methods(methods), traitName(traitName)
+	ImplNode(AstContext* context, const YYLTYPE& location, std::vector<TypeParam>&& typeParams, TypeName* typeName, std::vector<StatementNode*>&& members, TypeName* traitName)
+	: StatementNode(context, location), typeParams(typeParams), typeName(typeName), members(members), traitName(traitName)
 	{}
 
 	AST_VISITABLE();
 
 	std::vector<TypeParam> typeParams;
 	TypeName* typeName;
-	std::vector<MethodDefNode*> methods;
+	std::vector<StatementNode*> members;
 	TypeName* traitName;
 
 	// Annotations
 	std::unordered_map<std::string, Type*> typeContext;
 };
 
-class TraitMethodNode : public StatementNode
+class TraitItem : public StatementNode
+{
+public:
+	TraitItem(AstContext* context, const YYLTYPE& location)
+	: StatementNode(context, location)
+	{}
+};
+
+class TraitMethodNode : public TraitItem
 {
 public:
 	TraitMethodNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<std::string>&& params, TypeName* typeName)
-	: StatementNode(context, location), name(name), params(params), typeName(typeName)
+	: TraitItem(context, location), name(name), params(params), typeName(typeName)
 	{}
 
 	AST_VISITABLE();
@@ -544,18 +565,30 @@ public:
 	TypeName* typeName;
 };
 
+class AssociatedTypeNode : public TraitItem
+{
+public:
+	AssociatedTypeNode(AstContext* context, const YYLTYPE& location, const TypeParam& typeParam)
+	: TraitItem(context, location), typeParam(typeParam)
+	{}
+
+	AST_VISITABLE();
+
+	TypeParam typeParam;
+};
+
 class TraitDefNode : public StatementNode
 {
 public:
-	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<std::string>&& typeParams, std::vector<TraitMethodNode*>&& methods)
-	: StatementNode(context, location), name(name), typeParams(typeParams), methods(methods)
+	TraitDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<std::string>&& typeParams, std::vector<TraitItem*>&& members)
+	: StatementNode(context, location), name(name), typeParams(typeParams), members(members)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
 	std::vector<std::string> typeParams;
-	std::vector<TraitMethodNode*> methods;
+	std::vector<TraitItem*> members;
 
 	// Annotations
 	TraitSymbol* traitSymbol = nullptr;
@@ -616,19 +649,6 @@ public:
 	// Annotations
 	std::vector<ValueConstructor*> valueConstructors;
 	std::vector<ConstructorSymbol*> constructorSymbols;
-};
-
-class TypeAliasNode : public StatementNode
-{
-public:
-	TypeAliasNode(AstContext* context, const YYLTYPE& location, const std::string& name, TypeName* underlying)
-	: StatementNode(context, location), name(name), underlying(underlying)
-	{}
-
-	AST_VISITABLE();
-
-	std::string name;
-	TypeName* underlying;
 };
 
 class ForeignDeclNode : public StatementNode

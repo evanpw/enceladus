@@ -25,7 +25,7 @@ private:
     StatementNode* if_helper(const YYLTYPE& location);
     AssertNode* assert_statement();
     DataDeclaration* data_declaration();
-    TypeAliasNode* type_alias_declaration();
+    TypeAliasNode* type_alias();
     FunctionDefNode* function_definition();
     ForNode* for_statement();
     ForeignDeclNode* foreign_declaration();
@@ -42,9 +42,12 @@ private:
     BreakNode* break_statement();
     ContinueNode* continue_statement();
     ImplNode* implementation_block();
+    StatementNode* member();
     MethodDefNode* method_definition();
     TraitDefNode* trait_definition();
     TraitMethodNode* trait_method();
+    AssociatedTypeNode* associated_type();
+    TraitItem* trait_member();
 
     StatementNode* suite();
     std::vector<std::string> parameters();

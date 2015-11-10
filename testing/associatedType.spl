@@ -1,0 +1,14 @@
+trait TestTrait
+    type TestType
+
+    def getSomething(self) -> TestType
+
+struct Test
+    value: Int
+
+impl TestTrait for Test
+    type TestType = Int
+
+    def getSomething(self) -> Int
+        return self.value
+

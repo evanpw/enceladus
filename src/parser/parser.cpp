@@ -124,7 +124,7 @@ StatementNode* Parser::statement()
         return data_declaration();
 
     case tTYPE:
-        return type_alias_declaration();
+        return type_alias();
 
     case tDEF:
         return function_definition();
@@ -266,7 +266,7 @@ DataDeclaration* Parser::data_declaration()
     return new DataDeclaration(_context, location, name.value.str, typeParameters, specs);
 }
 
-TypeAliasNode* Parser::type_alias_declaration()
+TypeAliasNode* Parser::type_alias()
 {
     YYLTYPE location = getLocation();
 
@@ -559,7 +559,11 @@ ContinueNode* Parser::continue_statement()
 }
 
 /// implementation_block
-///     : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]
+///     : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ member { member } DEDENT ]
+///
+/// member
+///     : method_definition
+///     | type_alias
 ImplNode* Parser::implementation_block()
 {
     YYLTYPE location = getLocation();
@@ -610,21 +614,42 @@ ImplNode* Parser::implementation_block()
 
     expect(tEOL);
 
-    std::vector<MethodDefNode*> methods;
+    std::vector<StatementNode*> members;
     if (accept(tINDENT))
     {
-        while (peekType() == tDEF)
+        while (true)
         {
-            MethodDefNode* method = dynamic_cast<MethodDefNode*>(method_definition());
-            assert(method);
+            if (peekType() == tDEF)
+            {
+                MethodDefNode* method = method_definition();
+                members.push_back(method);
+            }
+            else if (peekType() == tTYPE)
+            {
+                if (!traitName)
+                {
+                    std::stringstream ss;
 
-            methods.push_back(method);
+                    ss << location.filename << ":" << location.first_line
+                       << ":" << location.first_column
+                       << ": only trait implementations may have associated types";
+
+                    throw LexerError(ss.str());
+                }
+
+                TypeAliasNode* associatedType = type_alias();
+                members.push_back(associatedType);
+            }
+            else
+            {
+                break;
+            }
         }
 
         expect(tDEDENT);
     }
 
-    return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(methods), traitName);
+    return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(members), traitName);
 }
 
 /// method_definition
@@ -643,7 +668,7 @@ MethodDefNode* Parser::method_definition()
 }
 
 /// trait_definition
-///     : TRAIT UIDENT type_params EOL [ INDENT trait_method { trait_method } DEDENT ]
+///     : TRAIT UIDENT type_params EOL [ INDENT trait_member { trait_member } DEDENT ]
 TraitDefNode* Parser::trait_definition()
 {
     YYLTYPE location = getLocation();
@@ -655,17 +680,32 @@ TraitDefNode* Parser::trait_definition()
 
     expect(tEOL);
 
-    std::vector<TraitMethodNode*> methods;
+    std::vector<TraitItem*> members;
 
     if (accept(tINDENT))
     {
         while (!accept(tDEDENT))
         {
-            methods.push_back(trait_method());
+            members.push_back(trait_member());
         }
     }
 
-    return new TraitDefNode(_context, location, traitName.value.str, std::move(typeParams), std::move(methods));
+    return new TraitDefNode(_context, location, traitName.value.str, std::move(typeParams), std::move(members));
+}
+
+/// trait_member
+///     : trait_method
+///     | associated_type
+TraitItem* Parser::trait_member()
+{
+    if (peekType() == tDEF)
+    {
+        return trait_method();
+    }
+    else
+    {
+        return associated_type();
+    }
 }
 
 /// trait_method
@@ -680,6 +720,19 @@ TraitMethodNode* Parser::trait_method()
     expect(tEOL);
 
     return new TraitMethodNode(_context, location, methodName.value.str, std::move(paramsAndTypes.first), paramsAndTypes.second);
+}
+
+/// associated_type
+///     TYPE constrained_type_param EOL
+AssociatedTypeNode* Parser::associated_type()
+{
+    YYLTYPE location = getLocation();
+
+    expect(tTYPE);
+    TypeParam type = constrained_type_param();
+    expect(tEOL);
+
+    return new AssociatedTypeNode(_context, location, type);
 }
 
 //// Miscellaneous /////////////////////////////////////////////////////////////

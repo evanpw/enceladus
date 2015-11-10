@@ -152,14 +152,14 @@ static std::string instanceLocation(TraitSymbol* traitSymbol, Type* type)
 {
     std::stringstream ss;
 
-    auto i = traitSymbol->instances.find(type);
-    if (i == traitSymbol->instances.end())
+    TraitInstance* instance = traitSymbol->getInstance(type);
+    if (!instance)
     {
         return "(builtin)";
     }
     else
     {
-        AstNode* impl = i->second;
+        AstNode* impl = instance->implNode;
         auto& location = impl->location;
 
         std::stringstream ss;
@@ -492,21 +492,26 @@ void SemanticAnalyzer::resolveTypeParams(AstNode* node, const std::vector<TypePa
 
 void SemanticAnalyzer::resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables)
 {
-    for (auto& item : typeParams)
+    for (auto& typeParam : typeParams)
     {
-        const std::string& typeParameter = item.name;
-        const std::vector<TypeName*>& constraints = item.constraints;
-
-        CHECK_UNDEFINED(typeParameter);
-        CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
-        Type* var = _typeTable->createTypeVariable(typeParameter, true);
-
-        auto result = addConstraints(var, constraints);
-        CHECK(result.first, result.second);
-
-        typeContext.emplace(typeParameter, var);
-        variables.push_back(var);
+        resolveTypeParam(node, typeParam, typeContext, variables);
     }
+}
+
+void SemanticAnalyzer::resolveTypeParam(AstNode* node, const TypeParam& typeParam, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables)
+{
+    const std::string& typeParameter = typeParam.name;
+    const std::vector<TypeName*>& constraints = typeParam.constraints;
+
+    CHECK_UNDEFINED(typeParameter);
+    CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
+    Type* var = _typeTable->createTypeVariable(typeParameter, true);
+
+    auto result = addConstraints(var, constraints);
+    CHECK(result.first, result.second);
+
+    typeContext.emplace(typeParameter, var);
+    variables.push_back(var);
 }
 
 void SemanticAnalyzer::resolveWhereClause(AstNode* node, const std::vector<TypeParam>& typeParams)
@@ -1254,21 +1259,19 @@ void SemanticAnalyzer::visit(ForNode* node)
     node->iteratorExpression->accept(this);
 
     TypeAssignment typeAssignment;
-    TraitSymbol* iterableSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterable"));
-    Trait* Iterable = instantiate(iterableSymbol->trait, typeAssignment);
+    node->iterableSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterable"));
+    Trait* Iterable = instantiate(node->iterableSymbol->trait, typeAssignment);
     unify(node->iteratorExpression->type, Iterable, node->iteratorExpression);
 
-    node->iter = iterableSymbol->methods.at("iter");
-    node->iteratorType = Iterable->parameters()[0];
+    node->iter = node->iterableSymbol->methods.at("iter");
+    Type* varType = Iterable->parameters()[0];
 
     TraitSymbol* iteratorSymbol = dynamic_cast<TraitSymbol*>(resolveTypeSymbol("Iterator"));
-    Trait* Iterator = instantiate(iteratorSymbol->trait, typeAssignment);
-    unify(node->iteratorType, Iterator, node->iteratorExpression);
+    Trait* Iterator = iteratorSymbol->trait->instantiate({varType});
 
     node->next = iteratorSymbol->methods.at("next");
 
     Type* Option = dynamic_cast<TypeSymbol*>(resolveTypeSymbol("Option"))->type;
-    Type* varType = Iterator->parameters()[0];
     node->optionType = Option->get<ConstructedType>()->instantiate({varType});
 
     // Save the current inner-most loop so that we can restore it after
@@ -1645,6 +1648,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
     assert(!_enclosingImplNode);
     _enclosingImplNode = node;
 
+    _symbolTable->pushScope();
     pushTypeContext();
 
     TraitSymbol* traitSymbol = nullptr;
@@ -1688,12 +1692,28 @@ void SemanticAnalyzer::visit(ImplNode* node)
         }
     }
 
-    // First pass: check prototype, and create symbol
-    std::unordered_map<std::string, Type*> methods;
-    for (auto& method : node->methods)
+    // First pass
+    // methods: check prototype, and create symbol
+    // associated types: add to type context
+    std::unordered_map<std::string, MethodSymbol*> methods;
+    std::unordered_map<std::string, Type*> associatedTypes;
+    for (auto& member : node->members)
     {
-        method->accept(this);
-        methods[method->name] = method->typeName->type;
+        member->accept(this);
+
+        if (MethodDefNode* method = dynamic_cast<MethodDefNode*>(member))
+        {
+            methods[method->name] = dynamic_cast<MethodSymbol*>(method->symbol);
+        }
+        else if (TypeAliasNode* typeAlias = dynamic_cast<TypeAliasNode*>(member))
+        {
+            // Do something
+            associatedTypes[typeAlias->name] = typeAlias->underlying->type;
+        }
+        else
+        {
+            assert(false);
+        }
     }
 
     // If a trait method block, then check that we actually have implementations
@@ -1703,6 +1723,23 @@ void SemanticAnalyzer::visit(ImplNode* node)
         TypeAssignment traitSub;
         traitSub[traitSymbol->traitVar->get<TypeVariable>()] = node->typeName->type;
 
+        for (auto& item : traitSymbol->associatedTypes)
+        {
+            std::string name = item.first;
+            Type* variable = item.second;
+
+            auto i = associatedTypes.find(name);
+            CHECK(i != associatedTypes.end(), "no definition was given for associated type `{}` in trait `{}`", name, traitSymbol->name);
+
+            Type* type = instantiate(variable, traitSub);
+            unify(type, i->second, node);
+        }
+
+        for (auto& item : associatedTypes)
+        {
+            CHECK(traitSymbol->associatedTypes.find(item.first) != traitSymbol->associatedTypes.end(), "associated type `{}` is not a member of trait `{}`", item.first, traitSymbol->name);
+        }
+
         for (auto& item : traitSymbol->methods)
         {
             std::string name = item.first;
@@ -1711,7 +1748,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
             auto i = methods.find(name);
             CHECK(i != methods.end(), "no implementation was given for method `{}` in trait `{}`", name, traitSymbol->name);
 
-            unify(type, i->second, node);
+            unify(type, i->second->type, i->second->node);
         }
 
         // Make sure there aren't any extra methods as well
@@ -1721,16 +1758,21 @@ void SemanticAnalyzer::visit(ImplNode* node)
         }
 
         traitSymbol->trait->addInstance(node->typeName->type, traitParameters);
-        traitSymbol->instances[node->typeName->type] = node;
+        traitSymbol->addInstance(node->typeName->type, node, std::move(methods), std::move(associatedTypes));
     }
 
-    // Second pass: check the method body
-    for (auto& method: node->methods)
+    // Third pass: check method bodies
+    for (auto& member: node->members)
     {
-        method->accept(this);
+        // Skip type aliases
+        if (!dynamic_cast<MethodDefNode*>(member))
+            continue;
+
+        member->accept(this);
     }
 
     popTypeContext();
+    _symbolTable->popScope();
     _enclosingImplNode = nullptr;
 
     node->type = _typeTable->Unit;
@@ -1835,12 +1877,11 @@ void SemanticAnalyzer::visit(TraitDefNode* node)
     traitVar->get<TypeVariable>()->addConstraint(trait);
     node->traitSymbol = _symbolTable->createTraitSymbol(traitName, node, trait, traitVar, std::move(typeParameters));
 
-    // Recurse to methods
     _enclosingTraitDef = node;
     pushTypeContext(std::move(typeContext));
-    for (auto& method : node->methods)
+    for (auto& member : node->members)
     {
-        method->accept(this);
+        member->accept(this);
     }
     popTypeContext();
     _enclosingTraitDef = nullptr;
@@ -1878,6 +1919,28 @@ void SemanticAnalyzer::visit(TraitMethodNode* node)
     TraitMethodSymbol* symbol = _symbolTable->createTraitMethodSymbol(node->name, node, traitSymbol);
     symbol->type = type;
     methods[name] = symbol;
+
+    node->type = _typeTable->Unit;
+}
+
+void SemanticAnalyzer::visit(AssociatedTypeNode* node)
+{
+    assert(_enclosingTraitDef);
+
+    TraitSymbol* traitSymbol = _enclosingTraitDef->traitSymbol;
+    auto& associatedTypes = traitSymbol->associatedTypes;
+
+    std::string name = node->typeParam.name;
+    CHECK(name != "_", "associated types cannot be unnamed");
+    CHECK(associatedTypes.find(name) == associatedTypes.end(), "trait `{}` already has an associated type named `{}`", traitSymbol->name, name);
+
+    std::unordered_map<std::string, Type*> typeContext;
+    std::vector<Type*> variables;
+    resolveTypeParam(node, node->typeParam, typeContext, variables);
+
+    Type* type = variables[0];
+    _typeContexts.back()[name] = type;
+    associatedTypes[name] = type;
 
     node->type = _typeTable->Unit;
 }

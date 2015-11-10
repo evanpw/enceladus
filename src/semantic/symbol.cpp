@@ -58,6 +58,7 @@ MethodSymbol::MethodSymbol(const std::string& name, FunctionDefNode* node, Type*
 
 TraitMethodSymbol::TraitMethodSymbol(const std::string& name, AstNode* node, TraitSymbol* traitSymbol)
 : MemberSymbol(name, kTraitMethod, node, traitSymbol->traitVar)
+, traitSymbol(traitSymbol)
 , trait(traitSymbol->trait)
 {
 }

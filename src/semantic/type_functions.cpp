@@ -24,7 +24,6 @@ Trait* instantiate(Trait* trait)
 
 Type* instantiate(Type* type, TypeAssignment& replacements)
 {
-
     switch (type->tag())
     {
         case ttBase:
@@ -536,9 +535,10 @@ Type* substitute(Type* original, const TypeAssignment& typeAssignment)
             TypeVariable* typeVariable = original->get<TypeVariable>();
 
             auto i = typeAssignment.find(typeVariable);
+
             if (i != typeAssignment.end())
             {
-                return i->second;
+                return substitute(i->second, typeAssignment);
             }
             else
             {

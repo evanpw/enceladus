@@ -63,6 +63,7 @@ public:
     virtual void visit(WhileNode* node);
 
     // Leaf nodes
+    virtual void visit(AssociatedTypeNode* node);
     virtual void visit(BoolNode* node);
     virtual void visit(BreakNode* node);
     virtual void visit(ContinueNode* node);
@@ -102,6 +103,7 @@ private:
     std::pair<bool, std::string> addConstraints(Type* lhs, const std::vector<TypeName*>& constraints);
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext);
     void resolveTypeParams(AstNode* node, const std::vector<TypeParam>& typeParams, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables);
+    void resolveTypeParam(AstNode* node, const TypeParam& typeParam, std::unordered_map<std::string, Type*>& typeContext, std::vector<Type*>& variables);
     void resolveWhereClause(AstNode* node, const std::vector<TypeParam>& typeParams);
 
     void checkTraitCoherence();

@@ -73,6 +73,7 @@ protected:
 
 std::string toString(const Trait* trait);
 std::string toString(const Type* trait);
+std::string toString(const TypeVariable* var);
 
 // Shared public interface for all types
 class Type

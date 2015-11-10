@@ -6,6 +6,7 @@
 
 class AssertNode;
 class AssignNode;
+class AssociatedTypeNode;
 class BinopNode;
 class BlockNode;
 class BoolNode;
@@ -81,6 +82,7 @@ public:
 	virtual void visit(WhileNode* node);
 
 	// Leaf nodes
+	virtual void visit(AssociatedTypeNode* node) {}
 	virtual void visit(BoolNode* node) {}
 	virtual void visit(BreakNode* node) {}
 	virtual void visit(ConstructorSpec* node) {}
@@ -101,6 +103,7 @@ class SparseAstVisitor : public AstVisitor
 public:
 	UNSUPPORTED(AssertNode);
 	UNSUPPORTED(AssignNode);
+	UNSUPPORTED(AssociatedTypeNode);
 	UNSUPPORTED(BinopNode);
 	UNSUPPORTED(BlockNode);
 	UNSUPPORTED(BoolNode);

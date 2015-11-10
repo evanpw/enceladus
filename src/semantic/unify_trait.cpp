@@ -75,8 +75,8 @@ std::pair<bool, std::string> tryUnify(Type* type, Trait* trait)
 
                 for (size_t i = 0; i < instance.traitParams.size(); ++i)
                 {
-                    // TODO: Do we need instantiate instead of substitute?
                     Type* instanceParam = substitute(instance.traitParams[i], comparer.rhsSubs());
+
                     auto result = tryUnify(trait->parameters()[i], instanceParam);
                     if (!result.first)
                     {

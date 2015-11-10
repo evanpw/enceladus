@@ -16,7 +16,7 @@ statement
     | if_statement
     | assert_statement
     | data_declaration
-    | type_alias_declaration
+    | type_alias
     | function_definition
     | for_statement
     | foreign_declaration
@@ -54,7 +54,7 @@ assign_or_expr
 data_declaration
     : DATA UIDENT type_params '=' constructor_spec { '|' constructor_spec } EOL
 
-type_alias_declaration
+type_alias
     : TYPE UIDENT '=' type EOL
 
 function_definition
@@ -106,16 +106,27 @@ continue_statement
     : CONTINUE EOL
 
 implementation_block
-    : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ method_definition { method_definition } DEDENT ]
+    : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ member { member } DEDENT ]
+
+member
+    : method_definition
+    | type_alias
 
 method_definition
     : DEF ident params_and_types where_clause suite
 
 trait_definition
-    : TRAIT UIDENT type_params EOL [ INDENT trait_method { trait_method } DEDENT ]
+    : TRAIT UIDENT type_params EOL [ INDENT trait_member { trait_member } DEDENT ]
+
+trait_member
+    : trait_method
+    | associated_type
 
 trait_method
     : DEF LIDENT params_and_types EOL
+
+associated_type
+    TYPE constrained_type_param EOL
 
 
 //// Types /////////////////////////////////////////////////////////////////////

@@ -74,6 +74,8 @@ bool overlap(Type* lhs, Type* rhs)
 
 bool TypeComparer::compare(Trait* lhs, Trait* rhs)
 {
+    //std::cerr << "compareTraitTrait: " << lhs->str() << ", " << rhs->str() << std::endl;
+
     if (lhs->prototype() != rhs->prototype())
         return false;
 
@@ -93,6 +95,8 @@ bool TypeComparer::compare(Trait* lhs, Trait* rhs)
 
 bool TypeComparer::compare(Type* lhs, Trait* trait)
 {
+    //std::cerr << "compareTypeTrait: " << lhs->str() << ", " << trait->str() << std::endl;
+
     Transaction transaction(this);
 
     if (lhs->isVariable())
@@ -101,7 +105,7 @@ bool TypeComparer::compare(Type* lhs, Trait* trait)
 
         if (!lhsVariable->quantified())
         {
-            _newConstraints[lhsVariable].insert(instantiate(trait->prototype()));
+            _newConstraints[lhsVariable].insert(trait);
             transaction.accept();
             return true;
         }
@@ -133,7 +137,11 @@ bool TypeComparer::compare(Type* lhs, Trait* trait)
             bool good = true;
             for (size_t i = 0; i < instance.traitParams.size(); ++i)
             {
-                if (!compare(instantiate(trait->parameters()[i]), instance.traitParams[i]))
+                Type* x = instance.traitParams[i];
+                Type* y = trait->parameters()[i];
+
+                //if (compare(trait->parameters()[i], instance.traitParams[i]))
+                if (!compare(instance.traitParams[i], trait->parameters()[i]))
                 {
                     good = false;
                     break;
@@ -157,6 +165,8 @@ bool TypeComparer::compare(Type* lhs, Trait* trait)
 
 bool TypeComparer::compare(TypeVariable* lhs, Type* rhs)
 {
+    //std::cerr << "compareVariableType: " << toString(lhs) << ", " << rhs->str() << std::endl;
+
     Transaction transaction(this);
     assert(!lhs->quantified());
 
@@ -207,7 +217,7 @@ bool TypeComparer::compare(TypeVariable* lhs, Type* rhs)
         {
             // Don't worry about redundant constraints: they won't be externally
             // visible anyway
-            _newConstraints[lhs].insert(instantiate(rhsConstraint->prototype()));
+            _newConstraints[lhs].insert(rhsConstraint);
         }
 
         transaction.accept();
@@ -217,9 +227,11 @@ bool TypeComparer::compare(TypeVariable* lhs, Type* rhs)
 
 bool TypeComparer::compare(Type* lhs, TypeVariable* rhs)
 {
+    //std::cerr << "compareTypeVariable: " << lhs->str() << ", " << toString(rhs) << std::endl;
+
     Transaction transaction(this);
 
-    assert(rhs->quantified());
+    //assert(rhs->quantified());
 
     auto i = _rhsSubs.find(rhs);
     if (i != _rhsSubs.end())
@@ -275,11 +287,15 @@ bool TypeComparer::compare(Type* lhs, TypeVariable* rhs)
 
     _rhsSubs[rhs] = lhs;
     transaction.accept();
+
+    //std::cerr << "compareTypeVariable: " << lhs->str() << ", " << toString(rhs) << " = true" << std::endl;
     return true;
 }
 
 bool TypeComparer::compare(Type* lhs, Type* rhs)
 {
+    //std::cerr << "compareTypeType: " << lhs->str() << ", " << rhs->str() << std::endl;
+
     Transaction transaction(this);
 
     if (rhs->isVariable())
@@ -320,6 +336,7 @@ bool TypeComparer::compare(Type* lhs, Type* rhs)
             // only when rhs is also a type variable
             if (rhs->isVariable())
             {
+                // TODO: Check constraints
                 transaction.accept();
                 return true;
             }

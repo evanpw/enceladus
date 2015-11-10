@@ -128,9 +128,9 @@ void AstVisitor::visit(DataDeclaration* node)
 
 void AstVisitor::visit(ImplNode* node)
 {
-	for (auto& method : node->methods)
+	for (auto& member : node->members)
 	{
-		method->accept(this);
+		member->accept(this);
 	}
 }
 
@@ -167,7 +167,7 @@ void AstVisitor::visit(CastNode* node)
 
 void AstVisitor::visit(TraitDefNode* node)
 {
-	for (auto& method : node->methods)
+	for (auto& method : node->members)
 	{
 		method->accept(this);
 	}

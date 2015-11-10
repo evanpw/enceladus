@@ -159,8 +159,8 @@ private:
     Value* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
     Value* getTraitMethodValue(Type* objectType, const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
-    ValueType getValueType(Type* type);
-    ValueType getValueType(Type* type, const TypeAssignment& typeAssignment);
+    Type* getConcreteType(Type* type, const TypeAssignment& typeAssignment = {});
+    ValueType getValueType(Type* type, const TypeAssignment& typeAssignment = {});
 
     std::unordered_map<Function*, std::pair<size_t, std::vector<size_t>>> _constructorLayouts;
     std::vector<size_t> getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});

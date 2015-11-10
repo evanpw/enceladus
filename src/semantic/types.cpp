@@ -11,6 +11,29 @@
 
 static std::string toString(const Trait* trait, std::unordered_set<const Type*>& varStack);
 
+std::string toString(const TypeVariable* var)
+{
+    if (var->constraints().empty())
+    {
+        return var->name();
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << var->name() << ": ";
+
+        bool first = true;
+        for (const Trait* constraint : var->constraints())
+        {
+            if (!first) ss << " + ";
+            ss << constraint->str();
+            first = false;
+        }
+
+        return ss.str();
+    }
+}
+
 static std::string toString(const Type* type, std::unordered_set<const Type*>& varStack)
 {
     switch (type->tag())
@@ -154,15 +177,15 @@ std::string TypeVariable::name() const
 {
     std::stringstream ss;
 
+    if (!_quantified)
+        ss << "'";
+
     if (!_name.empty())
     {
         ss << _name;
     }
     else
     {
-        if (!_quantified)
-            ss << "'";
-
         ss << "T" << _index;
     }
 

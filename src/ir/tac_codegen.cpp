@@ -276,18 +276,17 @@ static ValueType getRealValueType(Type* type)
     }
 }
 
-ValueType TACCodeGen::getValueType(Type* type, const TypeAssignment& typeAssignment)
+Type* TACCodeGen::getConcreteType(Type* type, const TypeAssignment& typeAssignment)
 {
     TypeAssignment fullAssignment = compose(_typeContext, typeAssignment);
-    Type* realType = substitute(type, fullAssignment);
+    Type* concreteType = substitute(type, fullAssignment);
 
-    return getRealValueType(realType);
+    return concreteType;
 }
 
-ValueType TACCodeGen::getValueType(Type* type)
+ValueType TACCodeGen::getValueType(Type* type, const TypeAssignment& typeAssignment)
 {
-    Type* realType = substitute(type, _typeContext);
-    return getRealValueType(realType);
+    return getRealValueType(getConcreteType(type, typeAssignment));
 }
 
 size_t TACCodeGen::getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
@@ -491,13 +490,15 @@ Value* TACCodeGen::getFunctionValue(const Symbol* symbol, AstNode* node, const T
 Value* TACCodeGen::getTraitMethodValue(Type* objectType, const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment)
 {
     assert(symbol->kind == kTraitMethod);
-    Trait* trait = dynamic_cast<const TraitMethodSymbol*>(symbol)->trait;
+    TraitSymbol* traitSymbol = dynamic_cast<const TraitMethodSymbol*>(symbol)->traitSymbol;
+    Trait* trait = traitSymbol->trait;
 
     objectType = substitute(substitute(objectType, typeAssignment), _typeContext);
+    //std::cerr << objectType->str() << " " << symbol->name << std::endl;
     assert(isConcrete(objectType));
     assert(isSubtype(objectType, trait));
 
-    MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveConcreteMethod(symbol->name, objectType);
+    MethodSymbol* methodSymbol = _astContext->symbolTable()->resolveTraitInstanceMethod(symbol->name, objectType, traitSymbol);
     assert(methodSymbol);
 
     TypeAssignment assignment;
@@ -1013,21 +1014,24 @@ void TACCodeGen::visit(ForNode* node)
 {
     Value* iterable = visitAndGet(node->iteratorExpression);
     Value* iter = getTraitMethodValue(node->iteratorExpression->type, node->iter, node);
-    Value* next = getTraitMethodValue(node->iteratorType, node->next, node);
+    Type* iterableType = getConcreteType(node->iteratorExpression->type);
+    Type* iteratorType = _astContext->symbolTable()->resolveAssociatedType("IteratorType", iterableType, node->iterableSymbol);
+    assert(iteratorType);
+    Value* next = getTraitMethodValue(iteratorType, node->next, node);
 
     BasicBlock* loopBegin = createBlock();
     BasicBlock* loopExit = createBlock();
     BasicBlock* isSome = createBlock();
 
     // Call rhs.iter()
-    Value* iterator = createTemp(getValueType(node->iteratorType, _typeContext));
+    Value* iterator = createTemp(getValueType(iteratorType));
     emit(new CallInst(iterator, iter, {iterable}));
 
     emit(new JumpInst(loopBegin));
     setBlock(loopBegin);
 
     // Call iter.next()
-    Value* nextOption = createTemp(getValueType(node->optionType, _typeContext));
+    Value* nextOption = createTemp(getValueType(node->optionType));
     emit(new CallInst(nextOption, next, {iterator}));
 
     // Check for Some tag, and otherwise exit the loop
@@ -1039,7 +1043,7 @@ void TACCodeGen::visit(ForNode* node)
 
     // Extract x from Some(x)
     setBlock(isSome);
-    Value* varTemp = createTemp(getValueType(node->symbol->type, _typeContext));
+    Value* varTemp = createTemp(getValueType(node->symbol->type));
     Value* varOffset = _context->createConstantInt(ValueType::I64, sizeof(SplObject));
     emit(new IndexedLoadInst(varTemp, nextOption, varOffset));
     emit(new StoreInst(getValue(node->symbol), varTemp));

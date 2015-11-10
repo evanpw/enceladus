@@ -264,12 +264,12 @@ TEST_CASE("complex subtype checks", "[isSubtype-complex]")
     Type* V = table->createTypeVariable("V", true);
     Trait* Iterator = table->createTrait("Iterator", {V});
 
-    Type* S = table->createTypeVariable();
+    Type* S = table->createTypeVariable("S");
     Type* T = table->createTypeVariable("T", true);
     Type* U = table->createTypeVariable("U", true);
     T->get<TypeVariable>()->addConstraint(Iterator->instantiate({U}));
 
-    Type* T1 = table->createTypeVariable();
+    Type* T1 = table->createTypeVariable("T1");
     T1->get<TypeVariable>()->addConstraint(Iterator->instantiate({table->Int}));
 
     Type* Y = table->createTypeVariable("Y", true);
@@ -280,8 +280,11 @@ TEST_CASE("complex subtype checks", "[isSubtype-complex]")
     Type* X = table->createTypeVariable("V", true);
     ConstructedType* Pair = table->createConstructedType("Pair", {W, X})->get<ConstructedType>();
 
-    // Make String: Iterator<Char> for the purposes of this test
+    // Make Bool: Iterator<Char> for the purposes of this test
     Iterator->addInstance(table->Bool, {table->UInt8});
+
+    // 'S <= T: Iterator<U>
+    CHECK(isSubtype(S, T));
 
     // Pair<'S, 'S> <= Pair<T: Iterator<U>, String>?
     CHECK(isSubtype(Pair->instantiate({S, S}), Pair->instantiate({T, table->Bool})));
@@ -499,6 +502,77 @@ TEST_CASE("generic trait checks", "[generic-trait]")
         CHECK(result.first);
         CHECK(equals(T1, genericList));
         CHECK(equals(T2, W));
+    }
+
+    SECTION("iterator-iterable")
+    {
+        // trait Iterator<A>
+        Type* A = table->createTypeVariable("A", true);
+        Trait* Iterator = table->createTrait("Iterator", {A});
+
+        // trait Iterable<B>
+        Type* B = table->createTypeVariable("B", true);
+        Trait* Iterable = table->createTrait("Iterable", {B});
+
+        // impl Iterable<C> for D where D: Iterator<C>
+        Type* D = table->createTypeVariable("D", true);
+        Type* C = table->createTypeVariable("C", true);
+        Trait* IteratorC = Iterator->instantiate({C});
+        D->get<TypeVariable>()->addConstraint(IteratorC);
+        Iterable->addInstance(D, {C});
+
+        // impl Iterator<Int> for Int
+        Iterator->addInstance(table->Int, {table->Int});
+
+        // Unify 'T1: Iterable<'T2> with Int
+        // Expecting 'T1 = Int, 'T2 = Int
+        Type* T1 = table->createTypeVariable("T1");
+        Type* T2 = table->createTypeVariable("T2");
+        Trait* IterableT2 = Iterable->instantiate({T2});
+        T1->get<TypeVariable>()->addConstraint(IterableT2);
+
+        auto result = tryUnify(T1, table->Int);
+        CHECK(result.first);
+        CHECK(equals(T1, table->Int));
+        CHECK(equals(T2, table->Int));
+    }
+
+    SECTION("iterator-iterable2")
+    {
+        // trait Iterator<A>
+        Type* A = table->createTypeVariable("A", true);
+        Trait* Iterator = table->createTrait("Iterator", {A});
+
+        // trait Iterable<B>
+        Type* B = table->createTypeVariable("B", true);
+        Trait* Iterable = table->createTrait("Iterable", {B});
+
+        // impl Iterable<C> for D where D: Iterator<C>
+        Type* D = table->createTypeVariable("D", true);
+        Type* C = table->createTypeVariable("C", true);
+        Trait* IteratorC = Iterator->instantiate({C});
+        D->get<TypeVariable>()->addConstraint(IteratorC);
+        Iterable->addInstance(D, {C});
+
+        // struct Container<E>
+        Type* E = table->createTypeVariable("E", true);
+        Type* Container = table->createConstructedType("Container", {E});
+
+        // impl Iterator<F> for Container<F>
+        Type* F = table->createTypeVariable("F", true);
+        Type* ContainerF = Container->get<ConstructedType>()->instantiate({F});
+        Iterator->addInstance(ContainerF, {F});
+
+        // Unify Container<Int> with Iterable<'T1>
+        // Expecting 'T1 = Int
+        Type* ContainerInt = Container->get<ConstructedType>()->instantiate({table->Int});
+        Type* T1 = table->createTypeVariable("T1");
+        Trait* IterableT1 = Iterable->instantiate({T1});
+
+        std::cerr << std::endl;
+        auto result = tryUnify(ContainerInt, IterableT1);
+        CHECK(result.first);
+        CHECK(equals(T1, table->Int));
     }
 
     delete table;

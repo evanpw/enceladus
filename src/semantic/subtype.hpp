@@ -4,6 +4,13 @@
 #include "types.hpp"
 #include <unordered_map>
 
+
+//// TODO: Allow unquantified type variables in the rhs, and add some tests for
+////       those cases. This is unavoidable when evaluating cases like
+////            'T1: MyIterator<'T2>  <=   MyContainer<F>?
+////       We have to check whether MyContainer<F> is a subtype of
+////       MyIterator<'T2>.
+
 /*
 The subtype relation lhs <= rhs is defined as follows:
 
