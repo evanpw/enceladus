@@ -1,0 +1,7 @@
+xs := unsafeZeroArray(10)
+
+total := 0
+for x in xs.iter()
+    total += x
+
+println $ show(total)

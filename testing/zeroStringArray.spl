@@ -1,0 +1,10 @@
+def triggerGC()
+    xs := range(1, 1000000).toList()
+
+def witness(a: Array<String>)
+    pass
+
+xs := unsafeZeroArray(10)
+witness(xs)
+
+triggerGC()
