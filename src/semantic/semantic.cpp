@@ -84,7 +84,7 @@ static void imposeConstraint(Type* type, Trait* trait, AstNode* node)
         {
             // A quantified type variable can't acquire any new constraints in the
             // process of unification (see overrideType test)
-            if (var->quantified())
+            if (var->quantified() && !isSubtype(type, trait))
             {
                 std::stringstream ss;
                 ss << "Type variable " << type->str() << " does not satisfy constraint " << trait->str();

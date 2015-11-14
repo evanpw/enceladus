@@ -1,6 +1,40 @@
 #include "semantic/subtype.hpp"
 #include "semantic/type_functions.hpp"
 
+Type* TypeComparer::lookup(Type* type, const TypeAssignment& context)
+{
+    while (type->isVariable())
+    {
+        TypeVariable* var = type->get<TypeVariable>();
+        auto i = context.find(var);
+        if (i == context.end())
+        {
+            return type;
+        }
+        else
+        {
+            type = i->second;
+        }
+    }
+
+    return type;
+}
+
+Type* TypeComparer::lookupLeft(Type* type)
+{
+    return lookup(type, _lhsSubs);
+}
+
+Type* TypeComparer::lookupRight(Type* type)
+{
+    return lookup(type, _rhsSubs);
+}
+
+Type* TypeComparer::lookupBoth(Type* type)
+{
+    return lookupLeft(lookupRight(type));
+}
+
 std::set<Trait*> TypeComparer::getConstraints(TypeVariable* var)
 {
     std::set<Trait*> result = var->constraints();
@@ -103,6 +137,8 @@ bool TypeComparer::compare(Trait* lhs, Trait* rhs)
 bool TypeComparer::compare(Type* lhs, Trait* trait)
 {
     //std::cerr << "compareTypeTrait: " << lhs->str() << ", " << trait->str() << std::endl;
+
+    lhs = lookupBoth(lhs);
 
     Transaction transaction(this);
 
@@ -418,29 +454,10 @@ bool TypeComparer::compare(Type* lhs, Type* rhs)
 
 //// Overlap ///////////////////////////////////////////////////////////////////
 
-static Type* lookup(Type* type, const TypeAssignment& context)
-{
-    while (type->isVariable())
-    {
-        TypeVariable* var = type->get<TypeVariable>();
-        auto i = context.find(var);
-        if (i == context.end())
-        {
-            return type;
-        }
-        else
-        {
-            type = i->second;
-        }
-    }
-
-    return type;
-}
-
 bool TypeComparer::overlap(Type* lhs, Type* rhs)
 {
-    lhs = lookup(lhs, _lhsSubs);
-    rhs = lookup(rhs, _rhsSubs);
+    lhs = lookupLeft(lhs);
+    rhs = lookupRight(rhs);
 
     if (lhs->isVariable())
     {

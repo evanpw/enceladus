@@ -64,6 +64,7 @@ uint64_t strHash(String* s)
 int argc;
 char** argv;
 
+void saveCommandLine(int pargc, char** pargv) asm("saveCommandLine");
 void saveCommandLine(int pargc, char** pargv)
 {
     argc = pargc;

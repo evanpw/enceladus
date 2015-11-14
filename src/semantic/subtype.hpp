@@ -97,6 +97,11 @@ public:
     }
 
 private:
+    Type* lookup(Type* type, const TypeAssignment& context);
+    Type* lookupLeft(Type* type);
+    Type* lookupRight(Type* type);
+    Type* lookupBoth(Type* type);
+
     // Special cases
     bool compare(TypeVariable* lhs, Type* rhs);
     bool compare(Type* lhs, TypeVariable* rhs);

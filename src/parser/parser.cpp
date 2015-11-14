@@ -99,7 +99,10 @@ ProgramNode* Parser::program()
 
     while (!accept(tEND))
     {
-        node->children.push_back(statement());
+        StatementNode* child = statement();
+
+        if (child)
+            node->children.push_back(child);
     }
 
     _context->setRoot(node);
@@ -109,6 +112,9 @@ ProgramNode* Parser::program()
 
 StatementNode* Parser::statement()
 {
+    if (accept(tEOL))
+        return nullptr;
+
     switch(peekType())
     {
     case tPASS:

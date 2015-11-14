@@ -44,56 +44,54 @@ std::pair<bool, std::string> tryUnify(Type* type, Trait* trait)
             }
         }
 
-        if (!found)
+        if (found)
+        {
+            return {true, ""};
+        }
+        else
         {
             // Quantified type variables can't acquire new constraints
-            if (var->quantified())
-            {
-                std::stringstream ss;
-                ss << "Type variable " << type->str() << " does not satisfy constraint " << trait->str();
-                return {false, ss.str()};
-            }
-            else
+            if (!var->quantified())
             {
                 var->addConstraint(trait);
             }
+
+            /* otherwise, fall through to instance check */
         }
     }
-    else /* non-variable type */
+
+    bool found = false;
+
+    for (const Trait::Instance& instance : trait->instances())
     {
-        bool found = false;
+        TypeComparer comparer;
 
-        for (const Trait::Instance& instance : trait->instances())
+        if (comparer.compare(type, instance.type))
         {
-            TypeComparer comparer;
+            found = true;
 
-            if (comparer.compare(type, instance.type))
+            assert(instance.traitParams.size() == trait->parameters().size());
+
+            for (size_t i = 0; i < instance.traitParams.size(); ++i)
             {
-                found = true;
+                Type* instanceParam = substitute(instance.traitParams[i], comparer.rhsSubs());
 
-                assert(instance.traitParams.size() == trait->parameters().size());
-
-                for (size_t i = 0; i < instance.traitParams.size(); ++i)
+                auto result = tryUnify(trait->parameters()[i], instanceParam);
+                if (!result.first)
                 {
-                    Type* instanceParam = substitute(instance.traitParams[i], comparer.rhsSubs());
-
-                    auto result = tryUnify(trait->parameters()[i], instanceParam);
-                    if (!result.first)
-                    {
-                        return result;
-                    }
+                    return result;
                 }
-
-                break;
             }
-        }
 
-        if (!found)
-        {
-            std::stringstream ss;
-            ss << "Type " << type->str() << " is not an instance of trait " << trait->str();
-            return {false, ss.str()};
+            break;
         }
+    }
+
+    if (!found)
+    {
+        std::stringstream ss;
+        ss << "Type " << type->str() << " is not an instance of trait " << trait->str();
+        return {false, ss.str()};
     }
 
     return {true, ""};

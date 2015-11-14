@@ -11,24 +11,6 @@ impl State
         arr := Array::make(memSize, 0)
         return State(arr, 0)
 
-
-struct Peekable<S> where S: Iterator<T>
-    current: Option<T>
-    iterator: S
-
-impl Peekable<S>
-    def new(iter: S) -> Peekable<S>
-        return Peekable(iter.next(), iter)
-
-impl Iterator<T> for Peekable<S> where S: Iterator<T>
-    def next(self) -> Option<T>
-        if let Some(x) := self.current
-            self.current = self.iterator.next()
-            return Some(x)
-        else
-            return None
-
-
 # IR Instructions
 data Instruction = Add(Int) | MovePtr(Int) | Out | In | Loop(Vector<Instruction>) | Clear| Close
 
@@ -93,7 +75,7 @@ def compileNext(iter: Peekable<I>, depth: Int) -> Option<Instruction> where I: I
 def compile(program: String) -> Vector<Instruction>
     result := Vector::new()
 
-    iter := Peekable::new(program.iter())
+    iter := program.iter().peekable()
 
     while let Some(inst) := compileNext(iter, 0)
         result.append(inst)

@@ -775,3 +775,6 @@ def assertMessage(b: Bool, err: String)
 
 foreign getArgc() -> Int
 foreign getArgv(n: UInt) -> String
+
+
+import iterators

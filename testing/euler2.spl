@@ -1,18 +1,23 @@
 # Solves Project Euler 2
+struct Fib
+    current: Int
+    last: Int
 
-total := 0
+impl Fib
+    def new() -> Self
+        return Fib(1, 1)
 
-last := 1
-current := 2
-while current < 4000000
-	if current % 2 == 0
-		total += current
+impl Iterator<Int> for Fib
+    def next(self) -> Option<Int>
+        next := self.current + self.last
+        self.last = self.current
+        self.current = next
 
-    # TODO: Add this syntax
-    # last, current = current, current + last
+        return Some(self.last)
 
-    next := last + current
-	last = current
-	current = next
+def lessThan4M(x: Int) -> Bool
+    return x < 4000000
 
-println $ show(total)
+fib := Fib::new()
+result := fib.takeWhile(lessThan4M).filter(even).sum()
+println $ show(result)

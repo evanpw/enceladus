@@ -575,6 +575,89 @@ TEST_CASE("generic trait checks", "[generic-trait]")
         CHECK(equals(T1, table->Int));
     }
 
+    SECTION("iterator-iterable3")
+    {
+        // trait Iterator<A>
+        Type* A = table->createTypeVariable("A", true);
+        Trait* Iterator = table->createTrait("Iterator", {A});
+
+        // trait Iterable<B>
+        Type* B = table->createTypeVariable("B", true);
+        Trait* Iterable = table->createTrait("Iterable", {B});
+
+        // impl Iterable<C> for D where D: Iterator<C>
+        Type* D = table->createTypeVariable("D", true);
+        Type* C = table->createTypeVariable("C", true);
+        Trait* IteratorC = Iterator->instantiate({C});
+        D->get<TypeVariable>()->addConstraint(IteratorC);
+        Iterable->addInstance(D, {C});
+
+        // S: Iterator<T: Num>
+        Type* T = table->createTypeVariable("T", true);
+        T->get<TypeVariable>()->addConstraint(table->Num);
+        Trait* IteratorT = Iterator->instantiate({T});
+        Type* S = table->createTypeVariable("S", true);
+        S->get<TypeVariable>()->addConstraint(IteratorT);
+
+        // Iterable<'T1>
+        Type* T1 = table->createTypeVariable("T1");
+        Trait* IterableT1 = Iterable->instantiate({T1});
+
+        CHECK(isSubtype(S, IterableT1));
+    }
+
+    SECTION("iterator-iterable4")
+    {
+        // trait Iterator<A>
+        Type* A = table->createTypeVariable("A", true);
+        Trait* Iterator = table->createTrait("Iterator", {A});
+
+        // trait Iterable<B>
+        Type* B = table->createTypeVariable("B", true);
+        Trait* Iterable = table->createTrait("Iterable", {B});
+
+        // impl Iterable<C> for D where D: Iterator<C>
+        Type* D = table->createTypeVariable("D", true);
+        Type* C = table->createTypeVariable("C", true);
+        Trait* IteratorC = Iterator->instantiate({C});
+        D->get<TypeVariable>()->addConstraint(IteratorC);
+        Iterable->addInstance(D, {C});
+
+        // struct Fib
+        Type* Fib = table->createBaseType("Fib");
+
+        // impl Iterator<Int> for Fib
+        Iterator->addInstance(Fib, {table->Int});
+
+        // struct TakeWhile<F> where F: Iterator<E>
+        Type* E = table->createTypeVariable("E", true);
+        Trait* IteratorE = Iterator->instantiate({E});
+        Type* F = table->createTypeVariable("F", true);
+        F->get<TypeVariable>()->addConstraint(IteratorE);
+        Type* TakeWhile = table->createConstructedType("TakeWhile", {F});
+
+        // impl Iterator<G> for TakeWhile<H> where H: Iterator<G>
+        Type* G = table->createTypeVariable("G", true);
+        Trait* IteratorG = Iterator->instantiate({G});
+        Type* H = table->createTypeVariable("H", true);
+        H->get<TypeVariable>()->addConstraint(IteratorG);
+        Type* TakeWhileH = TakeWhile->get<ConstructedType>()->instantiate({H});
+        Iterator->addInstance(TakeWhileH, {G});
+
+        // lhs = TakeWhile<Fib>
+        Type* lhs = TakeWhile->get<ConstructedType>()->instantiate({Fib});
+
+        // rhs = I: Iterator<J: Num>
+        Type* J = table->createTypeVariable("J", true);
+        J->get<TypeVariable>()->addConstraint(table->Num);
+        Trait* IteratorJ = Iterator->instantiate({J});
+        Type* I = table->createTypeVariable("I", true);
+        I->get<TypeVariable>()->addConstraint(IteratorJ);
+        Type* rhs = I;
+
+        CHECK(isSubtype(lhs, rhs));
+    }
+
     delete table;
 }
 
