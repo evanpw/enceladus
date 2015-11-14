@@ -24,22 +24,22 @@ while 2 * n + 1 <= 1001
     y := n
 
     # Down
-    for i in range(0, 2 * n)
+    for i in 0 to 2 * n
         y -= 1
         check(x, y)
 
     # Left
-    for i in range(0, 2 * n)
+    for i in 0 to 2 * n
         x -= 1
         check(x, y)
 
     # Up
-    for i in range(0, 2 * n)
+    for i in 0 to 2 * n
         y += 1
         check(x, y)
 
     # Right
-    for i in range(0, 2 * n)
+    for i in 0 to 2 * n
         x += 1
         check(x, y)
 

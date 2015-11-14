@@ -74,6 +74,7 @@ private:
     ExpressionNode* and_expression();
     ExpressionNode* equality_expression();
     ExpressionNode* relational_expression();
+    ExpressionNode* range_expression();
     ExpressionNode* additive_expression();
     ExpressionNode* multiplicative_expression();
     ExpressionNode* negation_expression();

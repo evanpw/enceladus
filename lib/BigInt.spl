@@ -68,7 +68,7 @@ impl BigInt
             return self
         else
             newDigits := self.digits()
-            for i in range(0, n)
+            for i in 0 to n
                 newDigits = newDigits.insert(0)
 
             return BigInt(newDigits)
@@ -77,7 +77,7 @@ impl BigInt
         ys := rhs.digits()
 
         result := toBigInt(0)
-        for n in range(0, ys.length())
+        for n in 0 to ys.length()
             y := ys.at(n)
             z1 := self.timesInt(y)
             z2 := z1.shift(n)
@@ -98,7 +98,7 @@ def bigPower(a: Int, b: Int) -> BigInt
     bigA := toBigInt(a)
     result := toBigInt(1)
 
-    for i in range(0, b)
+    for i in 0 to b
         result = result.times(bigA)
 
     return result

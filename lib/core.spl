@@ -46,3 +46,11 @@ trait Div
 trait Rem
     def rem(self, other: Self) -> Self
 
+struct Range<T: Num>
+    start: T
+    end: T
+
+def range(start: T, end: T) -> Range<T>
+    return Range(start, end)
+
+

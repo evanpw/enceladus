@@ -36,8 +36,8 @@ def makeRun(x: UInt, y: UInt, dx: UInt, dy: UInt) -> UInt
 def allRuns(xlower: UInt, xupper: UInt, ylower: UInt, yupper: UInt, dx: UInt, dy: UInt) -> [UInt]
     xs := []
 
-    for x in range(xlower, xupper)
-        for y in range(ylower, yupper)
+    for x in xlower to xupper
+        for y in ylower to yupper
             xs = xs.insert(makeRun(x, y, dx, dy))
 
     return xs

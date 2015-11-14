@@ -212,7 +212,10 @@ equality_expression
     : relational_expression [ ( EQUALS | NE ) relational_expression ]
 
 relational_expression
-    : cons_expression [ ( '>' | '<' | GE | LE ) additive_expression ]
+    : range_expression [ ( '>' | '<' | GE | LE ) range_expression ]
+
+range_expression
+    : additive_expression [ TO additive_expression ]
 
 additive_expression
     : multiplicative_expression { ( '+' | '-' ) multiplicative_expression }

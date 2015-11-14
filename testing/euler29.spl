@@ -4,8 +4,8 @@ import List
 import String
 
 values := []
-for a in range(2, 101)
-    for b in range(2, 101)
+for a in 2 to 101
+    for b in 2 to 101
         n := bigPower(a, b)
 
         values = values.insert(n.digits())

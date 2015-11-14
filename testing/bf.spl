@@ -85,7 +85,7 @@ def compile(program: String) -> Vector<Instruction>
 def clearLoop(program: Vector<Instruction>) -> Vector<Instruction>
     result := Vector::new()
 
-    for i in range(0, program.length())
+    for i in 0 to program.length()
         inst := program[i]
 
         if let Loop(body) := inst
@@ -114,7 +114,7 @@ def combineIncrements(program: Vector<Instruction>) -> Vector<Instruction>
         result.append(program[0])
 
     # Combine repeated +, -, <, or > instructions
-    for i in range(1, program.length())
+    for i in 1 to program.length()
         current := program[i]
         last := result[result.length() - 1]
 

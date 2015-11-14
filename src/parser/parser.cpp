@@ -1156,11 +1156,12 @@ MemberDefNode* Parser::member_definition()
 
 ExpressionNode* Parser::expression()
 {
+    YYLTYPE location = getLocation();
     ExpressionNode* lhs = and_expression();
 
     if (accept(tOR))
     {
-        return new LogicalNode(_context, getLocation(), lhs, LogicalNode::kOr, expression());
+        return new LogicalNode(_context, location, lhs, LogicalNode::kOr, expression());
     }
     else
     {
@@ -1170,11 +1171,12 @@ ExpressionNode* Parser::expression()
 
 ExpressionNode* Parser::and_expression()
 {
+    YYLTYPE location = getLocation();
     ExpressionNode* lhs = equality_expression();
 
     if (accept(tAND))
     {
-        return new LogicalNode(_context, getLocation(), lhs, LogicalNode::kAnd, and_expression());
+        return new LogicalNode(_context, location, lhs, LogicalNode::kAnd, and_expression());
     }
     else
     {
@@ -1184,15 +1186,16 @@ ExpressionNode* Parser::and_expression()
 
 ExpressionNode* Parser::equality_expression()
 {
+    YYLTYPE location = getLocation();
     ExpressionNode* lhs = relational_expression();
 
     if (accept(tEQUALS))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kEqual, relational_expression());
+        return new ComparisonNode(_context, location, lhs, ComparisonNode::kEqual, relational_expression());
     }
     else if (accept(tNE))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kNotEqual, relational_expression());
+        return new ComparisonNode(_context, location, lhs, ComparisonNode::kNotEqual, relational_expression());
     }
     else
     {
@@ -1202,23 +1205,42 @@ ExpressionNode* Parser::equality_expression()
 
 ExpressionNode* Parser::relational_expression()
 {
-    ExpressionNode* lhs = additive_expression();
+    YYLTYPE location = getLocation();
+    ExpressionNode* lhs = range_expression();
 
     if (accept('>'))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreater, additive_expression());
+        return new ComparisonNode(_context, location, lhs, ComparisonNode::kGreater, range_expression());
     }
     else if (accept('<'))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLess, additive_expression());
+        return new ComparisonNode(_context, location, lhs, ComparisonNode::kLess, range_expression());
     }
     else if (accept(tGE))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kGreaterOrEqual, additive_expression());
+        return new ComparisonNode(_context, location, lhs, ComparisonNode::kGreaterOrEqual, range_expression());
     }
     else if (accept(tLE))
     {
-        return new ComparisonNode(_context, getLocation(), lhs, ComparisonNode::kLessOrEqual, additive_expression());
+        return new ComparisonNode(_context, location, lhs, ComparisonNode::kLessOrEqual, range_expression());
+    }
+    else
+    {
+        return lhs;
+    }
+}
+
+// range_expression
+//     : additive_expression [ TO additive_expression ]
+ExpressionNode* Parser::range_expression()
+{
+    YYLTYPE location = getLocation();
+    ExpressionNode* lhs = additive_expression();
+
+    if (accept(tTO))
+    {
+        ExpressionNode* rhs = additive_expression();
+        return new FunctionCallNode(_context, location, "range", {lhs, rhs});
     }
     else
     {
@@ -1228,18 +1250,19 @@ ExpressionNode* Parser::relational_expression()
 
 ExpressionNode* Parser::additive_expression()
 {
+    YYLTYPE location = getLocation();
     ExpressionNode* result = multiplicative_expression();
 
     while (peekType() == '+' || peekType() == '-')
     {
         if (accept('+'))
         {
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kAdd, multiplicative_expression());
+            result = new BinopNode(_context, location, result, BinopNode::kAdd, multiplicative_expression());
         }
         else
         {
             expect('-');
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kSub, multiplicative_expression());
+            result = new BinopNode(_context, location, result, BinopNode::kSub, multiplicative_expression());
         }
     }
 
@@ -1248,22 +1271,23 @@ ExpressionNode* Parser::additive_expression()
 
 ExpressionNode* Parser::multiplicative_expression()
 {
+    YYLTYPE location = getLocation();
     ExpressionNode* result = negation_expression();
 
     while (peekType() == '*' || peekType() == '/' || peekType() == '%')
     {
         if (accept('*'))
         {
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kMul, negation_expression());
+            result = new BinopNode(_context, location, result, BinopNode::kMul, negation_expression());
         }
         else if (accept('/'))
         {
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kDiv, negation_expression());
+            result = new BinopNode(_context, location, result, BinopNode::kDiv, negation_expression());
         }
         else
         {
             expect('%');
-            result = new BinopNode(_context, getLocation(), result, BinopNode::kRem, negation_expression());
+            result = new BinopNode(_context, location, result, BinopNode::kRem, negation_expression());
         }
     }
 
@@ -1275,9 +1299,11 @@ ExpressionNode* Parser::multiplicative_expression()
 ///     | '-' cast_expression
 ExpressionNode* Parser::negation_expression()
 {
+    YYLTYPE location = getLocation();
+
     if (accept('-'))
     {
-        return new BinopNode(_context, getLocation(), new IntNode(_context, getLocation(), 0, ""), BinopNode::kSub, cast_expression());
+        return new BinopNode(_context, location, new IntNode(_context, getLocation(), 0, ""), BinopNode::kSub, cast_expression());
     }
     else
     {

@@ -52,7 +52,7 @@ def periodLength(d: Int) -> Int
 
 longest := 0
 longestIndex := 1
-for d in range(2, 1000)
+for d in 2 to 1000
     period := periodLength(d)
 
     if period > longest

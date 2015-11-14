@@ -11,11 +11,12 @@ def reverseDigits(x: Int) -> Int
 
 biggest := 0
 
-for i in range(100, 1000)
-    for j in range(100, 1000)
+for i in 100 to 999
+    for j in i + 1 to 1000
+
         x := i * j
 
-        if x == reverseDigits(x) and x > biggest
+        if x > biggest and x == reverseDigits(x)
             biggest = x
 
 println $ show(biggest)

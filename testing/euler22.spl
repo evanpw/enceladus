@@ -16,7 +16,7 @@ def readNames() -> [String]
 
 def score(name: String) -> Int
     total := 0
-    for i in range(0, name.length())
+    for i in 0 to name.length()
         c := name.at(i)
         total += (c - 'A') as Int + 1
 
@@ -26,7 +26,7 @@ names := readNames()
 names = sort(names)
 
 total := 0
-for i in range(0, names.length())
+for i in 0 to names.length()
     name := names.at(i)
 
     total += ((i + 1) as Int) * score(name)
