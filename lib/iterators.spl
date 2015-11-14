@@ -1,0 +1,70 @@
+## TakeWhile ##
+struct TakeWhile<I> where I: Iterator<T>
+    iterator: I
+    predicate: |T| -> Bool
+
+impl Iterator<T> for TakeWhile<I> where I: Iterator<T>
+    def next(self) -> Option<T>
+        if let Some(x) := self.iterator.next()
+            f := self.predicate
+            if f(x)
+                return Some(x)
+
+        return None
+
+
+## Filter ##
+struct Filter<I> where I: Iterator<T>
+    iterator: I
+    predicate: |T| -> Bool
+
+impl Iterator<T> for Filter<I> where I: Iterator<T>
+    def next(self) -> Option<T>
+        f := self.predicate
+
+        while let Some(x) := self.iterator.next()
+            if f(x)
+                return Some(x)
+
+        return None
+
+
+## Peekable ##
+struct Peekable<S> where S: Iterator<T>
+    current: Option<T>
+    iterator: S
+
+impl Peekable<S>
+    def new(iter: S) -> Peekable<S>
+        return Peekable(iter.next(), iter)
+
+impl Iterator<T> for Peekable<S> where S: Iterator<T>
+    def next(self) -> Option<T>
+        if let Some(x) := self.current
+            self.current = self.iterator.next()
+            return Some(x)
+        else
+            return None
+
+
+## Iterator transforms ##
+impl S: Iterator<T>
+    def takeWhile(self, pred: |T| -> Bool) -> TakeWhile<S>
+        return TakeWhile(self, pred)
+
+    def filter(self, pred: |T| -> Bool) -> Filter<S>
+        return Filter(self, pred)
+
+    def peekable(self) -> Peekable<S>
+        return Peekable::new(self)
+
+
+## Arithmetic on iterators ##
+impl S where T: Num, S: Iterator<T>
+    def sum(self) -> T
+        total := 0
+
+        for x in self
+            total += x
+
+        return total
