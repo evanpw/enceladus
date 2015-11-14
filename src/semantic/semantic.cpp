@@ -624,8 +624,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
     CHECK_UNDEFINED(name);
 
     pushTypeContext();
-    resolveTypeName(node->typeName, true);
-    resolveWhereClause(node, node->typeParams);
+    resolveTypeNameWhere(node, node->typeName, node->typeParams);
 
     Type* type = node->typeName->type;
     FunctionType* functionType = type->get<FunctionType>();
@@ -1832,8 +1831,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         typeContext["Self"] = Self;
 
         pushTypeContext(std::move(typeContext));
-        resolveTypeName(node->typeName, true);
-        resolveWhereClause(node, node->typeParams);
+        resolveTypeNameWhere(node, node->typeName, node->typeParams);
 
         std::vector<MemberSymbol*> symbols;
         _symbolTable->resolveMemberSymbol(node->name, Self, symbols);

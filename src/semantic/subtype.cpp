@@ -70,6 +70,13 @@ bool overlap(Type* lhs, Type* rhs)
     return comparer.overlap(lhs, rhs);
 }
 
+bool isSubtype(TypeVariable* lhs, Trait* trait)
+{
+    // Slightly hacky way to get a Type which refers to lhs
+    Type* lhsType = lhs->references().at(0);
+    return isSubtype(lhsType, trait);
+}
+
 //// Trait <= Trait ////////////////////////////////////////////////////////////
 
 bool TypeComparer::compare(Trait* lhs, Trait* rhs)

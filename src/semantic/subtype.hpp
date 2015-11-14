@@ -68,6 +68,7 @@ Uses:
 // Convenience functions
 bool isSubtype(Trait* lhs, Trait* rhs);
 bool isSubtype(Type* lhs, Trait* trait);
+bool isSubtype(TypeVariable* lhs, Trait* trait);
 bool isSubtype(Type* lhs, Type* rhs);
 bool overlap(Type* lhs, Type* rhs);
 

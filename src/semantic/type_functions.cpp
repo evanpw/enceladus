@@ -114,16 +114,14 @@ Type* findOverlappingInstance(Trait* trait, Type* type)
     return nullptr;
 }
 
-std::pair<bool, std::string> bindVariable(Type* var, Type* value)
+std::pair<bool, std::string> bindVariable(TypeVariable* lhs, Type* value)
 {
-    assert(var->isVariable());
-    TypeVariable* lhs = var->get<TypeVariable>();
-
     // Check to see if the value is actually the same type variable, and don't
     // rebind
     if (value->tag() == ttVariable)
     {
         TypeVariable* rhs = value->get<TypeVariable>();
+
         if (lhs == rhs)
             return {true, ""};
 
@@ -140,8 +138,31 @@ std::pair<bool, std::string> bindVariable(Type* var, Type* value)
 
             for (Trait* rhsConstraint : rhsConstraints)
             {
-                if (isSubtype(constraint, rhsConstraint))
+                TypeComparer comparer;
+
+                if (comparer.compare(constraint, rhsConstraint))
                 {
+                    // Handle additional subsitutions implied by the constraints
+                    // on the two type variables
+                    // Ex: binding 'T1: Trait<'T2> to S: Trait<T> should also
+                    //     bind 'T2 to T
+                    for (auto& item : comparer.lhsSubs())
+                    {
+                        assert(!item.first->quantified());
+                        bindVariable(item.first, item.second);
+                    }
+
+                    for (auto& item : comparer.rhsSubs())
+                    {
+                        if (item.second->isVariable())
+                        {
+                            // TODO: This is pretty hacky
+                            TypeVariable* impliedLhs = item.second->get<TypeVariable>();
+                            Type* impliedRhs = item.first->references().at(0);
+                            bindVariable(impliedLhs, impliedRhs);
+                        }
+                    }
+
                     good = true;
                     break;
                 }
@@ -153,11 +174,11 @@ std::pair<bool, std::string> bindVariable(Type* var, Type* value)
                 // process of unification (see overrideType test)
                 if (rhs->quantified())
                 {
-                    if (!isSubtype(value, constraint))
+                    if (!isSubtype(rhs, constraint))
                     {
                         std::stringstream ss;
-                        ss << "Can't bind variable " << var->str()
-                           << " to quantified type variable " << value->str()
+                        ss << "Can't bind variable " << toString(lhs)
+                           << " to quantified type variable " << toString(rhs)
                            << ", because the latter isn't constrained by trait " << constraint->str();
 
                         return {false, ss.str()};
@@ -193,15 +214,22 @@ std::pair<bool, std::string> bindVariable(Type* var, Type* value)
         if (occurs(lhs, value))
         {
             std::stringstream ss;
-            ss << "variable " << var->str() << " already occurs in " << value->str();
+            ss << "variable " << toString(lhs) << " already occurs in " << value->str();
 
             return {false, ss.str()};
         }
     }
 
-
     lhs->assign(value);
     return {true, ""};
+}
+
+std::pair<bool, std::string> bindVariable(Type* var, Type* value)
+{
+    assert(var->isVariable());
+    TypeVariable* lhs = var->get<TypeVariable>();
+
+    return bindVariable(lhs, value);
 }
 
 std::pair<bool, std::string> tryUnify(Type* lhs, Type* rhs)
@@ -405,125 +433,36 @@ bool equals(Type* lhs, Type* rhs)
     assert(false);
 }
 
-// static Type* lookup(Type* type, const TypeAssignment& context)
-// {
-//     while (type->isVariable())
-//     {
-//         TypeVariable* var = type->get<TypeVariable>();
-//         auto i = context.find(var);
-//         if (i == context.end())
-//         {
-//             return type;
-//         }
-//         else
-//         {
-//             type = i->second;
-//         }
-//     }
+class Substituter
+{
+public:
+    Type* fullySubstitute(Type* original, const TypeAssignment& typeAssignment);
 
-//     return type;
-// }
+private:
+    Type* substitute(Type* original, const TypeAssignment& typeAssignment);
+    TypeAssignment _impliedAssignments;
+};
 
-// bool overlap(Type* lhs, Type* rhs, TypeAssignment& subs)
-// {
-//     lhs = lookup(lhs, subs);
-//     rhs = lookup(rhs, subs);
+Type* Substituter::fullySubstitute(Type* original, const TypeAssignment& typeAssignment)
+{
+    TypeAssignment assignment = typeAssignment;
 
-//     if (lhs->isVariable())
-//     {
-//         assert(lhs->get<TypeVariable>()->quantified());
+    while (true)
+    {
+        _impliedAssignments.clear();
+        Type* result = substitute(original, assignment);
 
-//         if (equals(lhs, rhs))
-//             return true;
+        if (_impliedAssignments.empty())
+            return result;
 
-//         TypeVariable* lhsVariable = lhs->get<TypeVariable>();
+        for (auto& item : _impliedAssignments)
+        {
+            assignment[item.first] = item.second;
+        }
+    }
+}
 
-//         assert(subs.find(lhsVariable) == subs.end());
-
-//         for (Trait* constraint : lhsVariable->constraints())
-//         {
-//             if (!isSubtype(rhs, constraint))
-//                 return false;
-//         }
-
-//         subs[lhs->get<TypeVariable>()] = rhs;
-
-//         return true;
-//     }
-//     else if (rhs->isVariable())
-//     {
-//         assert(rhs->get<TypeVariable>()->quantified());
-//         assert(subs.find(rhs->get<TypeVariable>()) == subs.end());
-
-//         for (Trait* constraint : rhs->get<TypeVariable>()->constraints())
-//         {
-//             if (!isSubtype(lhs, constraint))
-//                 return false;
-//         }
-
-//         subs[rhs->get<TypeVariable>()] = lhs;
-
-//         return true;
-//     }
-
-//     if (lhs->tag() != rhs->tag())
-//         return false;
-
-//     switch (lhs->tag())
-//     {
-//         case ttBase:
-//         {
-//             return lhs->get<BaseType>() == rhs->get<BaseType>();
-//         }
-
-//         case ttFunction:
-//         {
-//             const FunctionType* lhsFunction = lhs->get<FunctionType>();
-//             const FunctionType* rhsFunction = rhs->get<FunctionType>();
-
-//             if (lhsFunction->inputs().size() != rhsFunction->inputs().size())
-//                 return false;
-
-//             for (size_t i = 0; i < lhsFunction->inputs().size(); ++i)
-//             {
-//                 if (!overlap(lhsFunction->inputs()[i], rhsFunction->inputs()[i], subs))
-//                     return false;
-//             }
-
-//             if (!overlap(lhsFunction->output(), rhsFunction->output(), subs))
-//                 return false;
-
-//             return true;
-//         }
-
-//         case ttConstructed:
-//         {
-//             const ConstructedType* lhsConstructed = lhs->get<ConstructedType>();
-//             const ConstructedType* rhsConstructed = rhs->get<ConstructedType>();
-
-//             if (lhsConstructed->prototype() != rhsConstructed->prototype())
-//                 return false;
-
-//             for (size_t i = 0; i < lhsConstructed->typeParameters().size(); ++i)
-//             {
-//                 if (!overlap(lhsConstructed->typeParameters()[i], rhsConstructed->typeParameters()[i], subs))
-//                     return false;
-//             }
-
-//             return true;
-//         }
-//     }
-
-//     assert(false);
-// }
-
-// bool overlap(Type* lhs, Type* rhs)
-// {
-//     TypeAssignment subs;
-//     return overlap(lhs, rhs, subs);
-// }
-
-Type* substitute(Type* original, const TypeAssignment& typeAssignment)
+Type* Substituter::substitute(Type* original, const TypeAssignment& typeAssignment)
 {
     switch (original->tag())
     {
@@ -538,7 +477,23 @@ Type* substitute(Type* original, const TypeAssignment& typeAssignment)
 
             if (i != typeAssignment.end())
             {
-                return substitute(i->second, typeAssignment);
+                Type* newValue = substitute(i->second, typeAssignment);
+
+                // Determine which additional substitutions (if any) are implied
+                // by the constraints on the type variable
+                TypeAssignment instantiation;
+                auto result = tryUnify(instantiate(original, instantiation), newValue);
+                assert(result.first);
+
+                for (auto& item : instantiation)
+                {
+                    if (typeAssignment.count(item.first) == 0)
+                    {
+                        _impliedAssignments[item.first] = item.second;
+                    }
+                }
+
+                return newValue;
             }
             else
             {
@@ -599,4 +554,10 @@ Type* substitute(Type* original, const TypeAssignment& typeAssignment)
     }
 
     assert(false);
+}
+
+Type* substitute(Type* original, const TypeAssignment& typeAssignment)
+{
+    Substituter subs;
+    return subs.fullySubstitute(original, typeAssignment);
 }

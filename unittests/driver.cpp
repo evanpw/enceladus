@@ -589,4 +589,63 @@ TEST_CASE("recursive type checks", "[recursive-type]")
     T->get<TypeVariable>()->addConstraint(Iterator->instantiate({T}));
 
     CHECK(T->str() == "T: Iterator<T>");
+
+    delete table;
+}
+
+TEST_CASE("implied substitutions", "[implied-subs]")
+{
+    TypeTable* table = new TypeTable;
+
+    SECTION("on-subsitute")
+    {
+        // trait Iterator<S>
+        Type* S = table->createTypeVariable("S", true);
+        Trait* Iterator = table->createTrait("Iterator", {S});
+
+        // impl Iterator<Int> for Int
+        Iterator->addInstance(table->Int, {table->Int});
+
+        // T: Iterator<U>
+        Type* T = table->createTypeVariable("T", true);
+        Type* U = table->createTypeVariable("U", true);
+        Trait* IteratorU = Iterator->instantiate({U});
+        T->get<TypeVariable>()->addConstraint(IteratorU);
+
+        // Function type: |T: Iterator<U>| -> U
+        Type* nextType = table->createFunctionType({T}, U);
+
+        // Make assignment T -> Int in nextType
+        TypeAssignment assignment;
+        assignment[T->get<TypeVariable>()] = table->Int;
+        Type* resultType = substitute(nextType, assignment);
+
+        // Check that the implied subsitution U -> Int also got made
+        CHECK(equals(resultType->get<FunctionType>()->output(), table->Int));
+    }
+
+    SECTION("on-bind-variable")
+    {
+        // trait Iterator<Z>
+        Type* Z = table->createTypeVariable("Z", true);
+        Trait* Iterator = table->createTrait("Iterator", {Z});
+
+        // S: Iterator<T>
+        Type* S = table->createTypeVariable("S", true);
+        Type* T = table->createTypeVariable("T", true);
+        Trait* IteratorT = Iterator->instantiate({T});
+        S->get<TypeVariable>()->addConstraint(IteratorT);
+
+        // 'T1: Iterator<'T2>
+        Type* T1 = table->createTypeVariable("T1");
+        Type* T2 = table->createTypeVariable("T2");
+        Trait* IteratorT2 = Iterator->instantiate({T2});
+        T1->get<TypeVariable>()->addConstraint(IteratorT2);
+
+        // assign 'T1 -> S, and hope that we get 'T2 -> T for free
+        bindVariable(T1, S);
+        CHECK(equals(T2, T));
+    }
+
+    delete table;
 }

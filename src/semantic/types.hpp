@@ -286,6 +286,12 @@ public:
         _references.push_back(parent);
     }
 
+    const std::vector<Type*>& references() const
+    {
+        return _references;
+    }
+
+    void assign(const TypeVariable* rhs);
     void assign(const Type* rhs);
 
     int index() const

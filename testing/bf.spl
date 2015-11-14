@@ -12,15 +12,15 @@ impl State
         return State(arr, 0)
 
 
-struct PeekableIterator<S> where S: Iterator<T>
+struct Peekable<S> where S: Iterator<T>
     current: Option<T>
     iterator: S
 
-impl PeekableIterator<S>
-    def new(iter: S) -> PeekableIterator<S>
-        return PeekableIterator(iter.next(), iter)
+impl Peekable<S>
+    def new(iter: S) -> Peekable<S>
+        return Peekable(iter.next(), iter)
 
-impl Iterator<T> for PeekableIterator<S> where S: Iterator<T>
+impl Iterator<T> for Peekable<S> where S: Iterator<T>
     def next(self) -> Option<T>
         if let Some(x) := self.current
             self.current = self.iterator.next()
@@ -51,9 +51,7 @@ impl Instruction
             Close
                 return "Close"
 
-type IteratorType = PeekableIterator<ArrayIterator<Char>>
-
-def compileNext(iter: IteratorType, depth: Int) -> Option<Instruction>
+def compileNext(iter: Peekable<I>, depth: Int) -> Option<Instruction> where I: Iterator<Char>
     while let Some(c) := iter.next()
         if c == '+'
             return Some(Add(1))
@@ -95,7 +93,7 @@ def compileNext(iter: IteratorType, depth: Int) -> Option<Instruction>
 def compile(program: String) -> Vector<Instruction>
     result := Vector::new()
 
-    iter := PeekableIterator::new(program.iter())
+    iter := Peekable::new(program.iter())
 
     while let Some(inst) := compileNext(iter, 0)
         result.append(inst)
