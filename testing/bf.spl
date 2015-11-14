@@ -5,21 +5,32 @@ import IO
 struct State
     memory: Array<UInt8>
     dp: UInt
-    ip: UInt
 
 impl State
     def new(memSize: UInt) -> State
         arr := Array::make(memSize, 0)
-        return State(arr, 0, 0)
+        return State(arr, 0)
+
+
+struct PeekableIterator<S> where S: Iterator<T>
+    current: Option<T>
+    iterator: S
+
+impl PeekableIterator<S>
+    def new(iter: S) -> PeekableIterator<S>
+        return PeekableIterator(iter.next(), iter)
+
+impl Iterator<T> for PeekableIterator<S> where S: Iterator<T>
+    def next(self) -> Option<T>
+        if let Some(x) := self.current
+            self.current = self.iterator.next()
+            return Some(x)
+        else
+            return None
 
 
 # IR Instructions
-data Instruction = Add(Int) | MovePtr(Int) | Out | In | Open | Close | Clear
-
-# Should be able to derive these for simple types
-impl Default for Instruction
-    def default() -> Instruction
-        return Add(0)
+data Instruction = Add(Int) | MovePtr(Int) | Out | In | Loop(Vector<Instruction>) | Clear| Close
 
 impl Instruction
     def toString(self: Instruction) -> String
@@ -32,15 +43,17 @@ impl Instruction
                 return "Out"
             In
                 return "In"
-            Open
-                return "Open"
-            Close
-                return "Close"
+            Loop(_)
+                return "Loop"
             Clear
                 return "Clear"
 
+            Close
+                return "Close"
 
-def compileNext(iter: ArrayIterator<Char>) -> Option<Instruction>
+type IteratorType = PeekableIterator<ArrayIterator<Char>>
+
+def compileNext(iter: IteratorType, depth: Int) -> Option<Instruction>
     while let Some(c) := iter.next()
         if c == '+'
             return Some(Add(1))
@@ -61,59 +74,64 @@ def compileNext(iter: ArrayIterator<Char>) -> Option<Instruction>
             return Some(In)
 
         elif c == '['
-            return Some(Open)
+            body := Vector::new()
+
+            while let Some(inst) := compileNext(iter, depth + 1)
+                if let Close := inst
+                    return Some(Loop(body))
+                else
+                    body.append(inst)
+
+            panic $ "Unterminated loop"
 
         elif c == ']'
-            return Some(Close)
+            if depth == 0
+                panic $ "Unbalanced close bracket"
+            else
+                return Some(Close)
 
     return None
 
 def compile(program: String) -> Vector<Instruction>
     result := Vector::new()
 
-    iter := program.iter()
+    iter := PeekableIterator::new(program.iter())
 
-    while let Some(inst) := compileNext(iter)
+    while let Some(inst) := compileNext(iter, 0)
         result.append(inst)
-
-    #for inst in result
-    #    println $ inst.toString()
 
     return result
 
 def clearLoop(program: Vector<Instruction>) -> Vector<Instruction>
-    if program.length() < 3
-        return program
-
     result := Vector::new()
-    result.append(program[0])
-    result.append(program[1])
 
-    # Convert [-] and [+] to Clear
-    for i in range(2, program.length())
-        a := program[i - 2]
-        b := program[i - 1]
-        c := program[i]
+    for i in range(0, program.length())
+        inst := program[i]
 
-        if let Open := a
-            if let Close := c
-                if let Add(n) := b
+        if let Loop(body) := inst
+            if body.length() == 1
+                if let Add(n) := body[0]
                     assert n == 1 or n == -1
-                    drop $ result.pop()
-                    drop $ result.pop()
                     result.append(Clear)
                     continue
 
-        result.append(c)
+            result.append(Loop(clearLoop(body)))
+        else
+            result.append(inst)
 
     return result
+
 
 def combineIncrements(program: Vector<Instruction>) -> Vector<Instruction>
     if program.length() == 0
         return program
 
     result := Vector::new()
-    result.append(program[0])
+
+    if let Loop(body) := program[0]
+        result.append(Loop(combineIncrements(body)))
+    else
+        result.append(program[0])
 
     # Combine repeated +, -, <, or > instructions
     for i in range(1, program.length())
@@ -130,12 +148,16 @@ def combineIncrements(program: Vector<Instruction>) -> Vector<Instruction>
                 result[result.length() - 1] = MovePtr(n + m)
                 continue
 
+        if let Loop(body) := current
+            result.append(Loop(combineIncrements(body)))
+            continue
+
         result.append(program[i])
 
     return result
 
-def step(state: State, program: Vector<Instruction>)
-    match program[state.ip]
+def executeInst(state: State, inst: Instruction)
+    match inst
         Add(n)
             state.memory[state.dp] += n as UInt8
 
@@ -154,57 +176,23 @@ def step(state: State, program: Vector<Instruction>)
                 None
                     state.memory[state.dp] = -1 as UInt8
 
-        Open
-            if state.memory[state.dp] == 0
-
-                matchingBracket := 0
-                nesting := 1
-
-                for i in range(state.ip + 1, program.length())
-                    if let Open := program[i]
-                        nesting += 1
-
-                    elif let Close := program[i]
-                        nesting -= 1
-                        if nesting == 0
-                            matchingBracket = i
-                            break
-
-                assert nesting == 0
-                state.ip = matchingBracket + 1
-                return
-
-        Close
-            if state.memory[state.dp] != 0
-
-                matchingBracket := 0
-                nesting := 1
-
-                for i in rangeBy(state.ip - 1, -1, -1)
-                    if let Close := program[i]
-                        nesting += 1
-
-                    elif let Open := program[i]
-                        nesting -= 1
-                        if nesting == 0
-                            matchingBracket = i
-                            break
-
-                assert nesting == 0
-                state.ip = matchingBracket + 1
-                return
+        Loop(body)
+            while state.memory[state.dp] != 0
+                for bodyInst in body
+                    executeInst(state, bodyInst)
 
         Clear
             state.memory[state.dp] = 0
 
-    state.ip += 1
+        Close
+            panic $ "Close appears in compiled instructions"
 
 
 def run(program: Vector<Instruction>)
     state := State::new(30000)
 
-    while state.ip < program.length()
-        step(state, program)
+    for inst in program
+        executeInst(state, inst)
 
 
 argc := getArgc()

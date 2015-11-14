@@ -616,9 +616,13 @@ void TACCodeGen::visit(ProgramNode* node)
                 setBlock(createBlock());
 
                 // TODO: Make this into some kind of map
-                if (symbol->name == "unsafeMakeArray")
+                if (symbol->name == "unsafeEmptyArray")
                 {
-                    builtin_unsafeMakeArray(functionType);
+                    makeArray(functionType, false);
+                }
+                else if (symbol->name == "unsafeZeroArray")
+                {
+                    makeArray(functionType, true);
                 }
                 else
                 {
@@ -1641,8 +1645,7 @@ void TACCodeGen::visit(ImplNode* node)
     AstVisitor::visit(node);
 }
 
-
-void TACCodeGen::builtin_unsafeMakeArray(Type* functionType)
+void TACCodeGen::makeArray(Type* functionType, bool zero)
 {
     // Only argument = size in elements
     Value* size = _context->createArgument(ValueType::U64, "size");
@@ -1657,7 +1660,6 @@ void TACCodeGen::builtin_unsafeMakeArray(Type* functionType)
     assert(arrayType->typeParameters().size() == 1);
     ValueType eltType = getValueType(arrayType->typeParameters()[0]);
 
-    // For now, every member takes up exactly 8 bytes (either directly or as a pointer).
     Value* sizeAfterHead = createTemp(ValueType::U64);
     Value* bytesPerElt = _context->createConstantInt(ValueType::U64, getSize(eltType) / 8);
     Value* tempSize = createTemp(ValueType::U64);
@@ -1687,6 +1689,16 @@ void TACCodeGen::builtin_unsafeMakeArray(Type* functionType)
     emit(new IndexedStoreInst(result,
         _context->createConstantInt(ValueType::U64, offsetof(Array, numElements)),
         tempSize));
+
+    // Zero out all elements
+    if (zero)
+    {
+        emit(new MemsetFn(
+            result,
+            sizeOfHeader,
+            tempSize,
+            _context->createConstantInt(eltType, 0)));
+    }
 
     emit(new ReturnInst(result));
 }

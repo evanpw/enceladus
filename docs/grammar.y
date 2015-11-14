@@ -58,7 +58,7 @@ type_alias
     : TYPE UIDENT '=' type EOL
 
 function_definition
-    : DEF ident params_and_types [ where where_clause ] suite
+    : DEF ident params_and_types [ where_clause ] suite
 
 foreign_declaration
     : FOREIGN ident type_params params_and_types EOL
@@ -91,7 +91,7 @@ return_statement
     : RETURN [ expression ] EOL
 
 struct_declaration
-    : STRUCT UIDENT constrained_type_params '=' members
+    : STRUCT UIDENT constrained_type_params [ where_clause ] members
 
 variable_declaration
     : LIDENT COLON_EQUAL expression EOL

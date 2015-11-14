@@ -141,8 +141,7 @@ public:
     virtual void visit(TypeAliasNode* node) {}
 
 private:
-    void builtin_unsafeMakeArray(Type* functionType);
-
+    void makeArray(Type* functionType, bool zero = false);
     void letHelper(LetNode* node, Value* rhs);
 
 private:

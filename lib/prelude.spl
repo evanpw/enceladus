@@ -99,10 +99,10 @@ impl Iterator<T> for StepRange<T>
 ## Array ##
 impl Array<T>
     def new() -> Array<T>
-        return unsafeMakeArray(0)
+        return unsafeEmptyArray(0)
 
     def make(size: UInt, value: T) -> Array<T>
-        arr := unsafeMakeArray(size)
+        arr := unsafeEmptyArray(size)
 
         # MUST NOT collect garbage in between allocation and initialization
         # if T is boxed
@@ -175,7 +175,7 @@ impl String
         assert pos < self.length()
         assert pos + len <= self.length()    # TODO: Check for overflow
 
-        result := unsafeMakeArray(len)
+        result := unsafeEmptyArray(len)
 
         for i in range(0, len)
             result[i] = self[pos + i]
@@ -364,7 +364,7 @@ impl String
     def fromList(chars: [Char]) -> String
         n := chars.length()
 
-        result := unsafeMakeArray(n)
+        result := unsafeEmptyArray(n)
 
         for i in range(0, n)
             result[i] = chars.head()
@@ -373,33 +373,12 @@ impl String
         return result
 
 
-## Default trait ##
-trait Default
-    def default() -> Self
-
-impl Default for T: Num
-    def default() -> T
-        return 0
-
-impl Default for [T]
-    def default() -> [T]
-        return []
-
-impl Default for String
-    def default() -> String
-        return ""
-
-impl Default for Bool
-    def default() -> Bool
-        return False
-
-
 ## Vector ##
-struct Vector<T: Default>
+struct Vector<T>
     content: Array<T>
     size: UInt
 
-struct VectorIterator<T: Default>
+struct VectorIterator<T>
     v: Vector<T>
     idx: UInt
 
@@ -413,7 +392,7 @@ impl Vector<T>
             self.size += 1
         else
             newCapacity := self.content.length() * 2 + 1
-            newContent := Array::make(newCapacity, T::default())
+            newContent := unsafeZeroArray(newCapacity)
             for i in range(0, self.size)
                 newContent[i] = self.content[i]
 
@@ -430,7 +409,7 @@ impl Vector<T>
         return value
 
     def toArray(self) -> Array<T>
-        result := Array::make(self.size, T::default())
+        result := unsafeZeroArray(self.size)
         for i in range(0, self.size)
             result[i] = self.content[i]
 
@@ -756,7 +735,7 @@ impl Add for String
         n1 := self.length()
         n2 := other.length()
 
-        result := unsafeMakeArray(n1 + n2)
+        result := unsafeEmptyArray(n1 + n2)
 
         for i in range(0, n1)
             result[i] = self[i]

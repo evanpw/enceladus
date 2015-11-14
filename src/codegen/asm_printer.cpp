@@ -484,6 +484,35 @@ void AsmPrinter::printInstruction(MachineInst* inst)
 
 
         // Miscellaneous
+        case Opcode::REP_STOS:
+            assert(inst->outputs.size() == 0);
+            assert(inst->inputs.size() == 3);
+            assert(getAssignment(inst->inputs[0]) == _context->rdi);
+            assert(getAssignment(inst->inputs[1]) == _context->rcx);
+            assert(getAssignment(inst->inputs[2]) == _context->rax);
+
+            if (inst->inputs[2]->size() == 8)
+            {
+                _out << "\trep stosb" << std::endl;
+            }
+            else if (inst->inputs[2]->size() == 16)
+            {
+                _out << "\trep stosw" << std::endl;
+            }
+            else if (inst->inputs[2]->size() == 32)
+            {
+                _out << "\trep stosd" << std::endl;
+            }
+            else if (inst->inputs[2]->size() == 64)
+            {
+                _out << "\trep stosq" << std::endl;
+            }
+            else
+            {
+                assert(false);
+            }
+            break;
+
         case Opcode::MOVrd:
             assert(inst->outputs.size() == 1);
             assert(inst->inputs.size() == 1);

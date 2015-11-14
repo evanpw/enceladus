@@ -34,6 +34,15 @@ _main:
     ; The actual program
     call splmain
 
+    ; free the c stack (to make valgrind happy)
+    mov rdi, qword [rel cstack]
+    add rdi, -0x400000
+%ifdef __APPLE__
+    call _free
+%else
+    call free
+%endif
+
     ; If we reach here without calling panic, then exit code = 0
     xor rax, rax
     leave

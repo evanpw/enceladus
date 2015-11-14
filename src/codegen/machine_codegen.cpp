@@ -669,3 +669,25 @@ void MachineCodeGen::visit(ReturnInst* inst)
 void MachineCodeGen::visit(UnreachableInst* inst)
 {
 }
+
+void MachineCodeGen::visit(MemsetFn* inst)
+{
+    MachineOperand* dest = getOperand(inst->dest);
+    MachineOperand* offset = getOperand(inst->offset);
+    MachineOperand* count = getOperand(inst->count);
+    MachineOperand* value = getOperand(inst->value);
+
+    // This may point into the interior of an object, so calling it a reference
+    // might break the GC
+    VirtualRegister* vrdi = _function->createPrecoloredReg(_context->rdi, ValueType::U64);
+    emitMovrd(vrdi, dest);
+    emit(Opcode::ADD, {vrdi}, {vrdi, offset});
+
+    VirtualRegister* vrcx = _function->createPrecoloredReg(_context->rcx, ValueType::U64);
+    emitMovrd(vrcx, count);
+
+    VirtualRegister* vrax = _function->createPrecoloredReg(hrax, inst->value->type);
+    emitMovrd(vrax, value);
+
+    emit(Opcode::REP_STOS, {}, {vrdi, vrcx, vrax});
+}

@@ -28,6 +28,7 @@ public:
     virtual void visit(JumpIfInst* inst);
     virtual void visit(JumpInst* inst);
     virtual void visit(LoadInst* inst);
+    virtual void visit(MemsetFn* inst);
     virtual void visit(PhiInst* inst);
     virtual void visit(ReturnInst* inst);
     virtual void visit(StoreInst* inst);

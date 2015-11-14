@@ -497,7 +497,7 @@ class TestAcceptance(object):
         self.run('inferTypeVars', '')
 
     def test_inferTypeVars2(self):
-        self.run('inferTypeVars2', build_error='Error: testing/inferTypeVars2.spl:3:37: Type variable `S` is not defined')
+        self.run('inferTypeVars2', '')
 
     def test_repeatedConstraint(self):
         self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.spl:3:19: cannot unify types T: Num and Array<UInt8>')
@@ -522,6 +522,12 @@ class TestAcceptance(object):
 
     def test_mutateVector(self):
         self.run('mutateVector', '20')
+
+    def test_zeroIntArray(self):
+        self.run('zeroIntArray', '0')
+
+    def test_zeroStringArray(self):
+        self.run('zeroStringArray', '')
 
     def test_bf(self):
         self.run('bf', result='Hello World!', command='testing/hello.bf')

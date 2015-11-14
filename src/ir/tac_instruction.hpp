@@ -700,4 +700,50 @@ private:
     std::vector<std::pair<BasicBlock*, Value*>> _sources;
 };
 
+// TODO: LLVM distinguishes between intrinsic functions and instructions. Do
+// we need to do that?
+struct MemsetFn : public Instruction
+{
+    MemsetFn(Value* dest, Value* offset, Value* count, Value* value)
+    : dest(dest), offset(offset), count(count), value(value)
+    {
+        dest->uses.insert(this);
+        offset->uses.insert(this);
+        count->uses.insert(this);
+        value->uses.insert(this);
+    }
+
+    virtual void dropReferences()
+    {
+        dest->uses.erase(this);
+        offset->uses.erase(this);
+        count->uses.erase(this);
+        value->uses.erase(this);
+    }
+
+    virtual void replaceReferences(Value* from, Value* to)
+    {
+        replaceReference(dest, from, to);
+        replaceReference(offset, from, to);
+        replaceReference(count, from, to);
+        replaceReference(value, from, to);
+    }
+
+    MAKE_VISITABLE();
+
+    virtual std::string str() const
+    {
+        std::stringstream ss;
+        ss << "memset " << dest->str() << ", " << offset->str()
+           << ", " << count->str() << ", " << value->str();
+
+        return ss.str();
+    }
+
+    Value* dest;
+    Value* offset;
+    Value* count;
+    Value* value;
+};
+
 #endif

@@ -280,7 +280,7 @@ TypeAliasNode* Parser::type_alias()
 }
 
 /// function_definition
-///     : DEF ident params_and_types [ where where_clause ] suite
+///     : DEF ident params_and_types [ where_clause ] suite
 FunctionDefNode* Parser::function_definition()
 {
     YYLTYPE location = getLocation();
@@ -430,7 +430,7 @@ ReturnNode* Parser::return_statement()
 }
 
 /// struct_declaration
-///     : STRUCT UIDENT constrained_type_params '=' members
+///     : STRUCT UIDENT constrained_type_params [ where_clause ] members
 StructDefNode* Parser::struct_declaration()
 {
     YYLTYPE location = getLocation();
@@ -439,10 +439,10 @@ StructDefNode* Parser::struct_declaration()
     Token name = expect(tUIDENT);
 
     std::vector<TypeParam> typeParams = constrained_type_params();
-
+    std::vector<TypeParam> whereClause = where_clause();
     std::vector<MemberDefNode*> memberList = members();
 
-    return new StructDefNode(_context, location, name.value.str, std::move(memberList), std::move(typeParams));
+    return new StructDefNode(_context, location, name.value.str, std::move(memberList), std::move(typeParams), std::move(whereClause));
 }
 
 /// while_statement

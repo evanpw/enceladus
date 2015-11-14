@@ -720,15 +720,16 @@ public:
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<TypeParam>&& typeParameters)
-	: StatementNode(context, location), name(name), members(members), typeParameters(typeParameters)
+	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<TypeParam>&& typeParams, std::vector<TypeParam>&& whereClause)
+	: StatementNode(context, location), name(name), members(members), typeParams(typeParams), whereClause(whereClause)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
 	std::vector<MemberDefNode*> members;
-	std::vector<TypeParam> typeParameters;
+	std::vector<TypeParam> typeParams;
+	std::vector<TypeParam> whereClause;
 
 	// Annotations
 	Type* structType;

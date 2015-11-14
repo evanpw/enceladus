@@ -244,6 +244,8 @@ uint64_t* scanPtr;
 
 void* gcCopy(void* object)
 {
+    if (!object) return NULL;
+
     assert((otherEnd - otherStart) >= (heapEnd - heapStart));
 
     // Back up one word to the beginning of the allocated block
