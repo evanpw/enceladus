@@ -1,0 +1,7 @@
+struct Test<I> where I: Iterator<T>
+    iterator: I
+
+# Should be Iterator<Vector<T>> to match the signature of next
+impl Iterator<T> for Test<I> where I: Iterator<T>
+    def next(self) -> Option<Vector<T>>
+        return None
