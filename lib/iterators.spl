@@ -31,12 +31,12 @@ impl Iterator<T> for Filter<I> where I: Iterator<T>
 
 ## Peekable ##
 struct Peekable<S> where S: Iterator<T>
-    current: Option<T>
     iterator: S
+    current: Option<T>
 
 impl Peekable<S>
     def new(iter: S) -> Peekable<S>
-        return Peekable(iter.next(), iter)
+        return Peekable(iter, iter.next())
 
 impl Iterator<T> for Peekable<S> where S: Iterator<T>
     def next(self) -> Option<T>
@@ -45,6 +45,51 @@ impl Iterator<T> for Peekable<S> where S: Iterator<T>
             return Some(x)
         else
             return None
+
+## Map ##
+struct Map<I, T> where I: Iterator<S>
+    iterator: I
+    fn: |S| -> T
+
+impl Iterator<T> for Map<I, T> where I: Iterator<S>
+    def next(self) -> Option<T>
+        if let Some(x) := self.iterator.next()
+            f := self.fn
+            return Some $ f(x)
+        else
+            return None
+
+
+## Slide ##
+struct Slide<I> where I: Iterator<T>
+    iterator: I
+    window: Vector<T>
+    n: UInt
+
+impl Slide<I>
+    def new(iter: I, n: UInt) -> Slide<I>
+        window := Vector::new()
+
+        for _ in 0 to n
+            if let Some(elt) := iter.next()
+                window.append(elt)
+            else
+                break
+
+        return Slide(iter, window, n)
+
+impl Iterator<Vector<T>> for Slide<I> where I: Iterator<T>
+    def next(self) -> Option<Vector<T>>
+        if self.window.length() == self.n
+            result := self.window.clone()
+
+            self.window.remove(0)
+            if let Some(elt) := self.iterator.next()
+                self.window.append(elt)
+
+            return Some(result)
+
+        return None
 
 
 ## Iterator transforms ##
@@ -58,6 +103,19 @@ impl S: Iterator<T>
     def peekable(self) -> Peekable<S>
         return Peekable::new(self)
 
+    def map(self, fn: |T| -> U) -> Map<S, U>
+        return Map(self, fn)
+
+    def slide(self, n: UInt) -> Slide<S>
+        return Slide::new(self, n)
+
+    def fold(self, init: B, f: |B, T| -> B) -> B
+        result := init
+        for x in self
+            result = f(result, x)
+
+        return result
+
 
 ## Arithmetic on iterators ##
 impl S where T: Num, S: Iterator<T>
@@ -68,3 +126,33 @@ impl S where T: Num, S: Iterator<T>
             total += x
 
         return total
+
+    def product(self) -> T
+        total := 1
+
+        for x in self
+            total *= x
+
+        return total
+
+impl S where T: Ord, S: Iterator<T>
+    def max(self) -> Option<T>
+        if let Some(best) := self.next()
+            for x in self
+                if x > best
+                    best = x
+
+            return Some(best)
+        else
+            return None
+
+    def min(self) -> Option<T>
+        if let Some(best) := self.next()
+            for x in self
+                if x < best
+                    best = x
+
+            return Some(best)
+        else
+            return None
+

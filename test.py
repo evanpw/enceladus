@@ -77,7 +77,7 @@ class TestAcceptance(object):
         self.run('euler7', result='104743')
 
     def test_euler8(self):
-        self.run('euler8', result='40824')
+        self.run('euler8', result='23514624000')
 
     def test_euler9(self):
         self.run('euler9', result='31875000')
@@ -531,6 +531,9 @@ class TestAcceptance(object):
 
     def test_bf(self):
         self.run('bf', result='Hello World!', command='testing/hello.bf')
+
+    def test_traitMismatch(self):
+        self.run('traitMismatch', build_error='Error: testing/traitMismatch.spl:5:1: override of trait method `next` has the wrong type:\nexpected: |Test<I: Iterator<T>>| -> Option<T>\nactual: |Test<I: Iterator<T>>| -> Option<Vector<T>>')
 
     # Medium tests (100ms-1s)
 

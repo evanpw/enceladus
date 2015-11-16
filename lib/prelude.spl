@@ -408,11 +408,19 @@ impl Vector<T>
 
         return result
 
-    def copy(self) -> Vector<T>
+    def clone(self) -> Vector<T>
         return Vector(self.toArray(), self.size)
 
     def length(self) -> UInt
         return self.size
+
+    def remove(self, n: UInt)
+        assert n < self.size
+
+        self.size -= 1
+
+        for i in n to self.size
+            self.content[i] = self.content[i + 1]
 
     # Reverses in-place
     def reverse(self)

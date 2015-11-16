@@ -389,7 +389,7 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, bool inferVariables)
                      typeName->name,
                      typeParameters.size());
 
-            TypeAssignment typeMapping;
+            std::vector<Type*> typeParams;
             for (size_t i = 0; i < constructedType->typeParameters().size(); ++i)
             {
                 TypeVariable* variable = constructedType->typeParameters()[i]->get<TypeVariable>();
@@ -416,10 +416,10 @@ void SemanticAnalyzer::resolveTypeName(TypeName* typeName, bool inferVariables)
                     }
                 }
 
-                typeMapping[variable] = value;
+                typeParams.push_back(value);
             }
 
-            typeName->type = instantiate(type, typeMapping);
+            typeName->type = constructedType->instantiate(std::move(typeParams));
         }
     }
 }
@@ -1760,6 +1760,10 @@ void SemanticAnalyzer::visit(ImplNode* node)
     // for each trait method
     if (traitSymbol)
     {
+        // Have to do this here so that the checks below work correctly
+        // (see traitMismatch.spl)
+        traitSymbol->trait->addInstance(node->typeName->type, traitParameters);
+
         TypeAssignment traitSub;
         traitSub[traitSymbol->traitVar->get<TypeVariable>()] = node->typeName->type;
 
@@ -1788,7 +1792,15 @@ void SemanticAnalyzer::visit(ImplNode* node)
             auto i = methods.find(name);
             CHECK(i != methods.end(), "no implementation was given for method `{}` in trait `{}`", name, traitSymbol->name);
 
-            unify(type, i->second->type, i->second->node);
+            auto result = tryUnify(type, i->second->type);
+            if (!result.first)
+            {
+                std::stringstream ss;
+                ss << "override of trait method `" << name << "` has the wrong type:" << std::endl;
+                ss << "expected: " << type->str() << std::endl;
+                ss << "actual: " << i->second->type->str();
+                inferenceError(node, ss.str());
+            }
         }
 
         // Make sure there aren't any extra methods as well
@@ -1797,7 +1809,6 @@ void SemanticAnalyzer::visit(ImplNode* node)
             CHECK(traitSymbol->methods.find(item.first) != traitSymbol->methods.end(), "method `{}` is not a member of trait `{}`", item.first, traitSymbol->name);
         }
 
-        traitSymbol->trait->addInstance(node->typeName->type, traitParameters);
         traitSymbol->addInstance(node->typeName->type, node, std::move(methods), std::move(associatedTypes));
     }
 

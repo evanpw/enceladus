@@ -2,7 +2,9 @@
 #include "semantic/subtype.hpp"
 #include "semantic/unify_trait.hpp"
 
-Trait* instantiate(Trait* trait, TypeAssignment& replacements)
+Type* internalInstantiate(Type* type, TypeAssignment& replacements);
+
+Trait* internalInstantiate(Trait* trait, TypeAssignment& replacements)
 {
     if (trait->parameters().empty())
         return trait;
@@ -10,10 +12,20 @@ Trait* instantiate(Trait* trait, TypeAssignment& replacements)
     std::vector<Type*> params;
     for (Type* param : trait->parameters())
     {
-        params.push_back(instantiate(param, replacements));
+        params.push_back(internalInstantiate(param, replacements));
     }
 
     return trait->prototype()->instantiate(std::move(params));
+}
+
+Trait* instantiate(Trait* trait, TypeAssignment& replacements)
+{
+    if (!replacements.empty())
+    {
+        trait = substitute(trait, replacements);
+    }
+
+    return internalInstantiate(trait, replacements);
 }
 
 Trait* instantiate(Trait* trait)
@@ -22,7 +34,7 @@ Trait* instantiate(Trait* trait)
     return instantiate(trait, typeAssignment);
 }
 
-Type* instantiate(Type* type, TypeAssignment& replacements)
+Type* internalInstantiate(Type* type, TypeAssignment& replacements)
 {
     switch (type->tag())
     {
@@ -48,7 +60,7 @@ Type* instantiate(Type* type, TypeAssignment& replacements)
                     TypeVariable* newVar = replacement->get<TypeVariable>();
                     for (Trait* constraint : typeVariable->constraints())
                     {
-                        newVar->addConstraint(instantiate(constraint, replacements));
+                        newVar->addConstraint(internalInstantiate(constraint, replacements));
                     }
 
                     replacements[typeVariable] = replacement;
@@ -69,10 +81,10 @@ Type* instantiate(Type* type, TypeAssignment& replacements)
             std::vector<Type*> newInputs;
             for (Type* input : functionType->inputs())
             {
-                newInputs.push_back(instantiate(input, replacements));
+                newInputs.push_back(internalInstantiate(input, replacements));
             }
 
-            return type->table()->createFunctionType(newInputs, instantiate(functionType->output(), replacements));
+            return type->table()->createFunctionType(newInputs, internalInstantiate(functionType->output(), replacements));
         }
 
         case ttConstructed:
@@ -82,7 +94,7 @@ Type* instantiate(Type* type, TypeAssignment& replacements)
             ConstructedType* constructedType = type->get<ConstructedType>();
             for (Type* parameter : constructedType->typeParameters())
             {
-                params.push_back(instantiate(parameter, replacements));
+                params.push_back(internalInstantiate(parameter, replacements));
             }
 
             return constructedType->prototype()->instantiate(std::move(params));
@@ -93,10 +105,20 @@ Type* instantiate(Type* type, TypeAssignment& replacements)
     return nullptr;
 }
 
+Type* instantiate(Type* type, TypeAssignment& replacements)
+{
+    if (!replacements.empty())
+    {
+        type = substitute(type, replacements);
+    }
+
+    return internalInstantiate(type, replacements);
+}
+
 Type* instantiate(Type* type)
 {
     TypeAssignment replacements;
-    return instantiate(type, replacements);
+    return internalInstantiate(type, replacements);
 }
 
 Type* findOverlappingInstance(Trait* trait, Type* type)
@@ -437,9 +459,12 @@ class Substituter
 {
 public:
     Type* fullySubstitute(Type* original, const TypeAssignment& typeAssignment);
+    Trait* fullySubstitute(Trait* original, const TypeAssignment& typeAssignment);
 
 private:
-    Type* substitute(Type* original, const TypeAssignment& typeAssignment);
+    Type* substitute(Type* original, TypeAssignment& typeAssignment);
+    Trait* substitute(Trait* trait, TypeAssignment& typeAssignment);
+
     TypeAssignment _impliedAssignments;
 };
 
@@ -462,7 +487,36 @@ Type* Substituter::fullySubstitute(Type* original, const TypeAssignment& typeAss
     }
 }
 
-Type* Substituter::substitute(Type* original, const TypeAssignment& typeAssignment)
+Trait* Substituter::fullySubstitute(Trait* trait, const TypeAssignment& typeAssignment)
+{
+    if (trait->parameters().empty())
+        return trait;
+
+    TypeAssignment assignment = typeAssignment;
+
+    while (true)
+    {
+        _impliedAssignments.clear();
+
+        std::vector<Type*> params;
+        for (Type* param : trait->parameters())
+        {
+            params.push_back(substitute(param, assignment));
+        }
+
+        if (!_impliedAssignments.empty())
+        {
+            return trait->prototype()->instantiate(std::move(params));
+        }
+
+        for (auto& item : _impliedAssignments)
+        {
+            assignment[item.first] = item.second;
+        }
+    }
+}
+
+Type* Substituter::substitute(Type* original, TypeAssignment& typeAssignment)
 {
     switch (original->tag())
     {
@@ -477,19 +531,26 @@ Type* Substituter::substitute(Type* original, const TypeAssignment& typeAssignme
 
             if (i != typeAssignment.end())
             {
+                // Avoid infinite loops in case we have a variable mapped to
+                // itself in the type assignment
+                if (i->second->isVariable() && i->second->get<TypeVariable>() == typeVariable)
+                    return original;
+
                 Type* newValue = substitute(i->second, typeAssignment);
 
                 // Determine which additional substitutions (if any) are implied
                 // by the constraints on the type variable
                 TypeAssignment instantiation;
-                auto result = tryUnify(instantiate(original, instantiation), newValue);
-                assert(result.first);
-
-                for (auto& item : instantiation)
+                Type* instantiated = instantiate(original, instantiation);
+                auto result = tryUnify(instantiated, newValue);
+                if (result.first)
                 {
-                    if (typeAssignment.count(item.first) == 0)
+                    for (auto& item : instantiation)
                     {
-                        _impliedAssignments[item.first] = item.second;
+                        if (typeAssignment.count(item.first) == 0)
+                        {
+                            _impliedAssignments[item.first] = item.second;
+                        }
                     }
                 }
 
@@ -557,6 +618,12 @@ Type* Substituter::substitute(Type* original, const TypeAssignment& typeAssignme
 }
 
 Type* substitute(Type* original, const TypeAssignment& typeAssignment)
+{
+    Substituter subs;
+    return subs.fullySubstitute(original, typeAssignment);
+}
+
+Trait* substitute(Trait* original, const TypeAssignment& typeAssignment)
 {
     Substituter subs;
     return subs.fullySubstitute(original, typeAssignment);

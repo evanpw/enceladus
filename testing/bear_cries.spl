@@ -7,8 +7,8 @@ impl Progress
     def new() -> Progress
         return Progress(Vector::new(), Vector::new())
 
-    def copy(self) -> Progress
-        return Progress(self.nonempty.copy(), self.closed.copy())
+    def clone(self) -> Progress
+        return Progress(self.nonempty.clone(), self.closed.clone())
 
 impl Vector<Bool>
     def toString(self) -> String
@@ -36,7 +36,7 @@ def compute(progress: Progress, message: String, idx: UInt) -> Int
 
     if c == ';'
         # Create a new emoticon
-        next := progress.copy()
+        next := progress.clone()
         next.nonempty.append(False)
         next.closed.append(False)
         total += compute(next, message, idx + 1)
@@ -44,7 +44,7 @@ def compute(progress: Progress, message: String, idx: UInt) -> Int
         # Close an existing emoticon
         for i in 0 to progress.nonempty.size
             if progress.nonempty[i] and not(progress.closed[i])
-                next := progress.copy()
+                next := progress.clone()
                 next.closed[i] = True
                 total += compute(next, message, idx + 1)
     else
@@ -52,7 +52,7 @@ def compute(progress: Progress, message: String, idx: UInt) -> Int
 
         for i in 0 to progress.nonempty.size
             if not $ progress.closed[i]
-                next := progress.copy()
+                next := progress.clone()
                 next.nonempty[i] = True
                 total += compute(next, message, idx + 1)
 

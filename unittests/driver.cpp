@@ -730,5 +730,32 @@ TEST_CASE("implied substitutions", "[implied-subs]")
         CHECK(equals(T2, T));
     }
 
+    SECTION("on-instantiate")
+    {
+        // trait Iterator<S>
+        Type* S = table->createTypeVariable("S", true);
+        Trait* Iterator = table->createTrait("Iterator", {S});
+
+        // impl Iterator<Int> for Int
+        Iterator->addInstance(table->Int, {table->Int});
+
+        // T: Iterator<U>
+        Type* T = table->createTypeVariable("T", true);
+        Type* U = table->createTypeVariable("U", true);
+        Trait* IteratorU = Iterator->instantiate({U});
+        T->get<TypeVariable>()->addConstraint(IteratorU);
+
+        // Function type: |T: Iterator<U>| -> U
+        Type* nextType = table->createFunctionType({T}, U);
+
+        // Make assignment T -> Int in nextType
+        TypeAssignment assignment;
+        assignment[T->get<TypeVariable>()] = table->Int;
+        Type* resultType = instantiate(nextType, assignment);
+
+        // Check that the implied subsitution U -> Int also got made
+        CHECK(equals(resultType->get<FunctionType>()->output(), table->Int));
+    }
+
     delete table;
 }

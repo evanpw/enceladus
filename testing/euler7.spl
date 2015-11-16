@@ -1,23 +1,22 @@
-# Solves Project Euler 7
+# Solves Project Euler #7
 
-def isPrime(x: Int) -> Bool
-    i := 2
-    while i * i <= x
-        if x % i == 0
-            return False
-        i += 1
+def sieve(n: UInt) -> Vector<UInt>
+    maybePrime := Array::make(n, True)
 
-    return True
+    for i in 2 to n
+        for j in i to n
+            if i * j >= n
+                break
 
-x := 2
-n := 0
-forever
-    if isPrime(x)
-        n += 1
+            maybePrime[i * j] = False
 
-    if n == 10001
-        break
+    result := Vector::new()
+    for i in 2 to n
+        if maybePrime[i]
+            result.append(i)
 
-    x += 1
+    return result
 
-println $ show(x)
+
+primes := sieve(200000)
+println $ show(primes[10000])

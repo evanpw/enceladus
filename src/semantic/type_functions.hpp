@@ -10,6 +10,7 @@ Trait* instantiate(Trait* trait, TypeAssignment& replacements);
 Trait* instantiate(Trait* trait);
 
 Type* substitute(Type* original, const TypeAssignment& typeAssignment);
+Trait* substitute(Trait* original, const TypeAssignment& typeAssignment);
 
 Type* findOverlappingInstance(Trait* trait, Type* type);
 
