@@ -117,6 +117,7 @@ private:
         ~Transaction();
 
         void rollback();
+        void rollbackRhs();
         void accept() { _accepted = true; }
 
     private:

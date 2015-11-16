@@ -1,0 +1,8 @@
+def id(x: Int) -> Int
+    return x
+
+def witness(xs: S) where S: Iterator<Int>
+    pass
+
+witness $ [1, 2].iter().map(id)
+witness $ [1, 2].iter().map(id).map(id)

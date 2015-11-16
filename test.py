@@ -535,6 +535,9 @@ class TestAcceptance(object):
     def test_traitMismatch(self):
         self.run('traitMismatch', build_error='Error: testing/traitMismatch.spl:5:1: override of trait method `next` has the wrong type:\nexpected: |Test<I: Iterator<T>>| -> Option<T>\nactual: |Test<I: Iterator<T>>| -> Option<Vector<T>>')
 
+    def test_nestedMap(self):
+        self.run('nestedMap', '')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):

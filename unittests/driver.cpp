@@ -658,6 +658,56 @@ TEST_CASE("generic trait checks", "[generic-trait]")
         CHECK(isSubtype(lhs, rhs));
     }
 
+    SECTION("nested-map")
+    {
+        // trait Iterator<A>
+        Type* A = table->createTypeVariable("A", true);
+        Trait* Iterator = table->createTrait("Iterator", {A});
+
+        // struct Map<B, C> where B: Iterator<D>
+        Type* B = table->createTypeVariable("B", true);
+        Type* D = table->createTypeVariable("D", true);
+        Trait* IteratorD = Iterator->instantiate({D});
+        B->get<TypeVariable>()->addConstraint(IteratorD);
+        Type* C = table->createTypeVariable("C", true);
+        Type* Map = table->createConstructedType("Map", {B, C});
+
+        // impl Iterator<F> for Map<E, F>
+        Type* E = table->createTypeVariable("E", true);
+        Type* G = table->createTypeVariable("G", true);
+        Trait* IteratorG = Iterator->instantiate({G});
+        E->get<TypeVariable>()->addConstraint(IteratorG);
+        Type* F = table->createTypeVariable("F", true);
+        Type* MapEF = Map->get<ConstructedType>()->instantiate({E, F});
+        Iterator->addInstance(MapEF, {F});
+
+        // struct Test
+        Type* Test = table->createBaseType("Test");
+
+        // impl Iterator<Int> for Test
+        Iterator->addInstance(Test, {table->Int});
+
+        // lhs = Map<Map<Test, Int>, Int>
+        Type* MapTestInt = Map->get<ConstructedType>()->instantiate({Test, table->Int});
+        Type* lhs = Map->get<ConstructedType>()->instantiate({MapTestInt, table->Int});
+
+        // // rhs = Map<I: Iterator<H>, J>
+        // Type* I = table->createTypeVariable("I", true);
+        // Type* H = table->createTypeVariable("H", true);
+        // Trait* IteratorH = Iterator->instantiate({H});
+        // I->get<TypeVariable>()->addConstraint(IteratorH);
+        // Type* J = table->createTypeVariable("J", true);
+        // Type* rhs = Map->get<ConstructedType>()->instantiate({I, J});
+
+        // // Map<Map<Test, Int>, Int>  <=  Map<I: Iterator<H>, J> ?
+        // CHECK(isSubtype(lhs, rhs));
+        std::cerr << std::endl << std::endl;
+        CHECK(isSubtype(lhs, MapEF));
+
+        auto result = tryUnify(lhs, Iterator->instantiate({table->Int}));
+        CHECK(result.first);
+    }
+
     delete table;
 }
 

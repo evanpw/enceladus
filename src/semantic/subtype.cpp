@@ -72,6 +72,16 @@ void TypeComparer::Transaction::rollback()
     _accepted = true;
 }
 
+void TypeComparer::Transaction::rollbackRhs()
+{
+    assert(!_accepted);
+
+    _comparer->_rhsSubs = _rhsSubs;
+
+    // This transaction has ended, so don't do another rollback at destruction
+    _accepted = true;
+}
+
 TypeComparer::Transaction::~Transaction()
 {
     if (!_accepted)
@@ -173,18 +183,22 @@ bool TypeComparer::compare(Type* lhs, Trait* trait)
     {
         Transaction innerTransaction(this);
 
-        if (compare(lhs, instance.type))
+        // We need a fresh instantiation of the instance types each time, or
+        // instance checking on nested types will break (see nestedMap.spl)
+        TypeAssignment assignment;
+        Type* instanceType = instantiate(instance.type, assignment);
+
+        if (compare(lhs, instanceType))
         {
             assert(instance.traitParams.size() == trait->parameters().size());
 
             bool good = true;
             for (size_t i = 0; i < instance.traitParams.size(); ++i)
             {
-                Type* x = instance.traitParams[i];
+                Type* x = substitute(instance.traitParams[i], assignment);
                 Type* y = trait->parameters()[i];
 
-                //if (compare(trait->parameters()[i], instance.traitParams[i]))
-                if (!compare(instance.traitParams[i], trait->parameters()[i]))
+                if (!compare(x, y))
                 {
                     good = false;
                     break;
