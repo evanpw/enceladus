@@ -1,0 +1,174 @@
+## Set ##
+struct Set<S: Eq + Hash>
+    contents: Array<Option<S>>
+    size: UInt
+    capacity: UInt
+
+impl Set<S>
+    def new() -> Set<S>
+        return Set(Array::make(0, None), 0, 0)
+
+    def clone(self) -> Set<S>
+        return Set(self.contents.clone(), self.size, self.capacity)
+
+    def insert(self, key: S)
+        # Resize when 2/3 full
+        if 3 * self.size >= 2 * self.capacity
+            newCapacity := max(1, 3 * self.size)
+            self.resize(newCapacity)
+
+        startIdx := key.hash() % self.capacity
+
+        # Linear probing
+        idx := startIdx
+        forever
+            match self.contents[idx]
+                Some(k)
+                    if k == key
+                        self.contents[idx] = Some(key)
+                        break
+
+                None
+                    self.contents[idx] = Some(key)
+                    break
+
+            idx = (idx + 1) % self.capacity
+
+        self.size += 1
+
+    def delete(self, key: S)
+        startIdx := key.hash() % self.capacity
+
+        # Linear probing
+        idx := startIdx
+        forever
+            match self.contents[idx]
+                Some(k)
+                    if k == key
+                        self.contents[idx] = None
+                        return
+
+                None
+                    panic $ "Set::delete: key not found"
+
+            idx = (idx + 1) % self.capacity
+
+        panic $ "Set::delete: key not found"
+
+    def pop(self) -> S
+        assert self.size > 0
+
+        for i in 0 to self.capacity
+            if let Some(k) := self.contents[i]
+                self.contents[i] = None
+                self.size -= 1
+                return k
+
+        panic $ "Unreachable"
+
+    def contains(self, key: S) -> Bool
+        if self.capacity == 0
+            return False
+
+        startIdx := key.hash() % self.capacity
+
+        idx := startIdx
+        forever
+            match self.contents[idx]
+                Some(k)
+                    if k == key
+                        return True
+
+                None
+                    return False
+
+            idx = (idx + 1) % self.capacity
+            if idx == startIdx
+                return False
+
+    def resize(self, newCapacity: UInt)
+        assert newCapacity >= self.size
+
+        oldContents := self.contents
+        oldCapacity := self.capacity
+
+        self.capacity = newCapacity
+        self.contents = Array::make(newCapacity, None)
+        self.size = 0
+
+        for idx in 0 to oldCapacity
+            match oldContents[idx]
+                Some(k)
+                    self.insert(k)
+                None
+                    pass
+
+
+## SetIterator ##
+struct SetIterator<S: Eq + Hash>
+    set: Set<S>
+    current: UInt
+
+impl Iterator<S> for SetIterator<S>
+    def next(self) -> Option<S>
+        while self.current < self.set.capacity
+            x := self.set.contents[self.current]
+            self.current += 1
+
+            if let Some(_) := x
+                return x
+
+        return None
+
+impl Iterable<S> for Set<S>
+    type IteratorType = SetIterator<S>
+
+    def iter(self) -> SetIterator<S>
+        return SetIterator(self, 0)
+
+
+## Other traits
+impl Set<S>
+    def extend(self, other: Set<S>)
+        for x in other
+            self.insert(x)
+
+    def difference(self, other: Set<S>)
+        # TODO: This could be more efficient
+        for x in other
+            if self.contains(x)
+                self.delete(x)
+
+impl Add for Set<S>
+    def add(self, other: Set<S>) -> Set<S>
+        result := self.clone()
+        result.extend(other)
+        return result
+
+impl Sub for Set<S>
+    def sub(self, other: Set<S>) -> Set<S>
+        result := self.clone()
+        result.difference(other)
+        return result
+
+impl Eq for Set<S>
+    def eq(self, other: Set<S>) -> Bool
+        if self.size != other.size
+            return False
+
+        for x in self
+            if not $ other.contains(x)
+                return False
+
+        return True
+
+    def ne(self, other: Set<S>) -> Bool
+        return not $ self.eq(other)
+
+impl Hash for Set<S>
+    def hash(self) -> UInt
+        result := 0
+        for x in self
+            result += x.hash()
+
+        return result
