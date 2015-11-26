@@ -520,9 +520,14 @@ public:
     Type* Int;
     Type* UInt;
     Type* UInt8;
+    Type* Char;
     Type* Bool;
     Type* Unit;
     Type* String;
+
+    // Generic boxed type representing the captured environment of a closure.
+    // Not accessible in-language
+    Type* Environment;
 
     Trait* Num;
 

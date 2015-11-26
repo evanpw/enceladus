@@ -10,7 +10,7 @@
 # LIB: Deque data structure
 
 import List
-import HashTable
+import Dict
 
 def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
     newCache := []
@@ -44,7 +44,7 @@ def fullCache(instructions: [String]) -> String
 
     return cache
 
-def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) -> Int
+def costAt(memo: Dict<String, Int>, instructions: [String], cache: String) -> Int
     savedValue := memo[cache]
     if savedValue.isSome()
         return savedValue.unwrap()
@@ -63,7 +63,7 @@ def costAt(memo: HashTable<String, Int>, instructions: [String], cache: String) 
     assert costs.length() > 0
 
     bestCost := minimum(costs)
-    memo.insert(cache, bestCost)
+    memo[cache] = bestCost
 
     return bestCost
 
@@ -73,10 +73,10 @@ def minTime(instructions: [String]) -> Int
 
     empty := zeroCache(m)
     full := fullCache(instructions)
-    memo := HashTable::new()
+    memo := Dict::new()
 
     # From a full cache, we're finished -> zero time
-    memo.insert(full, 0)
+    memo[full] = 0
 
     return costAt(memo, instructions, empty)
 

@@ -12,6 +12,7 @@ enum TokenType : int
     tAS,
     tASSERT,
     tBREAK,
+    tCHAR_LIT,
     tCOLON_EQUAL,
     tCONTINUE,
     tDARROW,

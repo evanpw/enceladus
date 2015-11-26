@@ -33,34 +33,32 @@ int count_whitespace(const char* s, int length)
     return count;
 }
 
-const char* char_literal(const char* s)
+char char_literal(const char* s)
 {
-    static char result[16];
-    int c;
-
     if (s[1] != '\\')
     {
-        c = s[1];
+        return s[1];
     }
     else if (s[2] == 'n')
     {
-        c = '\n';
+        return '\n';
     }
     else if (s[2] == 'r')
     {
-        c = '\r';
+        return '\r';
     }
     else if (s[2] == 't')
     {
-        c = '\t';
+        return '\t';
+    }
+    else if (s[2] == '\\')
+    {
+        return '\\';
     }
     else
     {
-        assert(false);
+        return 0;
     }
-
-    sprintf(result, "%d", c);
-    return result;
 }
 
 int unclosedBrackets = 0;
@@ -258,7 +256,24 @@ extern "C" int yywrap()
 
  /* String and char literals */
 \"[^"]*\"                { yylval.str = StringTable::add(trim_quotes(yytext)); return tSTRING_LIT; }
-\'([^']|\\[nrt])\'       { yylval.str = StringTable::add(char_literal(yytext)); return tINT_LIT; }    /* character literal */
+
+\'([^']|\\.)\'       {
+    char c = char_literal(yytext);
+
+    if (c)
+    {
+        yylval.unsignedInt = c;
+        return tCHAR_LIT;
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
+           << ": bad character literal: " << yytext;
+
+        throw LexerError(ss.str());
+    }
+}
 
 [a-z][a-zA-Z0-9']*       { yylval.str = StringTable::add(yytext); return tLIDENT; }
 "_"                      { yylval.str = StringTable::add(yytext); return tLIDENT; }

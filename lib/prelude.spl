@@ -24,6 +24,13 @@ impl Eq for T: Num
     def ne(self, other: T) -> Bool
         return self != other
 
+impl Eq for Char
+    def eq(self, other: Char) -> Bool
+        return self == other
+
+    def ne(self, other: Char) -> Bool
+        return self != other
+
 
 ## Range ##
 def upTo(end: T) -> Range<T>
@@ -125,6 +132,15 @@ struct ArrayIterator<T>
 impl Array<T>
     def length(self) -> UInt
         return arrayLength(self)
+
+    def clone(self) -> Array<T>
+        size := arrayLength(self)
+        result := unsafeZeroArray(size)
+
+        for i in 0 to size
+            result[i] = self[i]
+
+        return result
 
 impl Iterator<T> for ArrayIterator<T>
     def next(self) -> Option<T>
@@ -234,7 +250,7 @@ def println(s: String)
     for c in s
         putchar(c)
 
-    putchar(10) # '\n'
+    putchar('\n')
 
 
 ## List ##
@@ -323,7 +339,7 @@ impl List<T>
 
         return ys
 
-    def filter(self: [T], f: T -> Bool) -> [T]
+    def filter(self, f: T -> Bool) -> [T]
         result := []
         for x in self
             if f(x)
@@ -331,7 +347,7 @@ impl List<T>
 
         return result.reverse()
 
-    def map(self: [T], f: T -> S) -> [S]
+    def map(self, f: T -> S) -> [S]
         result := []
         for x in self
             result = result.insert(f(x))
@@ -411,6 +427,7 @@ impl Vector<T>
     def clone(self) -> Vector<T>
         return Vector(self.toArray(), self.size)
 
+
     def length(self) -> UInt
         return self.size
 
@@ -468,28 +485,6 @@ def any(xs: Vector<Bool>) -> Bool
 
     return False
 
-
-def show(x: T) -> String where T: Num
-    digits := Vector::new()
-
-    plusx := x as UInt
-    negative := False
-    if x < 0
-        plusx = -x as UInt
-        negative = True
-
-    while plusx != 0
-        digits.append((plusx % 10) as UInt8 + '0')
-        plusx /= 10
-
-    if digits.length() == 0
-        return "0"
-    else
-        if negative
-            digits.append('-')
-
-        digits.reverse()
-        return digits.toArray()
 
 impl Int
     # Does not check for integer overflow
@@ -637,6 +632,15 @@ impl Ord for T: Num
         else
             return Equal
 
+impl Ord for Char
+    def cmp(self, other: Char) -> Ordering
+        if self < other
+            return Less
+        elif self > other
+            return Greater
+        else
+            return Equal
+
 impl Ord for [T] where T: Ord
     def cmp(self, other: [T]) -> Ordering
         if self.empty()
@@ -726,7 +730,7 @@ impl Div for T: Num
         return self / other
 
 impl Rem for T: Num
-    def rem(self: T, other: T) -> T
+    def rem(self, other: T) -> T
         return self % other
 
 
@@ -764,9 +768,52 @@ impl Hash for Int
     def hash(self) -> UInt
         return self as UInt
 
+impl Hash for UInt8
+    def hash(self) -> UInt
+        return self as UInt
+
 impl Hash for String
     def hash(self) -> UInt
         return strHash(self)
+
+
+## Show trait ##
+trait Show
+    def show(self) -> String
+
+impl Show for T: Num
+    def show(self) -> String
+        digits := Vector::new()
+
+        plusx := self as UInt
+        negative := False
+        if self < 0
+            plusx = -self as UInt
+            negative = True
+
+        while plusx != 0
+            digits.append((plusx % 10) as Char + '0')
+            plusx /= 10
+
+        if digits.length() == 0
+            return "0"
+        else
+            if negative
+                digits.append('-')
+
+            digits.reverse()
+            return digits.toArray()
+
+impl Show for Char
+    def show(self) -> String
+        return Array::make(1, self)
+
+impl Show for Unit
+    def show(self) -> String
+        return "()"
+
+def show(x: T) -> String where T: Show
+    return x.show()
 
 
 ## Miscellaneous

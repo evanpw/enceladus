@@ -119,6 +119,7 @@ public:
     virtual void visit(ImplNode* node);
     virtual void visit(IndexNode* node);
     virtual void visit(IntNode* node);
+    virtual void visit(LambdaNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
     virtual void visit(MatchArm* node);
@@ -154,6 +155,9 @@ private:
     std::unordered_map<const Symbol*, Value*> _externFunctions;
     std::unordered_map<const Symbol*, std::vector<std::pair<TypeAssignment, Function*>>> _functionNames;
 
+    Value* load(const Symbol* symbol);
+    void store(const Symbol* symbol, Value* src);
+
     Value* getValue(const Symbol* symbol);
     Value* getFunctionValue(const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
     Value* getTraitMethodValue(Type* objectType, const Symbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
@@ -161,9 +165,8 @@ private:
     Type* getConcreteType(Type* type, const TypeAssignment& typeAssignment = {});
     ValueType getValueType(Type* type, const TypeAssignment& typeAssignment = {});
 
-    std::unordered_map<Function*, std::pair<size_t, std::vector<size_t>>> _constructorLayouts;
-    std::vector<size_t> getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
-    size_t getNumPointers(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment);
+    std::unordered_map<Function*, uint64_t> _constructorLayouts;
+    uint64_t getConstructorLayout(const ConstructorSymbol* symbol, AstNode* node, const TypeAssignment& typeAssignment = {});
 
     // The entry / exit labels of the current loop (used by break & continue)
     BasicBlock* _currentLoopEntry;
@@ -180,6 +183,8 @@ private:
     // generate code for each of them after the main function is finished
     std::vector<ConstructorSymbol*> _constructors;
     void createConstructor(const ConstructorSymbol* constructor, const TypeAssignment& typeAssignment);
+
+    void createClosure(Value* dest, Value* fn, const std::vector<Symbol*>& captures = {});
 
     // Current assignment of type variables to types
     TypeAssignment _typeContext;
@@ -202,6 +207,23 @@ private:
     BasicBlock* createBlock()
     {
         return _currentFunction->createBlock();
+    }
+
+    ConstantInt* constant(uint64_t value)
+    {
+        return _context->createConstantInt(ValueType::U64, value);
+    }
+
+    void gcAllocate(Value* dest, Value* size)
+    {
+        CallInst* callInst = new CallInst(dest, _context->createExternFunction("gcAllocate"), {size});
+        callInst->regpass = true;
+        emit(callInst);
+    }
+
+    void gcAllocate(Value* dest, size_t size)
+    {
+        gcAllocate(dest, constant(size));
     }
 
     void setBlock(BasicBlock* block) { _currentBlock = block; }

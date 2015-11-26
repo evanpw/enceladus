@@ -183,9 +183,6 @@ SemanticAnalyzer::SemanticAnalyzer(AstContext* context)
 , _context(context)
 , _typeTable(context->typeTable())
 , _symbolTable(context->symbolTable())
-, _enclosingFunction(nullptr)
-, _enclosingLoop(nullptr)
-, _enclosingImplNode(nullptr)
 {
 }
 
@@ -235,6 +232,7 @@ void SemanticAnalyzer::injectSymbols()
     _symbolTable->createTypeSymbol("Int", _root, _typeTable->Int);
     _symbolTable->createTypeSymbol("UInt", _root, _typeTable->UInt);
     _symbolTable->createTypeSymbol("UInt8", _root, _typeTable->UInt8);
+    _symbolTable->createTypeSymbol("Char", _root, _typeTable->Char);
 
     Type* Self = _typeTable->createTypeVariable("Self", true);
     _symbolTable->createTraitSymbol("Num", nullptr, _typeTable->Num, Self);
@@ -646,7 +644,7 @@ void SemanticAnalyzer::visit(FunctionDefNode* node)
 	{
 		const std::string& param = node->params[i];
 
-		VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, node, false);
+		VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, false);
 		paramSymbol->isParam = true;
         paramSymbol->offset = i;
 		paramSymbol->type = paramTypes[i];
@@ -720,7 +718,7 @@ void SemanticAnalyzer::visit(VariableDefNode* node)
         CHECK_UNDEFINED_IN_SCOPE(target);
 
         bool global = _symbolTable->isTopScope();
-    	VariableSymbol* symbol = _symbolTable->createVariableSymbol(target, node, _enclosingFunction, global);
+    	VariableSymbol* symbol = _symbolTable->createVariableSymbol(target, node, global);
 
         symbol->type = node->rhs->type;
     	node->symbol = symbol;
@@ -809,7 +807,7 @@ void SemanticAnalyzer::visit(MatchArm* node)
 
         if (name != "_")
         {
-            VariableSymbol* member = _symbolTable->createVariableSymbol(name, node, _enclosingFunction, false);
+            VariableSymbol* member = _symbolTable->createVariableSymbol(name, node, false);
             member->type = functionType->inputs().at(i);
             node->symbols.push_back(member);
         }
@@ -868,7 +866,7 @@ void SemanticAnalyzer::visit(LetNode* node)
 
         if (name != "_")
         {
-    		VariableSymbol* member = _symbolTable->createVariableSymbol(name, node, _enclosingFunction, global);
+    		VariableSymbol* member = _symbolTable->createVariableSymbol(name, node, global);
     		member->type = functionType->inputs().at(i);
     		node->symbols.push_back(member);
         }
@@ -888,6 +886,53 @@ void SemanticAnalyzer::visit(LetNode* node)
     {
         node->type = _typeTable->Unit;
     }
+}
+
+void SemanticAnalyzer::visit(LambdaNode* node)
+{
+    // Functions cannot be declared inside of another function
+    CHECK(!_enclosingLambda, "lambdas cannot be nested");
+
+    _symbolTable->pushScope();
+
+    Type* inputType = _typeTable->createTypeVariable();
+    Type* outputType = _typeTable->createTypeVariable();
+    Type* functionType = _typeTable->createFunctionType({inputType}, outputType);
+
+    VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(node->varName, node, false);
+    paramSymbol->isParam = true;
+    paramSymbol->offset = 0;
+    paramSymbol->type = inputType;
+    node->paramSymbol = paramSymbol;
+
+    VariableSymbol* envSymbol = _symbolTable->createVariableSymbol("_", node, false);
+    envSymbol->isParam = true;
+    envSymbol->offset = 1;
+    envSymbol->type = _typeTable->Environment; // Generic boxed type
+    node->envSymbol = envSymbol;
+
+    std::string name = "__lambda" + std::to_string(node->counter);
+
+    // Recurse
+    _enclosingLambda = node;
+    node->body->accept(this);
+    _enclosingLambda = nullptr;
+
+    unify(node->body->type, outputType, node->body);
+
+    _symbolTable->popScope();
+
+    FunctionSymbol* functionSymbol = _symbolTable->createFunctionSymbol(name, node, nullptr);
+    functionSymbol->type = functionType;
+    functionSymbol->isLambda = true;
+    node->functionSymbol = functionSymbol;
+
+    EnvironmentCapture capturer(_symbolTable, envSymbol, {paramSymbol});
+    node->body->accept(&capturer);
+    node->captures = capturer.captures();
+    node->replacements = capturer.replacements();
+
+    node->type = functionType;
 }
 
 void SemanticAnalyzer::visit(AssignNode* node)
@@ -975,7 +1020,7 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
         std::vector<MemberSymbol*> symbols;
         _symbolTable->resolveMemberSymbol(name, node->typeName->type, symbols);
         CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", name, node->typeName->type->str());
-        CHECK(symbols.size() < 2, "method call is ambiguous");
+        CHECK(symbols.size() < 2, "call to method `{}` is ambiguous", name);
 
         CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", name);
         symbol = symbols.front();
@@ -1013,7 +1058,7 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->methodName, objectType, symbols);
     CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", node->methodName, objectType->str());
-    CHECK(symbols.size() < 2, "method call is ambiguous");
+    CHECK(symbols.size() < 2, "call to method `{}` is ambiguous", node->methodName);
 
     CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", node->methodName);
     Symbol* symbol = symbols.front();
@@ -1049,7 +1094,7 @@ void SemanticAnalyzer::visit(BinopNode* node)
     unify(node->lhs->type, node->rhs->type, node);
 
     // Arithmetic on numerical types are built-in
-    if (!isSubtype(node->lhs->type, _typeTable->Num))
+    if (!isSubtype(node->lhs->type, _typeTable->Num) && !equals(node->lhs->type, _typeTable->Char))
     {
         std::string traitName;
         std::string methodName;
@@ -1118,6 +1163,12 @@ void SemanticAnalyzer::visit(CastNode* node)
     if (isSubtype(srcType, _typeTable->Num) && isSubtype(destType, _typeTable->Num))
         return;
 
+    if (isSubtype(srcType, _typeTable->Num) && equals(destType, _typeTable->Char))
+        return;
+
+    if (equals(srcType, _typeTable->Char) && isSubtype(destType, _typeTable->Num))
+        return;
+
     semanticError(node->location, "Cannot cast from type {} to {}", srcType->str(), destType->str());
 }
 
@@ -1162,7 +1213,7 @@ void SemanticAnalyzer::visit(ComparisonNode* node)
     node->rhs->accept(this);
     unify(node->lhs->type, node->rhs->type, node);
 
-    if (!isSubtype(node->lhs->type, _typeTable->Num))
+    if (!isSubtype(node->lhs->type, _typeTable->Num) && !equals(node->lhs->type, _typeTable->Char))
     {
         TraitSymbol* traitSymbol;
         if (node->op == ComparisonNode::kEqual || node->op == ComparisonNode::kNotEqual)
@@ -1321,7 +1372,7 @@ void SemanticAnalyzer::visit(ForNode* node)
     _enclosingLoop = node;
     _symbolTable->pushScope();
 
-    node->symbol = _symbolTable->createVariableSymbol(node->varName, node, _enclosingFunction, false);
+    node->symbol = _symbolTable->createVariableSymbol(node->varName, node, false);
     node->symbol->type = varType;
 
     node->body->accept(this);
@@ -1368,7 +1419,11 @@ void SemanticAnalyzer::visit(ContinueNode* node)
 
 void SemanticAnalyzer::visit(IntNode* node)
 {
-    if (node->suffix == "u")
+    if (node->character)
+    {
+        node->type = _typeTable->Char;
+    }
+    else if (node->suffix == "u")
     {
         node->type = _typeTable->UInt;
     }
@@ -1402,7 +1457,7 @@ void SemanticAnalyzer::visit(StringLiteralNode* node)
     node->type = String;
 
     std::string name = "__staticString" + std::to_string(node->counter);
-    VariableSymbol* symbol = _symbolTable->createVariableSymbol(name, node, nullptr, true);
+    VariableSymbol* symbol = _symbolTable->createVariableSymbol(name, node, true);
     symbol->isStatic = true;
     symbol->contents = node->content;
     node->symbol = symbol;
@@ -1537,8 +1592,6 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     // TODO: Refactor these two cases (and maybe DataDeclaration as well)
     if (node->typeParams.empty())
     {
-        AstVisitor::visit(node);
-
         Type* newType = _typeTable->createBaseType(node->name);
         _symbolTable->createTypeSymbol(typeName, node, newType);
 
@@ -1553,6 +1606,8 @@ void SemanticAnalyzer::visit(StructDefNode* node)
             // Make sure there are no repeated member names
             CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type `{}` already has a member named `{}`", node->name, member->name);
             alreadyUsed.insert(member->name);
+
+            member->accept(this);
 
             memberTypes.push_back(member->memberType);
             memberNames.push_back(member->name);
@@ -1639,7 +1694,7 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->memberName, objectType, symbols);
     CHECK(!symbols.empty(), "no member named `{}` found for type `{}`", node->memberName, objectType->str());
-    assert(symbols.size() < 2);
+    CHECK(symbols.size() < 2, "access to field `{}` is ambiguous", node->memberName);
 
     CHECK(symbols.front()->isMemberVar(), "`{}` is a method, not a member variable", node->memberName);
     MemberVarSymbol* symbol = dynamic_cast<MemberVarSymbol*>(symbols.front());
@@ -1875,7 +1930,7 @@ void SemanticAnalyzer::visit(MethodDefNode* node)
         {
             const std::string& param = node->params[i];
 
-            VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, node, false);
+            VariableSymbol* paramSymbol = _symbolTable->createVariableSymbol(param, node, false);
             paramSymbol->isParam = true;
             paramSymbol->offset = i;
             paramSymbol->type = paramTypes[i];
@@ -2031,6 +2086,53 @@ void SemanticAnalyzer::checkTraitCoherence()
                     throw SemanticError(ss.str());
                 }
             }
+        }
+    }
+}
+
+
+//// EnvironmentCapture /////////////////////////////////////////////////////////////
+
+void EnvironmentCapture::visit(NullaryNode* node)
+{
+    if (_boundVars.count(node->symbol) == 0)
+    {
+        auto i = _replacements.find(node->symbol);
+        if (i == _replacements.end())
+        {
+            Symbol* replacement = _symbolTable->createCaptureSymbol(node->symbol->name, node, _envSymbol, _captures.size());
+            replacement->type = node->symbol->type;
+
+            _replacements[node->symbol] = replacement;
+            _captures.push_back(node->symbol);
+
+            node->symbol = replacement;
+        }
+        else
+        {
+            node->symbol = i->second;
+        }
+    }
+}
+
+void EnvironmentCapture::visit(FunctionCallNode* node)
+{
+    if (_boundVars.count(node->symbol) == 0)
+    {
+        auto i = _replacements.find(node->symbol);
+        if (i == _replacements.end())
+        {
+            Symbol* replacement = _symbolTable->createCaptureSymbol(node->symbol->name, node, _envSymbol, _captures.size());
+            replacement->type = node->symbol->type;
+
+            _replacements[node->symbol] = replacement;
+            _captures.push_back(node->symbol);
+
+            node->symbol = replacement;
+        }
+        else
+        {
+            node->symbol = i->second;
         }
     }
 }

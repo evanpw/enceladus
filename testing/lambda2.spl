@@ -1,0 +1,6 @@
+def indirectIdentity(x: T) -> T
+    nothing := (x -> x)
+    return nothing(x)
+
+drop $ indirectIdentity(1)
+drop $ indirectIdentity("Hello")

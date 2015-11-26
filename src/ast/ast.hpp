@@ -206,6 +206,7 @@ public:
 
 	int64_t intValue;
 	std::string suffix;
+	bool character = false;
 };
 
 class BoolNode : public ExpressionNode
@@ -332,6 +333,30 @@ public:
 
 	std::vector<Symbol*> symbols;
 	ValueConstructor* valueConstructor;
+};
+
+class LambdaNode : public ExpressionNode
+{
+public:
+	LambdaNode(AstContext* context, const YYLTYPE& location, const std::string& varName, ExpressionNode* body)
+	: ExpressionNode(context, location), varName(varName), body(body), counter(nextCounter++)
+	{}
+
+	AST_VISITABLE();
+
+	std::string varName;
+	ExpressionNode* body;
+	int counter;
+
+	// Annotations
+	VariableSymbol* paramSymbol;
+	VariableSymbol* envSymbol;
+	Symbol* functionSymbol;
+
+	std::vector<Symbol*> captures;
+	std::unordered_map<Symbol*, Symbol*> replacements;
+
+	static int nextCounter;
 };
 
 ////// Statement nodes /////////////////////////////////////////////////////////

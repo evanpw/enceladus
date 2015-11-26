@@ -1,7 +1,7 @@
 # These are the definitions that the compiler depends on internally. Changing
 # any of these may cause the compiler to crash
 
-type Char = UInt8
+#type Char = UInt8
 type String = Array<Char>
 foreign panic(msg: String)
 

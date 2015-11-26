@@ -52,37 +52,37 @@ impl String
 
         return s.slice(pos, n)
 
-    def split(s) -> [String]
-        result := []
+    def split(s) -> Vector<String>
+        result := Vector::new()
         start := 0
 
         len := s.length()
         for i in 0 to len
             if isSpace(s.at(i))
                 len := i - start
-                result = result.insert(s.slice(start, len))
+                result.append(s.slice(start, len))
                 start = i + 1
 
         if start < len
-            result = result.insert(s.slice(start, len - start))
+            result.append(s.slice(start, len - start))
 
-        return result.reverse()
+        return result
 
-    def splitBy(s, sep: Char) -> [String]
-        result := []
+    def splitBy(s, sep: Char) -> Vector<String>
+        result := Vector::new()
         start := 0
 
         len := s.length()
         for i in 0 to len
             if s.at(i) == sep
                 len := i - start
-                result = result.insert(s.slice(start, len))
+                result.append(s.slice(start, len))
                 start = i + 1
 
         if start < len
-            result = result.insert(s.slice(start, len - start))
+            result.append(s.slice(start, len - start))
 
-        return result.reverse()
+        return result
 
     def join(s, xs: [String]) -> String
         if xs.empty()

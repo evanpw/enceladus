@@ -9,8 +9,9 @@
 class SymbolTable
 {
 public:
-    VariableSymbol* createVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global);
+    VariableSymbol* createVariableSymbol(const std::string& name, AstNode* node, bool global);
     FunctionSymbol* createFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
+    CaptureSymbol* createCaptureSymbol(const std::string& name, AstNode* node, VariableSymbol* envSymbol, size_t index);
     ConstructorSymbol* createConstructorSymbol(const std::string& name, AstNode* node, ValueConstructor* constructor, const std::vector<MemberVarSymbol*>& memberSymbols);
 
     MethodSymbol* createMethodSymbol(const std::string& name, FunctionDefNode* node, Type* parentType);

@@ -15,7 +15,7 @@ impl State
 data Instruction = Add(Int) | MovePtr(Int) | Out | In | Loop(Vector<Instruction>) | Clear| Close
 
 impl Instruction
-    def toString(self: Instruction) -> String
+    def toString(self) -> String
         match self
             Add(m)
                 return "Add(" + show(m) + ")"
@@ -147,12 +147,12 @@ def executeInst(state: State, inst: Instruction)
             state.dp = newDP as UInt
 
         Out
-            putchar(state.memory[state.dp])
+            putchar(state.memory[state.dp] as Char)
 
         In
             match readChar(stdin)
                 Some(c)
-                    state.memory[state.dp] = c
+                    state.memory[state.dp] = c as UInt8
                 None
                     state.memory[state.dp] = -1 as UInt8
 

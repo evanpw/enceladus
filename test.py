@@ -227,7 +227,7 @@ class TestAcceptance(object):
         self.run('intOutOfRange2', build_error='Error: testing/intOutOfRange2.spl:2:6: error: integer literal out of range: -9223372036854775809')
 
     def test_wrongReturnType(self):
-        self.run('wrongReturnType', build_error='Error: testing/wrongReturnType.spl:2:5: cannot unify types Array<UInt8> and Int')
+        self.run('wrongReturnType', build_error='Error: testing/wrongReturnType.spl:2:5: cannot unify types Array<Char> and Int')
 
     def test_mainStackRoots(self):
         self.run('mainStackRoots', result='1')
@@ -334,9 +334,6 @@ class TestAcceptance(object):
     def test_genericChain3(self):
         self.run('genericChain3', '4')
 
-    def test_cantMonomorphize(self):
-        self.run('cantMonomorphize', build_error='Error: testing/cantMonomorphize.spl:1:7: cannot infer concrete type of call to function Nil')
-
     def test_globalInt(self):
         self.run('globalInt', '15')
 
@@ -365,10 +362,10 @@ class TestAcceptance(object):
         self.run('goodCasts', '1\n2\n3\nhello')
 
     def test_badCast1(self):
-        self.run('badCast1', build_error='Error: testing/badCast1.spl:1:8: Cannot cast from type UInt to Array<UInt8>')
+        self.run('badCast1', build_error='Error: testing/badCast1.spl:1:8: Cannot cast from type UInt to Array<Char>')
 
     def test_typeConstraint(self):
-        self.run('typeConstraint', build_error="Error: testing/typeConstraint.spl:5:3: Type Array<UInt8> is not an instance of trait Num")
+        self.run('typeConstraint', build_error="Error: testing/typeConstraint.spl:5:3: Type Array<Char> is not an instance of trait Num")
 
     def test_typeConstraint2(self):
         self.run('typeConstraint2', '3\n7\n11\n15')
@@ -377,7 +374,7 @@ class TestAcceptance(object):
         self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable \'T\d+: Num to quantified type variable T, because the latter isn\'t constrained by trait Num'))
 
     def test_typeConstraint4(self):
-        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<Array<UInt8>>`')
+        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<Array<Char>>`')
 
     def test_useUnit(self):
         self.run('useUnit', '')
@@ -386,7 +383,7 @@ class TestAcceptance(object):
         self.run('callVariable', build_error='Error: testing/callVariable.spl:2:1: `x` is not a function')
 
     def test_wrongList(self):
-        self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types [Array<UInt8>] and [Int]')
+        self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types [Array<Char>] and [Int]')
 
     def test_constrainedImpl(self):
         self.run('constrainedImpl', '')
@@ -401,20 +398,19 @@ class TestAcceptance(object):
         self.run('overlappingInstances3', build_error='Error: testing/overlappingInstances3.spl:15:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T: Marked` at testing/overlappingInstances3.spl:7:1')
 
     def test_overlappingInstances4(self):
-        self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.spl:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`\nPrevious impl for type `Array<UInt8>` at testing/overlappingInstances4.spl:11:1')
+        self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.spl:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`\nPrevious impl for type `Array<Char>` at testing/overlappingInstances4.spl:11:1')
 
     def test_methodResolution(self):
-        good_tests = [2, 5, 7, 9, 12, 13, 15, 16]
+        good_tests = [1, 2, 5, 7, 9, 12, 13, 15, 16]
         for i in good_tests:
             test_name = 'methodResolution' + str(i)
             self.run(test_name, '')
 
         bad_tests = {
-            '1': 'Error: testing/methodResolution1.spl:1:7: cannot infer concrete type of call to function Nil',
-            '3': 'Error: testing/methodResolution3.spl:9:1: method call is ambiguous',
-            '4': 'Error: testing/methodResolution4.spl:16:1: method call is ambiguous',
+            '3': 'Error: testing/methodResolution3.spl:9:1: call to method `nothing` is ambiguous',
+            '4': ' Error: testing/methodResolution4.spl:16:1: call to method `nothing` is ambiguous',
             '6': 'Error: testing/methodResolution6.spl:7:5: no method named `nothing` found for type `T`',
-            '8': 'Error: testing/methodResolution8.spl:8:5: method call is ambiguous',
+            '8': 'Error: testing/methodResolution8.spl:8:5: call to method `nothing` is ambiguous',
             '10': 'Error: testing/methodResolution10.spl:6:5: no method named `nothing` found for type `[T]`',
             '11': 'Error: testing/methodResolution11.spl:6:5: no method named `nothing` found for type `[T]`',
             '14': 'Error: testing/methodResolution14.spl:6:5: no method named `nothing` found for type `[T: Num]`',
@@ -458,7 +454,7 @@ class TestAcceptance(object):
         self.run('genericTrait', '')
 
     def test_genericTrait2(self):
-        self.run('genericTrait2', build_error=Regex("Error: testing/genericTrait2.spl:5:11: cannot unify types ArrayIterator<UInt8> and 'T\d+: Iterator<Int>"))
+        self.run('genericTrait2', build_error=Regex("Error: testing/genericTrait2.spl:5:11: cannot unify types ArrayIterator<Char> and 'T\d+: Iterator<Int>"))
 
     def test_genericTrait3(self):
         self.run('genericTrait3', '72')
@@ -467,7 +463,7 @@ class TestAcceptance(object):
         self.run('genericTrait4', build_error='Error: testing/genericTrait4.spl:8:1: trait `Test` already has an instance which would overlap with `Int`\nPrevious impl for type `Int` at testing/genericTrait4.spl:4:1')
 
     def test_genericTrait5(self):
-        self.run('genericTrait5', '20\n10\n')
+        self.run('genericTrait5', '532\n394')
 
     def test_genericTrait6(self):
         self.run('genericTrait6', '12')
@@ -500,13 +496,13 @@ class TestAcceptance(object):
         self.run('inferTypeVars2', '')
 
     def test_repeatedConstraint(self):
-        self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.spl:3:19: cannot unify types T: Num and Array<UInt8>')
+        self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.spl:3:19: cannot unify types T: Num and Array<Char>')
 
     def test_repeatedConstraint2(self):
-        self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.spl:1:1: can\'t add constraint `Iterator<Array<UInt8>>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
+        self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.spl:1:1: can\'t add constraint `Iterator<Array<Char>>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
 
     def test_repeatedConstraint3(self):
-        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:19: cannot unify types [T: Iterator<T>] and Array<UInt8>')
+        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:19: cannot unify types [T: Iterator<T>] and Array<Char>')
 
     def test_repeatedConstraint4(self):
         self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.spl:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')
@@ -537,6 +533,18 @@ class TestAcceptance(object):
 
     def test_nestedMap(self):
         self.run('nestedMap', '')
+
+    def test_lambda(self):
+        self.run('lambda', '233168')
+
+    def test_lambda2(self):
+        self.run('lambda2', '')
+
+    def test_lambda3(self):
+        self.run('lambda3', '11')
+
+    def test_lambda4(self):
+        self.run('lambda4', '12')
 
     # Medium tests (100ms-1s)
 

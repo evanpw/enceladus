@@ -1,10 +1,10 @@
-def genericSum(xs: T) -> UInt8 where T: Iterable<UInt8>
+def genericSum(xs: T) -> Int where T: Iterable<Char>
     total := 0
 
     for x in xs
-        total += x
+        total += x as Int
 
     return total
 
-println $ show $ genericSum("hello".iter()) as Int
-println $ show $ genericSum([1u8, 2, 3, 4].iter()) as Int
+println $ show $ genericSum("hello".iter())
+println $ show $ genericSum(['a', 'b', 'c', 'd'].iter())

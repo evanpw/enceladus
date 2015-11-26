@@ -1,6 +1,7 @@
 #include "codegen/machine_codegen.hpp"
 #include "ir/tac_instruction.hpp"
 #include "ir/value.hpp"
+#include "lib/library.h"
 
 MachineCodeGen::MachineCodeGen(MachineContext* context, Function* function)
 {

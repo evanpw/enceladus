@@ -1,10 +1,10 @@
-import HashTable
+import Dict
 
-table := HashTable::new()
+table := Dict::new()
 
-table.insert("One", 1)
-table.insert("Two", 2)
-table.insert("Three", 3)
+table["One"] = 1
+table["Two"] = 2
+table["Three"] = 3
 
 match table.get("Two")
     Some(x)

@@ -215,6 +215,9 @@ TypeTable::TypeTable()
     Int = createBaseType("Int", true, 64, true);
     UInt = createBaseType("UInt", true, 64, false);
     UInt8 = createBaseType("UInt8", true, 8, false);
+    Char = createBaseType("Char", true, 8, false);
+
+    Environment = createBaseType("Environment", false, 64, false);
 
     Num = createTrait("Num");
     Num->addInstance(Int);

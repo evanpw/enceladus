@@ -5,9 +5,9 @@
 
 #include <cassert>
 
-VariableSymbol* SymbolTable::createVariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
+VariableSymbol* SymbolTable::createVariableSymbol(const std::string& name, AstNode* node, bool global)
 {
-    VariableSymbol* symbol = new VariableSymbol(name, node, enclosingFunction, global);
+    VariableSymbol* symbol = new VariableSymbol(name, node, global);
 
     if (symbol->name != "_")
     {
@@ -21,6 +21,13 @@ FunctionSymbol* SymbolTable::createFunctionSymbol(const std::string& name, AstNo
 {
     FunctionSymbol* symbol = new FunctionSymbol(name, node, definition);
     insert(symbol);
+    return symbol;
+}
+
+CaptureSymbol* SymbolTable::createCaptureSymbol(const std::string& name, AstNode* node, VariableSymbol* envSymbol, size_t index)
+{
+    CaptureSymbol* symbol = new CaptureSymbol(name, node, envSymbol, index);
+    _symbols.emplace_back(symbol);
     return symbol;
 }
 
@@ -141,10 +148,6 @@ void SymbolTable::findMembers(const std::string& name, std::vector<MemberSymbol*
 void SymbolTable::resolveMemberSymbol(const std::string& name, Type* parentType, std::vector<MemberSymbol*>& symbols)
 {
     symbols.clear();
-
-    // Never match an unconstrained type to a method
-    if (parentType->isVariable() && parentType->get<TypeVariable>()->constraints().empty())
-        return;
 
     bool matchTraits = parentType->isVariable() && parentType->get<TypeVariable>()->quantified();
 

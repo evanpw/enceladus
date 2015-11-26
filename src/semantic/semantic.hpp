@@ -40,14 +40,15 @@ public:
     virtual void visit(ComparisonNode* node);
     virtual void visit(ConstructorSpec* node);
     virtual void visit(DataDeclaration* node);
-    virtual void visit(ForNode* node);
     virtual void visit(ForeignDeclNode* node);
     virtual void visit(ForeverNode* node);
+    virtual void visit(ForNode* node);
     virtual void visit(FunctionCallNode* node);
     virtual void visit(FunctionDefNode* node);
     virtual void visit(IfElseNode* node);
     virtual void visit(ImplNode* node);
     virtual void visit(IndexNode* node);
+    virtual void visit(LambdaNode* node);
     virtual void visit(LetNode* node);
     virtual void visit(LogicalNode* node);
     virtual void visit(MatchArm* node);
@@ -113,10 +114,11 @@ private:
     TypeTable* _typeTable;
     SymbolTable* _symbolTable;
 
-    FunctionDefNode* _enclosingFunction;
-    LoopNode* _enclosingLoop;
-    ImplNode* _enclosingImplNode;
-    TraitDefNode* _enclosingTraitDef;
+    FunctionDefNode* _enclosingFunction = nullptr;
+    LoopNode* _enclosingLoop = nullptr;
+    ImplNode* _enclosingImplNode = nullptr;
+    TraitDefNode* _enclosingTraitDef = nullptr;
+    LambdaNode* _enclosingLambda = nullptr;
 
     ReturnChecker _returnChecker;
 };
@@ -141,6 +143,28 @@ public:
 private:
     bool _good = false;
     SemanticAnalyzer* _mainAnalyzer;
+};
+
+class EnvironmentCapture : public AstVisitor
+{
+public:
+    EnvironmentCapture(SymbolTable* symbolTable, VariableSymbol* envSymbol, std::unordered_set<Symbol*>&& boundVars)
+    : _symbolTable(symbolTable), _envSymbol(envSymbol), _boundVars(std::move(boundVars))
+    {}
+
+    std::vector<Symbol*>& captures() { return _captures; }
+    std::unordered_map<Symbol*, Symbol*>& replacements() { return _replacements; }
+
+    virtual void visit(NullaryNode* node);
+    virtual void visit(FunctionCallNode* node);
+
+private:
+    SymbolTable* _symbolTable;
+    VariableSymbol* _envSymbol;
+
+    std::unordered_set<Symbol*> _boundVars;
+    std::unordered_map<Symbol*, Symbol*> _replacements;
+    std::vector<Symbol*> _captures;
 };
 
 class TypeInferenceError : public std::exception

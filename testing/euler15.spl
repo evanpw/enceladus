@@ -1,4 +1,4 @@
-import HashTable
+import Dict
 
 impl Eq for Pair<Int, Int>
     def eq(self, other: Self) -> Bool
@@ -15,7 +15,7 @@ impl Hash for Pair<Int, Int>
         result := 20 * self.first() + self.second()
         return result as UInt
 
-memo := HashTable::new()
+memo := Dict::new()
 
 def countPaths(p: Pair<Int, Int>) -> Int
     let Pair(x, y) := p
@@ -34,7 +34,7 @@ def countPaths(p: Pair<Int, Int>) -> Int
     count += countPaths $ Pair(x + 1, y)
     count += countPaths $ Pair(x, y + 1)
 
-    memo.insert(p, count)
+    memo[p] = count
     return count
 
 println $ show $ countPaths $ Pair(0, 0)

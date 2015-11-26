@@ -298,21 +298,18 @@ void ToSSA::rename(BasicBlock* block, PhiList& phis)
         {
             if (_phiStack[load->src].empty())
             {
-                // Don't rewrite loads from global variables
-                if (dynamic_cast<GlobalValue*>(load->src))
+                if (dynamic_cast<Argument*>(load->src))
+                {
+                    // For any node dominated by this one, don't re-load, just
+                    // use this value
+                    _phiStack[load->src].push(load->dest);
+                    toPop.push_back(load->src);
+                }
+                else
                 {
                     inst = inst->next;
                     continue;
                 }
-
-                // A load without a previous store should only be possible for
-                // a function parameter or a global
-                assert(dynamic_cast<Argument*>(load->src));
-
-                // For any node dominated by this one, don't re-load, just
-                // use this value
-                _phiStack[load->src].push(load->dest);
-                toPop.push_back(load->src);
             }
             else
             {

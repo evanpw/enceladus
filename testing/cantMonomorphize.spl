@@ -1,5 +1,0 @@
-xs := []
-if xs.empty()
-    println $ "Empty"
-else
-    println $ "Not Empty"

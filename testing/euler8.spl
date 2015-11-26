@@ -8,6 +8,7 @@ def charToInt(c: Char) -> Int
 def prod(w: Vector<Int>) -> Int
     return w.iter().product()
 
+# TODO: .map(w -> w.iter().product()) should correctly infer the type
 products := s.iter().map(charToInt).slide(13).map(prod)
 result := products.max().unwrap()
 println $ show(result)

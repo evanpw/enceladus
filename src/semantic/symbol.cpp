@@ -2,18 +2,24 @@
 #include "ast/ast.hpp"
 
 DummySymbol::DummySymbol(const std::string& name, AstNode* node)
-: Symbol(name, kDummy, node, nullptr, true)
+: Symbol(name, kDummy, node, true)
 {
 }
 
-VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
-: Symbol(name, kVariable, node, enclosingFunction, global)
+VariableSymbol::VariableSymbol(const std::string& name, AstNode* node, bool global)
+: Symbol(name, kVariable, node, global)
 {
 }
 
 FunctionSymbol::FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition)
-: Symbol(name, kFunction, node, nullptr, true)
+: Symbol(name, kFunction, node, true)
 , definition(definition)
+{
+}
+
+CaptureSymbol::CaptureSymbol(const std::string& name, AstNode* node, VariableSymbol* envSymbol, size_t index)
+: Symbol(name, kCapture, node, false)
+, envSymbol(envSymbol), index(index)
 {
 }
 
@@ -31,13 +37,13 @@ ConstructorSymbol::ConstructorSymbol(const std::string& name, AstNode* node, Val
 }
 
 TypeSymbol::TypeSymbol(const std::string& name, AstNode* node, Type* type)
-: Symbol(name, kType, node, nullptr, true)
+: Symbol(name, kType, node, true)
 {
     this->type = type;
 }
 
 TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait, Type* traitVar, std::vector<Type*>&& typeParameters)
-: Symbol(name, kTrait, node, nullptr, true), typeParameters(typeParameters)
+: Symbol(name, kTrait, node, true), typeParameters(typeParameters)
 {
     assert(traitVar->isVariable() && traitVar->get<TypeVariable>()->quantified());
     this->trait = trait;
@@ -45,7 +51,7 @@ TraitSymbol::TraitSymbol(const std::string& name, AstNode* node, Trait* trait, T
 }
 
 MemberSymbol::MemberSymbol(const std::string& name, Kind kind, AstNode* node, Type* parentType)
-: Symbol(name, kind, node, nullptr, true)
+: Symbol(name, kind, node, true)
 , parentType(parentType)
 {
 }

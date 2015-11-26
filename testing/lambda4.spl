@@ -1,0 +1,6 @@
+def captureLocal() -> |Int| -> Int
+    y := 2
+    return (x -> x + y)
+
+addTwo := captureLocal()
+println $ show $ addTwo(10)

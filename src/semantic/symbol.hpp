@@ -13,7 +13,7 @@ class TraitDefNode;
 class SymbolTable;
 
 
-enum Kind {kDummy, kVariable, kFunction, kType, kMethod, kMemberVar, kTrait, kTraitMethod};
+enum Kind {kDummy, kVariable, kFunction, kCapture, kType, kMethod, kMemberVar, kTrait, kTraitMethod};
 
 class Symbol
 {
@@ -26,9 +26,6 @@ public:
     // The node at which this symbol is first declared.
     AstNode* node;
 
-    // May be null
-    FunctionDefNode* enclosingFunction;
-
     bool global;
 
     // Type (possibly polymorphic) of this variable or function
@@ -38,10 +35,9 @@ public:
     Kind kind;
 
 protected:
-    Symbol(const std::string& name, Kind kind, AstNode* node, FunctionDefNode* enclosingFunction, bool global)
+    Symbol(const std::string& name, Kind kind, AstNode* node, bool global)
     : name(name)
     , node(node)
-    , enclosingFunction(enclosingFunction)
     , global(global)
     , kind(kind)
     {}
@@ -72,7 +68,7 @@ public:
 
 private:
     friend class SymbolTable;
-    VariableSymbol(const std::string& name, AstNode* node, FunctionDefNode* enclosingFunction, bool global);
+    VariableSymbol(const std::string& name, AstNode* node, bool global);
 };
 
 class FunctionSymbol : public Symbol
@@ -81,12 +77,25 @@ public:
     bool isExternal = false;
     bool isBuiltin = false;
     bool isConstructor = false;
+    bool isLambda = false;
 
     FunctionDefNode* definition;
 
 protected:
     friend class SymbolTable;
     FunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
+};
+
+// Variable captured in a closure
+class CaptureSymbol : public Symbol
+{
+public:
+    VariableSymbol* envSymbol;
+    size_t index;
+
+private:
+    friend class SymbolTable;
+    CaptureSymbol(const std::string& name, AstNode* node, VariableSymbol* envSymbol, size_t index);
 };
 
 class MemberVarSymbol;

@@ -41,7 +41,7 @@ def readLine(file: File) -> Option<String>
         match readChar(file)
             Some(c)
                 v.append(c)
-                if c == 10 # '\n'
+                if c == '\n'
                     break
             None
                 break

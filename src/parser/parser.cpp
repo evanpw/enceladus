@@ -983,10 +983,10 @@ std::pair<std::string, TypeName*> Parser::param_and_type()
 }
 
 /// params_and_types
-///     : '(' [ param_and_type { ',' param_and_type } ] ')' RARROW constructed_type
+///     : '(' [ param_and_type { ',' param_and_type } ] ')' RARROW type
 ///
 /// method_params_and_types
-///     : '(' [ LIDENT [ ': type ] { ',' param_and_type } ] ')' RARROW constructed_type
+///     : '(' [ LIDENT [ ': type ] { ',' param_and_type } ] ')' RARROW type
 std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types(bool isMethod)
 {
     YYLTYPE location = getLocation();
@@ -1024,7 +1024,7 @@ std::pair<std::vector<std::string>, TypeName*> Parser::params_and_types(bool isM
     // Return type
     if (accept(tRARROW))
     {
-        typeName->parameters.push_back(constructed_type());
+        typeName->parameters.push_back(type());
     }
     else
     {
@@ -1430,7 +1430,7 @@ ExpressionNode* Parser::func_call_expression()
 /// static_function_call_expression
 ///     : type '::' LIDENT '(' [ expression { ',' expression } ] ')'
 ///     | type '::' LIDENT '$' expression
-///     | unary_expression
+///     | lambda_expression
 ExpressionNode* Parser::static_function_call_expression()
 {
     YYLTYPE location = getLocation();
@@ -1439,14 +1439,14 @@ ExpressionNode* Parser::static_function_call_expression()
     {
         if (peek2ndType() != '<' && peek2ndType() != tDCOLON)
         {
-            return unary_expression();
+            return lambda_expression();
         }
     }
     // Don't allow the [T] abbreviation for list types because of confusion with
     // list literals
     else if (peekType() != '|')
     {
-        return unary_expression();
+        return lambda_expression();
     }
 
     TypeName* typeName = type();
@@ -1478,6 +1478,24 @@ ExpressionNode* Parser::static_function_call_expression()
     }
 
     return new FunctionCallNode(_context, location, functionName.value.str, std::move(argList), typeName);
+}
+
+ExpressionNode* Parser::lambda_expression()
+{
+    YYLTYPE location = getLocation();
+
+    if (peekType() == tLIDENT && peek2ndType() == tRARROW)
+    {
+        Token varName = expect(tLIDENT);
+        expect(tRARROW);
+        ExpressionNode* body = expression();
+
+        return new LambdaNode(_context, location, varName.value.str, body);
+    }
+    else
+    {
+        return unary_expression();
+    }
 }
 
 ExpressionNode* Parser::unary_expression()
@@ -1527,6 +1545,11 @@ ExpressionNode* Parser::unary_expression()
     case tINT_LIT:
     {
         return integer_literal();
+    }
+
+    case tCHAR_LIT:
+    {
+        return character_literal();
     }
 
     case tSTRING_LIT:
@@ -1652,4 +1675,16 @@ ExpressionNode* Parser::integer_literal()
     }
 
     return new IntNode(_context, location, value, suffix);
+}
+
+ExpressionNode* Parser::character_literal()
+{
+    YYLTYPE location = getLocation();
+    Token token = expect(tCHAR_LIT);
+
+    assert(token.value.unsignedInt < 256);
+
+    IntNode* node = new IntNode(_context, location, token.value.unsignedInt, "");
+    node->character = true;
+    return node;
 }

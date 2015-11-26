@@ -1,0 +1,5 @@
+def getAddOne() -> |Int| -> Int
+    return (x -> x + 1)
+
+addOne := getAddOne()
+println $ show $ addOne(10)

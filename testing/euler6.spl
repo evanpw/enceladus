@@ -1,10 +1,7 @@
 # Solves Project Euler 6
 
-def square(x: Int) -> Int
-    return x * x
-
 def sumOfSquares(n: Int) -> Int
-    return (1 to n + 1).map(square).sum()
+    return (1 to n + 1).map(x -> x * x).sum()
 
 def squareOfSum(n: Int) -> Int
     sum := (1 to n + 1).sum()

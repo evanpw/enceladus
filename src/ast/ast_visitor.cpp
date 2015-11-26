@@ -96,6 +96,11 @@ void AstVisitor::visit(LetNode* node)
 	node->body->accept(this);
 }
 
+void AstVisitor::visit(LambdaNode* node)
+{
+	node->body->accept(this);
+}
+
 void AstVisitor::visit(StructDefNode* node)
 {
 	for (auto& member : node->members)

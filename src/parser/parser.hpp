@@ -82,8 +82,10 @@ private:
     ExpressionNode* method_member_idx_expression();
     ExpressionNode* func_call_expression();
     ExpressionNode* static_function_call_expression();
+    ExpressionNode* lambda_expression();
     ExpressionNode* unary_expression();
     ExpressionNode* integer_literal();
+    ExpressionNode* character_literal();
 };
 
 #endif

@@ -15,9 +15,6 @@ impl Iterator<Int> for Fib
 
         return Some(self.last)
 
-def lessThan4M(x: Int) -> Bool
-    return x < 4000000
-
 fib := Fib::new()
-result := fib.takeWhile(lessThan4M).filter(even).sum()
+result := fib.takeWhile(x -> x < 4000000).filter(even).sum()
 println $ show(result)

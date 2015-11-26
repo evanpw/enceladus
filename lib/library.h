@@ -10,7 +10,7 @@
 
 #define SplObject_HEAD \
     uint64_t constructorTag; \
-    uint64_t numReferences;
+    uint64_t refMask;
 
 typedef struct SplObject
 {
@@ -27,7 +27,7 @@ typedef struct List
 typedef struct Array
 {
     uint64_t constructorTag;    // Either BOXED_ARRAY_TAG or UNBOXED_ARRAY_TAG
-    uint64_t numElements;       // Number of elements in the array (instead of numReferences)
+    uint64_t numElements;       // Number of elements in the array (instead of refMask)
 } Array;
 
 typedef Array String;

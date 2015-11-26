@@ -170,10 +170,10 @@ param_and_type
     : LIDENT ':' type
 
 params_and_types
-    : '(' [ param_and_type { ',' param_and_type } ] ')' [ RARROW constructed_type ]
+    : '(' [ param_and_type { ',' param_and_type } ] ')' [ RARROW type ]
 
 method_params_and_types
-    : '(' [ LIDENT [ ': type ] { ',' param_and_type } ] ')' [ RARROW constructed_type ]
+    : '(' [ LIDENT [ ': type ] { ',' param_and_type } ] ')' [ RARROW type ]
 
 type_params
     : '<' UIDENT { ',' UIDENT } '>'
@@ -245,6 +245,10 @@ func_call_expression
 static_function_call_expression
     : type '::' LIDENT '(' [ expression { ',' expression } ] ')'
     | type '::' LIDENT '$' expression
+    | lambda_expression
+
+lambda_expression
+    : LIDENT '->' expression
     | unary_expression
 
 unary_expression
@@ -255,6 +259,7 @@ unary_expression
     | inline_list
     | INT_LIT
     | STRING_LIT
+    | CHAR_LIT
 
 inline_list
     : '[' list_interior ']'

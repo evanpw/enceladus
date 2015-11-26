@@ -89,7 +89,7 @@ impl BigInt
     def toString(self) -> String
         s := []
         for x in self.digits()
-            s = s.insert((x as UInt8) + '0')
+            s = s.insert((x as Char) + '0')
 
         return String::fromList(s)
 

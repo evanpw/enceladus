@@ -14,6 +14,8 @@ std::string tokenToString(TokenType t)
         return "`assert`";
     case tBREAK:
         return "`break`";
+    case tCHAR_LIT:
+        return "character literal";
     case tCOLON_EQUAL:
         return "`:=`";
     case tCONTINUE:

@@ -55,4 +55,4 @@ FunctionCallNode* createList(AstContext* context, const YYLTYPE& location, std::
 }
 
 int StringLiteralNode::nextCounter = 0;
-
+int LambdaNode::nextCounter = 0;

@@ -1,0 +1,159 @@
+## Dict ##
+struct Dict<S: Eq + Hash, T>
+    contents: Array<Option<Pair<S, T>>>
+    size: UInt
+    capacity: UInt
+
+impl Dict<S, T>
+    def new() -> Dict<S, T>
+        return Dict(Array::make(0, None), 0, 0)
+
+    def insert(self, key: S, value: T)
+        # Resize when 2/3 full
+        if 3 * self.size >= 2 * self.capacity
+            newCapacity := max(1, 3 * self.size)
+            self.resize(newCapacity)
+
+        startIdx := key.hash() % self.capacity
+
+        # Linear probing
+        idx := startIdx
+        forever
+            match self.contents[idx]
+                Some(item)
+                    let Pair(k, v) := item
+
+                    if k == key
+                        self.contents[idx] = Some(Pair(key, value))
+                        break
+
+                None
+                    self.contents[idx] = Some(Pair(key, value))
+                    break
+
+            idx = (idx + 1) % self.capacity
+
+        self.size += 1
+
+    def get(self, key: S) -> Option<T>
+        if self.capacity == 0
+            return None
+
+        startIdx := key.hash() % self.capacity
+
+        idx := startIdx
+        forever
+            match self.contents[idx]
+                Some(item)
+                    let Pair(k, v) := item
+
+                    if k == key
+                        return Some(v)
+
+                None
+                    return None
+
+            idx = (idx + 1) % self.capacity
+            if idx == startIdx
+                return None
+
+    def contains(self, key: S) -> Bool
+        match self.get(key)
+            Some(_)
+                return True
+
+            None
+                return False
+
+    def resize(self, newCapacity: UInt)
+        assert newCapacity >= self.size
+
+        oldContents := self.contents
+        oldCapacity := self.capacity
+
+        self.capacity = newCapacity
+        self.contents = Array::make(newCapacity, None)
+        self.size = 0
+
+        for idx in 0 to oldCapacity
+            match oldContents[idx]
+                Some(item)
+                    let Pair(k, v) := item
+                    self.insert(k, v)
+                None
+                    pass
+
+impl Index<S, Option<T>> for Dict<S, T>
+    def at(self, key: S) -> Option<T>
+        return self.get(key)
+
+impl IndexSet<S, T> for Dict<S, T>
+    def set(self, key: S, value: T)
+        self.insert(key, value)
+
+
+## ItemIterator ##
+struct ItemIterator<S: Eq + Hash, T>
+    table: Dict<S, T>
+    current: UInt
+
+impl Iterator<Pair<S, T>> for ItemIterator<S, T>
+    def next(self) -> Option<Pair<S, T>>
+        while self.current < self.table.capacity
+            x := self.table.contents[self.current]
+            self.current += 1
+
+            if let Some(p) := x
+                return Some(p)
+
+        return None
+
+impl Iterable<Pair<S, T>> for Dict<S, T>
+    type IteratorType = ItemIterator<S, T>
+
+    def iter(self) -> ItemIterator<S, T>
+        return ItemIterator(self, 0)
+
+
+## KeyIterator ##
+struct KeyIterator<S: Eq + Hash, T>
+    table: Dict<S, T>
+    current: UInt
+
+impl Dict<S, T>
+    def keys(self) -> KeyIterator<S, T>
+        return KeyIterator(self, 0)
+
+impl Iterator<S> for KeyIterator<S, T>
+    def next(self) -> Option<S>
+        while self.current < self.table.capacity
+            x := self.table.contents[self.current]
+            self.current += 1
+
+            if let Some(p) := x
+                let Pair(k, v) := p
+                return Some(k)
+
+        return None
+
+
+## ValueIterator ##
+struct ValueIterator<S: Eq + Hash, T>
+    table: Dict<S, T>
+    current: UInt
+
+impl Dict<S, T>
+    def values(self) -> ValueIterator<S, T>
+        return ValueIterator(self, 0)
+
+impl Iterator<T> for ValueIterator<S, T>
+    def next(self) -> Option<T>
+        while self.current < self.table.capacity
+            x := self.table.contents[self.current]
+            self.current += 1
+
+            if let Some(p) := x
+                let Pair(k, v) := p
+                return Some(v)
+
+        return None

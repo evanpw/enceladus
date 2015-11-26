@@ -294,13 +294,28 @@ void gcScan()
 
         // Iterate over the children, and copy them to the new heap
         SplObject** p = (SplObject**)(object + 1);
-        if (object->constructorTag != UNBOXED_ARRAY_TAG)
+        if (object->constructorTag == BOXED_ARRAY_TAG)
         {
-            SplObject** pend = p + object->numReferences;
+            SplObject** pend = p + object->refMask;
             while (p < pend)
             {
                 void* newLocation = gcCopy(*p);
                 *p++ = (SplObject*)newLocation;
+            }
+        }
+        else if (object->constructorTag != UNBOXED_ARRAY_TAG)
+        {
+            uint64_t refMask = object->refMask;
+            while (refMask != 0)
+            {
+                if (refMask & 1)
+                {
+                    void* newLocation = gcCopy(*p);
+                    *p = (SplObject*)newLocation;
+                }
+
+                ++p;
+                refMask >>= 1;
             }
         }
 
