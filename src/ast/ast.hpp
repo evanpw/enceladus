@@ -207,6 +207,7 @@ public:
 	int64_t intValue;
 	std::string suffix;
 	bool character = false;
+	bool negative = false;
 };
 
 class BoolNode : public ExpressionNode

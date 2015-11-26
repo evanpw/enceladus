@@ -763,17 +763,17 @@ impl Add for [T]
 trait Hash
     def hash(self) -> UInt
 
-impl Hash for Int
-    def hash(self) -> UInt
-        return self as UInt
-
-impl Hash for UInt8
+impl Hash for T: Num
     def hash(self) -> UInt
         return self as UInt
 
 impl Hash for String
     def hash(self) -> UInt
         return strHash(self)
+
+impl Hash for Char
+    def hash(self) -> UInt
+        return self as UInt
 
 
 ## Show trait ##

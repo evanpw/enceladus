@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <iostream>
 
 TACCodeGen::TACCodeGen(TACContext* context)
@@ -1039,11 +1040,91 @@ void TACCodeGen::visit(LambdaNode* node)
     createClosure(node->value, fn, node->captures);
 }
 
+static bool checkIntRange(ValueType type, int64_t value)
+{
+    if (isSigned(type))
+    {
+        int64_t lower, upper;
+        switch (getSize(type))
+        {
+            case 64:
+                lower = std::numeric_limits<int64_t>::min();
+                upper = std::numeric_limits<int64_t>::max();
+                break;
+
+            case 32:
+                lower = std::numeric_limits<int32_t>::min();
+                upper = std::numeric_limits<int32_t>::max();
+                break;
+
+            case 16:
+                lower = std::numeric_limits<int16_t>::min();
+                upper = std::numeric_limits<int16_t>::max();
+                break;
+
+            case 8:
+                lower = std::numeric_limits<int8_t>::min();
+                upper = std::numeric_limits<int8_t>::max();
+                break;
+
+            default:
+                assert(false);
+        }
+
+        return (lower <= value && value <= upper);
+    }
+    else
+    {
+        uint64_t uvalue = static_cast<uint64_t>(value);
+
+        uint64_t upper;
+        switch (getSize(type))
+        {
+            case 64:
+                upper = std::numeric_limits<uint64_t>::max();
+                break;
+
+            case 32:
+                upper = std::numeric_limits<uint32_t>::max();
+                break;
+
+            case 16:
+                upper = std::numeric_limits<uint16_t>::max();
+                break;
+
+            case 8:
+                upper = std::numeric_limits<uint8_t>::max();
+                break;
+
+            default:
+                assert(false);
+        }
+
+        return uvalue <= upper;
+    }
+}
+
 void TACCodeGen::visit(IntNode* node)
 {
     try
     {
         ValueType type = getValueType(node->type);
+        assert(isInteger(type));
+
+        if (node->suffix.empty())
+        {
+            if ((node->negative && !isSigned(type)) || !checkIntRange(type, node->intValue))
+            {
+                YYLTYPE location = node->location;
+                std::stringstream ss;
+
+                ss << location.filename << ":" << location.first_line << ":" << location.first_column
+                    << ": integer literal is out of range for inferred type " << node->type->str();
+
+                throw CodegenError(ss.str());
+            }
+        }
+
         node->value = _context->createConstantInt(type, node->intValue);
     }
     catch (MonomorphizationError& e)

@@ -1598,6 +1598,8 @@ ExpressionNode* Parser::integer_literal()
 
     assert(!text.empty());
 
+    bool negative = (text[0] == '-');
+
     // Parse the integer, check for out-of-range errors
     int64_t value;
     bool failure = false;
@@ -1674,7 +1676,9 @@ ExpressionNode* Parser::integer_literal()
         throw LexerError(ss.str());
     }
 
-    return new IntNode(_context, location, value, suffix);
+    IntNode* result = new IntNode(_context, location, value, suffix);
+    result->negative = negative;
+    return result;
 }
 
 ExpressionNode* Parser::character_literal()

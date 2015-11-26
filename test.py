@@ -567,6 +567,12 @@ class TestAcceptance(object):
     def test_notConcrete(self):
         self.run('notConcrete', build_error='Error: testing/notConcrete.spl:8:6: cannot infer concrete type for integer (try adding a suffix)')
 
+    def test_inferredIntRange(self):
+        self.run('inferredIntRange', build_error='Error: testing/inferredIntRange.spl:5:3: integer literal is out of range for inferred type UInt8')
+
+    def test_inferredIntRange2(self):
+        self.run('inferredIntRange2', build_error='Error: testing/inferredIntRange2.spl:5:3: integer literal is out of range for inferred type UInt')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
