@@ -5,52 +5,65 @@ def isSpace(c: Char) -> Bool
         return False
 
 impl String
-    def trimLeft(s) -> String
-        len := s.length()
+    def rstrip(self) -> String
+        n := self.length()
 
-        n := 0
-        while n < len and isSpace(s.at(n))
-            n += 1
+        i := 0
+        while i < n and isSpace $ self[n - 1 - i]
+            i += 1
 
-        return s.slice(n, len - n)
+        if i == 0
+            return self
+        else
+            return self.slice(0, n - i)
 
-    def trim(s) -> String
-        len := s.length()
+    def lstrip(self) -> String
+        n := self.length()
 
-        if len == 0
-            return s
+        i := 0
+        while i < n and isSpace $ self[i]
+            i += 1
 
-        n1 := 0
-        while n1 < len and isSpace(s.at(n1))
-            n1 += 1
+        if i == 0
+            return self
+        else
+            return self.slice(i, n - i)
 
-        n2 := len - 1
-        while n2 >= 0 and isSpace(s.at(n2))
-            n2 -= 1
+    def strip(self) -> String
+        n := self.length()
 
-        pos := 1
-        n := max(0, n2 - n1 + 1)
+        left := 0
+        while left < n and isSpace $ self[left]
+            left += 1
 
-        return s.slice(pos, n)
+        right := 0
+        while right < n and isSpace $ self[n - 1 - right]
+            right += 1
 
-    def trimChar(s, c: Char) -> String
-        len := s.length()
+        if left + right == 0
+            return self
+        elif left + right > n
+            return ""
+        else
+            return self.slice(left, n - left - right)
 
-        if len == 0
-            return s
+    def stripChar(self, c: Char) -> String
+        n := self.length()
 
-        n1 := 0
-        while n1 < len and s.at(n1) == c
-            n1 += 1
+        left := 0
+        while left < n and self[left] == c
+            left += 1
 
-        n2 := len - 1
-        while n2 >= 0 and s.at(n2) == c
-            n2 -= 1
+        right := 0
+        while right < n and self[n - 1 - right] == c
+            right += 1
 
-        pos := 1
-        n := max(0, n2 - n1 + 1)
-
-        return s.slice(pos, n)
+        if left + right == 0
+            return self
+        elif left + right > n
+            return ""
+        else
+            return self.slice(left, n - left - right)
 
     def split(s) -> Vector<String>
         result := Vector::new()
@@ -84,13 +97,19 @@ impl String
 
         return result
 
-    def join(s, xs: [String]) -> String
-        if xs.empty()
-            return ""
-        elif xs.length() == 1
-            return xs.head()
-        else
-            return xs.head() + s + s.join(xs.tail())
+    def join(self, xs: T) -> String where T: Iterable<String>
+        result := ""
+
+        first := True
+        for x in xs
+            if not $ first
+                result += self
+
+            result += x
+
+            first = False
+
+        return result
 
     def toInt(s) -> Option<Int>
         x := 0

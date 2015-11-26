@@ -13,12 +13,13 @@
 TACCodeGen::TACCodeGen(TACContext* context)
 : _context(context), _conditionalCodeGen(this)
 {
+    _gcAllocate = _context->createExternFunction("gcAllocate");
 }
 
 void TACCodeGen::codeGen(AstContext* astContext)
 {
     _astContext = astContext;
-     astContext->root()->accept(this);
+    _astContext->root()->accept(this);
 }
 
 TACConditionalCodeGen::TACConditionalCodeGen(TACCodeGen* mainCodeGen)

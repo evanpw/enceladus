@@ -10,7 +10,7 @@ def readNames() -> [String]
 
     result := []
     for piece in pieces
-        result = result.insert(piece.trimChar('"'))
+        result = result.insert(piece.stripChar('"'))
 
     return result
 

@@ -219,9 +219,11 @@ private:
         return _context->createConstantInt(ValueType::U64, value);
     }
 
+    Value* _gcAllocate = nullptr;
+
     void gcAllocate(Value* dest, Value* size)
     {
-        CallInst* callInst = new CallInst(dest, _context->createExternFunction("gcAllocate"), {size});
+        CallInst* callInst = new CallInst(dest, _gcAllocate, {size});
         callInst->regpass = true;
         emit(callInst);
     }

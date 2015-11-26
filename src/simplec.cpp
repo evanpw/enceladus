@@ -154,16 +154,6 @@ int main(int argc, char* argv[])
 	// Process the abstract machine code and make it concrete
 	for (MachineFunction* mf : machineContext->functions)
 	{
-		// std::cerr << mf->name << ":" << std::endl;
-		// for (MachineBB* block : mf->blocks)
-		// {
-		// 	std::cerr << *block << ":" << std::endl;
-		// 	for (MachineInst* inst : block->instructions)
-		// 	{
-		// 		std::cerr << "\t" << *inst << std::endl;
-		// 	}
-		// }
-
 		RegAlloc regAlloc(mf);
 		regAlloc.run();
 

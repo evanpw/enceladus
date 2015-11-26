@@ -22,6 +22,9 @@ private:
     // Every temporary has a defining instruction
     bool tempsDefined();
 
+    // Every temporary is used somewhere
+    bool tempsUsed();
+
     // Every block successor has a corresponding predecessor, and vice-versa
     bool blockLinksGood();
 

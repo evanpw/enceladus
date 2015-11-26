@@ -109,6 +109,7 @@ void AsmPrinter::printBlock(MachineBB* block)
 
     for (MachineInst* inst : block->instructions)
     {
+        //_out << "\t;" << *inst << std::endl;
         printInstruction(inst);
     }
 }

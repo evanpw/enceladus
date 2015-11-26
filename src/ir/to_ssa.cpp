@@ -218,7 +218,7 @@ PhiList ToSSA::calculatePhiNodes(const DomFrontier& df)
             }
         }
 
-        // Function arguments have an ssumed assignment in the entry node
+        // Function arguments have an assumed assignment in the entry node
         BasicBlock* entry = _function->blocks[0];
         if (everOnWorkList.find(entry) == everOnWorkList.end())
         {
@@ -412,20 +412,22 @@ void ToSSA::insertPhis(PhiList& phis)
 
                     // Case 2: Local variable -- in this case, the value really is
                     // undefined, so the result variable better be dead, or we'll
-                    // have undefined behavior
+                    // have undefined behavior.
+                    // It's dangerous to have undefined values floating around
+                    // in the garbage collector, so set it to null in the
+                    // predecessor
+                    // TODO: Eliminate dead variable more effectively.
                     else
                     {
-                        delete phi;
-                        phi = nullptr;
-                        break;
+                        Value* zero = _function->context()->createConstantInt(ValueType::U64, 0);
+                        source.second = zero;
                     }
                 }
 
                 phi->addSource(source.first, source.second);
             }
 
-            if (phi)
-                block->prepend(phi);
+            block->prepend(phi);
         }
     }
 }

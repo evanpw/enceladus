@@ -22,6 +22,12 @@ bool TACValidator::isValid()
         return false;
     }
 
+    if (!tempsUsed())
+    {
+        std::cerr << "Not all temporaries are used" << std::endl;
+        //return false;
+    }
+
     if (!blockLinksGood())
     {
         std::cerr << "Not all links between blocks are bidirectional" << std::endl;
@@ -80,6 +86,20 @@ bool TACValidator::tempsDefined()
         for (Value* value : function->temps)
         {
             if (!value->definition)
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool TACValidator::tempsUsed()
+{
+    for (Function* function : _context->functions)
+    {
+        for (Value* value : function->temps)
+        {
+            if (value->uses.empty())
                 return false;
         }
     }

@@ -1,0 +1,478 @@
+# Matches regular expressions
+#
+# References:
+# 1. http://matt.might.net/articles/parsing-regex-with-recursive-descent/
+# 2. https://swtch.com/~rsc/regexp/regexp1.html
+
+import Dict
+import IO
+import Set
+import String
+
+
+## Token ##
+data Token = Token(Char) | End
+
+impl Eq for Token
+    def eq(self, other: Token) -> Bool
+        if let Token(c) := self
+            if let Token(d) := other
+                return c == d
+            else
+                return False
+        else
+            if let Token(_) := other
+                return False
+            else
+                return True
+
+    def ne(self, other: Token) -> Bool
+        return not $ self.eq(other)
+
+impl Show for Token
+    def show(self) -> String
+        if let Token(c) := self
+            return "`" + show(c) + "`"
+        else
+            return "end-of-string"
+
+
+## Regex ##
+data Regex = Empty | Literal(Char) | AnyChar | Optional(Regex) | Or(Regex, Regex) | Cat(Regex, Regex) | Star(Regex)
+
+# Aspirational syntax
+#enum Regex
+#    Empty
+#    Literal(Char)
+#    AnyChar
+#    Optional(Regex)
+#    Or(Regex, Regex)
+#    Cat(Regex, Regex)
+#    Star(Regex)
+
+impl Show for Regex
+    def show(self) -> String
+        match self
+            Empty
+                return "Empty"
+
+            Literal(c)
+                return show(c)
+
+            AnyChar
+                return "AnyChar"
+
+            Optional(inner)
+                return "Optional(" + inner.show() + ")"
+
+            Or(left, right)
+                return "Or(" + left.show() + ", " + right.show() + ")"
+
+            Cat(left, right)
+                return "Cat(" + left.show() + ", " + right.show() + ")"
+
+            Star(inner)
+                return "Star(" + inner.show() + ")"
+
+
+## Parser ##
+struct Parser
+    string: String
+    location: UInt
+
+# Regex grammar
+# --------------
+# regex
+#     | term '|' regex
+#     | term
+#
+# term
+#     | { factor }
+#
+# factor
+#     | base
+#     | base '*'
+#     | base '+'
+#     | base '?'
+#
+# base
+#     | char
+#     | '.'
+#     | '\' char
+#     | '(' regex ')'
+
+impl Parser
+    def new(string: String) -> Parser
+        return Parser(string, 0)
+
+    # Token methods
+    def peek(self) -> Token
+        if self.location < self.string.length()
+            return Token(self.string[self.location])
+        else
+            return End
+
+    def accept(self, t: Token) -> Bool
+        if self.peek() == t
+            drop $ self.advance()
+            return True
+
+        return False
+
+    def expect(self, t: Token)
+        if not $ self.accept(t)
+            panic $ "Expected token " + t.show() + " but got " + self.peek().show()
+
+    def advance(self) -> Token
+        current := self.peek()
+        self.location += 1
+
+        return current
+
+    # Recursive-descent parsing
+    def regex(self) -> Regex
+        term := self.term()
+        if self.accept(Token $ '|')
+            return Or(term, self.regex())
+        else
+            return term
+
+    def term(self) -> Regex
+        result := Empty
+
+        while let Token(c) := self.peek()
+            if c != ')' and c != '|'
+                result = Cat(result, self.factor())
+            else
+                break
+
+        return result
+
+    def factor(self) -> Regex
+        base := self.base()
+
+        if self.accept(Token $ '*')
+            return Star(base)
+        elif self.accept(Token $ '+')
+            return Cat(base, Star(base))
+        elif self.accept(Token $ '?')
+            return Optional(base)
+        else
+            return base
+
+    def base(self) -> Regex
+        if let Token(c) := self.peek()
+            if c == '('
+                self.expect(Token $ '(')
+                result := self.regex()
+                self.expect(Token $ ')')
+
+                return result
+
+            elif c == '.'
+                self.expect(Token $ '.')
+                return AnyChar
+
+            elif c == '\\'
+                self.expect(Token $ '\\')
+
+            if let Token(d) := self.advance()
+                return Literal(d)
+
+        panic $ "Unexpected end of string"
+
+
+## NFAState ##
+struct NFAState
+    id: UInt
+    transitions: Dict<Char, NFAState>
+    epsilons: Vector<NFAState>
+    accepting: Bool
+
+impl NFAState
+    def new(id: UInt) -> NFAState
+        return NFAState(id, Dict::new(), Vector::new(), False)
+
+impl Eq for NFAState
+    def eq(self, other: NFAState) -> Bool
+        return self.id == other.id
+
+    def ne(self, other: NFAState) -> Bool
+        return not $ self.eq(other)
+
+impl Hash for NFAState
+    def hash(self) -> UInt
+        return self.id
+
+# Aspirational syntax:
+#struct NFAState
+#    id: UInt
+#    transitions: Dict<Char, NFAState>
+#    epsilons: Vector<NFAState>
+#    accepting: Bool
+
+#    def new(id: UInt) -> NFAState
+#        return NFAState(id, Dict::new(), Vector::new(), False)
+
+#    impl Eq
+#    def eq(self, other: NFAState) -> Bool
+#        return self.id == other.id
+
+#    def ne(self, other: NFAState) -> Bool
+#        return not $ self.eq(other)
+
+#    impl Hash
+#    def hash(self) -> UInt
+#        return self.id
+
+
+
+## NFABuilder ##
+struct NFABuilder
+    states: Vector<NFAState>
+
+impl NFABuilder
+    def new() -> NFABuilder
+        return NFABuilder(Vector::new())
+
+    def newState(self) -> NFAState
+        state := NFAState::new(self.states.size)
+        self.states.append(state)
+        return state
+
+    def buildNFA(self, regex: Regex) -> NFAState
+        finalState := self.newState()
+        finalState.accepting = True
+
+        startState := self.buildState(regex, finalState)
+        return startState
+
+    def buildState(self, regex: Regex, next: NFAState) -> NFAState
+        match regex
+            Empty
+                state := self.newState()
+                state.epsilons.append(next)
+                return state
+
+            Literal(c)
+                state := self.newState()
+                state.transitions[c] = next
+                return state
+
+            AnyChar
+                state := self.newState()
+                for c in 0 to 256
+                    state.transitions[c as Char] = next
+                return state
+
+            Or(left, right)
+                state := self.newState()
+                state.epsilons.append(self.buildState(left, next))
+                state.epsilons.append(self.buildState(right, next))
+                return state
+
+            Cat(left, right)
+                second := self.buildState(right, next)
+                first := self.buildState(left, second)
+                return first
+
+            Star(inner)
+                state := self.newState()
+                state.epsilons.append(self.buildState(inner, state))
+                state.epsilons.append(next)
+                return state
+
+            Optional(inner)
+                state := self.newState()
+                state.epsilons.append(self.buildState(inner, next))
+                state.epsilons.append(next)
+                return state
+
+    def dumpGraph(self)
+        println $ "digraph regex {"
+
+        for state in self.states
+            for item in state.transitions
+                let Pair(c, dest) := item
+                println $ show(state.id) + " -> " + show(dest.id) + "[label=" + show(c) + "];"
+
+            for dest in state.epsilons
+                println $ show(state.id) + " -> " + show(dest.id) + ";"
+
+            if state.accepting
+                println $ show(state.id) + "[shape=doublecircle];"
+
+        println $ "}"
+
+
+## DFAState ##
+struct DFAState
+    id: UInt
+    transitions: Dict<Char, DFAState>
+    accepting: Bool
+
+
+## DFAConverter
+type StateSet = Set<NFAState>
+
+impl Show for StateSet
+    def show(self) -> String
+        result := "{"
+        first := True
+
+        for x in self
+            if not $ first
+                result += ", "
+
+            result += show(x.id)
+
+            first = False
+
+        result += "}"
+
+        return result
+
+struct DFAConverter
+    stateMap: Dict<StateSet, DFAState>
+
+impl DFAConverter
+    def new() -> DFAConverter
+        return DFAConverter(Dict::new())
+
+    def getState(self, stateSet: StateSet) -> DFAState
+        match self.stateMap[stateSet]
+            Some(state)
+                return state
+
+            None
+                accepting := stateSet.iter().map(state -> state.accepting).any()
+
+                result := DFAState(self.stateMap.size, Dict::new(), accepting)
+                self.stateMap[stateSet] = result
+
+                return result
+
+    def closeState(self, state: NFAState) -> StateSet
+        open := Set::new()
+        result := Set::new()
+
+        open.insert(state)
+
+        while open.size > 0
+            nextState := open.pop()
+            result.insert(nextState)
+
+            for dest in nextState.epsilons
+                open.insert(dest)
+
+        return result
+
+    def transitions(self, states: StateSet) -> Dict<Char, Set<NFAState>>
+        result := Dict::new()
+
+        for state in states
+            for item in state.transitions
+                let Pair(c, dest) := item
+
+                match result[c]
+                    Some(s)
+                        s.extend(self.closeState(dest))
+
+                    None
+                        s := self.closeState(dest)
+                        result[c] = s
+
+        return result
+
+    def convert(self, startState: NFAState) -> DFAState
+        open := Set::new()
+
+        starts := self.closeState(startState)
+        open.insert(starts)
+
+        while open.size > 0
+            nfaStates := open.pop()
+            dfaState := self.getState(nfaStates)
+
+            for item in self.transitions(nfaStates)
+                let Pair(c, dests) := item
+
+                match self.stateMap[dests]
+                    Some(dfaDest)
+                        dfaState.transitions[c] = dfaDest
+
+                    None
+                        dfaDest := self.getState(dests)
+                        open.insert(dests)
+                        dfaState.transitions[c] = dfaDest
+
+        return self.getState(starts)
+
+    def dumpGraph(self)
+        println $ "digraph regex {"
+
+        for item in self.stateMap
+            let Pair(_, state) := item
+
+            for transition in state.transitions
+                let Pair(c, dest) := transition
+                println $ show(state.id) + " -> " + show(dest.id) + "[label=" + show(c) + "];"
+
+            if state.accepting
+                println $ show(state.id) + "[shape=doublecircle];"
+
+        println $ "}"
+
+
+def compileRegex(pattern: String) -> DFAState
+    parser := Parser::new(pattern)
+    regex := parser.regex()
+
+    nfaBuilder := NFABuilder::new()
+    nfa := nfaBuilder.buildNFA(regex)
+
+    dfaConverter := DFAConverter::new()
+    return dfaConverter.convert(nfa)
+
+
+def matchRegex(dfa: DFAState, string: String) -> Option<String>
+    result := Vector::new()
+
+    state := dfa
+    for c in string
+        match state.transitions[c]
+            Some(dest)
+                result.append(c)
+                state = dest
+
+            None
+                return None
+
+    if state.accepting
+        return Some $ result.toArray()
+    else
+        return None
+
+
+argc := getArgc()
+if argc < 2
+    panic $ "Usage: " + getArgv(0) + " pattern"
+
+pattern := ".*" + getArgv(1) + ".*"
+
+#parser := Parser::new(pattern)
+#regex := parser.regex()
+
+#nfaBuilder := NFABuilder::new()
+#nfa := nfaBuilder.buildNFA(regex)
+
+#dfaConverter := DFAConverter::new()
+#dfa := dfaConverter.convert(nfa)
+
+#dfaConverter.dumpGraph()
+
+matcher := compileRegex(pattern)
+
+while let Some(line) := readLine(stdin)
+    if let Some(_) := matchRegex(matcher, line.rstrip())
+        print $ line

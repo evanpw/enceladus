@@ -573,6 +573,9 @@ class TestAcceptance(object):
     def test_inferredIntRange2(self):
         self.run('inferredIntRange2', build_error='Error: testing/inferredIntRange2.spl:5:3: integer literal is out of range for inferred type UInt')
 
+    def test_grep(self):
+        self.run('grep', command='compileRegex', input_file='testing/grep.spl', result='def compileRegex(pattern: String) -> DFAState\nmatcher := compileRegex(pattern)')
+
     # Medium tests (100ms-1s)
 
     def test_euler4(self):
