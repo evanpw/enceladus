@@ -1,0 +1,5 @@
+trait TestTrait
+    type ValueType
+    type IteratorType: Iterator<ValueType>
+
+    def getSomething(self) -> IteratorType

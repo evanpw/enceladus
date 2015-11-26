@@ -1,0 +1,9 @@
+trait TestTrait
+
+impl TestTrait for UInt
+
+def imposeConstraint(x: T) where T: TestTrait
+    pass
+
+x := 4
+imposeConstraint(x)

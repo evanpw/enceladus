@@ -29,6 +29,11 @@ private:
     std::string _description;
 };
 
+struct MonomorphizationError : public std::exception
+{
+    virtual ~MonomorphizationError() throw() {}
+};
+
 class TACConditionalCodeGen : public SparseAstVisitor
 {
 public:

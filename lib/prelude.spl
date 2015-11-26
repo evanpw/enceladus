@@ -291,13 +291,12 @@ impl List<T>
         else
             return False
 
-# TODO: Allow this definition, or something better
-#def reversed(iter: S) -> List<T> where S: Iterable<T>
-#    xs := []
-#    for x in iter
-#        xs = xs.insert(x)
+def reversed(iter: S) -> List<T> where S: Iterable<T>
+    xs := []
+    for x in iter
+        xs = xs.insert(x)
 
-#    return xs
+    return xs
 
 impl Index<UInt, T> for List<T>
     def at(self, n: UInt) -> T

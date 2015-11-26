@@ -1,0 +1,6 @@
+def identity(x: T) -> T
+    return x
+
+id := identity
+drop $ id(1i)
+drop $ id("Hello")

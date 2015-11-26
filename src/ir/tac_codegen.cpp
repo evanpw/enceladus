@@ -309,7 +309,10 @@ static TypeAssignment compose(const TypeAssignment& typeContext, const TypeAssig
 
 static ValueType getRealValueType(Type* type)
 {
-    assert(isConcrete(type));
+    if (!isConcrete(type))
+    {
+        throw MonomorphizationError();
+    }
 
     if (type->isBoxed())
     {
@@ -1038,8 +1041,25 @@ void TACCodeGen::visit(LambdaNode* node)
 
 void TACCodeGen::visit(IntNode* node)
 {
-    ValueType type = getValueType(node->type);
-    node->value = _context->createConstantInt(type, node->intValue);
+    try
+    {
+        ValueType type = getValueType(node->type);
+        node->value = _context->createConstantInt(type, node->intValue);
+    }
+    catch (MonomorphizationError& e)
+    {
+        // This can happen if the result accumulates some additional constraints
+        // not satisfied by Int. We could try harder in this case to find a type
+        // that works.
+
+        YYLTYPE location = node->location;
+        std::stringstream ss;
+
+        ss << location.filename << ":" << location.first_line << ":" << location.first_column
+            << ": cannot infer concrete type for integer (try adding a suffix)";
+
+        throw CodegenError(ss.str());
+    }
 }
 
 void TACCodeGen::visit(CastNode* node)

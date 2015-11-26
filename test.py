@@ -526,7 +526,7 @@ class TestAcceptance(object):
         self.run('zeroStringArray', '')
 
     def test_bf(self):
-        self.run('bf', result='Hello World!', command='testing/hello.bf')
+        self.run('bf', result='Hello World!', command='testing/bf/hello.bf')
 
     def test_traitMismatch(self):
         self.run('traitMismatch', build_error='Error: testing/traitMismatch.spl:5:1: override of trait method `next` has the wrong type:\nexpected: |Test<I: Iterator<T>>| -> Option<T>\nactual: |Test<I: Iterator<T>>| -> Option<Vector<T>>')
@@ -545,6 +545,27 @@ class TestAcceptance(object):
 
     def test_lambda4(self):
         self.run('lambda4', '12')
+
+    def test_associatedType(self):
+        self.run('associatedType', '')
+
+    def test_associatedType2(self):
+        self.run('associatedType2', build_error='Error: testing/associatedType2.spl:9:1: Type Bool is not an instance of trait Num')
+
+    def test_associatedType3(self):
+        self.run('associatedType3', '')
+
+    def test_associatedType4(self):
+        self.run('associatedType4', '')
+
+    def test_genericClosure(self):
+        self.run('genericClosure', build_error='Error: testing/genericClosure.spl:6:11: cannot unify types Array<Char> and Int')
+
+    def test_badImport(self):
+        self.run('badImport', build_error='Error: testing/badImport.spl:2:8: can\'t import `Nothing`: file not found')
+
+    def test_notConcrete(self):
+        self.run('notConcrete', build_error='Error: testing/notConcrete.spl:8:6: cannot infer concrete type for integer (try adding a suffix)')
 
     # Medium tests (100ms-1s)
 

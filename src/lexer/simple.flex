@@ -90,10 +90,10 @@ void initializeLexer(const std::string& fileName)
     BEGIN(0);
 }
 
-void importFile(const std::string& fileName)
+bool importFile(const std::string& fileName)
 {
     yyin = fopen(fileName.c_str(), "r");
-    assert(yyin);
+    if (!yyin) return false;
 
     filenameStack.push(StringTable::add(fileName.c_str()));
 
@@ -105,6 +105,7 @@ void importFile(const std::string& fileName)
     currentFilename = filenameStack.top();
 
     BEGIN(0);
+    return true;
 }
 
 extern int yylex_destroy();
@@ -223,7 +224,16 @@ extern "C" int yywrap()
  /* Import file name */
 <import>[^ \t\n]+\n {
 
-    importFile(std::string("lib/") + trim_right(yytext) + ".spl");
+    bool result = importFile(std::string("lib/") + trim_right(yytext) + ".spl");
+
+    if (!result)
+    {
+        std::stringstream ss;
+        ss << yylloc.filename << ":" << yylloc.first_line << ":" << yylloc.first_column
+           << ": can't import `" << trim_right(yytext) << "`: file not found";
+
+        throw LexerError(ss.str());
+    }
 }
 
 <<EOF>> {
