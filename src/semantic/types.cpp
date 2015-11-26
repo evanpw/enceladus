@@ -173,6 +173,13 @@ std::string toString(const Trait* trait)
     return toString(trait, varStack);
 }
 
+std::string toString(const Has* has)
+{
+    std::stringstream ss;
+    ss << "Has<" << has->fieldName() << ">";
+    return ss.str();
+}
+
 std::string TypeVariable::name() const
 {
     std::stringstream ss;

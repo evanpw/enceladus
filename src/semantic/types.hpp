@@ -14,6 +14,7 @@
 class BaseType;
 class ConstructedType;
 class FunctionType;
+class Has;
 class Trait;
 class Type;
 class TypeTable;
@@ -72,6 +73,7 @@ protected:
 };
 
 std::string toString(const Trait* trait);
+std::string toString(const Has* has);
 std::string toString(const Type* trait);
 std::string toString(const TypeVariable* var);
 
@@ -386,7 +388,7 @@ public:
         return _name;
     }
 
-    std::string str() const
+    virtual std::string str() const
     {
         return toString(this);
     }
@@ -426,7 +428,7 @@ public:
         _instances.push_back({traitParams, type});
     }
 
-private:
+protected:
     friend TypeTable;
 
     Trait(TypeTable* table, const std::string& name, std::vector<Type*>&& params, Trait* prototype)
@@ -436,6 +438,7 @@ private:
             _prototype = this;
     }
 
+private:
     TypeTable* _table;
     std::string _name;
     std::vector<Type*> _params;
@@ -444,6 +447,32 @@ private:
     // Similar to constructed types, this is what defines identity for a trait.
     // Set to "this" for the prototypical trait
     Trait* _prototype;
+};
+
+// Acts like a trait, but takes a string as argument instead of a type.
+// Instances with different arguments are considered completely separate traits
+class Has : public Trait
+{
+public:
+    virtual std::string str() const
+    {
+        return toString(this);
+    }
+
+    std::string fieldName() const
+    {
+        return _fieldName;
+    }
+
+private:
+    friend TypeTable;
+
+    Has(TypeTable* table, const std::string& fieldName)
+    : Trait(table, "Has", {}, nullptr), _fieldName(fieldName)
+    {
+    }
+
+    std::string _fieldName;
 };
 
 
@@ -505,6 +534,18 @@ public:
         return trait;
     }
 
+    Has* createHasTrait(const std::string fieldName)
+    {
+        auto i = _hasTraits.find(fieldName);
+        if (i != _hasTraits.end()) return i->second;
+
+        Has* has = new Has(this, fieldName);
+        _traits.emplace_back(has);
+        _hasTraits[fieldName] = has;
+
+        return has;
+    }
+
     std::vector<Trait*> traits() const
     {
         std::vector<Trait*> result;
@@ -538,6 +579,7 @@ private:
     std::vector<std::unique_ptr<Type>> _types;
     std::vector<std::unique_ptr<ValueConstructor>> _valueConstructors;
     std::vector<std::unique_ptr<Trait>> _traits;
+    std::unordered_map<std::string, Has*> _hasTraits;
 };
 
 #endif

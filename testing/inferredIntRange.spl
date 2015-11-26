@@ -1,0 +1,6 @@
+import Dict
+
+d := Dict::new()
+
+d[256] = "Hello"
+d[0u8] = "World"

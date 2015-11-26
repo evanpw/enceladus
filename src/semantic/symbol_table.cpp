@@ -94,7 +94,7 @@ DummySymbol* SymbolTable::createDummySymbol(const std::string& name, AstNode* no
 
 void SymbolTable::pushScope()
 {
-    _scopes.push_back({});
+    _scopes.push_back(std::make_shared<Scope>());
 }
 
 void SymbolTable::popScope()
@@ -108,8 +108,8 @@ Symbol* SymbolTable::find(const std::string& name, WhichTable whichTable)
 
     for (auto scope = _scopes.rbegin(); scope != _scopes.rend(); ++scope)
     {
-        auto i = scope->find(key);
-        if (i != scope->end())
+        auto i = (*scope)->find(key);
+        if (i != (*scope)->end())
         {
             return i->second;
         }
@@ -121,7 +121,7 @@ Symbol* SymbolTable::find(const std::string& name, WhichTable whichTable)
 Symbol* SymbolTable::findTopScope(const std::string& name, WhichTable whichTable)
 {
     auto key = std::make_pair(name, whichTable);
-    auto& scope = _scopes.back();
+    auto& scope = *_scopes.back();
 
     auto i = scope.find(key);
     if (i == scope.end())
@@ -200,7 +200,7 @@ Type* SymbolTable::resolveAssociatedType(const std::string& name, Type* objectTy
 void SymbolTable::insert(Symbol* symbol, WhichTable whichTable)
 {
     auto key = std::make_pair(symbol->name, whichTable);
-    auto& scope = _scopes.back();
+    auto& scope = *_scopes.back();
 
     assert(scope.find(key) == scope.end());
 

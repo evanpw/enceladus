@@ -25,7 +25,7 @@ def compute(progress: Progress, message: String, idx: UInt) -> Int
     assert progress.nonempty.size == progress.closed.size
 
     if idx == message.length()
-        if all(progress.nonempty) and all(progress.closed)
+        if progress.nonempty.all() and progress.closed.all()
             return 1
         else
             return 0

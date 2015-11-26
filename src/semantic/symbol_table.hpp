@@ -9,6 +9,22 @@
 class SymbolTable
 {
 public:
+    enum WhichTable {TYPE = 0, OTHER = 1};
+
+private:
+    using KeyType = std::pair<std::string, WhichTable>;
+
+    struct PairHash
+    {
+        size_t operator()(const KeyType& key) const
+        {
+            return std::hash<std::string>()(key.first) + static_cast<size_t>(key.second);
+        }
+    };
+
+    using Scope = std::unordered_map<KeyType, Symbol*, PairHash>;
+
+public:
     VariableSymbol* createVariableSymbol(const std::string& name, AstNode* node, bool global);
     FunctionSymbol* createFunctionSymbol(const std::string& name, AstNode* node, FunctionDefNode* definition);
     CaptureSymbol* createCaptureSymbol(const std::string& name, AstNode* node, VariableSymbol* envSymbol, size_t index);
@@ -23,11 +39,6 @@ public:
 
     DummySymbol* createDummySymbol(const std::string& name, AstNode* node);
 
-    void pushScope();
-    void popScope();
-
-    enum WhichTable {TYPE = 0, OTHER = 1};
-
     // Returns nullptr if the symbol is not found in the symbol table
     Symbol* find(const std::string& name, WhichTable whichTable = OTHER);
     Symbol* findTopScope(const std::string& name, WhichTable whichTable = OTHER);
@@ -40,7 +51,24 @@ public:
     MethodSymbol* resolveTraitInstanceMethod(const std::string& name, Type* objectType, TraitSymbol* traitSymbol);
     Type* resolveAssociatedType(const std::string& name, Type* objectType, TraitSymbol* traitSymbol);
 
+    void pushScope();
+    void popScope();
+
     bool isTopScope() const { return _scopes.size() == 1; }
+
+    class SavedScopes
+    {
+        friend class SymbolTable;
+
+        SavedScopes(const std::vector<std::shared_ptr<Scope>>& scopes)
+        : _scopes(scopes)
+        {}
+
+        std::vector<std::shared_ptr<Scope>> _scopes;
+    };
+
+    SavedScopes saveScopes() const { return SavedScopes(_scopes); }
+    void restoreScopes(const SavedScopes& savedScopes) { _scopes = savedScopes._scopes; }
 
 private:
     void insert(Symbol* symbol, WhichTable = OTHER);
@@ -48,19 +76,8 @@ private:
     // Owning references
     std::vector<std::unique_ptr<Symbol>> _symbols;
 
-    using KeyType = std::pair<std::string, WhichTable>;
-
-    struct PairHash
-    {
-        size_t operator()(const KeyType& key) const
-        {
-            return std::hash<std::string>()(key.first) + static_cast<size_t>(key.second);
-        }
-    };
-
     // Scoped lookup table
-    using Scope = std::unordered_map<KeyType, Symbol*, PairHash>;
-    std::vector<Scope> _scopes;
+    std::vector<std::shared_ptr<Scope>> _scopes;
 
     // Unscoped table of methods / member variables
     std::unordered_map<std::string, std::vector<MemberSymbol*>> _members;

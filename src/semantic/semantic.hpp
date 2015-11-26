@@ -120,6 +120,44 @@ private:
     TraitDefNode* _enclosingTraitDef = nullptr;
     LambdaNode* _enclosingLambda = nullptr;
 
+    /// Deferred processing
+    bool _allowDefer = true;
+
+    struct DeferredNode
+    {
+        DeferredNode(AstNode* node, const SymbolTable::SavedScopes& scopes)
+        : node(node), scopes(scopes)
+        {}
+
+        AstNode* node;
+        SymbolTable::SavedScopes scopes;
+    };
+
+    std::vector<DeferredNode> _deferred;
+
+    void defer(AstNode* node)
+    {
+        node->type = _typeTable->createTypeVariable();
+        _deferred.emplace_back(node, _symbolTable->saveScopes());
+    }
+
+    bool restore(const DeferredNode& deferredNode)
+    {
+        _symbolTable->restoreScopes(deferredNode.scopes);
+        deferredNode.node->accept(this);
+
+        bool found = false;
+        for (auto& item : _deferred)
+        {
+            if (item.node == deferredNode.node)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     ReturnChecker _returnChecker;
 };
 

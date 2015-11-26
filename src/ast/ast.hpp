@@ -29,7 +29,7 @@ public:
 	YYLTYPE location;
 
 	// For semantic analysis
-	Type* type;
+	Type* type = nullptr;
 
 	// For code generation
 	Value* value = nullptr;

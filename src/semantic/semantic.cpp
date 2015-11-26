@@ -193,6 +193,34 @@ bool SemanticAnalyzer::analyze()
         _symbolTable->pushScope();
 
 		_root->accept(this);
+
+        // Some nodes may need multiple passes
+        while (!_deferred.empty())
+        {
+            auto deferred = _deferred;
+            _deferred.clear();
+
+            bool progress = false;
+            for (const DeferredNode& deferredNode : deferred)
+            {
+                progress |= restore(deferredNode);
+            }
+
+            // If we fail to make any progress, turn of deferred processing, and
+            // let one of the blocked nodes produce an error
+            if (!progress)
+            {
+                _allowDefer = false;
+                for (const DeferredNode& deferredNode : deferred)
+                {
+                    restore(deferredNode);
+                }
+
+                // Should be unreachable
+                assert(false);
+            }
+        }
+
         checkTraitCoherence();
 
         _symbolTable->popScope();
@@ -1020,6 +1048,13 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
         std::vector<MemberSymbol*> symbols;
         _symbolTable->resolveMemberSymbol(name, node->typeName->type, symbols);
         CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", name, node->typeName->type->str());
+
+        if (symbols.size() >= 2 && _allowDefer)
+        {
+            defer(node);
+            return;
+        }
+
         CHECK(symbols.size() < 2, "call to method `{}` is ambiguous", name);
 
         CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", name);
@@ -1047,7 +1082,15 @@ void SemanticAnalyzer::visit(FunctionCallNode* node)
     }
 
 	node->symbol = symbol;
-    node->type = functionType->output();
+
+    if (node->type)
+    {
+        unify(node->type, functionType->output(), node);
+    }
+    else
+    {
+        node->type = functionType->output();
+    }
 }
 
 void SemanticAnalyzer::visit(MethodCallNode* node)
@@ -1058,6 +1101,13 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->methodName, objectType, symbols);
     CHECK(!symbols.empty(), "no method named `{}` found for type `{}`", node->methodName, objectType->str());
+
+    if (symbols.size() >= 2 && _allowDefer)
+    {
+        defer(node);
+        return;
+    }
+
     CHECK(symbols.size() < 2, "call to method `{}` is ambiguous", node->methodName);
 
     CHECK(!symbols.front()->isMemberVar(), "`{}` is a member variable, not a method", node->methodName);
@@ -1084,7 +1134,15 @@ void SemanticAnalyzer::visit(MethodCallNode* node)
     }
 
     node->symbol = symbol;
-    node->type = functionType->output();
+
+    if (node->type)
+    {
+        unify(node->type, functionType->output(), node);
+    }
+    else
+    {
+        node->type = functionType->output();
+    }
 }
 
 void SemanticAnalyzer::visit(BinopNode* node)
@@ -1694,6 +1752,13 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     std::vector<MemberSymbol*> symbols;
     _symbolTable->resolveMemberSymbol(node->memberName, objectType, symbols);
     CHECK(!symbols.empty(), "no member named `{}` found for type `{}`", node->memberName, objectType->str());
+
+    if (symbols.size() >= 2 && _allowDefer)
+    {
+        defer(node);
+        return;
+    }
+
     CHECK(symbols.size() < 2, "access to field `{}` is ambiguous", node->memberName);
 
     CHECK(symbols.front()->isMemberVar(), "`{}` is a method, not a member variable", node->memberName);
@@ -1707,9 +1772,17 @@ void SemanticAnalyzer::visit(MemberAccessNode* node)
     unify(functionType->inputs()[0], objectType, node);
 
     node->symbol = symbol;
-    node->type = functionType->output();
     node->constructorSymbol = symbol->constructorSymbol;
     node->memberIndex = symbol->index;
+
+    if (node->type)
+    {
+        unify(node->type, functionType->output(), node);
+    }
+    else
+    {
+        node->type = functionType->output();
+    }
 }
 
 void SemanticAnalyzer::visit(IndexNode* node)

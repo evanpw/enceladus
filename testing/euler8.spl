@@ -5,10 +5,6 @@ s := "73167176531330624919225119674426574742355349194934969835203127745063262395
 def charToInt(c: Char) -> Int
     return (c as Int) - ('0' as Int)
 
-def prod(w: Vector<Int>) -> Int
-    return w.iter().product()
-
-# TODO: .map(w -> w.iter().product()) should correctly infer the type
-products := s.iter().map(charToInt).slide(13).map(prod)
+products := s.iter().map(charToInt).slide(13).map(w -> w.product())
 result := products.max().unwrap()
 println $ show(result)

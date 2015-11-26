@@ -118,7 +118,7 @@ impl S: Iterator<T>
 
 
 ## Arithmetic on iterators ##
-impl S where T: Num, S: Iterator<T>
+impl S where T: Num, S: Iterable<T>
     def sum(self) -> T
         total := 0
 
@@ -135,6 +135,8 @@ impl S where T: Num, S: Iterator<T>
 
         return total
 
+## Comparisons on iterators ##
+# TODO: Make these apply to Iterable, not just Iterator
 impl S where T: Ord, S: Iterator<T>
     def max(self) -> Option<T>
         if let Some(best) := self.next()
@@ -156,3 +158,18 @@ impl S where T: Ord, S: Iterator<T>
         else
             return None
 
+## Boolean operators on iterators ##
+impl T: Iterable<Bool>
+    def all(self) -> Bool
+        for x in self
+            if not(x)
+                return False
+
+        return True
+
+    def any(self) -> Bool
+        for x in self
+            if x
+                return True
+
+        return False

@@ -470,20 +470,6 @@ impl Iterable<T> for Vector<T>
     def iter(self) -> VectorIterator<T>
         return VectorIterator(self, 0)
 
-def all(xs: Vector<Bool>) -> Bool
-    for x in xs
-        if not(x)
-            return False
-
-    return True
-
-def any(xs: Vector<Bool>) -> Bool
-    for x in xs
-        if x
-            return True
-
-    return False
-
 
 impl Int
     # Does not check for integer overflow
