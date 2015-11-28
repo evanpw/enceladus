@@ -11,7 +11,7 @@ def isPrime(x: Int) -> Bool
     return True
 
 
-for n in 0 to 1000000
+for n in 0 til 1000000
     biggest := 0
 
     # Loop over all possible divisors of n

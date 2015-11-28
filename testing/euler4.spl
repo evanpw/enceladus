@@ -11,8 +11,8 @@ def reverseDigits(x: Int) -> Int
 
 biggest := 0
 
-for i in 100 to 999
-    for j in i + 1 to 1000
+for i in 100 til 999
+    for j in i + 1 til 1000
 
         x := i * j
 

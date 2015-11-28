@@ -50,6 +50,7 @@ enum TokenType : int
     tRETURN,
     tSTRING_LIT,
     tSTRUCT,
+    tTIL,
     tTIMES_EQUAL,
     tTO,
     tTRAIT,

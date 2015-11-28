@@ -1,10 +1,10 @@
 # Solves Project Euler 6
 
 def sumOfSquares(n: Int) -> Int
-    return (1 to n + 1).map(x -> x * x).sum()
+    return (1 to n).map(x -> x * x).sum()
 
 def squareOfSum(n: Int) -> Int
-    sum := (1 to n + 1).sum()
+    sum := (1 to n).sum()
 	return sum * sum
 
 println $ show(squareOfSum(100) - sumOfSquares(100))

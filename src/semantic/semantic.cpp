@@ -1552,55 +1552,36 @@ void SemanticAnalyzer::visit(DataDeclaration* node)
     CHECK_UNDEFINED(name);
     CHECK(name.size() > 1, "type names must contain at least two characters");
 
-    // Actually create the type
-    if (node->typeParameters.empty())
+    pushTypeContext();
+
+    // Create type variables for each type parameter
+    std::vector<Type*> variables;
+    resolveTypeParams(node, node->typeParameters, variables);
+
+    Type* newType;
+    if (variables.empty())
     {
-        Type* newType = _typeTable->createBaseType(node->name);
-        _symbolTable->createTypeSymbol(name, node, newType);
-
-        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
-        {
-            auto& spec = node->constructorSpecs[i];
-            spec->constructorTag = i;
-            spec->resultType = newType;
-            spec->accept(this);
-
-            node->valueConstructors.push_back(spec->valueConstructor);
-            node->constructorSymbols.push_back(spec->symbol);
-        }
+        newType = _typeTable->createBaseType(node->name);
     }
     else
     {
-        // Create type variables for each type parameter
-        std::vector<Type*> variables;
-        TypeContext typeContext;
-        for (auto& typeParameter : node->typeParameters)
-        {
-            CHECK_UNDEFINED(typeParameter);
-            CHECK(typeContext.find(typeParameter) == typeContext.end(), "type parameter `{}` is already defined", typeParameter);
-
-            Type* var = _typeTable->createTypeVariable(typeParameter, true);
-            variables.push_back(var);
-
-            typeContext.emplace(typeParameter, var);
-        }
-
-        Type* newType = _typeTable->createConstructedType(name, std::move(variables));
-        _symbolTable->createTypeSymbol(name, node, newType);
-
-        pushTypeContext(std::move(typeContext));
-        for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
-        {
-            auto& spec = node->constructorSpecs[i];
-            spec->constructorTag = i;
-            spec->resultType = newType;
-            spec->accept(this);
-
-            node->valueConstructors.push_back(spec->valueConstructor);
-            node->constructorSymbols.push_back(spec->symbol);
-        }
-        popTypeContext();
+        newType = _typeTable->createConstructedType(name, std::move(variables));
     }
+
+    _symbolTable->createTypeSymbol(name, node, newType);
+
+    for (size_t i = 0; i < node->constructorSpecs.size(); ++i)
+    {
+        auto& spec = node->constructorSpecs[i];
+        spec->constructorTag = i;
+        spec->resultType = newType;
+        spec->accept(this);
+
+        node->valueConstructors.push_back(spec->valueConstructor);
+        node->constructorSymbols.push_back(spec->symbol);
+    }
+
+    popTypeContext();
 
     node->type = _typeTable->Unit;
 }

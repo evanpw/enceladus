@@ -17,7 +17,7 @@ def computeValue() -> Int
     return x + y + z + w + a + b + c + d + e + q
 
 result := 0
-for i in 0 to 10000000
+for i in 0 til 10000000
     result = computeValue()
 
 println $ show(result)

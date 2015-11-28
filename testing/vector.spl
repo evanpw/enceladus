@@ -1,14 +1,14 @@
 # Int vector
 v := Vector::new()
 
-for i in 1 to 11
+for i in 1 til 11
     v.append(i)
 
 drop $ v.pop()
 drop $ v.pop()
 
 total := 0
-for i in 0 to v.size
+for i in 0 til v.size
     total += v[i]
 
 # Boolean vector

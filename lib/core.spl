@@ -53,4 +53,9 @@ struct Range<T: Num>
 def range(start: T, end: T) -> Range<T>
     return Range(start, end)
 
+struct InclusiveRange<T: Num>
+    start: T
+    end: T
 
+def inclusiveRange(start: T, end: T) -> InclusiveRange<T>
+    return InclusiveRange(start, end)

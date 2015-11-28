@@ -1,1 +1,1 @@
-xs := (1 to 1000000).toList()
+xs := (1 to 1000000).toVector()

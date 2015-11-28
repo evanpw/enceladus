@@ -1,6 +1,6 @@
 import Dict
 
-table := Dict::new()
+table := dict()
 
 table["One"] = 1
 table["Two"] = 2

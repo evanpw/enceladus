@@ -1,10 +1,10 @@
 v := Vector::new()
 
-for x in 1u8 to 10u8
+for x in 1u8 til 10u8
     v.append(x)
 
 total := 0
-for i in 0 to v.size
+for i in 0 til v.size
     total += v.at(i) as Int
 
 println $ show(total)

@@ -219,7 +219,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(and|or|in|to|as|where)\b</string>
+			<string>\b(and|or|in|to|til|as|where)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>

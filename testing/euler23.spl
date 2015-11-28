@@ -40,7 +40,7 @@ def isSumOfTwo(y: Int, xs: Array<Int>) -> Bool
 
 # Find all abundant numbers less than the limit
 reversedList := []
-for i in 1 to 28124
+for i in 1 til 28124
     if isAbundant(i)
         reversedList = reversedList.insert(i)
 
@@ -49,7 +49,7 @@ for i in 1 to 28124
 n := reversedList.length()
 abundants := Array::make(n, 0)
 
-for j in 0 to n
+for j in 0 til n
     x := reversedList.head()
     reversedList = reversedList.tail()
 
@@ -57,7 +57,7 @@ for j in 0 to n
 
 # Find all numbers in the range which are the sum of two abundants
 total := 0
-for k in 1 to 28124
+for k in 1 til 28124
     if not $ isSumOfTwo(k, abundants)
         total += k
 

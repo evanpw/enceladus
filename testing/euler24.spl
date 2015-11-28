@@ -45,4 +45,4 @@ def permutationAt(n: UInt, digits: [UInt]) -> [UInt]
 
     panic $ "Unreachable"
 
-println $ show $ toUInt $ permutationAt(999999, (0 to 10).toList())
+println $ show $ toUInt $ permutationAt(999999, (0 to 9).toList())

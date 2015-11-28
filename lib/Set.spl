@@ -58,7 +58,7 @@ impl Set<S>
     def pop(self) -> S
         assert self.size > 0
 
-        for i in 0 to self.capacity
+        for i in 0 til self.capacity
             if let Some(k) := self.contents[i]
                 self.contents[i] = None
                 self.size -= 1
@@ -96,13 +96,24 @@ impl Set<S>
         self.contents = Array::make(newCapacity, None)
         self.size = 0
 
-        for idx in 0 to oldCapacity
+        for idx in 0 til oldCapacity
             match oldContents[idx]
                 Some(k)
                     self.insert(k)
                 None
                     pass
 
+def set() -> Set<S>
+    return Set::new()
+
+impl S: Iterable<T> where T: Eq + Hash
+    def toSet(self) -> Set<T>
+        result := set()
+
+        for x in self
+            result.insert(x)
+
+        return result
 
 ## SetIterator ##
 struct SetIterator<S: Eq + Hash>

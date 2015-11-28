@@ -1,4 +1,4 @@
-for i in 1 to 101
+for i in 1 til 101
     if i % 15 == 0
         println $ "FizzBuzz"
     elif i % 3 == 0

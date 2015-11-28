@@ -191,7 +191,7 @@ struct NFAState
 
 impl NFAState
     def new(id: UInt) -> NFAState
-        return NFAState(id, Dict::new(), Vector::new(), False)
+        return NFAState(id, dict(), Vector::new(), False)
 
 impl Eq for NFAState
     def eq(self, other: NFAState) -> Bool
@@ -212,7 +212,7 @@ impl Hash for NFAState
 #    accepting: Bool
 
 #    def new(id: UInt) -> NFAState
-#        return NFAState(id, Dict::new(), Vector::new(), False)
+#        return NFAState(id, dict(), Vector::new(), False)
 
 #    impl Eq
 #    def eq(self, other: NFAState) -> Bool
@@ -261,7 +261,7 @@ impl NFABuilder
 
             AnyChar
                 state := self.newState()
-                for c in 0 to 256
+                for c in 0 to 255
                     state.transitions[c as Char] = next
                 return state
 
@@ -337,7 +337,7 @@ struct DFAConverter
 
 impl DFAConverter
     def new() -> DFAConverter
-        return DFAConverter(Dict::new())
+        return DFAConverter(dict())
 
     def getState(self, stateSet: StateSet) -> DFAState
         match self.stateMap[stateSet]
@@ -347,14 +347,14 @@ impl DFAConverter
             None
                 accepting := stateSet.iter().map(state -> state.accepting).any()
 
-                result := DFAState(self.stateMap.size, Dict::new(), accepting)
+                result := DFAState(self.stateMap.size, dict(), accepting)
                 self.stateMap[stateSet] = result
 
                 return result
 
     def closeState(self, state: NFAState) -> StateSet
-        open := Set::new()
-        result := Set::new()
+        open := set()
+        result := set()
 
         open.insert(state)
 
@@ -368,7 +368,7 @@ impl DFAConverter
         return result
 
     def transitions(self, states: StateSet) -> Dict<Char, Set<NFAState>>
-        result := Dict::new()
+        result := dict()
 
         for state in states
             for item in state.transitions
@@ -385,7 +385,7 @@ impl DFAConverter
         return result
 
     def convert(self, startState: NFAState) -> DFAState
-        open := Set::new()
+        open := set()
 
         starts := self.closeState(startState)
         open.insert(starts)
@@ -459,18 +459,6 @@ if argc < 2
     panic $ "Usage: " + getArgv(0) + " pattern"
 
 pattern := ".*" + getArgv(1) + ".*"
-
-#parser := Parser::new(pattern)
-#regex := parser.regex()
-
-#nfaBuilder := NFABuilder::new()
-#nfa := nfaBuilder.buildNFA(regex)
-
-#dfaConverter := DFAConverter::new()
-#dfa := dfaConverter.convert(nfa)
-
-#dfaConverter.dumpGraph()
-
 matcher := compileRegex(pattern)
 
 while let Some(line) := readLine(stdin)

@@ -52,7 +52,7 @@ assign_or_expr
     | expression EOL
 
 data_declaration
-    : DATA UIDENT type_params '=' constructor_spec { '|' constructor_spec } EOL
+    : DATA UIDENT constrained_type_params '=' constructor_spec { '|' constructor_spec } EOL
 
 type_alias
     : TYPE UIDENT '=' type EOL
@@ -215,7 +215,7 @@ relational_expression
     : range_expression [ ( '>' | '<' | GE | LE ) range_expression ]
 
 range_expression
-    : additive_expression [ TO additive_expression ]
+    : additive_expression [ ( TO | TIL) additive_expression ]
 
 additive_expression
     : multiplicative_expression { ( '+' | '-' ) multiplicative_expression }

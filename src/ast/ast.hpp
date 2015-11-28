@@ -660,7 +660,7 @@ public:
 class DataDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(AstContext* context, const YYLTYPE& location, const std::string& name, const std::vector<std::string>& typeParameters, const std::vector<ConstructorSpec*>& specs)
+	DataDeclaration(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<TypeParam>&& typeParameters, const std::vector<ConstructorSpec*>& specs)
 	: StatementNode(context, location), name(name), typeParameters(typeParameters)
 	{
 		constructorSpecs = specs;
@@ -669,7 +669,7 @@ public:
 	AST_VISITABLE();
 
 	std::string name;
-	std::vector<std::string> typeParameters;
+	std::vector<TypeParam> typeParameters;
 	std::vector<ConstructorSpec*> constructorSpecs;
 
 	// Annotations

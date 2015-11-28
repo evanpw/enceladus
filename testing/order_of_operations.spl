@@ -16,7 +16,7 @@ def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
     newCache := []
     k := 0
 
-    for i in 0 to cache.length()
+    for i in 0 til cache.length()
         c := cache[i]
         x := inst[i]
 
@@ -30,7 +30,7 @@ def simulateInstruction(cache: String, inst: String) -> Pair<String, Int>
 
 def zeroCache(m: UInt) -> String
     result := ""
-    for i in 0 to m
+    for i in 0 til m
         result = result + "0"
 
     return result
@@ -73,7 +73,7 @@ def minTime(instructions: [String]) -> Int
 
     empty := zeroCache(m)
     full := fullCache(instructions)
-    memo := Dict::new()
+    memo := dict()
 
     # From a full cache, we're finished -> zero time
     memo[full] = 0

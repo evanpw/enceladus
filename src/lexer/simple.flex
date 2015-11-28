@@ -211,6 +211,7 @@ extern "C" int yywrap()
 "pass"      { return tPASS; }
 "return"    { return tRETURN; }
 "struct"    { return tSTRUCT; }
+"til"       { return tTIL; }
 "to"        { return tTO; }
 "True"      { return tTRUE; }
 "trait"     { return tTRAIT; }

@@ -1,6 +1,4 @@
 # Solves Project Euler #1
 
-def good(x: Int) -> Bool
-    return (x % 3 == 0) or (x % 5 == 0)
-
-println $ show $ sum $ (1 to 10000000).toList().filter(good)
+result := (1 til 10000000).filter(x -> (x % 3 == 0) or (x % 5 == 0)).sum()
+println $ show(result)

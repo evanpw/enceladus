@@ -30,8 +30,6 @@ def sort(xs: [T]) -> [T] where T: PartialOrd
     return sort(lhs) + [pivot] + sort(rhs)
 
 
-# Needs sub-traits to work correctly, so that Ord => PartialOrd and we can
-# call sort
 def uniquify(xs: [T]) -> [T] where T: Ord
     if xs.empty()
         return []

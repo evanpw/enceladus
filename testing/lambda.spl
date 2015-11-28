@@ -1,2 +1,2 @@
-result := (1 to 1000).filter(x -> (x % 3 == 0) or (x % 5 == 0)).sum()
+result := (1 til 1000).filter(x -> (x % 3 == 0) or (x % 5 == 0)).sum()
 println $ show(result)

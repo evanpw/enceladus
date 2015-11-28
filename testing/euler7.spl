@@ -3,15 +3,15 @@
 def sieve(n: UInt) -> Vector<UInt>
     maybePrime := Array::make(n, True)
 
-    for i in 2 to n
-        for j in i to n
+    for i in 2 til n
+        for j in i til n
             if i * j >= n
                 break
 
             maybePrime[i * j] = False
 
     result := Vector::new()
-    for i in 2 to n
+    for i in 2 til n
         if maybePrime[i]
             result.append(i)
 

@@ -9,5 +9,5 @@ def gcd(a: Int, b: Int) -> Int
 def lcm(a: Int, b: Int) -> Int
     return (a * b) / gcd(a, b)
 
-result := (1 to 21).fold(1, lcm)
+result := (1 to 20).fold(1, lcm)
 println $ show(result)

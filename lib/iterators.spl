@@ -70,7 +70,7 @@ impl Slide<I>
     def new(iter: I, n: UInt) -> Slide<I>
         window := Vector::new()
 
-        for _ in 0 to n
+        for _ in 0 til n
             if let Some(elt) := iter.next()
                 window.append(elt)
             else

@@ -90,6 +90,8 @@ std::string tokenToString(TokenType t)
         return "string literal";
     case tSTRUCT:
         return "`struct`";
+    case tTIL:
+        return "`til`";
     case tTIMES_EQUAL:
         return "`*=`";
     case tTO:

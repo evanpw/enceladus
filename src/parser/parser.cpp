@@ -248,7 +248,7 @@ AssertNode* Parser::assert_statement()
 }
 
 /// data_declaration
-///     : DATA UIDENT type_params '=' constructor_spec { '|' constructor_spec } EOL
+///     : DATA UIDENT constrained_type_params '=' constructor_spec { '|' constructor_spec } EOL
 DataDeclaration* Parser::data_declaration()
 {
     YYLTYPE location = getLocation();
@@ -256,7 +256,7 @@ DataDeclaration* Parser::data_declaration()
     expect(tDATA);
     Token name = expect(tUIDENT);
 
-    std::vector<std::string> typeParameters = type_params();
+    std::vector<TypeParam> typeParameters = constrained_type_params();
 
     expect('=');
 
@@ -269,7 +269,7 @@ DataDeclaration* Parser::data_declaration()
 
     expect(tEOL);
 
-    return new DataDeclaration(_context, location, name.value.str, typeParameters, specs);
+    return new DataDeclaration(_context, location, name.value.str, std::move(typeParameters), specs);
 }
 
 TypeAliasNode* Parser::type_alias()
@@ -1231,13 +1231,18 @@ ExpressionNode* Parser::relational_expression()
 }
 
 // range_expression
-//     : additive_expression [ TO additive_expression ]
+//     : additive_expression [ ( TO | TIL) additive_expression ]
 ExpressionNode* Parser::range_expression()
 {
     YYLTYPE location = getLocation();
     ExpressionNode* lhs = additive_expression();
 
     if (accept(tTO))
+    {
+        ExpressionNode* rhs = additive_expression();
+        return new FunctionCallNode(_context, location, "inclusiveRange", {lhs, rhs});
+    }
+    else if (accept(tTIL))
     {
         ExpressionNode* rhs = additive_expression();
         return new FunctionCallNode(_context, location, "range", {lhs, rhs});

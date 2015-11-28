@@ -75,13 +75,16 @@ impl Dict<S, T>
         self.contents = Array::make(newCapacity, None)
         self.size = 0
 
-        for idx in 0 to oldCapacity
+        for idx in 0 til oldCapacity
             match oldContents[idx]
                 Some(item)
                     let Pair(k, v) := item
                     self.insert(k, v)
                 None
                     pass
+
+def dict() -> Dict<S, T>
+    return Dict::new()
 
 impl Index<S, Option<T>> for Dict<S, T>
     def at(self, key: S) -> Option<T>

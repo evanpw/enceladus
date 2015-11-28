@@ -1,6 +1,6 @@
 import Dict
 
-d := Dict::new()
+d := dict()
 
 d[-1] = "Hello"
 d[0u] = "World"

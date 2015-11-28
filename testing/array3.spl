@@ -1,14 +1,14 @@
 n := 10000
 arr := Array::make(n, 0)
 
-for i in 0 to n
+for i in 0 til n
     arr[i] = i
 
 # Trigger GC
-xs := (1 to 1000000).toList()
+xs := (1 to 1000000).toVector()
 
 total := 0
-for i in 0 to n
+for i in 0 til n
     total += arr[i]
 
 assert total == n * (n - 1) / 2
