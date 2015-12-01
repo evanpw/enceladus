@@ -69,7 +69,7 @@ public:
     virtual void visit(BreakNode* node);
     virtual void visit(ContinueNode* node);
     virtual void visit(IntNode* node);
-    virtual void visit(MemberDefNode* node);
+    virtual void visit(StructVarNode* node);
     virtual void visit(NullaryNode* node);
     virtual void visit(PassNode* node);
     virtual void visit(ReturnNode* node);

@@ -287,13 +287,13 @@ class TestAcceptance(object):
         self.run('repeatedTypeParam3', build_error='Error: testing/repeatedTypeParam3.spl:1:1: type parameter `T` is already defined')
 
     def test_memberMethodConflict(self):
-        self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:5:5: type `Test` already has a method or member named `f`')
+        self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:4:5: type `Test` already has a method or member named `f`')
 
     def test_memberAsMethod(self):
         self.run('memberAsMethod', build_error='Error: testing/memberAsMethod.spl:5:1: `test` is a member variable, not a method')
 
     def test_methodAsMember(self):
-        self.run('methodAsMember', build_error='Error: testing/methodAsMember.spl:9:1: `doSomething` is a method, not a member variable')
+        self.run('methodAsMember', build_error='Error: testing/methodAsMember.spl:8:1: `doSomething` is a method, not a member variable')
 
     def test_structMemberNames(self):
         self.run('structMemberNames', result='30\nFrance')

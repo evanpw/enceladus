@@ -3,6 +3,27 @@
 # References:
 # 1. http://matt.might.net/articles/parsing-regex-with-recursive-descent/
 # 2. https://swtch.com/~rsc/regexp/regexp1.html
+#
+# Regex grammar
+# --------------
+# regex
+#     | term '|' regex
+#     | term
+#
+# term
+#     | { factor }
+#
+# factor
+#     | base
+#     | base '*'
+#     | base '+'
+#     | base '?'
+#
+# base
+#     | char
+#     | '.'
+#     | '\' char
+#     | '(' regex ')'
 
 import Dict
 import IO
@@ -49,7 +70,6 @@ enum Regex
     Or(Regex, Regex)
     Star(Regex)
 
-
 impl Show for Regex
     def show(self) -> String
         match self
@@ -80,28 +100,6 @@ struct Parser
     string: String
     location: UInt
 
-# Regex grammar
-# --------------
-# regex
-#     | term '|' regex
-#     | term
-#
-# term
-#     | { factor }
-#
-# factor
-#     | base
-#     | base '*'
-#     | base '+'
-#     | base '?'
-#
-# base
-#     | char
-#     | '.'
-#     | '\' char
-#     | '(' regex ')'
-
-impl Parser
     def new(string: String) -> Parser
         return Parser(string, 0)
 
@@ -192,7 +190,6 @@ struct NFAState
     epsilons: Vector<NFAState>
     accepting: Bool
 
-impl NFAState
     def new(id: UInt) -> NFAState
         return NFAState(id, dict(), Vector::new(), False)
 
@@ -207,34 +204,11 @@ impl Hash for NFAState
     def hash(self) -> UInt
         return self.id
 
-# Aspirational syntax:
-#struct NFAState
-#    id: UInt
-#    transitions: Dict<Char, NFAState>
-#    epsilons: Vector<NFAState>
-#    accepting: Bool
-
-#    def new(id: UInt) -> NFAState
-#        return NFAState(id, dict(), Vector::new(), False)
-
-#    impl Eq
-#    def eq(self, other: NFAState) -> Bool
-#        return self.id == other.id
-
-#    def ne(self, other: NFAState) -> Bool
-#        return not $ self.eq(other)
-
-#    impl Hash
-#    def hash(self) -> UInt
-#        return self.id
-
-
 
 ## NFABuilder ##
 struct NFABuilder
     states: Vector<NFAState>
 
-impl NFABuilder
     def new() -> NFABuilder
         return NFABuilder $ Vector::new()
 
@@ -338,7 +312,6 @@ impl Show for StateSet
 struct DFAConverter
     stateMap: Dict<StateSet, DFAState>
 
-impl DFAConverter
     def new() -> DFAConverter
         return DFAConverter $ dict()
 

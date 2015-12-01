@@ -1685,7 +1685,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
         std::unordered_set<std::string> alreadyUsed;
         for (size_t i = 0; i < node->members.size(); ++i)
         {
-            MemberDefNode* member = node->members[i];
+            StructVarNode* member = node->members[i];
 
             // Make sure there are no repeated member names
             CHECK(alreadyUsed.find(member->name) == alreadyUsed.end(), "type `{}` already has a member named `{}`", node->name, member->name);
@@ -1717,7 +1717,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
     node->type = _typeTable->Unit;
 }
 
-void SemanticAnalyzer::visit(MemberDefNode* node)
+void SemanticAnalyzer::visit(StructVarNode* node)
 {
     // All of the constructor members must refer to already-declared types
     resolveTypeName(node->typeName);

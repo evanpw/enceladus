@@ -125,7 +125,7 @@ public:
 
 	AST_VISITABLE();
 
-	std::vector<AstNode*> children;
+	std::vector<StatementNode*> children;
 };
 
 ////// Expression nodes ////////////////////////////////////////////////////////
@@ -726,10 +726,10 @@ public:
 
 //// Structures ////////////////////////////////////////////////////////////////
 
-class MemberDefNode : public AstNode
+class StructVarNode : public AstNode
 {
 public:
-	MemberDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, TypeName* typeName)
+	StructVarNode(AstContext* context, const YYLTYPE& location, const std::string& name, TypeName* typeName)
 	: AstNode(context, location), name(name), typeName(typeName)
 	{}
 
@@ -746,14 +746,14 @@ public:
 class StructDefNode : public StatementNode
 {
 public:
-	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<MemberDefNode*>&& members, std::vector<TypeParam>&& typeParams, std::vector<TypeParam>&& whereClause)
+	StructDefNode(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<StructVarNode*>&& members, std::vector<TypeParam>&& typeParams, std::vector<TypeParam>&& whereClause)
 	: StatementNode(context, location), name(name), members(members), typeParams(typeParams), whereClause(whereClause)
 	{}
 
 	AST_VISITABLE();
 
 	std::string name;
-	std::vector<MemberDefNode*> members;
+	std::vector<StructVarNode*> members;
 	std::vector<TypeParam> typeParams;
 	std::vector<TypeParam> whereClause;
 

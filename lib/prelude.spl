@@ -5,7 +5,6 @@ enum List<T>
     Cons(T, List<T>)
     Nil
 
-impl List<T>
     def insert(self, x: T) -> List<T>
         return Cons(x, self)
 
@@ -361,11 +360,6 @@ struct Vector<T>
     content: Array<T>
     size: UInt
 
-struct VectorIterator<T>
-    v: Vector<T>
-    idx: UInt
-
-impl Vector<T>
     def new() -> Vector<T>
         return Vector(Array::new(), 0)
 
@@ -429,6 +423,10 @@ impl Index<UInt, T> for Vector<T>
 impl IndexSet<UInt, T> for Vector<T>
     def set(self, n: UInt, x: T)
         self.content[n] = x
+
+struct VectorIterator<T>
+    v: Vector<T>
+    idx: UInt
 
 impl Iterator<T> for VectorIterator<T>
     def next(self) -> Option<T>
@@ -570,9 +568,9 @@ def pow(a: T, b: UInt) -> T where T: Num
 
 
 ## Pair ##
-enum Pair<S, T> = Pair(S, T)
+enum Pair<S, T>
+    Pair(S, T)
 
-impl Pair<S, T>
     def first(self) -> S
         match self
             Pair(x, _) => return x

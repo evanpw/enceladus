@@ -1,15 +1,6 @@
-enum BigInt = BigInt([Int])
+enum BigInt
+    BigInt([Int])
 
-def toBigInt(x: Int) -> BigInt
-    result := []
-
-    while x != 0
-        result = result.insert(x % 10)
-        x /= 10
-
-    return BigInt $ result.reverse()
-
-impl BigInt
     def digits(self) -> [Int]
         let BigInt(xs) := self
         return xs
@@ -76,7 +67,8 @@ impl BigInt
     def times(self, rhs: BigInt) -> BigInt
         ys := rhs.digits()
 
-        result := toBigInt(0)
+        result := BigInt([]) # representation of zero
+
         for n in 0 til ys.length()
             y := ys.at(n)
             z1 := self.timesInt(y)
@@ -92,6 +84,15 @@ impl BigInt
             s = s.insert((x as Char) + '0')
 
         return String::fromList(s)
+
+def toBigInt(x: Int) -> BigInt
+    result := []
+
+    while x != 0
+        result = result.insert(x % 10)
+        x /= 10
+
+    return BigInt $ result.reverse()
 
 # Computes a^b
 def bigPower(a: Int, b: Int) -> BigInt

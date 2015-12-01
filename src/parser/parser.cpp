@@ -99,10 +99,10 @@ ProgramNode* Parser::program()
 
     while (!accept(tEND))
     {
-        StatementNode* child = statement();
-
-        if (child)
+        for (auto& child : statement())
+        {
             node->children.push_back(child);
+        }
     }
 
     _context->setRoot(node);
@@ -110,77 +110,78 @@ ProgramNode* Parser::program()
     return node;
 }
 
-StatementNode* Parser::statement()
+std::vector<StatementNode*> Parser::statement()
 {
     if (accept(tEOL))
-        return nullptr;
+        return {};
 
     switch(peekType())
     {
     case tPASS:
-        return pass_statement();
+        return {pass_statement()};
 
     case tIF:
-        return if_statement();
+        return {if_statement()};
 
     case tASSERT:
-        return assert_statement();
+        return {assert_statement()};
 
     case tENUM:
         return enum_declaration();
 
     case tTYPE:
-        return type_alias();
+        return {type_alias()};
 
     case tDEF:
-        return function_definition();
+        return {function_definition()};
 
     case tFOR:
-        return for_statement();
+        return {for_statement()};
 
     case tFOREIGN:
-        return foreign_declaration();
+        return {foreign_declaration()};
 
     case tFOREVER:
-        return forever_statement();
+        return {forever_statement()};
 
     case tLET:
-        return let_statement();
+        return {let_statement()};
 
     case tMATCH:
-        return match_statement();
+        return {match_statement()};
 
     case tRETURN:
-        return return_statement();
+        return {return_statement()};
 
     case tSTRUCT:
         return struct_declaration();
 
     case tWHILE:
-        return while_statement();
+        return {while_statement()};
 
     case tBREAK:
-        return break_statement();
+        return {break_statement()};
 
     case tCONTINUE:
-        return continue_statement();
+        return {continue_statement()};
 
     case tIMPL:
-        return implementation_block();
+        return {implementation_block()};
 
     case tTRAIT:
-        return trait_definition();
+        return {trait_definition()};
 
     case tLIDENT:
         if (peek2ndType() == tCOLON_EQUAL || peek2ndType() == ':')
         {
-            return variable_declaration();
+            return {variable_declaration()};
         }
 
         // Else fallthrough
 
     default:
-        return assign_or_expr();
+        return {assign_or_expr()};
+        break;
     }
 }
 
@@ -248,21 +249,21 @@ AssertNode* Parser::assert_statement()
 }
 
 /// enum_declaration
-///     : ENUM UIDENT constrained_type_params EOL INDENT constructor_spec { constructor_spec } DEDENT
+///     : ENUM UIDENT constrained_type_params EOL INDENT constructor_spec { constructor_spec } [ impl_body ] DEDENT
 ///     : ENUM UIDENT constrained_type_params '=' constructor_spec EOL
-EnumDeclaration* Parser::enum_declaration()
+std::vector<StatementNode*> Parser::enum_declaration()
 {
     YYLTYPE location = getLocation();
 
     expect(tENUM);
     Token name = expect(tUIDENT);
 
-    std::vector<TypeParam> typeParameters = constrained_type_params();
+    std::vector<TypeParam> typeParams = constrained_type_params();
 
     if (accept('='))
     {
         ConstructorSpec* spec = constructor_spec();
-        return new EnumDeclaration(_context, location, name.value.str, std::move(typeParameters), {spec});
+        return {new EnumDeclaration(_context, location, name.value.str, std::move(typeParams), {spec})};
     }
     else
     {
@@ -271,12 +272,31 @@ EnumDeclaration* Parser::enum_declaration()
 
         std::vector<ConstructorSpec*> specs;
         specs.push_back(constructor_spec());
-        while (!accept(tDEDENT))
+        while (peekType() == tUIDENT)
         {
             specs.push_back(constructor_spec());
         }
 
-        return new EnumDeclaration(_context, location, name.value.str, std::move(typeParameters), specs);
+        std::vector<StatementNode*> result;
+        result.push_back(new EnumDeclaration(_context, location, name.value.str, std::move(typeParams), specs));
+
+        if (peekType() == tDEF)
+        {
+            YYLTYPE implLocation = getLocation();
+            std::vector<StatementNode*> members = impl_body();
+
+            TypeName* typeName = new TypeName(_context, location, name.value.str);
+            for (TypeParam& typeParam : typeParams)
+            {
+                typeName->parameters.push_back(new TypeName(_context, location, typeParam.name));
+            }
+
+            result.push_back(new ImplNode(_context, implLocation, {}, typeName, std::move(members), nullptr));
+        }
+
+        expect(tDEDENT);
+
+        return result;
     }
 }
 
@@ -408,7 +428,10 @@ MatchArm* Parser::match_arm()
         BlockNode* block = new BlockNode(_context, getLocation());
         while (peekType() != tDEDENT)
         {
-            block->children.push_back(statement());
+            for (auto& child : statement())
+            {
+                block->children.push_back(child);
+            }
         }
 
         expect(tDEDENT);
@@ -418,7 +441,24 @@ MatchArm* Parser::match_arm()
     else
     {
         expect(tDARROW);
-        StatementNode* body = statement();
+
+        std::vector<StatementNode*> bodyList = statement();
+
+        if (bodyList.size() > 1)
+        {
+            YYLTYPE location = bodyList[0]->location;
+
+            std::stringstream ss;
+
+            ss << location.filename << ":" << location.first_line
+               << ":" << location.first_column
+               << ": expected statement but got block";
+
+            throw LexerError(ss.str());
+        }
+
+        StatementNode* body = bodyList.empty() ? nullptr : bodyList[0];
+
         return new MatchArm(_context, location, constructor.value.str, params, body);
     }
 }
@@ -444,8 +484,8 @@ ReturnNode* Parser::return_statement()
 }
 
 /// struct_declaration
-///     : STRUCT UIDENT constrained_type_params [ where_clause ] members
-StructDefNode* Parser::struct_declaration()
+///     : STRUCT UIDENT constrained_type_params [ where_clause ] EOL INDENT struct_vars [ impl_body ] DEDENT
+std::vector<StatementNode*> Parser::struct_declaration()
 {
     YYLTYPE location = getLocation();
 
@@ -454,9 +494,31 @@ StructDefNode* Parser::struct_declaration()
 
     std::vector<TypeParam> typeParams = constrained_type_params();
     std::vector<TypeParam> whereClause = where_clause();
-    std::vector<MemberDefNode*> memberList = members();
 
-    return new StructDefNode(_context, location, name.value.str, std::move(memberList), std::move(typeParams), std::move(whereClause));
+    expect(tEOL);
+    expect(tINDENT);
+    std::vector<StructVarNode*> varList = struct_vars();
+
+    std::vector<StatementNode*> result;
+    result.push_back(new StructDefNode(_context, location, name.value.str, std::move(varList), std::move(typeParams), std::move(whereClause)));
+
+    if (peekType() == tDEF)
+    {
+        YYLTYPE implLocation = getLocation();
+        std::vector<StatementNode*> members = impl_body();
+
+        TypeName* typeName = new TypeName(_context, location, name.value.str);
+        for (TypeParam& typeParam : typeParams)
+        {
+            typeName->parameters.push_back(new TypeName(_context, location, typeParam.name));
+        }
+
+        result.push_back(new ImplNode(_context, implLocation, {}, typeName, std::move(members), nullptr));
+    }
+
+    expect(tDEDENT);
+
+    return result;
 }
 
 /// while_statement
@@ -631,39 +693,49 @@ ImplNode* Parser::implementation_block()
     std::vector<StatementNode*> members;
     if (accept(tINDENT))
     {
-        while (true)
-        {
-            if (peekType() == tDEF)
-            {
-                MethodDefNode* method = method_definition();
-                members.push_back(method);
-            }
-            else if (peekType() == tTYPE)
-            {
-                if (!traitName)
-                {
-                    std::stringstream ss;
-
-                    ss << location.filename << ":" << location.first_line
-                       << ":" << location.first_column
-                       << ": only trait implementations may have associated types";
-
-                    throw LexerError(ss.str());
-                }
-
-                TypeAliasNode* associatedType = type_alias();
-                members.push_back(associatedType);
-            }
-            else
-            {
-                break;
-            }
-        }
-
+        members = std::move(impl_body(traitName != nullptr));
         expect(tDEDENT);
     }
 
     return new ImplNode(_context, location, std::move(typeParams), typeName, std::move(members), traitName);
+}
+
+/// impl_body
+///     : ( method_definition | type_alias) [ (method_definition | type_alias ) ]
+std::vector<StatementNode*> Parser::impl_body(bool allowTypes)
+{
+    std::vector<StatementNode*> members;
+
+    while (true)
+    {
+        if (peekType() == tDEF)
+        {
+            MethodDefNode* method = method_definition();
+            members.push_back(method);
+        }
+        else if (peekType() == tTYPE)
+        {
+            if (!allowTypes)
+            {
+                YYLTYPE location = getLocation();
+
+                std::stringstream ss;
+
+                ss << location.filename << ":" << location.first_line
+                   << ":" << location.first_column
+                   << ": only trait implementations may have associated types";
+
+                throw LexerError(ss.str());
+            }
+
+            TypeAliasNode* associatedType = type_alias();
+            members.push_back(associatedType);
+        }
+        else
+        {
+            return members;
+        }
+    }
 }
 
 /// method_definition
@@ -760,7 +832,10 @@ StatementNode* Parser::suite()
         BlockNode* block = new BlockNode(_context, getLocation());
         while (peekType() != tDEDENT)
         {
-            block->children.push_back(statement());
+            for (auto& child : statement())
+            {
+                block->children.push_back(child);
+            }
         }
 
         expect(tDEDENT);
@@ -770,7 +845,27 @@ StatementNode* Parser::suite()
     else
     {
         expect(':');
-        return statement();
+
+        std::vector<StatementNode*> body = statement();
+
+        if (body.empty())
+        {
+            return nullptr;
+        }
+        else if (body.size() == 1)
+        {
+            return body[0];
+        }
+        else
+        {
+            BlockNode* block = new BlockNode(_context, body[0]->location);
+            for (StatementNode* item : body)
+            {
+                block->children.push_back(item);
+            }
+
+            return block;
+        }
     }
 }
 
@@ -1133,24 +1228,19 @@ TypeParam Parser::constrained_type_param()
 
 //// Structures ///////////////////////////////////////////////////////////////
 
-std::vector<MemberDefNode*> Parser::members()
+std::vector<StructVarNode*> Parser::struct_vars()
 {
-    std::vector<MemberDefNode*> memberList;
+    std::vector<StructVarNode*> memberList;
 
-    expect(tEOL);
-    expect(tINDENT);
-
-    while (peekType() != tDEDENT)
+    while (peekType() == tLIDENT)
     {
-        memberList.push_back(member_definition());
+        memberList.push_back(struct_var());
     }
-
-    expect(tDEDENT);
 
     return memberList;
 }
 
-MemberDefNode* Parser::member_definition()
+StructVarNode* Parser::struct_var()
 {
     YYLTYPE location = getLocation();
 
@@ -1159,7 +1249,7 @@ MemberDefNode* Parser::member_definition()
     TypeName* typeName = type();
     expect(tEOL);
 
-    return new MemberDefNode(_context, location, name.value.str, typeName);
+    return new StructVarNode(_context, location, name.value.str, typeName);
 }
 
 //// Expressions ///////////////////////////////////////////////////////////////

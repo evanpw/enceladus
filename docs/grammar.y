@@ -52,7 +52,7 @@ assign_or_expr
     | expression EOL
 
 enum_declaration
-    : ENUM UIDENT constrained_type_params EOL INDENT constructor_spec { constructor_spec } DEDENT
+    : ENUM UIDENT constrained_type_params EOL INDENT constructor_spec { constructor_spec } [ impl_body ] DEDENT
     : ENUM UIDENT constrained_type_params '=' constructor_spec EOL
 
 type_alias
@@ -92,7 +92,7 @@ return_statement
     : RETURN [ expression ] EOL
 
 struct_declaration
-    : STRUCT UIDENT constrained_type_params [ where_clause ] members
+    : STRUCT UIDENT constrained_type_params [ where_clause ] EOL INDENT struct_vars [ impl_body ] DEDENT
 
 variable_declaration
     : LIDENT COLON_EQUAL expression EOL
@@ -107,11 +107,10 @@ continue_statement
     : CONTINUE EOL
 
 implementation_block
-    : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL INDENT [ member { member } DEDENT ]
+    : IMPL type [ FOR type ] [ ':' UIDENT { '+' UIDENT } ] where_clause EOL [ INDENT impl_body DEDENT ]
 
-member
-    : method_definition
-    | type_alias
+impl_body
+    : ( method_definition | type_alias) [ (method_definition | type_alias ) ]
 
 method_definition
     : DEF ident params_and_types where_clause suite
@@ -193,10 +192,10 @@ where_clause
 
  //// Structures ///////////////////////////////////////////////////////////////
 
-members
-    : EOL INDENT member_definition { member_definition } DEDENT
+struct_vars
+    : struct_var { struct_var }
 
-member_definition
+struct_var
     : LIDENT ':' type EOL
 
  //// Expressions //////////////////////////////////////////////////////////////

@@ -141,7 +141,7 @@ public:
 
     // No code to generate (or handled separately)
     virtual void visit(FunctionDefNode* node) {}
-    virtual void visit(MemberDefNode* node) {}
+    virtual void visit(StructVarNode* node) {}
     virtual void visit(MethodDefNode*) {}
     virtual void visit(PassNode* node) {}
     virtual void visit(TypeAliasNode* node) {}

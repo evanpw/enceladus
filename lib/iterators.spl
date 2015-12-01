@@ -34,7 +34,6 @@ struct Peekable<S> where S: Iterator<T>
     iterator: S
     current: Option<T>
 
-impl Peekable<S>
     def new(iter: S) -> Peekable<S>
         return Peekable(iter, iter.next())
 
@@ -66,7 +65,6 @@ struct Slide<I> where I: Iterator<T>
     window: Vector<T>
     n: UInt
 
-impl Slide<I>
     def new(iter: I, n: UInt) -> Slide<I>
         window := Vector::new()
 

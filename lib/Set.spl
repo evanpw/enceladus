@@ -4,7 +4,6 @@ struct Set<S: Eq + Hash>
     size: UInt
     capacity: UInt
 
-impl Set<S>
     def new() -> Set<S>
         return Set(Array::make(0, None), 0, 0)
 

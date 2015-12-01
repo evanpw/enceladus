@@ -32,7 +32,7 @@ class LogicalNode;
 class MatchArm;
 class MatchNode;
 class MemberAccessNode;
-class MemberDefNode;
+class StructVarNode;
 class MethodCallNode;
 class MethodDefNode;
 class NullaryNode;
@@ -91,7 +91,7 @@ public:
 	virtual void visit(ContinueNode* node) {}
 	virtual void visit(ForeignDeclNode* node) {}
 	virtual void visit(IntNode* node) {}
-	virtual void visit(MemberDefNode* node) {}
+	virtual void visit(StructVarNode* node) {}
 	virtual void visit(NullaryNode* node) {}
 	virtual void visit(PassNode* node) {}
 	virtual void visit(StringLiteralNode* node) {}
@@ -130,7 +130,7 @@ public:
 	UNSUPPORTED(MatchArm);
 	UNSUPPORTED(MatchNode);
 	UNSUPPORTED(MemberAccessNode);
-	UNSUPPORTED(MemberDefNode);
+	UNSUPPORTED(StructVarNode);
 	UNSUPPORTED(MethodCallNode);
 	UNSUPPORTED(MethodDefNode);
 	UNSUPPORTED(NullaryNode);

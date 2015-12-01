@@ -8,7 +8,6 @@ struct Date
     day: UInt
     dayOfWeek: UInt
 
-impl Date
     def isLeapYear(self) -> Bool
         year := self.year
 

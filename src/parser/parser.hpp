@@ -19,12 +19,12 @@ private:
 
 private:
     ProgramNode* program();
-    StatementNode* statement();
+    std::vector<StatementNode*> statement();
     PassNode* pass_statement();
     StatementNode* if_statement();
     StatementNode* if_helper(const YYLTYPE& location);
     AssertNode* assert_statement();
-    EnumDeclaration* enum_declaration();
+    std::vector<StatementNode*> enum_declaration();
     TypeAliasNode* type_alias();
     FunctionDefNode* function_definition();
     ForNode* for_statement();
@@ -35,13 +35,14 @@ private:
     MatchNode* match_statement();
     MatchArm* match_arm();
     ReturnNode* return_statement();
-    StructDefNode* struct_declaration();
+    std::vector<StatementNode*> struct_declaration();
     WhileNode* while_statement();
     StatementNode* assign_or_expr();
     VariableDefNode* variable_declaration();
     BreakNode* break_statement();
     ContinueNode* continue_statement();
     ImplNode* implementation_block();
+    std::vector<StatementNode*> impl_body(bool allowTypes = false);
     StatementNode* member();
     MethodDefNode* method_definition();
     TraitDefNode* trait_definition();
@@ -67,8 +68,8 @@ private:
     TypeParam constrained_type_param();
 
 
-    std::vector<MemberDefNode*> members();
-    MemberDefNode* member_definition();
+    std::vector<StructVarNode*> struct_vars();
+    StructVarNode* struct_var();
 
     ExpressionNode* expression();
     ExpressionNode* and_expression();

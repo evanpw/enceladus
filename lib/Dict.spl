@@ -4,7 +4,6 @@ struct Dict<S: Eq + Hash, T>
     size: UInt
     capacity: UInt
 
-impl Dict<S, T>
     def new() -> Dict<S, T>
         return Dict(Array::make(0, None), 0, 0)
 

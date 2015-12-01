@@ -6,7 +6,6 @@ struct State
     memory: Array<UInt8>
     dp: UInt
 
-impl State
     def new(memSize: UInt) -> State
         arr := Array::make(memSize, 0)
         return State(arr, 0)
@@ -21,8 +20,8 @@ enum Instruction
     Clear
     Close
 
-impl Instruction
-    def toString(self) -> String
+impl Show for Instruction
+    def show(self) -> String
         match self
             Add(m)
                 return "Add(" + show(m) + ")"
