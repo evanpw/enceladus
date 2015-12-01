@@ -1,4 +1,4 @@
-data BigInt = BigInt([Int])
+enum BigInt = BigInt([Int])
 
 def toBigInt(x: Int) -> BigInt
     result := []
@@ -7,7 +7,7 @@ def toBigInt(x: Int) -> BigInt
         result = result.insert(x % 10)
         x /= 10
 
-    return BigInt(result.reverse())
+    return BigInt $ result.reverse()
 
 impl BigInt
     def digits(self) -> [Int]
@@ -41,7 +41,7 @@ impl BigInt
             result = result.insert(z % 10)
             carry = z / 10
 
-        return BigInt(result.reverse())
+        return BigInt $ result.reverse()
 
     def timesInt(self, rhs: Int) -> BigInt
         xs := self.digits()
@@ -61,7 +61,7 @@ impl BigInt
             result = result.insert(z % 10)
             carry = z / 10
 
-        return BigInt(result.reverse())
+        return BigInt $ result.reverse()
 
     def shift(self, n: UInt) -> BigInt
         if n == 0

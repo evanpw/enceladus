@@ -1,7 +1,9 @@
 import core
 
 ## List ##
-data List<T> = Cons(T, List<T>) | Nil
+enum List<T>
+    Cons(T, List<T>)
+    Nil
 
 impl List<T>
     def insert(self, x: T) -> List<T>
@@ -287,7 +289,7 @@ impl List<T>
         if n == 0
             return []
         else
-            return self.tail().take(n - 1).insert(self.head())
+            return self.tail().take(n - 1).insert $ self.head()
 
     def drop(self, n: UInt) -> [T]
         if n == 0
@@ -313,7 +315,7 @@ impl List<T>
     def map(self, f: T -> S) -> [S]
         result := []
         for x in self
-            result = result.insert(f(x))
+            result = result.insert $ f(x)
 
         return result.reverse()
 
@@ -506,7 +508,7 @@ def product(xs: [T]) -> T where T: Num
     if xs.empty()
         return 1
     else
-        return xs.head() * product(xs.tail())
+        return xs.head() * product $ xs.tail()
 
 
 def max(a: T, b: T) -> T where T: Num
@@ -527,14 +529,14 @@ def maximum(xs: [T]) -> T where T: Num
     if xs.length() == 1
         return xs.head()
     else
-        return max(xs.head(), maximum(xs.tail()))
+        return max(xs.head(), maximum $ xs.tail())
 
 
 def minimum(xs: [T]) -> T where T: Num
     if xs.length() == 1
         return xs.head()
     else
-        return min(xs.head(), minimum(xs.tail()))
+        return min(xs.head(), minimum $ xs.tail())
 
 
 def even(x: T) -> Bool where T: Num
@@ -568,7 +570,7 @@ def pow(a: T, b: UInt) -> T where T: Num
 
 
 ## Pair ##
-data Pair<S, T> = Pair(S, T)
+enum Pair<S, T> = Pair(S, T)
 
 impl Pair<S, T>
     def first(self) -> S
@@ -585,7 +587,10 @@ def splitAt(n: UInt, xs: [T]) -> Pair<[T], [T]>
 
 
 ## Ord trait ##
-data Ordering = Less | Equal | Greater
+enum Ordering
+    Less
+    Equal
+    Greater
 
 trait Ord
     def cmp(self, other: Self) -> Ordering
@@ -618,13 +623,13 @@ impl Ord for [T] where T: Ord
         elif other.empty()
             return Greater
         else
-            match self.head().cmp(other.head())
+            match self.head().cmp $ other.head()
                 Less
                     return Less
                 Greater
                     return Greater
                 Equal
-                    return self.tail().cmp(other.tail())
+                    return self.tail().cmp $ other.tail()
 
 impl Ord for String
     def cmp(self, other: String) -> Ordering

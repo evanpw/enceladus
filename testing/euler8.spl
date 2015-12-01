@@ -5,6 +5,6 @@ s := "73167176531330624919225119674426574742355349194934969835203127745063262395
 def charToInt(c: Char) -> Int
     return (c as Int) - ('0' as Int)
 
-products := s.iter().map(charToInt).slide(13).map(w -> w.product())
+products := s.iter().map(charToInt).slide(13).map $ w -> w.product()
 result := products.max().unwrap()
 println $ show(result)

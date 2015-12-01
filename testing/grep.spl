@@ -11,7 +11,9 @@ import String
 
 
 ## Token ##
-data Token = Token(Char) | End
+enum Token
+    Token(Char)
+    End
 
 impl Eq for Token
     def eq(self, other: Token) -> Bool
@@ -38,17 +40,15 @@ impl Show for Token
 
 
 ## Regex ##
-data Regex = Empty | Literal(Char) | AnyChar | Optional(Regex) | Or(Regex, Regex) | Cat(Regex, Regex) | Star(Regex)
+enum Regex
+    AnyChar
+    Cat(Regex, Regex)
+    Empty
+    Literal(Char)
+    Optional(Regex)
+    Or(Regex, Regex)
+    Star(Regex)
 
-# Aspirational syntax
-#enum Regex
-#    Empty
-#    Literal(Char)
-#    AnyChar
-#    Optional(Regex)
-#    Or(Regex, Regex)
-#    Cat(Regex, Regex)
-#    Star(Regex)
 
 impl Show for Regex
     def show(self) -> String
@@ -108,7 +108,7 @@ impl Parser
     # Token methods
     def peek(self) -> Token
         if self.location < self.string.length()
-            return Token(self.string[self.location])
+            return Token $ self.string[self.location]
         else
             return End
 
@@ -132,7 +132,7 @@ impl Parser
     # Recursive-descent parsing
     def regex(self) -> Regex
         term := self.term()
-        if self.accept(Token $ '|')
+        if self.accept $ Token('|')
             return Or(term, self.regex())
         else
             return term
@@ -151,30 +151,33 @@ impl Parser
     def factor(self) -> Regex
         base := self.base()
 
-        if self.accept(Token $ '*')
+        if self.accept $ Token('*')
             return Star(base)
-        elif self.accept(Token $ '+')
+
+        elif self.accept $ Token('+')
             return Cat(base, Star(base))
-        elif self.accept(Token $ '?')
+
+        elif self.accept $ Token('?')
             return Optional(base)
+
         else
             return base
 
     def base(self) -> Regex
         if let Token(c) := self.peek()
             if c == '('
-                self.expect(Token $ '(')
+                self.expect $ Token('(')
                 result := self.regex()
-                self.expect(Token $ ')')
+                self.expect $ Token(')')
 
                 return result
 
             elif c == '.'
-                self.expect(Token $ '.')
+                self.expect $ Token('.')
                 return AnyChar
 
             elif c == '\\'
-                self.expect(Token $ '\\')
+                self.expect $ Token('\\')
 
             if let Token(d) := self.advance()
                 return Literal(d)
@@ -233,7 +236,7 @@ struct NFABuilder
 
 impl NFABuilder
     def new() -> NFABuilder
-        return NFABuilder(Vector::new())
+        return NFABuilder $ Vector::new()
 
     def newState(self) -> NFAState
         state := NFAState::new(self.states.size)
@@ -267,8 +270,8 @@ impl NFABuilder
 
             Or(left, right)
                 state := self.newState()
-                state.epsilons.append(self.buildState(left, next))
-                state.epsilons.append(self.buildState(right, next))
+                state.epsilons.append $ self.buildState(left, next)
+                state.epsilons.append $ self.buildState(right, next)
                 return state
 
             Cat(left, right)
@@ -278,13 +281,13 @@ impl NFABuilder
 
             Star(inner)
                 state := self.newState()
-                state.epsilons.append(self.buildState(inner, state))
+                state.epsilons.append $ self.buildState(inner, state)
                 state.epsilons.append(next)
                 return state
 
             Optional(inner)
                 state := self.newState()
-                state.epsilons.append(self.buildState(inner, next))
+                state.epsilons.append $ self.buildState(inner, next)
                 state.epsilons.append(next)
                 return state
 
@@ -337,7 +340,7 @@ struct DFAConverter
 
 impl DFAConverter
     def new() -> DFAConverter
-        return DFAConverter(dict())
+        return DFAConverter $ dict()
 
     def getState(self, stateSet: StateSet) -> DFAState
         match self.stateMap[stateSet]
@@ -376,7 +379,7 @@ impl DFAConverter
 
                 match result[c]
                     Some(s)
-                        s.extend(self.closeState(dest))
+                        s.extend $ self.closeState(dest)
 
                     None
                         s := self.closeState(dest)

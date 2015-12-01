@@ -1,4 +1,6 @@
-data Either<S, T> = Left(S) | Right(T)
+enum Either<S, T>
+    Left(S)
+    Right(T)
 
 a := Left(1)
 

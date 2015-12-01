@@ -194,7 +194,7 @@ extern "C" int yywrap()
 "as"        { return tAS; }
 "break"     { return tBREAK; }
 "continue"  { return tCONTINUE; }
-"data"      { return tDATA; }
+"enum"      { return tENUM; }
 "def"       { return tDEF; }
 "import"    { BEGIN(import); }
 "elif"      { return tELIF; }

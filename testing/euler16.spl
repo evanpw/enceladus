@@ -7,4 +7,4 @@ x := toBigInt(1)
 for i in 0 til 1000
     x = x.plus(x)
 
-println $ show $ sum(x.digits())
+println $ show $ sum $ x.digits()

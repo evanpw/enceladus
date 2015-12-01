@@ -22,8 +22,6 @@ std::string tokenToString(TokenType t)
         return "`continue`";
     case tDARROW:
         return "`=>`";
-    case tDATA:
-        return "`data`";
     case tDCOLON:
         return "`::`";
     case tDEDENT:
@@ -38,6 +36,8 @@ std::string tokenToString(TokenType t)
         return "`else`";
     case tEND:
         return "end-of-input";
+    case tENUM:
+        return "`enum`";
     case tEOF:
         return "end-of-file";
     case tEOL:

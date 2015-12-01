@@ -1,1 +1,1 @@
-data MyType<T, T> = List(T)
+enum MyType<T, T> = List(T)

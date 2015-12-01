@@ -17,7 +17,7 @@ def divisors(n: Int) -> [Int]
     return result
 
 def isAbundant(n: Int) -> Bool
-    return sum(divisors(n)) > n
+    return n < sum $ divisors(n)
 
 def isSumOfTwo(y: Int, xs: Array<Int>) -> Bool
     i := 0

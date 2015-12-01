@@ -12,7 +12,14 @@ impl State
         return State(arr, 0)
 
 # IR Instructions
-data Instruction = Add(Int) | MovePtr(Int) | Out | In | Loop(Vector<Instruction>) | Clear| Close
+enum Instruction
+    Add(Int)
+    MovePtr(Int)
+    Out
+    In
+    Loop(Vector<Instruction>)
+    Clear
+    Close
 
 impl Instruction
     def toString(self) -> String
@@ -36,16 +43,16 @@ impl Instruction
 def compileNext(iter: Peekable<I>, depth: Int) -> Option<Instruction> where I: Iterator<Char>
     while let Some(c) := iter.next()
         if c == '+'
-            return Some(Add(1))
+            return Some $ Add(1)
 
         elif c == '-'
-            return Some(Add(-1))
+            return Some $ Add(-1)
 
         elif c == '>'
-            return Some(MovePtr(1))
+            return Some $ MovePtr(1)
 
         elif c == '<'
-            return Some(MovePtr(-1))
+            return Some $ MovePtr(-1)
 
         elif c == '.'
             return Some(Out)
@@ -58,7 +65,7 @@ def compileNext(iter: Peekable<I>, depth: Int) -> Option<Instruction> where I: I
 
             while let Some(inst) := compileNext(iter, depth + 1)
                 if let Close := inst
-                    return Some(Loop(body))
+                    return Some $ Loop(body)
                 else
                     body.append(inst)
 
@@ -95,7 +102,7 @@ def clearLoop(program: Vector<Instruction>) -> Vector<Instruction>
                     result.append(Clear)
                     continue
 
-            result.append(Loop(clearLoop(body)))
+            result.append $ Loop $ clearLoop(body)
         else
             result.append(inst)
 
@@ -109,7 +116,7 @@ def combineIncrements(program: Vector<Instruction>) -> Vector<Instruction>
     result := Vector::new()
 
     if let Loop(body) := program[0]
-        result.append(Loop(combineIncrements(body)))
+        result.append $ Loop $ combineIncrements(body)
     else
         result.append(program[0])
 
@@ -129,7 +136,7 @@ def combineIncrements(program: Vector<Instruction>) -> Vector<Instruction>
                 continue
 
         if let Loop(body) := current
-            result.append(Loop(combineIncrements(body)))
+            result.append $ Loop $ combineIncrements(body)
             continue
 
         result.append(program[i])

@@ -6,5 +6,5 @@ def genericSum(xs: T) -> Int where T: Iterable<Char>
 
     return total
 
-println $ show $ genericSum("hello".iter())
-println $ show $ genericSum(['a', 'b', 'c', 'd'].iter())
+println $ show $ genericSum $ "hello".iter()
+println $ show $ genericSum $ ['a', 'b', 'c', 'd'].iter()

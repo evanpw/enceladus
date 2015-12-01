@@ -24,11 +24,11 @@ impl Dict<S, T>
                     let Pair(k, v) := item
 
                     if k == key
-                        self.contents[idx] = Some(Pair(key, value))
+                        self.contents[idx] = Some $ Pair(key, value)
                         break
 
                 None
-                    self.contents[idx] = Some(Pair(key, value))
+                    self.contents[idx] = Some $ Pair(key, value)
                     break
 
             idx = (idx + 1) % self.capacity

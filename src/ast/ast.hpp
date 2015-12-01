@@ -657,10 +657,10 @@ public:
 	MatchArm* catchallArm = nullptr;
 };
 
-class DataDeclaration : public StatementNode
+class EnumDeclaration : public StatementNode
 {
 public:
-	DataDeclaration(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<TypeParam>&& typeParameters, const std::vector<ConstructorSpec*>& specs)
+	EnumDeclaration(AstContext* context, const YYLTYPE& location, const std::string& name, std::vector<TypeParam>&& typeParameters, const std::vector<ConstructorSpec*>& specs)
 	: StatementNode(context, location), name(name), typeParameters(typeParameters)
 	{
 		constructorSpecs = specs;

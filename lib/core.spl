@@ -5,7 +5,9 @@
 type String = Array<Char>
 foreign panic(msg: String)
 
-data Option<T> = Some(T) | None
+enum Option<T>
+    Some(T)
+    None
 
 trait Iterator<T>
     def next(self) -> Option<T>

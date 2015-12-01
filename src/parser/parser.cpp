@@ -126,8 +126,8 @@ StatementNode* Parser::statement()
     case tASSERT:
         return assert_statement();
 
-    case tDATA:
-        return data_declaration();
+    case tENUM:
+        return enum_declaration();
 
     case tTYPE:
         return type_alias();
@@ -247,29 +247,37 @@ AssertNode* Parser::assert_statement()
     return new AssertNode(_context, location, condition);
 }
 
-/// data_declaration
-///     : DATA UIDENT constrained_type_params '=' constructor_spec { '|' constructor_spec } EOL
-DataDeclaration* Parser::data_declaration()
+/// enum_declaration
+///     : ENUM UIDENT constrained_type_params EOL INDENT constructor_spec { constructor_spec } DEDENT
+///     : ENUM UIDENT constrained_type_params '=' constructor_spec EOL
+EnumDeclaration* Parser::enum_declaration()
 {
     YYLTYPE location = getLocation();
 
-    expect(tDATA);
+    expect(tENUM);
     Token name = expect(tUIDENT);
 
     std::vector<TypeParam> typeParameters = constrained_type_params();
 
-    expect('=');
-
-    std::vector<ConstructorSpec*> specs;
-    specs.push_back(constructor_spec());
-    while (accept('|'))
+    if (accept('='))
     {
-        specs.push_back(constructor_spec());
+        ConstructorSpec* spec = constructor_spec();
+        return new EnumDeclaration(_context, location, name.value.str, std::move(typeParameters), {spec});
     }
+    else
+    {
+        expect(tEOL);
+        expect(tINDENT);
 
-    expect(tEOL);
+        std::vector<ConstructorSpec*> specs;
+        specs.push_back(constructor_spec());
+        while (!accept(tDEDENT))
+        {
+            specs.push_back(constructor_spec());
+        }
 
-    return new DataDeclaration(_context, location, name.value.str, std::move(typeParameters), specs);
+        return new EnumDeclaration(_context, location, name.value.str, std::move(typeParameters), specs);
+    }
 }
 
 TypeAliasNode* Parser::type_alias()
@@ -970,6 +978,8 @@ ConstructorSpec* Parser::constructor_spec()
         expect(')');
     }
 
+    expect(tEOL);
+
     return constructorSpec;
 }
 
@@ -1339,6 +1349,7 @@ ExpressionNode* Parser::cast_expression()
 ///     : func_call_expression
 ///     | method_member_idx_expression '.' LIDENT
 ///     | method_member_idx_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
+///     | method_member_idx_expression '.' LIDENT '$' expression
 ///     | method_member_idx_expression '[' expression ']'
 ExpressionNode* Parser::method_member_idx_expression()
 {
@@ -1367,6 +1378,11 @@ ExpressionNode* Parser::method_member_idx_expression()
                 }
 
                 expr = new MethodCallNode(_context, location, expr, name.value.str, std::move(argList));
+            }
+            else if (accept('$'))
+            {
+                ExpressionNode* arg = expression();
+                expr = new MethodCallNode(_context, location, expr, name.value.str, {arg});
             }
             else
             {

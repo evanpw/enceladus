@@ -14,13 +14,13 @@ def readNumber() -> BigInt
     # TODO: This would be better solved with map, but lambdas don't exist / work
     # very well yet
     for piece in pieces
-        ys = ys.insert(Int::fromString(piece).unwrap())
+        ys = ys.insert $ Int::fromString(piece).unwrap()
 
     return BigInt(ys)
 
 xs := toBigInt(0)
 for i in 0 til 100
-    xs = xs.plus(readNumber())
+    xs = xs.plus $ readNumber()
 
 n := 0
 for x in xs.digits().reverse().take(10)

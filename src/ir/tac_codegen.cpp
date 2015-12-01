@@ -1743,7 +1743,7 @@ void TACCodeGen::visit(MemberAccessNode* node)
     emit(new IndexedLoadInst(node->value, structure, offset));
 }
 
-void TACCodeGen::visit(DataDeclaration* node)
+void TACCodeGen::visit(EnumDeclaration* node)
 {
     for (ConstructorSymbol* symbol : node->constructorSymbols)
     {

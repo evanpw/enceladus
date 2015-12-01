@@ -15,7 +15,7 @@ def delete(x: UInt, xs: [UInt]) -> [UInt]
         if xs'.head() == x
             return initial.reverse() + xs'.tail()
         else
-            initial = initial.insert(xs'.head())
+            initial = initial.insert $ xs'.head()
 
         xs' = xs'.tail()
 

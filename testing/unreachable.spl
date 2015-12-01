@@ -11,4 +11,4 @@ def test(x: Option<Int>) -> Int
             return -1
 
 
-println $ show $ test(Some(4))
+println $ show $ test $ Some(4)

@@ -11,7 +11,7 @@ impl [Int]
             return False
 
         else
-            return self.head() == other.head() and self.tail().equal(other.tail())
+            return self.head() == other.head() and self.tail().equal $ other.tail()
 
 x := [1, 2]
 y := [1, 2]

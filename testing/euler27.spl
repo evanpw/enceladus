@@ -1,6 +1,6 @@
 # Solves Project Euler #27
 
-data Quadratic = Quadratic(Int, Int)
+enum Quadratic = Quadratic(Int, Int)
 
 def eval(quad: Quadratic, n: Int) -> Int
     let Quadratic(a, b) := quad

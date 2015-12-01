@@ -123,7 +123,7 @@ void AstVisitor::visit(MatchArm* node)
 	node->body->accept(this);
 }
 
-void AstVisitor::visit(DataDeclaration* node)
+void AstVisitor::visit(EnumDeclaration* node)
 {
 	for (auto& spec : node->constructorSpecs)
 	{

@@ -71,13 +71,13 @@ impl String
 
         len := s.length()
         for i in 0 til len
-            if isSpace(s.at(i))
+            if isSpace $ s[i]
                 len := i - start
-                result.append(s.slice(start, len))
+                result.append $ s.slice(start, len)
                 start = i + 1
 
         if start < len
-            result.append(s.slice(start, len - start))
+            result.append $ s.slice(start, len - start)
 
         return result
 
@@ -89,11 +89,11 @@ impl String
         for i in 0 til len
             if s.at(i) == sep
                 len := i - start
-                result.append(s.slice(start, len))
+                result.append $ s.slice(start, len)
                 start = i + 1
 
         if start < len
-            result.append(s.slice(start, len - start))
+            result.append $ s.slice(start, len - start)
 
         return result
 

@@ -29,7 +29,7 @@
 				</dict>
 			</dict>
 			<key>match</key>
-			<string>\b(print|println|die|assert)\b</string>
+			<string>\b(print|println|die|assert|dict|set)\b</string>
 		</dict>
 
 		<dict>
@@ -213,7 +213,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(import|let|var|type|data|struct|match|trait|impl)\b</string>
+			<string>\b(import|let|var|type|enum|struct|match|trait|impl)\b</string>
 			<key>name</key>
 			<string>keyword.other.simple</string>
 		</dict>

@@ -9,7 +9,7 @@ x := f(3, 4)
 
 _ := 4
 
-data MyPair = MyPair(Int, Int)
+enum MyPair = MyPair(Int, Int)
 y := MyPair(5, 6)
 
 let MyPair(_, b) := y

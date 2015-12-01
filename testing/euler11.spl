@@ -38,7 +38,7 @@ def allRuns(xlower: Int, xupper: Int, ylower: Int, yupper: Int, dx: Int, dy: Int
 
     for x in xlower til xupper
         for y in ylower til yupper
-            xs = xs.insert(makeRun(x, y, dx, dy))
+            xs = xs.insert $ makeRun(x, y, dx, dy)
 
     return xs
 

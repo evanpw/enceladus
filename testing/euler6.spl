@@ -7,4 +7,4 @@ def squareOfSum(n: Int) -> Int
     sum := (1 to n).sum()
 	return sum * sum
 
-println $ show(squareOfSum(100) - sumOfSquares(100))
+println $ show $ squareOfSum(100) - sumOfSquares(100)

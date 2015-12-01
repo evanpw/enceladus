@@ -1,4 +1,4 @@
-data Only = Only(Int)
+enum Only = Only(Int)
 
 x := 0
 forever

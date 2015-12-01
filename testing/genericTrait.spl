@@ -2,4 +2,4 @@ def checkType(x: T) where T: Iterator<Char>
     pass
 
 i := "Hello World"
-checkType(i.iter())
+checkType $ i.iter()

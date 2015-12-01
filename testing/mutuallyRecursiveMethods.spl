@@ -1,4 +1,4 @@
-data Test = Test
+enum Test = Test
 
 impl Test
     def f(self, x: Int) -> Int

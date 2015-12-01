@@ -15,7 +15,7 @@ statement
     : EOL
     | if_statement
     | assert_statement
-    | data_declaration
+    | enum_declaration
     | type_alias
     | function_definition
     | for_statement
@@ -51,8 +51,9 @@ assign_or_expr
     | expression REM_EQUAL expression EOL
     | expression EOL
 
-data_declaration
-    : DATA UIDENT constrained_type_params '=' constructor_spec { '|' constructor_spec } EOL
+enum_declaration
+    : ENUM UIDENT constrained_type_params EOL INDENT constructor_spec { constructor_spec } DEDENT
+    : ENUM UIDENT constrained_type_params '=' constructor_spec EOL
 
 type_alias
     : TYPE UIDENT '=' type EOL
@@ -152,7 +153,7 @@ trait_name
 //// Miscellaneous /////////////////////////////////////////////////////////////
 
 constructor_spec
-    : UIDENT [ '(' type { ',' type } ')' ]
+    : UIDENT [ '(' type { ',' type } ')' ] EOL
 
 suite
     : ':' statement
@@ -235,6 +236,7 @@ method_member_idx_expression
     : func_call_expression
     | method_member_idx_expression '.' LIDENT
     | method_member_idx_expression '.' LIDENT '(' [ expression ] { ',' expression } ] ')'
+    | method_member_idx_expression '.' LIDENT '$' expression
     | method_member_idx_expression '[' expression ']'
 
 func_call_expression

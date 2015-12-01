@@ -2,7 +2,7 @@
 
 import String
 
-data Date = Date(Int, Int, Int, Int)
+enum Date = Date(Int, Int, Int, Int)
 
 impl Date
     def year(self) -> Int

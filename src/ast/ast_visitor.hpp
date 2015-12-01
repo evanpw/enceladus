@@ -15,7 +15,7 @@ class CastNode;
 class ComparisonNode;
 class ConstructorSpec;
 class ContinueNode;
-class DataDeclaration;
+class EnumDeclaration;
 class ExternalFunctionCallNode;
 class ForeignDeclNode;
 class ForeverNode;
@@ -60,7 +60,7 @@ public:
 	virtual void visit(BlockNode* node);
 	virtual void visit(CastNode* node);
 	virtual void visit(ComparisonNode* node);
-	virtual void visit(DataDeclaration* node);
+	virtual void visit(EnumDeclaration* node);
 	virtual void visit(ForeverNode* node);
 	virtual void visit(ForNode* node);
 	virtual void visit(FunctionCallNode* node);
@@ -114,7 +114,7 @@ public:
 	UNSUPPORTED(ComparisonNode);
 	UNSUPPORTED(ConstructorSpec);
 	UNSUPPORTED(ContinueNode);
-	UNSUPPORTED(DataDeclaration);
+	UNSUPPORTED(EnumDeclaration);
 	UNSUPPORTED(ForeignDeclNode);
 	UNSUPPORTED(ForeverNode);
 	UNSUPPORTED(ForNode);

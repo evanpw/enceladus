@@ -24,7 +24,7 @@ private:
     StatementNode* if_statement();
     StatementNode* if_helper(const YYLTYPE& location);
     AssertNode* assert_statement();
-    DataDeclaration* data_declaration();
+    EnumDeclaration* enum_declaration();
     TypeAliasNode* type_alias();
     FunctionDefNode* function_definition();
     ForNode* for_statement();

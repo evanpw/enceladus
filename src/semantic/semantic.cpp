@@ -1542,7 +1542,7 @@ void SemanticAnalyzer::visit(ReturnNode* node)
     node->type = _typeTable->Unit;
 }
 
-void SemanticAnalyzer::visit(DataDeclaration* node)
+void SemanticAnalyzer::visit(EnumDeclaration* node)
 {
     // Data declarations cannot be local
     CHECK_TOP_LEVEL("data declaration");
@@ -1628,7 +1628,7 @@ void SemanticAnalyzer::visit(StructDefNode* node)
 
     CHECK(!node->members.empty(), "structs cannot be empty");
 
-    // TODO: Refactor these two cases (and maybe DataDeclaration as well)
+    // TODO: Refactor these two cases (and maybe EnumDeclaration as well)
     if (node->typeParams.empty())
     {
         Type* newType = _typeTable->createBaseType(node->name);

@@ -203,10 +203,10 @@ class TestAcceptance(object):
         self.run('adt2', result='2')
 
     def test_adt3(self):
-        self.run('adt3', build_error='Error: testing/adt3.spl:7:5: cannot repeat constructors in match statement')
+        self.run('adt3', build_error='Error: testing/adt3.spl:10:5: cannot repeat constructors in match statement')
 
     def test_adt4(self):
-        self.run('adt4', build_error='Error: testing/adt4.spl:4:1: switch statement is not exhaustive')
+        self.run('adt4', build_error='Error: testing/adt4.spl:7:1: switch statement is not exhaustive')
 
     def test_array1(self):
         self.run('array1', result='12345')
@@ -454,7 +454,7 @@ class TestAcceptance(object):
         self.run('genericTrait', '')
 
     def test_genericTrait2(self):
-        self.run('genericTrait2', build_error=Regex("Error: testing/genericTrait2.spl:5:11: cannot unify types ArrayIterator<Char> and 'T\d+: Iterator<Int>"))
+        self.run('genericTrait2', build_error=Regex("Error: testing/genericTrait2.spl:5:13: cannot unify types ArrayIterator<Char> and 'T\d+: Iterator<Int>"))
 
     def test_genericTrait3(self):
         self.run('genericTrait3', '72')

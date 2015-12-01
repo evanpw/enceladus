@@ -1,4 +1,6 @@
-data MyOption<T> = MySome(T) | MyNone
+enum MyOption<T>
+    MySome(T)
+    MyNone
 
 def isGood(a: MyOption<T>) -> Int
     match a

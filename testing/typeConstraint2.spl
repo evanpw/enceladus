@@ -4,7 +4,7 @@ def add(x: T, y: T) -> T where T: Num
 println $ show $ add(1, 2)
 println $ show $ add(3, 4)
 
-data Nothing = Nothing
+enum Nothing = Nothing
 
 impl Nothing
     def addTwoNumbers(self, lhs: T, rhs: T) -> T where T: Num

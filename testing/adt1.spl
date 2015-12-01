@@ -1,4 +1,7 @@
-data MyOption = MySome(Int) | MyNone
+enum MyOption
+    MySome(Int)
+    MyNone
+
 x := MySome(4)
 y := MyNone
 
