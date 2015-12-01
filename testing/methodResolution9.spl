@@ -1,8 +1,8 @@
-impl [T]
+impl List<T>
     def nothing(self)
         pass
 
-def f(x: [T])
+def f(x: List<T>)
     x.nothing()
 
 drop $ f([1i, 2, 3])

@@ -1,5 +1,5 @@
 # Int vector
-v := Vector::new()
+v := []
 
 for i in 1 til 11
     v.append(i)
@@ -12,7 +12,7 @@ for i in 0 til v.size
     total += v[i]
 
 # Boolean vector
-v2 := Vector::new()
+v2 := []
 v2.append(True)
 v2.append(False)
 

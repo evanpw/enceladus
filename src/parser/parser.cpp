@@ -1024,7 +1024,7 @@ TypeName* Parser::simple_type()
         TypeName* internalType = type();
         expect(']');
 
-        TypeName* typeName = new TypeName(_context, location, "List");
+        TypeName* typeName = new TypeName(_context, location, "Vector");
         typeName->parameters.push_back(internalType);
 
         return typeName;
@@ -1636,7 +1636,9 @@ ExpressionNode* Parser::unary_expression()
         expect('[');
         if (accept(']'))
         {
-            return new FunctionCallNode(_context, location, "Nil", {});
+            // [] -> Vector::new()
+            TypeName* typeName = new TypeName(_context, location, "Vector");
+            return new FunctionCallNode(_context, location, "new", {}, typeName);
         }
         else
         {

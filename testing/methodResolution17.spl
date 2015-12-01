@@ -1,5 +1,5 @@
-impl [T]
-    def nothing(self) -> [T]
+impl List<T>
+    def nothing(self) -> List<T>
         return self
 
-x := [].nothing()
+x := Nil.nothing()

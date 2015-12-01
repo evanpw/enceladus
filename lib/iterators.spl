@@ -66,7 +66,7 @@ struct Slide<I> where I: Iterator<T>
     n: UInt
 
     def new(iter: I, n: UInt) -> Slide<I>
-        window := Vector::new()
+        window := []
 
         for _ in 0 til n
             if let Some(elt) := iter.next()

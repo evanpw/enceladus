@@ -275,7 +275,7 @@ class TestAcceptance(object):
         self.run('method4', '3')
 
     def test_method5(self):
-        self.run('method5', build_error='Error: testing/method5.spl:11:5: type `[Int]` already has a method or member named `myAt`')
+        self.run('method5', build_error='Error: testing/method5.spl:11:5: type `List<Int>` already has a method or member named `myAt`')
 
     def test_map(self):
         self.run('map', result='3')
@@ -383,7 +383,7 @@ class TestAcceptance(object):
         self.run('callVariable', build_error='Error: testing/callVariable.spl:2:1: `x` is not a function')
 
     def test_wrongList(self):
-        self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types [Array<Char>] and [Int]')
+        self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types List<Array<Char>> and List<Int>')
 
     def test_constrainedImpl(self):
         self.run('constrainedImpl', '')
@@ -411,9 +411,9 @@ class TestAcceptance(object):
             '4': ' Error: testing/methodResolution4.spl:16:1: call to method `nothing` is ambiguous',
             '6': 'Error: testing/methodResolution6.spl:7:5: no method named `nothing` found for type `T`',
             '8': 'Error: testing/methodResolution8.spl:8:5: call to method `nothing` is ambiguous',
-            '10': 'Error: testing/methodResolution10.spl:6:5: no method named `nothing` found for type `[T]`',
-            '11': 'Error: testing/methodResolution11.spl:6:5: no method named `nothing` found for type `[T]`',
-            '14': 'Error: testing/methodResolution14.spl:6:5: no method named `nothing` found for type `[T: Num]`',
+            '10': 'Error: testing/methodResolution10.spl:6:5: no method named `nothing` found for type `List<T>`',
+            '11': 'Error: testing/methodResolution11.spl:6:5: no method named `nothing` found for type `List<T>`',
+            '14': 'Error: testing/methodResolution14.spl:6:5: no method named `nothing` found for type `List<T: Num>`',
         }
 
         for key, value in bad_tests.iteritems():
@@ -502,7 +502,7 @@ class TestAcceptance(object):
         self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.spl:1:1: can\'t add constraint `Iterator<Array<Char>>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
 
     def test_repeatedConstraint3(self):
-        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:19: cannot unify types [T: Iterator<T>] and Array<Char>')
+        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:19: cannot unify types List<T: Iterator<T>> and Array<Char>')
 
     def test_repeatedConstraint4(self):
         self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.spl:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')
@@ -529,7 +529,7 @@ class TestAcceptance(object):
         self.run('bf', result='Hello World!', command='testing/bf/hello.bf')
 
     def test_traitMismatch(self):
-        self.run('traitMismatch', build_error='Error: testing/traitMismatch.spl:5:1: override of trait method `next` has the wrong type:\nexpected: |Test<I: Iterator<T>>| -> Option<T>\nactual: |Test<I: Iterator<T>>| -> Option<Vector<T>>')
+        self.run('traitMismatch', build_error='Error: testing/traitMismatch.spl:5:1: override of trait method `next` has the wrong type:\nexpected: |Test<I: Iterator<T>>| -> Option<T>\nactual: |Test<I: Iterator<T>>| -> Option<[T]>')
 
     def test_nestedMap(self):
         self.run('nestedMap', '')

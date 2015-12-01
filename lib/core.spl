@@ -61,3 +61,14 @@ struct InclusiveRange<T: Num>
 
 def inclusiveRange(start: T, end: T) -> InclusiveRange<T>
     return InclusiveRange(start, end)
+
+impl Array<T>
+    def new() -> Array<T>
+        return unsafeEmptyArray(0)
+
+struct Vector<T>
+    content: Array<T>
+    size: UInt
+
+    def new() -> Vector<T>
+        return Vector(Array::new(), 0)

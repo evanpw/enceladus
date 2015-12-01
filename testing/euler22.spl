@@ -3,12 +3,12 @@ import IO
 import List
 import String
 
-def readNames() -> [String]
+def readNames() -> List<String>
     line := readLine(stdin)
 
     pieces := line.unwrap().splitBy(',')
 
-    result := []
+    result := Nil
     for piece in pieces
         result = result.insert $ piece.stripChar('"')
 

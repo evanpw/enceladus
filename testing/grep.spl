@@ -191,7 +191,7 @@ struct NFAState
     accepting: Bool
 
     def new(id: UInt) -> NFAState
-        return NFAState(id, dict(), Vector::new(), False)
+        return NFAState(id, dict(), [], False)
 
 impl Eq for NFAState
     def eq(self, other: NFAState) -> Bool
@@ -210,7 +210,7 @@ struct NFABuilder
     states: Vector<NFAState>
 
     def new() -> NFABuilder
-        return NFABuilder $ Vector::new()
+        return NFABuilder $ []
 
     def newState(self) -> NFAState
         state := NFAState::new(self.states.size)
@@ -412,7 +412,7 @@ def compileRegex(pattern: String) -> DFAState
 
 
 def matchRegex(dfa: DFAState, string: String) -> Option<String>
-    result := Vector::new()
+    result := []
 
     state := dfa
     for c in string

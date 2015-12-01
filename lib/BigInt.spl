@@ -1,7 +1,7 @@
 enum BigInt
-    BigInt([Int])
+    BigInt(List<Int>)
 
-    def digits(self) -> [Int]
+    def digits(self) -> List<Int>
         let BigInt(xs) := self
         return xs
 
@@ -10,7 +10,7 @@ enum BigInt
         ys := rhs.digits()
 
         carry := 0
-        result := []
+        result := Nil
 
         x := 0
         y := 0
@@ -38,7 +38,7 @@ enum BigInt
         xs := self.digits()
 
         carry := 0
-        result := []
+        result := Nil
 
         while not $ xs.empty() and carry == 0
             z := 0
@@ -67,7 +67,7 @@ enum BigInt
     def times(self, rhs: BigInt) -> BigInt
         ys := rhs.digits()
 
-        result := BigInt([]) # representation of zero
+        result := BigInt(Nil) # representation of zero
 
         for n in 0 til ys.length()
             y := ys.at(n)
@@ -79,14 +79,14 @@ enum BigInt
         return result
 
     def toString(self) -> String
-        s := []
+        s := Nil
         for x in self.digits()
             s = s.insert((x as Char) + '0')
 
         return String::fromList(s)
 
 def toBigInt(x: Int) -> BigInt
-    result := []
+    result := Nil
 
     while x != 0
         result = result.insert(x % 10)

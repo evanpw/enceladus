@@ -1,4 +1,4 @@
-def getFirst(xs: [Int], ys: [Int]) -> [Int]
+def getFirst(xs: List<Int>, ys: List<Int>) -> List<Int>
     return xs
 
 result := getFirst([1, 2], (1 to 1000000).toList())

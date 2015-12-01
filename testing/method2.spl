@@ -2,8 +2,8 @@ impl Int
     def equal(self, other: Int) -> Bool
         return self == other
 
-impl [Int]
-    def equal(self, other: [Int]) -> Bool
+impl List<Int>
+    def equal(self, other: List<Int>) -> Bool
         if self.empty()
             return other.empty()
 

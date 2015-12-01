@@ -1,3 +1,3 @@
-impl [T] where T: Iterator<T> + Iterator<T>
+impl List<T> where T: Iterator<T> + Iterator<T>
     def f(self)
         println $ self

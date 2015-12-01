@@ -63,9 +63,6 @@ impl InclusiveRange<T>
 
 ## Array ##
 impl Array<T>
-    def new() -> Array<T>
-        return unsafeEmptyArray(0)
-
     def make(size: UInt, value: T) -> Array<T>
         arr := unsafeEmptyArray(size)
 
@@ -244,7 +241,7 @@ impl List<T>
         else
             panic $ "Called head on empty list"
 
-    def tail(self) -> [T]
+    def tail(self) -> List<T>
         if let Cons(_, rest) := self
             return rest
         else
@@ -257,7 +254,7 @@ impl List<T>
             return False
 
 def reversed(iter: S) -> List<T> where S: Iterable<T>
-    xs := []
+    xs := Nil
     for x in iter
         xs = xs.insert(x)
 
@@ -284,42 +281,42 @@ impl List<T>
 
         return result
 
-    def take(self, n: UInt) -> [T]
+    def take(self, n: UInt) -> List<T>
         if n == 0
-            return []
+            return Nil
         else
             return self.tail().take(n - 1).insert $ self.head()
 
-    def drop(self, n: UInt) -> [T]
+    def drop(self, n: UInt) -> List<T>
         if n == 0
             return self
         else
             return self.tail().drop(n - 1)
 
-    def reverse(self) -> [T]
-        ys := []
+    def reverse(self) -> List<T>
+        ys := Nil
         for x in self
             ys = ys.insert(x)
 
         return ys
 
-    def filter(self, f: T -> Bool) -> [T]
-        result := []
+    def filter(self, f: T -> Bool) -> List<T>
+        result := Nil
         for x in self
             if f(x)
                 result = result.insert(x)
 
         return result.reverse()
 
-    def map(self, f: T -> S) -> [S]
-        result := []
+    def map(self, f: T -> S) -> List<S>
+        result := Nil
         for x in self
             result = result.insert $ f(x)
 
         return result.reverse()
 
-impl Eq for [T] where T: Eq
-    def eq(self, other: [T]) -> Bool
+impl Eq for List<T> where T: Eq
+    def eq(self, other: List<T>) -> Bool
         if self.empty()
             return other.empty()
         elif other.empty()
@@ -330,11 +327,11 @@ impl Eq for [T] where T: Eq
         else
             return self.tail() == other.tail()
 
-    def ne(self, other: [T]) -> Bool
+    def ne(self, other: List<T>) -> Bool
         return not $ self == other
 
 impl String
-    def fromList(chars: [Char]) -> String
+    def fromList(chars: List<Char>) -> String
         n := chars.length()
 
         result := unsafeEmptyArray(n)
@@ -347,7 +344,7 @@ impl String
 
 impl S: Iterable<T>
     def toList(self) -> List<T>
-        result := []
+        result := Nil
 
         for x in self
             result = result.insert(x)
@@ -356,13 +353,7 @@ impl S: Iterable<T>
 
 
 ## Vector ##
-struct Vector<T>
-    content: Array<T>
-    size: UInt
-
-    def new() -> Vector<T>
-        return Vector(Array::new(), 0)
-
+impl Vector<T>
     def append(self, x: T)
         if self.size < self.content.length()
             self.content[self.size] = x
@@ -445,7 +436,7 @@ impl Iterable<T> for Vector<T>
 
 impl S: Iterable<T>
     def toVector(self) -> Vector<T>
-        result := Vector::new()
+        result := []
 
         for x in self
             result.append(x)
@@ -494,7 +485,7 @@ def drop(x: T)
     pass
 
 
-def sum(xs: [T]) -> T where T: Num
+def sum(xs: List<T>) -> T where T: Num
     result := 0
     for x in xs
         result += x
@@ -502,7 +493,7 @@ def sum(xs: [T]) -> T where T: Num
     return result
 
 
-def product(xs: [T]) -> T where T: Num
+def product(xs: List<T>) -> T where T: Num
     if xs.empty()
         return 1
     else
@@ -523,14 +514,14 @@ def min(a: T, b: T) -> T where T: Num
         return b
 
 
-def maximum(xs: [T]) -> T where T: Num
+def maximum(xs: List<T>) -> T where T: Num
     if xs.length() == 1
         return xs.head()
     else
         return max(xs.head(), maximum $ xs.tail())
 
 
-def minimum(xs: [T]) -> T where T: Num
+def minimum(xs: List<T>) -> T where T: Num
     if xs.length() == 1
         return xs.head()
     else
@@ -580,7 +571,7 @@ enum Pair<S, T>
             Pair(_, x) => return x
 
 
-def splitAt(n: UInt, xs: [T]) -> Pair<[T], [T]>
+def splitAt(n: UInt, xs: List<T>) -> Pair<List<T>, List<T>>
     return Pair(xs.take(n), xs.drop(n))
 
 
@@ -611,8 +602,8 @@ impl Ord for Char
         else
             return Equal
 
-impl Ord for [T] where T: Ord
-    def cmp(self, other: [T]) -> Ordering
+impl Ord for List<T> where T: Ord
+    def cmp(self, other: List<T>) -> Ordering
         if self.empty()
             if other.empty()
                 return Equal
@@ -720,8 +711,8 @@ impl Add for String
 
         return result
 
-impl Add for [T]
-    def add(self, other: [T]) -> [T]
+impl Add for List<T>
+    def add(self, other: List<T>) -> List<T>
         result := other
 
         for x in self.reverse()
@@ -753,7 +744,7 @@ trait Show
 
 impl Show for T: Num
     def show(self) -> String
-        digits := Vector::new()
+        digits := []
 
         plusx := self as UInt
         negative := False

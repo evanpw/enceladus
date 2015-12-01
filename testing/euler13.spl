@@ -4,7 +4,7 @@ import IO
 import String
 
 def readNumber() -> BigInt
-    ys := []
+    ys := Nil
 
     line := readLine(stdin)
     pieces := line.unwrap().split()

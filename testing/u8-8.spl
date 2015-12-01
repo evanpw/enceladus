@@ -1,4 +1,4 @@
-v := Vector::new()
+v := []
 
 for x in 1u8 til 10u8
     v.append(x)

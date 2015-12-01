@@ -1,10 +1,10 @@
 # Solves Project Euler 12
 
-def countGroups(xs: [Int]) -> [Int]
+def countGroups(xs: List<Int>) -> List<Int>
     if xs.empty()
-        return []
+        return Nil
 
-    result := []
+    result := Nil
     last := xs.head()
     count := 1
     xs = xs.tail()
@@ -21,11 +21,11 @@ def countGroups(xs: [Int]) -> [Int]
 
     return result.insert(count).reverse()
 
-def factor(n: Int) -> [Int]
+def factor(n: Int) -> List<Int>
     if n == 1
-        return []
+        return Nil
 
-    factors := []
+    factors := Nil
     i := 2
 
     while n > 1

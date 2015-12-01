@@ -3,7 +3,7 @@ import BigInt
 import List
 import String
 
-values := []
+values := Nil
 for a in 2 to 100
     for b in 2 to 100
         n := bigPower(a, b)

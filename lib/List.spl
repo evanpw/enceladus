@@ -1,5 +1,5 @@
 # List operations
-def isIn(x: T, ys: [T]) -> Bool where T: Eq
+def isIn(x: T, ys: List<T>) -> Bool where T: Eq
     for y in ys
         if x == y
             return True
@@ -7,9 +7,9 @@ def isIn(x: T, ys: [T]) -> Bool where T: Eq
     return False
 
 
-def splitList(xs: [T], pivot: T) -> Pair<[T], [T]> where T: PartialOrd
-    lhs := []
-    rhs := []
+def splitList(xs: List<T>, pivot: T) -> Pair<List<T>, List<T>> where T: PartialOrd
+    lhs := Nil
+    rhs := Nil
 
     for x in xs
         if x < pivot
@@ -20,7 +20,7 @@ def splitList(xs: [T], pivot: T) -> Pair<[T], [T]> where T: PartialOrd
     return Pair(lhs, rhs)
 
 
-def sort(xs: [T]) -> [T] where T: PartialOrd
+def sort(xs: List<T>) -> List<T> where T: PartialOrd
     if xs.length() <= 1
         return xs
 
@@ -30,9 +30,9 @@ def sort(xs: [T]) -> [T] where T: PartialOrd
     return sort(lhs) + [pivot] + sort(rhs)
 
 
-def uniquify(xs: [T]) -> [T] where T: Ord
+def uniquify(xs: List<T>) -> List<T> where T: Ord
     if xs.empty()
-        return []
+        return Nil
 
     xs = sort(xs)
 

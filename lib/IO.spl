@@ -35,7 +35,7 @@ def readChar(file: File) -> Option<Char>
 
 
 def readLine(file: File) -> Option<String>
-    v := Vector::new()
+    v := []
 
     forever
         match readChar(file)
@@ -53,7 +53,7 @@ def readLine(file: File) -> Option<String>
 
 
 def readAll(file: File) -> String
-    v := Vector::new()
+    v := []
 
     forever
         match readChar(file)

@@ -1,4 +1,4 @@
-xs := []
+xs := Nil
 if not $ xs.empty()
     println $ "Hello"
 

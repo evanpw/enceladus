@@ -1,4 +1,4 @@
-def f(xs: [Int])
+def f(xs: List<Int>)
     println $ show $ xs.head()
 
 f(["a", "b", "c"])

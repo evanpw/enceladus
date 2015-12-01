@@ -77,7 +77,7 @@ static std::string toString(const Type* type, std::unordered_set<const Type*>& v
 
             std::stringstream ss;
 
-            if (constructedType->name() == "List")
+            if (constructedType->name() == "Vector")
             {
                 assert(constructedType->typeParameters().size() == 1);
                 ss << "[" << toString(constructedType->typeParameters()[0]) << "]";

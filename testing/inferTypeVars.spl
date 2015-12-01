@@ -14,13 +14,13 @@ foreign foreignTest(x: T)
 
 trait Nothing1
 
-impl Nothing1 for [T]
+impl Nothing1 for List<T>
 
 impl Nothing1 for Test<T>
 
 trait Nothing2<T>
 
-impl Nothing2<T> for [T]
+impl Nothing2<T> for List<T>
 
 impl Int
     def f(self, other: T) -> T

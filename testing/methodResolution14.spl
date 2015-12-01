@@ -1,6 +1,6 @@
-impl [Int]
+impl List<Int>
     def nothing(self)
         pass
 
-def f(x: [T]) where T: Num
+def f(x: List<T>) where T: Num
     x.nothing()

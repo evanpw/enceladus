@@ -66,7 +66,7 @@ impl String
             return self.slice(left, n - left - right)
 
     def split(s) -> Vector<String>
-        result := Vector::new()
+        result := []
         start := 0
 
         len := s.length()
@@ -82,7 +82,7 @@ impl String
         return result
 
     def splitBy(s, sep: Char) -> Vector<String>
-        result := Vector::new()
+        result := []
         start := 0
 
         len := s.length()

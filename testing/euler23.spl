@@ -1,7 +1,7 @@
 # Solves Project Euler #23
 import List
 
-def divisors(n: Int) -> [Int]
+def divisors(n: Int) -> List<Int>
     result := [1]
 
     i := 2
@@ -39,7 +39,7 @@ def isSumOfTwo(y: Int, xs: Array<Int>) -> Bool
     return False
 
 # Find all abundant numbers less than the limit
-reversedList := []
+reversedList := Nil
 for i in 1 til 28124
     if isAbundant(i)
         reversedList = reversedList.insert(i)

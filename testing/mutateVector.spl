@@ -1,4 +1,4 @@
-x := Vector::new()
+x := []
 x.append(10)
 x[0] = 5
 x[0] += 15

@@ -10,7 +10,7 @@ def sieve(n: UInt) -> Vector<UInt>
 
             maybePrime[i * j] = False
 
-    result := Vector::new()
+    result := []
     for i in 2 til n
         if maybePrime[i]
             result.append(i)

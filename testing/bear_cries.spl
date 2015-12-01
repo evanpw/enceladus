@@ -5,14 +5,14 @@ struct Progress
 
 impl Progress
     def new() -> Progress
-        return Progress(Vector::new(), Vector::new())
+        return Progress([], [])
 
     def clone(self) -> Progress
         return Progress(self.nonempty.clone(), self.closed.clone())
 
 impl Vector<Bool>
     def toString(self) -> String
-        result := []
+        result := Nil
         for x in self
             if x
                 result = result.insert('1')

@@ -1,14 +1,14 @@
 # Solves Project Euler #24
 
-def toUInt(xs: [UInt]) -> UInt
+def toUInt(xs: List<UInt>) -> UInt
     result := 0
     for x in xs
         result = (result * 10) + x
 
     return result
 
-def delete(x: UInt, xs: [UInt]) -> [UInt]
-    initial := []
+def delete(x: UInt, xs: List<UInt>) -> List<UInt>
+    initial := Nil
     xs' := xs
 
     while not $ xs'.empty()
@@ -29,7 +29,7 @@ def factorial(n: UInt) -> UInt
 
     return result
 
-def permutationAt(n: UInt, digits: [UInt]) -> [UInt]
+def permutationAt(n: UInt, digits: List<UInt>) -> List<UInt>
     if digits.length() == 1
         assert n == 0
         return [digits.head()]

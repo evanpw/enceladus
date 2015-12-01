@@ -2,15 +2,15 @@
 import IO
 import String
 
-def readInput() -> [[Int]]
-    pyramid := []
+def readInput() -> List<List<Int>>
+    pyramid := Nil
 
     forever
         maybeLine := readLine(stdin)
 
         match maybeLine
             Some(line)
-                xs := []
+                xs := Nil
                 for s in line.split()
                     xs = xs.insert $ s.toInt().unwrap()
 
@@ -23,7 +23,7 @@ def readInput() -> [[Int]]
 
     return pyramid.reverse()
 
-def bestRouteFrom(x: UInt, y: UInt, pyramid: [[Int]]) -> Int
+def bestRouteFrom(x: UInt, y: UInt, pyramid: List<List<Int>>) -> Int
     row := pyramid.at(y)
     here := row.at(x)
 

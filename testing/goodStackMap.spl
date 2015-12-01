@@ -1,7 +1,7 @@
 def triggerGC()
     xs := (1 to 1000000).toVector()
 
-def only(value: T) -> [T]
+def only(value: T) -> List<T>
     x := value
     ys := Nil
     triggerGC()

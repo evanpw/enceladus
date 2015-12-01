@@ -60,7 +60,7 @@ def compileNext(iter: Peekable<I>, depth: Int) -> Option<Instruction> where I: I
             return Some(In)
 
         elif c == '['
-            body := Vector::new()
+            body := []
 
             while let Some(inst) := compileNext(iter, depth + 1)
                 if let Close := inst
@@ -79,7 +79,7 @@ def compileNext(iter: Peekable<I>, depth: Int) -> Option<Instruction> where I: I
     return None
 
 def compile(program: String) -> Vector<Instruction>
-    result := Vector::new()
+    result := []
 
     iter := program.iter().peekable()
 
@@ -89,7 +89,7 @@ def compile(program: String) -> Vector<Instruction>
     return result
 
 def clearLoop(program: Vector<Instruction>) -> Vector<Instruction>
-    result := Vector::new()
+    result := []
 
     for i in 0 til program.length()
         inst := program[i]
@@ -112,7 +112,7 @@ def combineIncrements(program: Vector<Instruction>) -> Vector<Instruction>
     if program.length() == 0
         return program
 
-    result := Vector::new()
+    result := []
 
     if let Loop(body) := program[0]
         result.append $ Loop $ combineIncrements(body)

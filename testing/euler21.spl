@@ -1,6 +1,6 @@
 # Solves Project Euler #21
 
-def divisors(n: Int) -> [Int]
+def divisors(n: Int) -> List<Int>
     result := [1]
 
     i := 2

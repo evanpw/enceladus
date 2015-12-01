@@ -1,6 +1,6 @@
-impl [Int]
+impl List<Int>
     def nothing(self)
         pass
 
-def f(x: [T])
+def f(x: List<T>)
     x.nothing()
