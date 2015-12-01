@@ -1,0 +1,125 @@
+def isSpace(c: Char) -> Bool
+    if c == ' ' or c == '\n' or c == '\r' or c == '\t'
+        return True
+    else
+        return False
+
+impl String
+    def rstrip(self) -> String
+        n := self.length()
+
+        i := 0
+        while i < n and isSpace $ self[n - 1 - i]
+            i += 1
+
+        if i == 0
+            return self
+        else
+            return self.slice(0, n - i)
+
+    def lstrip(self) -> String
+        n := self.length()
+
+        i := 0
+        while i < n and isSpace $ self[i]
+            i += 1
+
+        if i == 0
+            return self
+        else
+            return self.slice(i, n - i)
+
+    def strip(self) -> String
+        n := self.length()
+
+        left := 0
+        while left < n and isSpace $ self[left]
+            left += 1
+
+        right := 0
+        while right < n and isSpace $ self[n - 1 - right]
+            right += 1
+
+        if left + right == 0
+            return self
+        elif left + right > n
+            return ""
+        else
+            return self.slice(left, n - left - right)
+
+    def stripChar(self, c: Char) -> String
+        n := self.length()
+
+        left := 0
+        while left < n and self[left] == c
+            left += 1
+
+        right := 0
+        while right < n and self[n - 1 - right] == c
+            right += 1
+
+        if left + right == 0
+            return self
+        elif left + right > n
+            return ""
+        else
+            return self.slice(left, n - left - right)
+
+    def split(s) -> Vector<String>
+        result := []
+        start := 0
+
+        len := s.length()
+        for i in 0 til len
+            if isSpace $ s[i]
+                len := i - start
+                result.append $ s.slice(start, len)
+                start = i + 1
+
+        if start < len
+            result.append $ s.slice(start, len - start)
+
+        return result
+
+    def splitBy(s, sep: Char) -> Vector<String>
+        result := []
+        start := 0
+
+        len := s.length()
+        for i in 0 til len
+            if s.at(i) == sep
+                len := i - start
+                result.append $ s.slice(start, len)
+                start = i + 1
+
+        if start < len
+            result.append $ s.slice(start, len - start)
+
+        return result
+
+    def join(self, xs: T) -> String where T: Iterable<String>
+        result := ""
+
+        first := True
+        for x in xs
+            if not $ first
+                result += self
+
+            result += x
+
+            first = False
+
+        return result
+
+    def toInt(s) -> Option<Int>
+        x := 0
+        for i in 0 til s.length()
+            digit := s.at(i)
+
+            if digit < '0' or digit > '9'
+                return None
+
+            x *= 10
+            x += (digit - '0') as Int
+
+        return Some(x)

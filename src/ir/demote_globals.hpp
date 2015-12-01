@@ -3,7 +3,7 @@
 
 #include "ir/context.hpp"
 
-// Demote globals which are only ever used in splmain to local variables
+// Demote globals which are only ever used in encmain to local variables
 class DemoteGlobals
 {
 public:

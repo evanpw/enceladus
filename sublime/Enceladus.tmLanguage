@@ -4,12 +4,12 @@
 <dict>
 	<key>fileTypes</key>
 	<array>
-		<string>spl</string>
+		<string>enc</string>
 	</array>
 	<key>keyEquivalent</key>
 	<string>^~H</string>
 	<key>name</key>
-	<string>Simple</string>
+	<string>Enceladus</string>
 	<key>patterns</key>
 	<array>
 		<dict>
@@ -18,7 +18,7 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>support.function.builtin.simple</string>
+					<string>support.function.builtin.enceladus</string>
 				</dict>
 			</dict>
 			<key>match</key>
@@ -33,7 +33,7 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
@@ -43,11 +43,11 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>name</key>
-			<string>meta.declaration.module.simple</string>
+			<string>meta.declaration.module.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
@@ -74,7 +74,7 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
@@ -84,30 +84,30 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>name</key>
-			<string>meta.declaration.class.simple</string>
+			<string>meta.declaration.class.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
 					<key>match</key>
 					<string>\b(Monad|Functor|Eq|Ord|Read|Show|Num|(Frac|Ra)tional|Enum|Bounded|Real(Frac|Float)?|Integral|Floating)\b</string>
 					<key>name</key>
-					<string>support.class.prelude.simple</string>
+					<string>support.class.prelude.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>[A-Z][A-Za-z_']*</string>
 					<key>name</key>
-					<string>entity.other.inherited-class.simple</string>
+					<string>entity.other.inherited-class.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\b[a-z][a-zA-Z0-9_']*\b</string>
 					<key>name</key>
-					<string>variable.other.generic-type.simple</string>
+					<string>variable.other.generic-type.enceladus</string>
 				</dict>
 			</array>
 		</dict>
@@ -119,7 +119,7 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
@@ -129,11 +129,11 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>name</key>
-			<string>meta.declaration.instance.simple</string>
+			<string>meta.declaration.instance.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
@@ -150,20 +150,20 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
 			<string>($|;)</string>
 			<key>name</key>
-			<string>meta.import.simple</string>
+			<string>meta.import.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
 					<key>match</key>
 					<string>(qualified|as|hiding)</string>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 				<dict>
 					<key>include</key>
@@ -187,20 +187,20 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.simple</string>
+					<string>keyword.other.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
 			<string>\)</string>
 			<key>name</key>
-			<string>meta.deriving.simple</string>
+			<string>meta.deriving.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
 					<key>match</key>
 					<string>\b[A-Z][a-zA-Z_']*</string>
 					<key>name</key>
-					<string>entity.other.inherited-class.simple</string>
+					<string>entity.other.inherited-class.enceladus</string>
 				</dict>
 			</array>
 		</dict>
@@ -208,31 +208,31 @@
 			<key>match</key>
 			<string>\b(import|let|var|type|enum|struct|match|trait|impl)\b</string>
 			<key>name</key>
-			<string>keyword.other.simple</string>
+			<string>keyword.other.enceladus</string>
 		</dict>
 		<dict>
 			<key>match</key>
 			<string>\b(and|or|in|to|til|as|where)\b</string>
 			<key>name</key>
-			<string>keyword.other.simple</string>
+			<string>keyword.other.enceladus</string>
 		</dict>
 		<dict>
 			<key>match</key>
 			<string>\binfix[lr]?\b</string>
 			<key>name</key>
-			<string>keyword.operator.simple</string>
+			<string>keyword.operator.enceladus</string>
 		</dict>
 		<dict>
 			<key>match</key>
 			<string>\b(do|if|then|else|while|for|return|break|forever|elif|pass|continue)\b</string>
 			<key>name</key>
-			<string>keyword.control.simple</string>
+			<string>keyword.control.enceladus</string>
 		</dict>
 		<dict>
 			<key>match</key>
 			<string>\b([0-9]+|0([xX][0-9a-fA-F]+|[oO][0-7]+))(i|u|u8)?\b</string>
 			<key>name</key>
-			<string>constant.numeric.simple</string>
+			<string>constant.numeric.enceladus</string>
 		</dict>
 		<dict>
 			<key>include</key>
@@ -246,7 +246,7 @@
 				<key>0</key>
 				<dict>
 					<key>name</key>
-					<string>punctuation.definition.string.begin.simple</string>
+					<string>punctuation.definition.string.begin.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
@@ -256,30 +256,30 @@
 				<key>0</key>
 				<dict>
 					<key>name</key>
-					<string>punctuation.definition.string.end.simple</string>
+					<string>punctuation.definition.string.end.enceladus</string>
 				</dict>
 			</dict>
 			<key>name</key>
-			<string>string.quoted.double.simple</string>
+			<string>string.quoted.double.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
 					<key>match</key>
 					<string>\\(NUL|SOH|STX|ETX|EOT|ENQ|ACK|BEL|BS|HT|LF|VT|FF|CR|SO|SI|DLE|DC1|DC2|DC3|DC4|NAK|SYN|ETB|CAN|EM|SUB|ESC|FS|GS|RS|US|SP|DEL|[abfnrtv\\\"'\&amp;])</string>
 					<key>name</key>
-					<string>constant.character.escape.simple</string>
+					<string>constant.character.escape.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\\o[0-7]+|\\x[0-9A-Fa-f]+|\\[0-9]+</string>
 					<key>name</key>
-					<string>constant.character.escape.octal.simple</string>
+					<string>constant.character.escape.octal.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\^[A-Z@\[\]\\\^_]</string>
 					<key>name</key>
-					<string>constant.character.escape.control.simple</string>
+					<string>constant.character.escape.control.enceladus</string>
 				</dict>
 			</array>
 		</dict>
@@ -293,7 +293,7 @@
 				<key>0</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.quasibracket.simple</string>
+					<string>keyword.other.quasibracket.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
@@ -303,35 +303,35 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>string.quasiquoted.simple</string>
+					<string>string.quasiquoted.enceladus</string>
 				</dict>
 				<key>2</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.quasibracket.simple</string>
+					<string>keyword.other.quasibracket.enceladus</string>
 				</dict>
 			</dict>
 			<key>name</key>
-			<string>meta.other.quasiquote.simple</string>
+			<string>meta.other.quasiquote.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
 					<key>match</key>
 					<string>\$\(</string>
 					<key>name</key>
-					<string>keyword.other.splice.simple</string>
+					<string>keyword.other.splice.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\$</string>
 					<key>name</key>
-					<string>string.quasiquoted.simple</string>
+					<string>string.quasiquoted.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>[^$]*</string>
 					<key>name</key>
-					<string>string.quasiquoted.simple</string>
+					<string>string.quasiquoted.enceladus</string>
 				</dict>
 			</array>
 		</dict>
@@ -341,7 +341,7 @@
 			<key>match</key>
 			<string>\$\(</string>
 			<key>name</key>
-			<string>keyword.other.splice.simple</string>
+			<string>keyword.other.splice.enceladus</string>
 		</dict>
 		<dict>
 			<key>begin</key>
@@ -351,7 +351,7 @@
 				<key>0</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.quasibracket.simple</string>
+					<string>keyword.other.quasibracket.enceladus</string>
 				</dict>
 			</dict>
 			<key>end</key>
@@ -361,23 +361,23 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>string.quasiquoted.simple</string>
+					<string>string.quasiquoted.enceladus</string>
 				</dict>
 				<key>2</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.other.quasibracket.simple</string>
+					<string>keyword.other.quasibracket.enceladus</string>
 				</dict>
 			</dict>
 			<key>name</key>
-			<string>meta.other.quasiquote.simple</string>
+			<string>meta.other.quasiquote.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
 					<key>match</key>
 					<string>.*</string>
 					<key>name</key>
-					<string>string.quasiquoted.simple</string>
+					<string>string.quasiquoted.enceladus</string>
 				</dict>
 			</array>
 		</dict>
@@ -387,32 +387,32 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>punctuation.definition.string.begin.simple</string>
+					<string>punctuation.definition.string.begin.enceladus</string>
 				</dict>
 				<key>2</key>
 				<dict>
 					<key>name</key>
-					<string>constant.character.escape.simple</string>
+					<string>constant.character.escape.enceladus</string>
 				</dict>
 				<key>3</key>
 				<dict>
 					<key>name</key>
-					<string>constant.character.escape.octal.simple</string>
+					<string>constant.character.escape.octal.enceladus</string>
 				</dict>
 				<key>4</key>
 				<dict>
 					<key>name</key>
-					<string>constant.character.escape.hexadecimal.simple</string>
+					<string>constant.character.escape.hexadecimal.enceladus</string>
 				</dict>
 				<key>5</key>
 				<dict>
 					<key>name</key>
-					<string>constant.character.escape.control.simple</string>
+					<string>constant.character.escape.control.enceladus</string>
 				</dict>
 				<key>6</key>
 				<dict>
 					<key>name</key>
-					<string>punctuation.definition.string.end.simple</string>
+					<string>punctuation.definition.string.end.enceladus</string>
 				</dict>
 			</dict>
 			<key>match</key>
@@ -430,7 +430,7 @@
 			(')
 			</string>
 			<key>name</key>
-			<string>string.quoted.single.simple</string>
+			<string>string.quoted.single.enceladus</string>
 		</dict>
 		<dict>
 			<key>match</key>
@@ -440,12 +440,12 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>support.function.builtin.simple</string>
+					<string>support.function.builtin.enceladus</string>
 				</dict>
 				<key>2</key>
 				<dict>
 					<key>name</key>
-					<string>entity.name.function.source.simple</string>
+					<string>entity.name.function.source.enceladus</string>
 				</dict>
 			</dict>
 		</dict>
@@ -457,12 +457,12 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.source.simple</string>
+					<string>keyword.source.enceladus</string>
 				</dict>
 				<key>2</key>
 				<dict>
 					<key>name</key>
-					<string>entity.name.function.source.simple</string>
+					<string>entity.name.function.source.enceladus</string>
 				</dict>
 			</dict>
 		</dict>
@@ -470,7 +470,7 @@
 			<key>match</key>
 			<string>\b[A-Z]\w*\b</string>
 			<key>name</key>
-			<string>constant.other.simple</string>
+			<string>constant.other.enceladus</string>
 		</dict>
 		<dict>
 			<key>include</key>
@@ -484,13 +484,13 @@
 			<key>match</key>
 			<string>(\+|-|\*|/|%|&gt;|&lt;|:|=|:=|\$|\||\^|->|=&gt;|&lt;=|&gt;=|==|!=|::|\+=|-=|\*=|\/=|\+\+)</string>
 			<key>name</key>
-			<string>keyword.operator.simple</string>
+			<string>keyword.operator.enceladus</string>
 		</dict>
 		<dict>
 			<key>match</key>
 			<string>,</string>
 			<key>name</key>
-			<string>punctuation.separator.comma.simple</string>
+			<string>punctuation.separator.comma.enceladus</string>
 		</dict>
 	</array>
 	<key>repository</key>
@@ -505,13 +505,13 @@
 						<key>1</key>
 						<dict>
 							<key>name</key>
-							<string>punctuation.definition.comment.simple</string>
+							<string>punctuation.definition.comment.enceladus</string>
 						</dict>
 					</dict>
 					<key>match</key>
 					<string>(#).*$\n?</string>
 					<key>name</key>
-					<string>comment.line.double-dash.simple</string>
+					<string>comment.line.double-dash.enceladus</string>
 				</dict>
 			</array>
 		</dict>
@@ -520,7 +520,7 @@
 			<key>match</key>
 			<string>(\([|!%$+:\-.=&lt;/&gt;]+\)|\(,+\))</string>
 			<key>name</key>
-			<string>entity.name.function.infix.simple</string>
+			<string>entity.name.function.infix.enceladus</string>
 		</dict>
 		<key>module_exports</key>
 		<dict>
@@ -529,26 +529,26 @@
 			<key>end</key>
 			<string>\)</string>
 			<key>name</key>
-			<string>meta.declaration.exports.simple</string>
+			<string>meta.declaration.exports.enceladus</string>
 			<key>patterns</key>
 			<array>
 				<dict>
 					<key>match</key>
 					<string>\b[a-z][a-zA-Z_'0-9]*</string>
 					<key>name</key>
-					<string>entity.name.function.simple</string>
+					<string>entity.name.function.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\b[A-Z][A-Za-z_'0-9]*</string>
 					<key>name</key>
-					<string>storage.type.simple</string>
+					<string>storage.type.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>,</string>
 					<key>name</key>
-					<string>punctuation.separator.comma.simple</string>
+					<string>punctuation.separator.comma.enceladus</string>
 				</dict>
 				<dict>
 					<key>include</key>
@@ -560,7 +560,7 @@
 					<key>match</key>
 					<string>\(.*?\)</string>
 					<key>name</key>
-					<string>meta.other.unknown.simple</string>
+					<string>meta.other.unknown.enceladus</string>
 				</dict>
 				<dict>
 					<key>include</key>
@@ -573,7 +573,7 @@
 			<key>match</key>
 			<string>[A-Z][A-Za-z._']*</string>
 			<key>name</key>
-			<string>support.other.module.simple</string>
+			<string>support.other.module.enceladus</string>
 		</dict>
 		<key>type_signature</key>
 		<dict>
@@ -587,31 +587,31 @@
 					<key>match</key>
 					<string>-&gt;</string>
 					<key>name</key>
-					<string>keyword.other.arrow.simple</string>
+					<string>keyword.other.arrow.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>=&gt;</string>
 					<key>name</key>
-					<string>keyword.other.big-arrow.simple</string>
+					<string>keyword.other.big-arrow.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\b[a-z][a-zA-Z0-9_']*\b</string>
 					<key>name</key>
-					<string>variable.other.generic-type.simple</string>
+					<string>variable.other.generic-type.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\b[A-Z][a-zA-Z0-9_']*\b</string>
 					<key>name</key>
-					<string>storage.type.simple</string>
+					<string>storage.type.enceladus</string>
 				</dict>
 				<dict>
 					<key>match</key>
 					<string>\(\)</string>
 					<key>name</key>
-					<string>support.constant.unit.simple</string>
+					<string>support.constant.unit.enceladus</string>
 				</dict>
 				<dict>
 					<key>include</key>
@@ -621,7 +621,7 @@
 		</dict>
 	</dict>
 	<key>scopeName</key>
-	<string>source.simple</string>
+	<string>source.enceladus</string>
 	<key>uuid</key>
 	<string>5C034675-1F6D-497E-8073-369D37E2FD7D</string>
 </dict>

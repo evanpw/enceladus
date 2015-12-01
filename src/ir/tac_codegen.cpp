@@ -612,7 +612,7 @@ static FunctionDefNode* getFunctionDefinition(const Symbol* symbol)
 
 void TACCodeGen::visit(ProgramNode* node)
 {
-    Function* main = _context->createFunction("splmain");
+    Function* main = _context->createFunction("encmain");
     _currentFunction = main;
     setBlock(createBlock());
 

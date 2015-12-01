@@ -1,0 +1,789 @@
+import core
+
+## List ##
+enum List<T>
+    Cons(T, List<T>)
+    Nil
+
+    def insert(self, x: T) -> List<T>
+        return Cons(x, self)
+
+
+## Iterator / Iterable traits ##
+impl Iterable<T> for S where S: Iterator<T>
+    type IteratorType = S
+
+    def iter(self) -> S
+        return self
+
+
+## Eq trait ##
+impl Eq for T: Num
+    def eq(self, other: T) -> Bool
+        return self == other
+
+    def ne(self, other: T) -> Bool
+        return self != other
+
+impl Eq for Char
+    def eq(self, other: Char) -> Bool
+        return self == other
+
+    def ne(self, other: Char) -> Bool
+        return self != other
+
+
+## Ranges ##
+impl Iterator<T> for Range<T>
+    def next(self) -> Option<T>
+        if self.start < self.end
+            result := self.start
+            self.start += 1
+            return Some(result)
+        else
+            return None
+
+impl Range<T>
+    def empty(self) -> Bool
+        return self.start >= self.end
+
+impl Iterator<T> for InclusiveRange<T>
+    def next(self) -> Option<T>
+        if self.start <= self.end
+            result := self.start
+            self.start += 1
+            return Some(result)
+        else
+            return None
+
+impl InclusiveRange<T>
+    def empty(self) -> Bool
+        return self.start > self.end
+
+
+## Array ##
+impl Array<T>
+    def make(size: UInt, value: T) -> Array<T>
+        arr := unsafeEmptyArray(size)
+
+        # MUST NOT collect garbage in between allocation and initialization
+        # if T is boxed
+
+        i := 0
+        while i < size
+            unsafeArraySet(arr, i, value)
+            i += 1
+
+        return arr
+
+# Method wrappers (methods can't be implemented in C)
+impl Index<UInt, T> for Array<T>
+    def at(self, n: UInt) -> T
+        assert n < arrayLength(self)
+        return unsafeArrayAt(self, n)
+
+impl IndexSet<UInt, T> for Array<T>
+    def set(self, n: UInt, value: T)
+        assert n < arrayLength(self)
+        unsafeArraySet(self, n, value)
+
+struct ArrayIterator<T>
+    arr: Array<T>
+    offset: UInt
+
+impl Array<T>
+    def length(self) -> UInt
+        return arrayLength(self)
+
+    def clone(self) -> Array<T>
+        size := arrayLength(self)
+        result := unsafeZeroArray(size)
+
+        for i in 0 til size
+            result[i] = self[i]
+
+        return result
+
+impl Iterator<T> for ArrayIterator<T>
+    def next(self) -> Option<T>
+        if self.offset < self.arr.length()
+            result := self.arr[self.offset]
+            self.offset += 1
+            return Some(result)
+        else
+            return None
+
+impl Iterable<T> for Array<T>
+    type IteratorType = ArrayIterator<T>
+
+    def iter(self) -> ArrayIterator<T>
+        return ArrayIterator(self, 0)
+
+impl Range<T>
+    def toArray(self) -> Array<T>
+        if self.empty()
+            return Array::new()
+
+        size := (self.end - self.start) as UInt
+        result := Array::make(size, 0)
+
+        x := self.start
+        i := 0
+        while x < self.end
+            result[i] = x
+            i += 1
+            x += 1
+
+        return result
+
+
+## String ##
+foreign strHash(s: String) -> UInt
+
+# Method wrappers (methods can't be implemented in C)
+impl String
+    def slice(self, pos: UInt, len: UInt) -> String
+        assert pos < self.length()
+        assert pos + len <= self.length()    # TODO: Check for overflow
+
+        result := unsafeEmptyArray(len)
+
+        for i in 0 til len
+            result[i] = self[pos + i]
+
+        return result
+
+impl Eq for String
+    def eq(self, other: String) -> Bool
+        n1 := self.length()
+        n2 := other.length()
+
+        if n1 != n2
+            return False
+
+        for i in 0 til n1
+            if self.at(i) != other.at(i)
+                return False
+
+        return True
+
+    def ne(self, other: String) -> Bool
+        return not $ self == other
+
+
+## Option ##
+impl Option<T>
+    def isSome(self) -> Bool
+        match self
+            Some(_)
+                return True
+            None
+                return False
+
+    def isNone(self) -> Bool
+        match self
+            Some(_)
+                return False
+            None
+                return True
+
+    def unwrap(self) -> T
+        match self
+            Some(y)
+                return y
+            None
+                panic $ "Cannot unwrap None"
+
+    def unwrapOr(self, other: T) -> T
+        match self
+            Some(y)
+                return y
+            None
+                return other
+
+## I/O functions
+foreign putchar(c: Char)
+
+def print(s: String)
+    for c in s
+        putchar(c)
+
+def println(s: String)
+    for c in s
+        putchar(c)
+
+    putchar('\n')
+
+
+## List ##
+struct ListIterator<T>
+    current: List<T>
+
+impl Iterator<T> for ListIterator<T>
+    def next(self) -> Option<T>
+        match self.current
+            Cons(head, tail)
+                self.current = tail
+                return Some(head)
+            Nil
+                return None
+
+impl Iterable<T> for List<T>
+    type IteratorType = ListIterator<T>
+
+    def iter(self) -> ListIterator<T>
+        return ListIterator(self)
+
+impl List<T>
+    def head(self) -> T
+        if let Cons(x, _) := self
+            return x
+        else
+            panic $ "Called head on empty list"
+
+    def tail(self) -> List<T>
+        if let Cons(_, rest) := self
+            return rest
+        else
+            panic $ "Called tail on empty list"
+
+    def empty(self) -> Bool
+        if let Nil := self
+            return True
+        else
+            return False
+
+def reversed(iter: S) -> List<T> where S: Iterable<T>
+    xs := Nil
+    for x in iter
+        xs = xs.insert(x)
+
+    return xs
+
+impl Index<UInt, T> for List<T>
+    def at(self, n: UInt) -> T
+        xs := self
+
+        while n > 0
+            xs = xs.tail()
+            n -= 1
+
+        return xs.head()
+
+impl List<T>
+    def length(self) -> UInt
+        result := 0
+        xs := self
+
+        while not $ xs.empty()
+            xs = xs.tail()
+            result += 1
+
+        return result
+
+    def take(self, n: UInt) -> List<T>
+        if n == 0
+            return Nil
+        else
+            return self.tail().take(n - 1).insert $ self.head()
+
+    def drop(self, n: UInt) -> List<T>
+        if n == 0
+            return self
+        else
+            return self.tail().drop(n - 1)
+
+    def reverse(self) -> List<T>
+        ys := Nil
+        for x in self
+            ys = ys.insert(x)
+
+        return ys
+
+    def filter(self, f: T -> Bool) -> List<T>
+        result := Nil
+        for x in self
+            if f(x)
+                result = result.insert(x)
+
+        return result.reverse()
+
+    def map(self, f: T -> S) -> List<S>
+        result := Nil
+        for x in self
+            result = result.insert $ f(x)
+
+        return result.reverse()
+
+impl Eq for List<T> where T: Eq
+    def eq(self, other: List<T>) -> Bool
+        if self.empty()
+            return other.empty()
+        elif other.empty()
+            return False
+
+        if self.head() != other.head()
+            return False
+        else
+            return self.tail() == other.tail()
+
+    def ne(self, other: List<T>) -> Bool
+        return not $ self == other
+
+impl String
+    def fromList(chars: List<Char>) -> String
+        n := chars.length()
+
+        result := unsafeEmptyArray(n)
+
+        for i in 0 til n
+            result[i] = chars.head()
+            chars = chars.tail()
+
+        return result
+
+impl S: Iterable<T>
+    def toList(self) -> List<T>
+        result := Nil
+
+        for x in self
+            result = result.insert(x)
+
+        return result.reverse()
+
+
+## Vector ##
+impl Vector<T>
+    def append(self, x: T)
+        if self.size < self.content.length()
+            self.content[self.size] = x
+            self.size += 1
+        else
+            newCapacity := self.content.length() * 2 + 1
+            newContent := unsafeZeroArray(newCapacity)
+            for i in 0 til self.size
+                newContent[i] = self.content[i]
+
+            newContent[self.size] = x
+
+            self.content = newContent
+            self.size += 1
+
+    def pop(self) -> T
+        assert self.size > 0
+        value := self.content[self.size - 1]
+        self.size -= 1
+
+        return value
+
+    def toArray(self) -> Array<T>
+        result := unsafeZeroArray(self.size)
+        for i in 0 til self.size
+            result[i] = self.content[i]
+
+        return result
+
+    def clone(self) -> Vector<T>
+        return Vector(self.toArray(), self.size)
+
+
+    def length(self) -> UInt
+        return self.size
+
+    def remove(self, n: UInt)
+        assert n < self.size
+
+        self.size -= 1
+
+        for i in n til self.size
+            self.content[i] = self.content[i + 1]
+
+    # Reverses in-place
+    def reverse(self)
+        n := self.size
+
+        for i in 0 til n / 2
+            x := self.content[n - i - 1]
+            self.content[n - i - 1] = self.content[i]
+            self.content[i] = x
+
+impl Index<UInt, T> for Vector<T>
+    def at(self, n: UInt) -> T
+        return self.content[n]
+
+impl IndexSet<UInt, T> for Vector<T>
+    def set(self, n: UInt, x: T)
+        self.content[n] = x
+
+struct VectorIterator<T>
+    v: Vector<T>
+    idx: UInt
+
+impl Iterator<T> for VectorIterator<T>
+    def next(self) -> Option<T>
+        if self.idx < self.v.size
+            result := self.v[self.idx]
+            self.idx += 1
+            return Some(result)
+        else
+            return None
+
+impl Iterable<T> for Vector<T>
+    type IteratorType = VectorIterator<T>
+
+    def iter(self) -> VectorIterator<T>
+        return VectorIterator(self, 0)
+
+impl S: Iterable<T>
+    def toVector(self) -> Vector<T>
+        result := []
+
+        for x in self
+            result.append(x)
+
+        return result
+
+
+impl Int
+    # Does not check for integer overflow
+    def fromString(s: String) -> Option<Int>
+        if s.length() == 0
+            return None
+
+        start := 0
+        negative := False
+        limit := 9223372036854775807
+
+        if s[0] == '-'
+            start = 1
+            negative = True
+            limit = 9223372036854775808
+
+        result := 0
+        for i in start til s.length()
+            c := s[i]
+            if c >= '0' and c <= '9'
+                digit := (c - '0') as UInt
+
+                # Check for overflow
+                if result > (limit - digit) / 10
+                    return None
+
+                result *= 10
+                result += digit
+            else
+                return None
+
+        if negative
+            result = -result
+
+        return Some(result as Int)
+
+
+## Native-language standard library
+def drop(x: T)
+    pass
+
+
+def sum(xs: List<T>) -> T where T: Num
+    result := 0
+    for x in xs
+        result += x
+
+    return result
+
+
+def product(xs: List<T>) -> T where T: Num
+    if xs.empty()
+        return 1
+    else
+        return xs.head() * product $ xs.tail()
+
+
+def max(a: T, b: T) -> T where T: Num
+    if a > b
+        return a
+    else
+        return b
+
+
+def min(a: T, b: T) -> T where T: Num
+    if a < b
+        return a
+    else
+        return b
+
+
+def maximum(xs: List<T>) -> T where T: Num
+    if xs.length() == 1
+        return xs.head()
+    else
+        return max(xs.head(), maximum $ xs.tail())
+
+
+def minimum(xs: List<T>) -> T where T: Num
+    if xs.length() == 1
+        return xs.head()
+    else
+        return min(xs.head(), minimum $ xs.tail())
+
+
+def even(x: T) -> Bool where T: Num
+    if x % 2 == 0
+        return True
+    else
+        return False
+
+
+def odd(x: T) -> Bool where T: Num
+    if x % 2 == 0
+        return False
+    else
+        return True
+
+
+def pow(a: T, b: UInt) -> T where T: Num
+    r := 1
+    forever
+        if b % 2 == 1
+            r *= a
+
+        b /= 2
+
+        if b == 0
+            break
+
+        a *= a
+
+    return r
+
+
+## Pair ##
+enum Pair<S, T>
+    Pair(S, T)
+
+    def first(self) -> S
+        match self
+            Pair(x, _) => return x
+
+    def second(self) -> T
+        match self
+            Pair(_, x) => return x
+
+
+def splitAt(n: UInt, xs: List<T>) -> Pair<List<T>, List<T>>
+    return Pair(xs.take(n), xs.drop(n))
+
+
+## Ord trait ##
+enum Ordering
+    Less
+    Equal
+    Greater
+
+trait Ord
+    def cmp(self, other: Self) -> Ordering
+
+impl Ord for T: Num
+    def cmp(self, other: T) -> Ordering
+        if self < other
+            return Less
+        elif self > other
+            return Greater
+        else
+            return Equal
+
+impl Ord for Char
+    def cmp(self, other: Char) -> Ordering
+        if self < other
+            return Less
+        elif self > other
+            return Greater
+        else
+            return Equal
+
+impl Ord for List<T> where T: Ord
+    def cmp(self, other: List<T>) -> Ordering
+        if self.empty()
+            if other.empty()
+                return Equal
+            else
+                return Less
+        elif other.empty()
+            return Greater
+        else
+            match self.head().cmp $ other.head()
+                Less
+                    return Less
+                Greater
+                    return Greater
+                Equal
+                    return self.tail().cmp $ other.tail()
+
+impl Ord for String
+    def cmp(self, other: String) -> Ordering
+        n1 := self.length()
+        n2 := other.length()
+
+        for n in 0 to min(n1, n2)
+            if self.length() <= n
+                if other.length() <= n
+                    return Equal
+                else
+                    return Less
+            elif other.length() <= n
+                return Greater
+            else
+                if self.at(n) < other.at(n)
+                    return Less
+                elif self.at(n) > other.at(n)
+                    return Greater
+
+        panic $ "Unreachable"
+
+
+## PartialOrd trait ##
+impl PartialOrd for T: Ord
+    def lt(self, other: T) -> Bool
+        match self.cmp(other)
+            Less
+                return True
+            Else
+                return False
+
+    def le(self, other: T) -> Bool
+        match self.cmp(other)
+            Greater
+                return False
+            Else
+                return True
+
+    def gt(self, other: T) -> Bool
+        match self.cmp(other)
+            Greater
+                return True
+            Else
+                return False
+
+    def ge(self, other: T) -> Bool
+        match self.cmp(other)
+            Less
+                return False
+            Else
+                return True
+
+
+## Add/Sub/Mul/Div traits ##
+impl Add for T: Num
+    def add(self, other: T) -> T
+        return self + other
+
+impl Sub for T: Num
+    def sub(self, other: T) -> T
+        return self - other
+
+impl Mul for T: Num
+    def mul(self, other: T) -> T
+        return self * other
+
+impl Div for T: Num
+    def div(self, other: T) -> T
+        return self / other
+
+impl Rem for T: Num
+    def rem(self, other: T) -> T
+        return self % other
+
+
+## Concatenation (abusing the Add trait)
+impl Add for String
+    def add(self, other: String) -> String
+        n1 := self.length()
+        n2 := other.length()
+
+        result := unsafeEmptyArray(n1 + n2)
+
+        for i in 0 til n1
+            result[i] = self[i]
+
+        for i in 0 til n2
+            result[n1 + i] = other[i]
+
+        return result
+
+impl Add for List<T>
+    def add(self, other: List<T>) -> List<T>
+        result := other
+
+        for x in self.reverse()
+            result = result.insert(x)
+
+        return result
+
+
+## Hash trait ##
+trait Hash
+    def hash(self) -> UInt
+
+impl Hash for T: Num
+    def hash(self) -> UInt
+        return self as UInt
+
+impl Hash for String
+    def hash(self) -> UInt
+        return strHash(self)
+
+impl Hash for Char
+    def hash(self) -> UInt
+        return self as UInt
+
+
+## Show trait ##
+trait Show
+    def show(self) -> String
+
+impl Show for T: Num
+    def show(self) -> String
+        digits := []
+
+        plusx := self as UInt
+        negative := False
+        if self < 0
+            plusx = -self as UInt
+            negative = True
+
+        while plusx != 0
+            digits.append((plusx % 10) as Char + '0')
+            plusx /= 10
+
+        if digits.length() == 0
+            return "0"
+        else
+            if negative
+                digits.append('-')
+
+            digits.reverse()
+            return digits.toArray()
+
+impl Show for Char
+    def show(self) -> String
+        return Array::make(1, self)
+
+impl Show for Unit
+    def show(self) -> String
+        return "()"
+
+def show(x: T) -> String where T: Show
+    return x.show()
+
+
+## Miscellaneous
+def assertMessage(b: Bool, err: String)
+    if not(b)
+        panic $ "Assertion failed: " + err
+
+foreign getArgc() -> Int
+foreign getArgv(n: UInt) -> String
+
+
+import iterators

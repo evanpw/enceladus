@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 	}
 
 	initializeLexer(argv[1]);
-	importFile("lib/prelude.spl");
+	importFile("lib/prelude.enc");
 
 	// Translate an input file to an AST (lexer and scanner)
 	AstContext* astContext = new AstContext;

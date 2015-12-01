@@ -1,0 +1,8 @@
+# From https://icpcarchive.ecs.baylor.edu/external/68/6814.pdf
+
+def solve(s: String, n: UInt) -> String
+    return ""
+
+assert solve("ACM", 5) == "MAC"
+assert solve("ICPC", 12) == "PICC"
+assert solve("REGION", 274) == "IGNORE"

@@ -1,0 +1,65 @@
+# Represents a FILE*
+type File = UInt
+
+foreign fgetc(file: File) -> Int    # Really should be Int32
+foreign getchar() -> Int
+
+foreign getStdin() -> File
+foreign getStderr() -> File
+
+stdin := getStdin()
+stderr := getStderr()
+
+# Internal use only: use openFile and closeFile instead
+foreign fopenWrapper(filename: String, mode: String) -> File
+foreign fclose(file: File)
+
+def openFile(filename: String, mode: String) -> Option<File>
+    file := fopenWrapper(filename, mode)
+
+    if file == 0 # Null pointer
+        return None
+    else
+        return Some(file)
+
+def closeFile(file: File)
+    fclose(file)
+
+def readChar(file: File) -> Option<Char>
+    c := fgetc(file)
+
+    if c == 4294967295 # -1 as a 32-bit integer
+        return None
+    else
+        return Some(c as Char)
+
+
+def readLine(file: File) -> Option<String>
+    v := []
+
+    forever
+        match readChar(file)
+            Some(c)
+                v.append(c)
+                if c == '\n'
+                    break
+            None
+                break
+
+    if v.length() == 0
+        return None
+    else
+        return Some $ v.toArray()
+
+
+def readAll(file: File) -> String
+    v := []
+
+    forever
+        match readChar(file)
+            Some(c)
+                v.append(c)
+            None
+                break
+
+    return v.toArray()

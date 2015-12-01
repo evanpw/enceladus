@@ -1,0 +1,6 @@
+import Dict
+
+# Should infer the constraints on S and T
+struct MyKeyIterator<S, T>
+    table: Dict<S, T>
+    current: UInt

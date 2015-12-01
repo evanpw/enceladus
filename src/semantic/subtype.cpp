@@ -184,7 +184,7 @@ bool TypeComparer::compare(Type* lhs, Trait* trait)
         Transaction innerTransaction(this);
 
         // We need a fresh instantiation of the instance types each time, or
-        // instance checking on nested types will break (see nestedMap.spl)
+        // instance checking on nested types will break (see nestedMap.enc)
         TypeAssignment assignment;
         Type* instanceType = instantiate(instance.type, assignment);
 

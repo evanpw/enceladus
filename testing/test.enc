@@ -1,0 +1,4 @@
+enum MyRange<T: Num>
+    MyRange(T, T)
+    EmptyRange
+

@@ -9,7 +9,7 @@ Function* DemoteGlobals::getSplMain()
 {
     for (Function* function : _context->functions)
     {
-        if (function->name == "splmain")
+        if (function->name == "encmain")
             return function;
     }
 
@@ -30,17 +30,17 @@ bool DemoteGlobals::isUsedOutside(Value* variable, Function* fn)
 void DemoteGlobals::run()
 {
     // Find main function
-    Function* splmain = getSplMain();
+    Function* encmain = getSplMain();
 
     std::vector<Value*> goodGlobals;
     for (Value* global : _context->globals)
     {
-        if (!isUsedOutside(global, splmain))
+        if (!isUsedOutside(global, encmain))
         {
             // Replace the global with a local of the same name
             Value* local = _context->createLocal(global->type, global->name);
-            splmain->locals.push_back(local);
-            splmain->replaceReferences(global, local);
+            encmain->locals.push_back(local);
+            encmain->replaceReferences(global, local);
         }
         else
         {

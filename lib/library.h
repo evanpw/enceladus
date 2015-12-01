@@ -32,12 +32,12 @@ typedef struct Array
 
 typedef Array String;
 
-extern void* splcall0(void* f) asm("splcall0");
-extern void* splcall1(void* f, void* p1) asm("splcall1");
-extern void* splcall2(void* f, void* p1, void* p2) asm("splcall2");
-extern void* splcall3(void* f, void* p1, void* p2, void* p3) asm("splcall3");
-extern void* splcall4(void* f, void* p1, void* p2, void* p3, void* p4) asm("splcall4");
-extern void* splcall5(void* f, void* p1, void* p2, void* p3, void* p4, void* p5) asm("splcall5");
+extern void* enccall0(void* f) asm("enccall0");
+extern void* enccall1(void* f, void* p1) asm("enccall1");
+extern void* enccall2(void* f, void* p1, void* p2) asm("enccall2");
+extern void* enccall3(void* f, void* p1, void* p2, void* p3) asm("enccall3");
+extern void* enccall4(void* f, void* p1, void* p2, void* p3, void* p4) asm("enccall4");
+extern void* enccall5(void* f, void* p1, void* p2, void* p3, void* p4, void* p5) asm("enccall5");
 
 extern void addRoot(uint64_t* array, void** root) asm("addRoot");
 extern void removeRoots(uint64_t* array) asm("removeRoots");

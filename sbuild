@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-build/src/simplec testing/$1.spl > build/$1.asm
+build/src/simplec testing/$1.enc > build/$1.asm
 
 if [[ $(uname) == "Darwin" ]]; then
     nasm -fmacho64 build/$1.asm -o build/$1.o

@@ -1,9 +1,9 @@
 bits 64
 section .text
 global main, _main, stackBottom, gcAllocate, _gcAllocate, gcAllocateFromC, ccall, _ccall
-global splcall0, splcall1, splcall2, splcall3, splcall4, splcall5
+global enccall0, enccall1, enccall2, enccall3, enccall4, enccall5
 global addRoot, removeRoots
-extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _panic, panic, splmain
+extern gcCollectAndAllocate, __globalVarTable, try_mymalloc, _panic, panic, encmain
 extern initializeHeap
 extern _malloc, _free, malloc, free, saveCommandLine
 
@@ -32,7 +32,7 @@ _main:
     mov qword [rel stackBottom], rax
 
     ; The actual program
-    call splmain
+    call encmain
 
     ; free the c stack (to make valgrind happy)
     mov rdi, qword [rel cstack]
@@ -96,7 +96,7 @@ ccall:
     ret
 
 
-splcall0:
+enccall0:
     push rbp
     mov rbp, rsp
 
@@ -128,7 +128,7 @@ splcall0:
     ret
 
 
-splcall1:
+enccall1:
     push rbp
     mov rbp, rsp
 
@@ -166,7 +166,7 @@ splcall1:
     ret
 
 
-splcall2:
+enccall2:
     push rbp
     mov rbp, rsp
 
@@ -204,7 +204,7 @@ splcall2:
     ret
 
 
-splcall3:
+enccall3:
     push rbp
     mov rbp, rsp
 
@@ -244,7 +244,7 @@ splcall3:
     ret
 
 
-splcall4:
+enccall4:
     push rbp
     mov rbp, rsp
 
@@ -284,7 +284,7 @@ splcall4:
     ret
 
 
-splcall5:
+enccall5:
     push rbp
     mov rbp, rsp
 
@@ -378,7 +378,7 @@ gcAllocateFromC:
 
     ; If not successful, collect garbage
     mov rdi, qword [rbp - 8]                ; Size to allocate
-    mov rsi, qword [rel splstack]           ; Frame pointer at last Simple->C transition
+    mov rsi, qword [rel splstack]           ; Frame pointer at last Enceladus->C transition
     mov rdx, qword [rel stackBottom]        ; Frame pointer at beginning of execution
     mov rcx, qword [rel additionalRoots]    ; List of additional roots: globals and C-allocated heap vars
     call gcCollectAndAllocate

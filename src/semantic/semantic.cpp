@@ -1870,7 +1870,7 @@ void SemanticAnalyzer::visit(ImplNode* node)
     if (traitSymbol)
     {
         // Have to do this here so that the checks below work correctly
-        // (see traitMismatch.spl)
+        // (see traitMismatch.enc)
         traitSymbol->trait->addInstance(node->typeName->type, traitParameters);
 
         TypeAssignment traitSub;

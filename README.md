@@ -1,6 +1,6 @@
-# simple
+# Enceladus
 
-A simple compiler for a simple language.
+A statically-typed language for lazy people. Aims to be easy to use and have a minimum of boilerplate.
 
 ## Getting Started
 * Make sure you have all of the requirements (see below)
@@ -15,10 +15,13 @@ A simple compiler for a simple language.
 * nosetests (for tests)
 
 ## Features
-* Syntax inspired by Python, Haskell, and Rust
-  * Blocks defined by indentation, a la Python
-* Hindley-Milner type system with type inference
-* Parametric polymorphism
+* Inspired by Python and Rust (and many others)
+  * blocks defined by indentation, a la Python
+  * type system and many syntax elements inspired by Rust
+* Hindley-Milner-like type system with type inference
+  * parametric polymorphism
+  * ad-hoc polymorphism using traits (like type classes or C++ templates)
+  * sum types (called "enum"), and product types with named fields (called "struct")
 * Unboxed, untagged integer and boolean types
 * Cheney-style copying garbage collection
 * Support for calling C functions

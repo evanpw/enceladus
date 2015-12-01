@@ -1,0 +1,9 @@
+struct Test
+    iter: Int
+
+impl Iterator<Int> for Test
+    def next(self) -> Option<Int>
+        return Some(self.iter)
+
+# impl Iterator => impl Iterable, which gives a method iter, which overlaps
+# with the original member variable

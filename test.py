@@ -140,7 +140,7 @@ class TestAcceptance(object):
         self.run('closure', result='7')
 
     def test_structMembers1(self):
-        self.run('structMembers1', build_error='Error: testing/structMembers1.spl:1:1: type `Test` already has a member named `x`')
+        self.run('structMembers1', build_error='Error: testing/structMembers1.enc:1:1: type `Test` already has a member named `x`')
 
     def test_structMembers2(self):
         self.run('structMembers2', result='')
@@ -170,28 +170,28 @@ class TestAcceptance(object):
         self.run('functionArg2', result='12')
 
     def test_importSemantic(self):
-        self.run('importSemantic', build_error="Error: testing/importSemantic.spl:4:5: Type Bool is not an instance of trait Num")
+        self.run('importSemantic', build_error="Error: testing/importSemantic.enc:4:5: Type Bool is not an instance of trait Num")
 
     def test_syntaxError(self):
-        self.run('syntaxError', build_error='Error: testing/syntaxError.spl:1:1: left-hand side of assignment statement is not an lvalue')
+        self.run('syntaxError', build_error='Error: testing/syntaxError.enc:1:1: left-hand side of assignment statement is not an lvalue')
 
     def test_constructorMismatch(self):
-        self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.spl:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
+        self.run('constructorMismatch', build_error='Error: testing/constructorMismatch.enc:3:10: Expected 1 parameter(s) to type constructor MyPair, but got 2')
 
     def test_overrideType(self):
-        self.run('overrideType', build_error=Regex("Error: testing/overrideType.spl:2:12: Can't bind variable 'T\d+: Num to quantified type variable T, because the latter isn't constrained by trait Num"))
+        self.run('overrideType', build_error=Regex("Error: testing/overrideType.enc:2:12: Can't bind variable 'T\d+: Num to quantified type variable T, because the latter isn't constrained by trait Num"))
 
     def test_noReturn(self):
         self.run('noReturn', result='1')
 
     def test_noReturn2(self):
-        self.run('noReturn2', build_error='Error: testing/noReturn2.spl:1:1: not every path through function returns a value')
+        self.run('noReturn2', build_error='Error: testing/noReturn2.enc:1:1: not every path through function returns a value')
 
     def test_noReturn3(self):
-        self.run('noReturn3', build_error='Error: testing/noReturn3.spl:1:1: not every path through function returns a value')
+        self.run('noReturn3', build_error='Error: testing/noReturn3.enc:1:1: not every path through function returns a value')
 
     def test_noReturn4(self):
-        self.run('noReturn4', build_error='Error: testing/noReturn4.spl:1:1: not every path through function returns a value')
+        self.run('noReturn4', build_error='Error: testing/noReturn4.enc:1:1: not every path through function returns a value')
 
     def test_fizzBuzz(self):
         self.run('fizzBuzz', result=open('testing/fizzBuzz.correct').read())
@@ -203,10 +203,10 @@ class TestAcceptance(object):
         self.run('adt2', result='2')
 
     def test_adt3(self):
-        self.run('adt3', build_error='Error: testing/adt3.spl:10:5: cannot repeat constructors in match statement')
+        self.run('adt3', build_error='Error: testing/adt3.enc:10:5: cannot repeat constructors in match statement')
 
     def test_adt4(self):
-        self.run('adt4', build_error='Error: testing/adt4.spl:7:1: switch statement is not exhaustive')
+        self.run('adt4', build_error='Error: testing/adt4.enc:7:1: switch statement is not exhaustive')
 
     def test_array1(self):
         self.run('array1', result='12345')
@@ -221,28 +221,28 @@ class TestAcceptance(object):
         self.run('array4', result='Hello')
 
     def test_intOutOfRange1(self):
-        self.run('intOutOfRange1', build_error='Error: testing/intOutOfRange1.spl:2:6: error: integer literal out of range: 9223372036854775808i')
+        self.run('intOutOfRange1', build_error='Error: testing/intOutOfRange1.enc:2:6: error: integer literal out of range: 9223372036854775808i')
 
     def test_intOutOfRange2(self):
-        self.run('intOutOfRange2', build_error='Error: testing/intOutOfRange2.spl:2:6: error: integer literal out of range: -9223372036854775809')
+        self.run('intOutOfRange2', build_error='Error: testing/intOutOfRange2.enc:2:6: error: integer literal out of range: -9223372036854775809')
 
     def test_wrongReturnType(self):
-        self.run('wrongReturnType', build_error='Error: testing/wrongReturnType.spl:2:5: cannot unify types Array<Char> and Int')
+        self.run('wrongReturnType', build_error='Error: testing/wrongReturnType.enc:2:5: cannot unify types Array<Char> and Int')
 
     def test_mainStackRoots(self):
         self.run('mainStackRoots', result='1')
 
     def test_scopes1(self):
-        self.run('scopes1', build_error='Error: testing/scopes1.spl:4:16: symbol `x` is not defined in this scope')
+        self.run('scopes1', build_error='Error: testing/scopes1.enc:4:16: symbol `x` is not defined in this scope')
 
     def test_scopes2(self):
-        self.run('scopes2', build_error='Error: testing/scopes2.spl:6:16: symbol `x` is not defined in this scope')
+        self.run('scopes2', build_error='Error: testing/scopes2.enc:6:16: symbol `x` is not defined in this scope')
 
     def test_scopes3(self):
-        self.run('scopes3', build_error='Error: testing/scopes3.spl:4:16: symbol `x` is not defined in this scope')
+        self.run('scopes3', build_error='Error: testing/scopes3.enc:4:16: symbol `x` is not defined in this scope')
 
     def test_scopes4(self):
-        self.run('scopes4', build_error='Error: testing/scopes4.spl:5:16: symbol `x` is not defined in this scope')
+        self.run('scopes4', build_error='Error: testing/scopes4.enc:5:16: symbol `x` is not defined in this scope')
 
     def test_scopes5(self):
         self.run('scopes5', result='1')
@@ -275,25 +275,25 @@ class TestAcceptance(object):
         self.run('method4', '3')
 
     def test_method5(self):
-        self.run('method5', build_error='Error: testing/method5.spl:11:5: type `List<Int>` already has a method or member named `myAt`')
+        self.run('method5', build_error='Error: testing/method5.enc:11:5: type `List<Int>` already has a method or member named `myAt`')
 
     def test_map(self):
         self.run('map', result='3')
 
     def test_repeatedTypeParam(self):
-        self.run('repeatedTypeParam', build_error='Error: testing/repeatedTypeParam.spl:1:1: type parameter `T` is already defined')
+        self.run('repeatedTypeParam', build_error='Error: testing/repeatedTypeParam.enc:1:1: type parameter `T` is already defined')
 
     def test_repeatedTypeParam3(self):
-        self.run('repeatedTypeParam3', build_error='Error: testing/repeatedTypeParam3.spl:1:1: type parameter `T` is already defined')
+        self.run('repeatedTypeParam3', build_error='Error: testing/repeatedTypeParam3.enc:1:1: type parameter `T` is already defined')
 
     def test_memberMethodConflict(self):
-        self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.spl:4:5: type `Test` already has a method or member named `f`')
+        self.run('memberMethodConflict', build_error='Error: testing/memberMethodConflict.enc:4:5: type `Test` already has a method or member named `f`')
 
     def test_memberAsMethod(self):
-        self.run('memberAsMethod', build_error='Error: testing/memberAsMethod.spl:5:1: `test` is a member variable, not a method')
+        self.run('memberAsMethod', build_error='Error: testing/memberAsMethod.enc:5:1: `test` is a member variable, not a method')
 
     def test_methodAsMember(self):
-        self.run('methodAsMember', build_error='Error: testing/methodAsMember.spl:8:1: `doSomething` is a method, not a member variable')
+        self.run('methodAsMember', build_error='Error: testing/methodAsMember.enc:8:1: `doSomething` is a method, not a member variable')
 
     def test_structMemberNames(self):
         self.run('structMemberNames', result='30\nFrance')
@@ -302,7 +302,7 @@ class TestAcceptance(object):
         self.run('vector', result='37')
 
     def test_assignToFunction(self):
-        self.run('assignToFunction', build_error='Error: testing/assignToFunction.spl:4:1: left-hand side of assignment statement is not an lvalue')
+        self.run('assignToFunction', build_error='Error: testing/assignToFunction.enc:4:1: left-hand side of assignment statement is not an lvalue')
 
     def test_mutateStruct(self):
         self.run('mutateStruct', result='4\n5')
@@ -323,7 +323,7 @@ class TestAcceptance(object):
         self.run('hashTable3', '2')
 
     def test_foreignClosure(self):
-        self.run('foreignClosure', build_error='Error: testing/foreignClosure.spl:1:6: Cannot put external function `strHash` into a closure')
+        self.run('foreignClosure', build_error='Error: testing/foreignClosure.enc:1:6: Cannot put external function `strHash` into a closure')
 
     def test_constructorClosure(self):
         self.run('constructorClosure', '3')
@@ -362,43 +362,43 @@ class TestAcceptance(object):
         self.run('goodCasts', '1\n2\n3\nhello')
 
     def test_badCast1(self):
-        self.run('badCast1', build_error='Error: testing/badCast1.spl:1:8: Cannot cast from type UInt to Array<Char>')
+        self.run('badCast1', build_error='Error: testing/badCast1.enc:1:8: Cannot cast from type UInt to Array<Char>')
 
     def test_typeConstraint(self):
-        self.run('typeConstraint', build_error="Error: testing/typeConstraint.spl:5:3: Type Array<Char> is not an instance of trait Num")
+        self.run('typeConstraint', build_error="Error: testing/typeConstraint.enc:5:3: Type Array<Char> is not an instance of trait Num")
 
     def test_typeConstraint2(self):
         self.run('typeConstraint2', '3\n7\n11\n15')
 
     def test_typeConstraint3(self):
-        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.spl:5:14: Can\'t bind variable \'T\d+: Num to quantified type variable T, because the latter isn\'t constrained by trait Num'))
+        self.run('typeConstraint3', build_error=Regex('Error: testing/typeConstraint3.enc:5:14: Can\'t bind variable \'T\d+: Num to quantified type variable T, because the latter isn\'t constrained by trait Num'))
 
     def test_typeConstraint4(self):
-        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.spl:9:8: no method named `f` found for type `Test<Array<Char>>`')
+        self.run('typeConstraint4', build_error='Error: testing/typeConstraint4.enc:9:8: no method named `f` found for type `Test<Array<Char>>`')
 
     def test_useUnit(self):
         self.run('useUnit', '')
 
     def test_callVariable(self):
-        self.run('callVariable', build_error='Error: testing/callVariable.spl:2:1: `x` is not a function')
+        self.run('callVariable', build_error='Error: testing/callVariable.enc:2:1: `x` is not a function')
 
     def test_wrongList(self):
-        self.run('wrongList', build_error='Error: testing/wrongList.spl:4:3: cannot unify types List<Array<Char>> and List<Int>')
+        self.run('wrongList', build_error='Error: testing/wrongList.enc:4:3: cannot unify types List<Array<Char>> and List<Int>')
 
     def test_constrainedImpl(self):
         self.run('constrainedImpl', '')
 
     def test_overlappingInstances(self):
-        self.run('overlappingInstances', build_error='Error: testing/overlappingInstances.spl:8:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T` at testing/overlappingInstances.spl:4:1')
+        self.run('overlappingInstances', build_error='Error: testing/overlappingInstances.enc:8:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T` at testing/overlappingInstances.enc:4:1')
 
     def test_overlappingInstances2(self):
-        self.run('overlappingInstances2', build_error='Error: testing/overlappingInstances2.spl:8:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T: Num` at testing/overlappingInstances2.spl:4:1')
+        self.run('overlappingInstances2', build_error='Error: testing/overlappingInstances2.enc:8:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T: Num` at testing/overlappingInstances2.enc:4:1')
 
     def test_overlappingInstances3(self):
-        self.run('overlappingInstances3', build_error='Error: testing/overlappingInstances3.spl:15:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T: Marked` at testing/overlappingInstances3.spl:7:1')
+        self.run('overlappingInstances3', build_error='Error: testing/overlappingInstances3.enc:15:1: trait `IsInteger` already has an instance which would overlap with `Int`\nPrevious impl for type `T: Marked` at testing/overlappingInstances3.enc:7:1')
 
     def test_overlappingInstances4(self):
-        self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.spl:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`\nPrevious impl for type `Array<Char>` at testing/overlappingInstances4.spl:11:1')
+        self.run('overlappingInstances4', build_error='Error: testing/overlappingInstances4.enc:15:1: trait `Trait2` already has an instance which would overlap with `T: Trait1`\nPrevious impl for type `Array<Char>` at testing/overlappingInstances4.enc:11:1')
 
     def test_methodResolution(self):
         good_tests = [1, 2, 5, 7, 9, 12, 13, 15, 16]
@@ -407,13 +407,13 @@ class TestAcceptance(object):
             self.run(test_name, '')
 
         bad_tests = {
-            '3': 'Error: testing/methodResolution3.spl:9:1: call to method `nothing` is ambiguous',
-            '4': ' Error: testing/methodResolution4.spl:16:1: call to method `nothing` is ambiguous',
-            '6': 'Error: testing/methodResolution6.spl:7:5: no method named `nothing` found for type `T`',
-            '8': 'Error: testing/methodResolution8.spl:8:5: call to method `nothing` is ambiguous',
-            '10': 'Error: testing/methodResolution10.spl:6:5: no method named `nothing` found for type `List<T>`',
-            '11': 'Error: testing/methodResolution11.spl:6:5: no method named `nothing` found for type `List<T>`',
-            '14': 'Error: testing/methodResolution14.spl:6:5: no method named `nothing` found for type `List<T: Num>`',
+            '3': 'Error: testing/methodResolution3.enc:9:1: call to method `nothing` is ambiguous',
+            '4': ' Error: testing/methodResolution4.enc:16:1: call to method `nothing` is ambiguous',
+            '6': 'Error: testing/methodResolution6.enc:7:5: no method named `nothing` found for type `T`',
+            '8': 'Error: testing/methodResolution8.enc:8:5: call to method `nothing` is ambiguous',
+            '10': 'Error: testing/methodResolution10.enc:6:5: no method named `nothing` found for type `List<T>`',
+            '11': 'Error: testing/methodResolution11.enc:6:5: no method named `nothing` found for type `List<T>`',
+            '14': 'Error: testing/methodResolution14.enc:6:5: no method named `nothing` found for type `List<T: Num>`',
         }
 
         for key, value in bad_tests.iteritems():
@@ -421,7 +421,7 @@ class TestAcceptance(object):
             self.run(test_name, build_error=value)
 
     def test_unsignedNegative(self):
-        self.run('unsignedNegative', build_error='Error: testing/unsignedNegative.spl:1:6: error: integer literal out of range: -1u')
+        self.run('unsignedNegative', build_error='Error: testing/unsignedNegative.enc:1:6: error: integer literal out of range: -1u')
 
     def test_u8(self):
         self.run('u8', '10')
@@ -454,13 +454,13 @@ class TestAcceptance(object):
         self.run('genericTrait', '')
 
     def test_genericTrait2(self):
-        self.run('genericTrait2', build_error=Regex("Error: testing/genericTrait2.spl:5:13: cannot unify types ArrayIterator<Char> and 'T\d+: Iterator<Int>"))
+        self.run('genericTrait2', build_error=Regex("Error: testing/genericTrait2.enc:5:13: cannot unify types ArrayIterator<Char> and 'T\d+: Iterator<Int>"))
 
     def test_genericTrait3(self):
         self.run('genericTrait3', '72')
 
     def test_genericTrait4(self):
-        self.run('genericTrait4', build_error='Error: testing/genericTrait4.spl:8:1: trait `Test` already has an instance which would overlap with `Int`\nPrevious impl for type `Int` at testing/genericTrait4.spl:4:1')
+        self.run('genericTrait4', build_error='Error: testing/genericTrait4.enc:8:1: trait `Test` already has an instance which would overlap with `Int`\nPrevious impl for type `Int` at testing/genericTrait4.enc:4:1')
 
     def test_genericTrait5(self):
         self.run('genericTrait5', '532\n394')
@@ -469,10 +469,10 @@ class TestAcceptance(object):
         self.run('genericTrait6', '12')
 
     def test_iterateInt(self):
-        self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.spl:1:10: Type Int is not an instance of trait Iterable<\'T\d+>'))
+        self.run('iterateInt', build_error=Regex('Error: testing/iterateInt.enc:1:10: Type Int is not an instance of trait Iterable<\'T\d+>'))
 
     def test_fakeIterator(self):
-        self.run('fakeIterator', build_error=Regex('Error: testing/fakeIterator.spl:9:10: Type Test is not an instance of trait Iterable<\'T\d+>'))
+        self.run('fakeIterator', build_error=Regex('Error: testing/fakeIterator.enc:9:10: Type Test is not an instance of trait Iterable<\'T\d+>'))
 
     def test_bearCries(self):
         self.run('bear_cries', '')
@@ -481,13 +481,13 @@ class TestAcceptance(object):
         self.run('inferFromReturn', 'Test')
 
     def test_coherence(self):
-        self.run('coherence', build_error='Error: found overlapping instances for trait `Trait2`\nImpl for `T: Trait1` at testing/coherence.spl:7:1\nImpl for `Int` at testing/coherence.spl:11:1')
+        self.run('coherence', build_error='Error: found overlapping instances for trait `Trait2`\nImpl for `T: Trait1` at testing/coherence.enc:7:1\nImpl for `Int` at testing/coherence.enc:11:1')
 
     def test_coherence2(self):
-        self.run('coherence2', build_error='Error: testing/coherence2.spl:8:1: trait `Trait1` already has an instance which would overlap with `Int`\nPrevious impl for type `T` at testing/coherence2.spl:4:1')
+        self.run('coherence2', build_error='Error: testing/coherence2.enc:8:1: trait `Trait1` already has an instance which would overlap with `Int`\nPrevious impl for type `T` at testing/coherence2.enc:4:1')
 
     def test_numInstance(self):
-        self.run('numInstance', build_error='Error: testing/numInstance.spl:4:1: can\'t create new instance for built-in trait `Num`')
+        self.run('numInstance', build_error='Error: testing/numInstance.enc:4:1: can\'t create new instance for built-in trait `Num`')
 
     def test_inferTypeVars(self):
         self.run('inferTypeVars', '')
@@ -496,19 +496,19 @@ class TestAcceptance(object):
         self.run('inferTypeVars2', '')
 
     def test_repeatedConstraint(self):
-        self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.spl:3:19: cannot unify types T: Num and Array<Char>')
+        self.run('repeatedConstraint', build_error='Error: testing/repeatedConstraint.enc:3:19: cannot unify types T: Num and Array<Char>')
 
     def test_repeatedConstraint2(self):
-        self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.spl:1:1: can\'t add constraint `Iterator<Array<Char>>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
+        self.run('repeatedConstraint2', build_error='Error: testing/repeatedConstraint2.enc:1:1: can\'t add constraint `Iterator<Array<Char>>` to type variable `T`: conflicts with existing constraint `Iterator<Int>`')
 
     def test_repeatedConstraint3(self):
-        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.spl:3:19: cannot unify types List<T: Iterator<T>> and Array<Char>')
+        self.run('repeatedConstraint3', build_error='Error: testing/repeatedConstraint3.enc:3:19: cannot unify types List<T: Iterator<T>> and Array<Char>')
 
     def test_repeatedConstraint4(self):
-        self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.spl:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')
+        self.run('repeatedConstraint4', build_error='Error: testing/repeatedConstraint4.enc:1:1: can\'t add constraint `Iterator<T: Iterator<S>>` to type variable `T`: conflicts with existing constraint `Iterator<S>`')
 
     def test_whereClause(self):
-        self.run('whereClause', build_error='Error: testing/whereClause.spl:4:1: `Int` does not name a type parameter')
+        self.run('whereClause', build_error='Error: testing/whereClause.enc:4:1: `Int` does not name a type parameter')
 
     def test_u8array(self):
         self.run('u8array', '10')
@@ -529,7 +529,7 @@ class TestAcceptance(object):
         self.run('bf', result='Hello World!', command='testing/bf/hello.bf')
 
     def test_traitMismatch(self):
-        self.run('traitMismatch', build_error='Error: testing/traitMismatch.spl:5:1: override of trait method `next` has the wrong type:\nexpected: |Test<I: Iterator<T>>| -> Option<T>\nactual: |Test<I: Iterator<T>>| -> Option<[T]>')
+        self.run('traitMismatch', build_error='Error: testing/traitMismatch.enc:5:1: override of trait method `next` has the wrong type:\nexpected: |Test<I: Iterator<T>>| -> Option<T>\nactual: |Test<I: Iterator<T>>| -> Option<[T]>')
 
     def test_nestedMap(self):
         self.run('nestedMap', '')
@@ -550,7 +550,7 @@ class TestAcceptance(object):
         self.run('associatedType', '')
 
     def test_associatedType2(self):
-        self.run('associatedType2', build_error='Error: testing/associatedType2.spl:9:1: Type Bool is not an instance of trait Num')
+        self.run('associatedType2', build_error='Error: testing/associatedType2.enc:9:1: Type Bool is not an instance of trait Num')
 
     def test_associatedType3(self):
         self.run('associatedType3', '')
@@ -559,22 +559,22 @@ class TestAcceptance(object):
         self.run('associatedType4', '')
 
     def test_genericClosure(self):
-        self.run('genericClosure', build_error='Error: testing/genericClosure.spl:6:11: cannot unify types Array<Char> and Int')
+        self.run('genericClosure', build_error='Error: testing/genericClosure.enc:6:11: cannot unify types Array<Char> and Int')
 
     def test_badImport(self):
-        self.run('badImport', build_error='Error: testing/badImport.spl:2:8: can\'t import `Nothing`: file not found')
+        self.run('badImport', build_error='Error: testing/badImport.enc:2:8: can\'t import `Nothing`: file not found')
 
     def test_notConcrete(self):
-        self.run('notConcrete', build_error='Error: testing/notConcrete.spl:8:6: cannot infer concrete type for integer (try adding a suffix)')
+        self.run('notConcrete', build_error='Error: testing/notConcrete.enc:8:6: cannot infer concrete type for integer (try adding a suffix)')
 
     def test_inferredIntRange(self):
-        self.run('inferredIntRange', build_error='Error: testing/inferredIntRange.spl:5:3: integer literal is out of range for inferred type UInt8')
+        self.run('inferredIntRange', build_error='Error: testing/inferredIntRange.enc:5:3: integer literal is out of range for inferred type UInt8')
 
     def test_inferredIntRange2(self):
-        self.run('inferredIntRange2', build_error='Error: testing/inferredIntRange2.spl:5:3: integer literal is out of range for inferred type UInt')
+        self.run('inferredIntRange2', build_error='Error: testing/inferredIntRange2.enc:5:3: integer literal is out of range for inferred type UInt')
 
     def test_grep(self):
-        self.run('grep', command='compileRegex', input_file='testing/grep.spl', result='def compileRegex(pattern: String) -> DFAState\nmatcher := compileRegex(pattern)')
+        self.run('grep', command='compileRegex', input_file='testing/grep.enc', result='def compileRegex(pattern: String) -> DFAState\nmatcher := compileRegex(pattern)')
 
     # Medium tests (100ms-1s)
 

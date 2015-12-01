@@ -225,7 +225,7 @@ extern "C" int yywrap()
  /* Import file name */
 <import>[^ \t\n]+\n {
 
-    bool result = importFile(std::string("lib/") + trim_right(yytext) + ".spl");
+    bool result = importFile(std::string("lib/") + trim_right(yytext) + ".enc");
 
     if (!result)
     {

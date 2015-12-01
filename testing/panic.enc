@@ -1,0 +1,2 @@
+if True
+    panic $ "Hello World"
