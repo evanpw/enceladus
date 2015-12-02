@@ -5,7 +5,7 @@
 	<key>name</key>
 	<string>Comments</string>
 	<key>scope</key>
-	<string>source.simple</string>
+	<string>source.enceladus</string>
 	<key>settings</key>
 	<dict>
 		<key>shellVariables</key>
@@ -19,6 +19,6 @@
 		</array>
 	</dict>
 	<key>uuid</key>
-	<string>E3994307-4D9E-44D6-832E-52C244F1CDF3</string>
+	<string>03D812FF-2531-4861-A79A-D4BBB666237B</string>
 </dict>
 </plist>

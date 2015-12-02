@@ -5,13 +5,15 @@
 	<key>name</key>
 	<string>Indent Patterns</string>
 	<key>scope</key>
-	<string>source.simple</string>
+	<string>source.enceladus</string>
 	<key>settings</key>
 	<dict>
 		<key>increaseIndentPattern</key>
-		<string>((^.*(=|\bdo|\bwhere|\bthen|\belse|\bof)\s*$)|(^.*\bif(?!.*\bthen\b.*\belse\b.*).*$))</string>
+		<string>^\s*((enum \S+\s*$)|(match|struct|impl|trait|def|for|forever|while|if|elif|else)\b)</string>
+		<key>decreaseIndentPattern</key>
+		<string>^\s*(elif|else)\b</string>
 	</dict>
 	<key>uuid</key>
-	<string>39417FB9-B85C-4213-BB1D-C19BCDD4E487</string>
+	<string>7C1FA7A0-BF5D-4F23-B8ED-44B4DE14B835</string>
 </dict>
 </plist>

@@ -6,10 +6,10 @@
 	<array>
 		<string>enc</string>
 	</array>
-	<key>keyEquivalent</key>
-	<string>^~H</string>
+
 	<key>name</key>
 	<string>Enceladus</string>
+
 	<key>patterns</key>
 	<array>
 		<dict>
@@ -26,218 +26,33 @@
 		</dict>
 
 		<dict>
-			<key>begin</key>
-			<string>\b(module)\b</string>
-			<key>beginCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>end</key>
-			<string>(where)</string>
-			<key>endCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>name</key>
-			<string>meta.declaration.module.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>include</key>
-					<string>#module_name</string>
-				</dict>
-				<dict>
-					<key>include</key>
-					<string>#module_exports</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>[a-z]+</string>
-					<key>name</key>
-					<string>invalid</string>
-				</dict>
-			</array>
-		</dict>
-		<dict>
-			<key>begin</key>
-			<string>\b(class)\b</string>
-			<key>beginCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>end</key>
-			<string>\b(where)\b</string>
-			<key>endCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>name</key>
-			<string>meta.declaration.class.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>match</key>
-					<string>\b(Monad|Functor|Eq|Ord|Read|Show|Num|(Frac|Ra)tional|Enum|Bounded|Real(Frac|Float)?|Integral|Floating)\b</string>
-					<key>name</key>
-					<string>support.class.prelude.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>[A-Z][A-Za-z_']*</string>
-					<key>name</key>
-					<string>entity.other.inherited-class.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\b[a-z][a-zA-Z0-9_']*\b</string>
-					<key>name</key>
-					<string>variable.other.generic-type.enceladus</string>
-				</dict>
-			</array>
-		</dict>
-		<dict>
-			<key>begin</key>
-			<string>\b(instance)\b</string>
-			<key>beginCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>end</key>
-			<string>\b(where)\b|$</string>
-			<key>endCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>name</key>
-			<string>meta.declaration.instance.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>include</key>
-					<string>#type_signature</string>
-				</dict>
-			</array>
-		</dict>
-		<dict>
-			<key>begin</key>
-			<string>\b(import)\b</string>
-			<key>beginCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>end</key>
-			<string>($|;)</string>
-			<key>name</key>
-			<string>meta.import.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>match</key>
-					<string>(qualified|as|hiding)</string>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-				<dict>
-					<key>include</key>
-					<string>#module_name</string>
-				</dict>
-				<dict>
-					<key>include</key>
-					<string>#module_exports</string>
-				</dict>
-				<dict>
-					<key>include</key>
-					<string>#comments</string>
-				</dict>
-			</array>
-		</dict>
-		<dict>
-			<key>begin</key>
-			<string>(deriving)\s*\(</string>
-			<key>beginCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.enceladus</string>
-				</dict>
-			</dict>
-			<key>end</key>
-			<string>\)</string>
-			<key>name</key>
-			<string>meta.deriving.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>match</key>
-					<string>\b[A-Z][a-zA-Z_']*</string>
-					<key>name</key>
-					<string>entity.other.inherited-class.enceladus</string>
-				</dict>
-			</array>
-		</dict>
-		<dict>
 			<key>match</key>
-			<string>\b(import|let|var|type|enum|struct|match|trait|impl)\b</string>
+			<string>\b(import|let|var|match)\b</string>
 			<key>name</key>
 			<string>keyword.other.enceladus</string>
 		</dict>
+
 		<dict>
 			<key>match</key>
 			<string>\b(and|or|in|to|til|as|where)\b</string>
 			<key>name</key>
 			<string>keyword.other.enceladus</string>
 		</dict>
-		<dict>
-			<key>match</key>
-			<string>\binfix[lr]?\b</string>
-			<key>name</key>
-			<string>keyword.operator.enceladus</string>
-		</dict>
+
 		<dict>
 			<key>match</key>
 			<string>\b(do|if|then|else|while|for|return|break|forever|elif|pass|continue)\b</string>
 			<key>name</key>
 			<string>keyword.control.enceladus</string>
 		</dict>
+
 		<dict>
 			<key>match</key>
-			<string>\b([0-9]+|0([xX][0-9a-fA-F]+|[oO][0-7]+))(i|u|u8)?\b</string>
+			<string>\b[0-9]+(i|u|u8)?\b</string>
 			<key>name</key>
 			<string>constant.numeric.enceladus</string>
 		</dict>
-		<dict>
-			<key>include</key>
-			<string>#pragma</string>
-		</dict>
+
 		<dict>
 			<key>begin</key>
 			<string>"</string>
@@ -265,173 +80,45 @@
 			<array>
 				<dict>
 					<key>match</key>
-					<string>\\(NUL|SOH|STX|ETX|EOT|ENQ|ACK|BEL|BS|HT|LF|VT|FF|CR|SO|SI|DLE|DC1|DC2|DC3|DC4|NAK|SYN|ETB|CAN|EM|SUB|ESC|FS|GS|RS|US|SP|DEL|[abfnrtv\\\"'\&amp;])</string>
+					<string>\\[nrt\\]</string>
 					<key>name</key>
 					<string>constant.character.escape.enceladus</string>
 				</dict>
-				<dict>
-					<key>match</key>
-					<string>\\o[0-7]+|\\x[0-9A-Fa-f]+|\\[0-9]+</string>
-					<key>name</key>
-					<string>constant.character.escape.octal.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\^[A-Z@\[\]\\\^_]</string>
-					<key>name</key>
-					<string>constant.character.escape.control.enceladus</string>
-				</dict>
 			</array>
 		</dict>
+
 		<dict>
-			<key>comment</key>
-			<string>Points out splices in ast quotes</string>
 			<key>begin</key>
-			<string>\[(?:|e|d|t|p)\|</string>
+			<string>'</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>0</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.quasibracket.enceladus</string>
-				</dict>
-			</dict>
-			<key>end</key>
-			<string>(.*)(\|\])</string>
-			<key>endCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>string.quasiquoted.enceladus</string>
-				</dict>
-				<key>2</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.quasibracket.enceladus</string>
-				</dict>
-			</dict>
-			<key>name</key>
-			<string>meta.other.quasiquote.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>match</key>
-					<string>\$\(</string>
-					<key>name</key>
-					<string>keyword.other.splice.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\$</string>
-					<key>name</key>
-					<string>string.quasiquoted.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>[^$]*</string>
-					<key>name</key>
-					<string>string.quasiquoted.enceladus</string>
-				</dict>
-			</array>
-		</dict>
-		<dict>
-			<key>comment</key>
-			<string>Highlight the beginning of a splice.</string>
-			<key>match</key>
-			<string>\$\(</string>
-			<key>name</key>
-			<string>keyword.other.splice.enceladus</string>
-		</dict>
-		<dict>
-			<key>begin</key>
-			<string>\[[a-zA-Z0-9_']*\|</string>
-			<key>beginCaptures</key>
-			<dict>
-				<key>0</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.quasibracket.enceladus</string>
-				</dict>
-			</dict>
-			<key>end</key>
-			<string>(.*)(\|\])</string>
-			<key>endCaptures</key>
-			<dict>
-				<key>1</key>
-				<dict>
-					<key>name</key>
-					<string>string.quasiquoted.enceladus</string>
-				</dict>
-				<key>2</key>
-				<dict>
-					<key>name</key>
-					<string>keyword.other.quasibracket.enceladus</string>
-				</dict>
-			</dict>
-			<key>name</key>
-			<string>meta.other.quasiquote.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>match</key>
-					<string>.*</string>
-					<key>name</key>
-					<string>string.quasiquoted.enceladus</string>
-				</dict>
-			</array>
-		</dict>
-		<dict>
-			<key>captures</key>
-			<dict>
-				<key>1</key>
 				<dict>
 					<key>name</key>
 					<string>punctuation.definition.string.begin.enceladus</string>
 				</dict>
-				<key>2</key>
-				<dict>
-					<key>name</key>
-					<string>constant.character.escape.enceladus</string>
-				</dict>
-				<key>3</key>
-				<dict>
-					<key>name</key>
-					<string>constant.character.escape.octal.enceladus</string>
-				</dict>
-				<key>4</key>
-				<dict>
-					<key>name</key>
-					<string>constant.character.escape.hexadecimal.enceladus</string>
-				</dict>
-				<key>5</key>
-				<dict>
-					<key>name</key>
-					<string>constant.character.escape.control.enceladus</string>
-				</dict>
-				<key>6</key>
+			</dict>
+			<key>end</key>
+			<string>'</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>0</key>
 				<dict>
 					<key>name</key>
 					<string>punctuation.definition.string.end.enceladus</string>
 				</dict>
 			</dict>
-			<key>match</key>
-			<string>(?x)
-			(')
-			(?:
-				[\ -\[\]-~]                             # Basic Char
-			  | (\\(?:NUL|SOH|STX|ETX|EOT|ENQ|ACK|BEL|BS|HT|LF|VT|FF|CR|SO|SI|DLE
-					|DC1|DC2|DC3|DC4|NAK|SYN|ETB|CAN|EM|SUB|ESC|FS|GS|RS
-					|US|SP|DEL|[abfnrtv\\\"'\&amp;]))       # Escapes
-			  | (\\o[0-7]+)                             # Octal Escapes
-			  | (\\x[0-9A-Fa-f]+)                       # Hexadecimal Escapes
-			  | (\^[A-Z@\[\]\\\^_])                     # Control Chars
-			)
-			(')
-			</string>
 			<key>name</key>
-			<string>string.quoted.single.enceladus</string>
+			<string>string.quoted.single.c</string>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#string_escaped_char</string>
+				</dict>
+			</array>
 		</dict>
+
 		<dict>
 			<key>match</key>
 			<string>^\s*\b(def)\b\s*([a-z][a-zA-Z0-9.']*)</string>
@@ -440,7 +127,7 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>support.function.builtin.enceladus</string>
+					<string>storage.type.function.enceladus</string>
 				</dict>
 				<key>2</key>
 				<dict>
@@ -449,6 +136,7 @@
 				</dict>
 			</dict>
 		</dict>
+
 		<dict>
 			<key>match</key>
 			<string>^(foreign|builtin)\s*([a-z][a-zA-Z0-9.']*)</string>
@@ -457,7 +145,7 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>keyword.source.enceladus</string>
+					<string>storage.type.function.enceladus</string>
 				</dict>
 				<key>2</key>
 				<dict>
@@ -466,26 +154,56 @@
 				</dict>
 			</dict>
 		</dict>
+
+		<dict>
+			<key>match</key>
+			<string>^\s*\b(struct|enum|trait|type)\b\s*([a-zA-Z][a-zA-Z0-9.']*)</string>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.enceladus</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.function.enceladus</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>match</key>
+			<string>^\s*\b(impl)\b</string>
+			<key>name</key>
+			<string>storage.type.enceladus</string>
+		</dict>
+
 		<dict>
 			<key>match</key>
 			<string>\b[A-Z]\w*\b</string>
 			<key>name</key>
 			<string>constant.other.enceladus</string>
 		</dict>
+
 		<dict>
 			<key>include</key>
 			<string>#comments</string>
 		</dict>
+
 		<dict>
 			<key>include</key>
 			<string>#infix_op</string>
 		</dict>
+
 		<dict>
 			<key>match</key>
-			<string>(\+|-|\*|/|%|&gt;|&lt;|:|=|:=|\$|\||\^|->|=&gt;|&lt;=|&gt;=|==|!=|::|\+=|-=|\*=|\/=|\+\+)</string>
+			<string>(\+|-|\*|/|%|&gt;|&lt;|:|=|:=|\$|\||->|&gt;=|==|!=|::|\+=|-=|\*=|\/=|%=)</string>
 			<key>name</key>
 			<string>keyword.operator.enceladus</string>
 		</dict>
+
 		<dict>
 			<key>match</key>
 			<string>,</string>
@@ -493,6 +211,7 @@
 			<string>punctuation.separator.comma.enceladus</string>
 		</dict>
 	</array>
+
 	<key>repository</key>
 	<dict>
 		<key>comments</key>
@@ -511,118 +230,16 @@
 					<key>match</key>
 					<string>(#).*$\n?</string>
 					<key>name</key>
-					<string>comment.line.double-dash.enceladus</string>
-				</dict>
-			</array>
-		</dict>
-		<key>infix_op</key>
-		<dict>
-			<key>match</key>
-			<string>(\([|!%$+:\-.=&lt;/&gt;]+\)|\(,+\))</string>
-			<key>name</key>
-			<string>entity.name.function.infix.enceladus</string>
-		</dict>
-		<key>module_exports</key>
-		<dict>
-			<key>begin</key>
-			<string>\(</string>
-			<key>end</key>
-			<string>\)</string>
-			<key>name</key>
-			<string>meta.declaration.exports.enceladus</string>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>match</key>
-					<string>\b[a-z][a-zA-Z_'0-9]*</string>
-					<key>name</key>
-					<string>entity.name.function.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\b[A-Z][A-Za-z_'0-9]*</string>
-					<key>name</key>
-					<string>storage.type.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>,</string>
-					<key>name</key>
-					<string>punctuation.separator.comma.enceladus</string>
-				</dict>
-				<dict>
-					<key>include</key>
-					<string>#infix_op</string>
-				</dict>
-				<dict>
-					<key>comment</key>
-					<string>So named because I don't know what to call this.</string>
-					<key>match</key>
-					<string>\(.*?\)</string>
-					<key>name</key>
-					<string>meta.other.unknown.enceladus</string>
-				</dict>
-				<dict>
-					<key>include</key>
-					<string>#comments</string>
-				</dict>
-			</array>
-		</dict>
-		<key>module_name</key>
-		<dict>
-			<key>match</key>
-			<string>[A-Z][A-Za-z._']*</string>
-			<key>name</key>
-			<string>support.other.module.enceladus</string>
-		</dict>
-		<key>type_signature</key>
-		<dict>
-			<key>patterns</key>
-			<array>
-				<dict>
-					<key>include</key>
-					<string>#pragma</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>-&gt;</string>
-					<key>name</key>
-					<string>keyword.other.arrow.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>=&gt;</string>
-					<key>name</key>
-					<string>keyword.other.big-arrow.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\b[a-z][a-zA-Z0-9_']*\b</string>
-					<key>name</key>
-					<string>variable.other.generic-type.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\b[A-Z][a-zA-Z0-9_']*\b</string>
-					<key>name</key>
-					<string>storage.type.enceladus</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\(\)</string>
-					<key>name</key>
-					<string>support.constant.unit.enceladus</string>
-				</dict>
-				<dict>
-					<key>include</key>
-					<string>#comments</string>
+					<string>comment.line.number-sign.enceladus</string>
 				</dict>
 			</array>
 		</dict>
 	</dict>
+
 	<key>scopeName</key>
 	<string>source.enceladus</string>
+
 	<key>uuid</key>
-	<string>5C034675-1F6D-497E-8073-369D37E2FD7D</string>
+	<string>7C1FA7A0-BF5D-4F23-B8ED-44B4DE14B835</string>
 </dict>
 </plist>

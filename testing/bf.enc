@@ -10,7 +10,7 @@ struct State
         arr := Array::make(memSize, 0)
         return State(arr, 0)
 
-# IR Instructions
+# Intermediate representation
 enum Instruction
     Add(Int)
     MovePtr(Int)

@@ -171,7 +171,6 @@ extern "C" int yywrap()
 "{"     { return '{'; }
 "}"     { return '}'; }
 "|"     { return '|'; }
-"^"     { return '^'; }
 "->"    { return tRARROW; }
 "=>"    { return tDARROW; }
 "<="    { return tLE; }

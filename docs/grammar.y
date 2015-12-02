@@ -34,7 +34,7 @@ statement
     | assign_or_expr
 
 if_statement
-    : IF ( expression | let_expression ) { ELIF ( expression | let_expression ) } [ ELSE suite ]
+    : IF ( expression | let_expression ) suite { ELIF ( expression | let_expression ) suite } [ ELSE suite ]
 
 assert_statement
     : ASSERT expression EOL
