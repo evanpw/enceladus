@@ -25,7 +25,7 @@ class TestAcceptance(object):
         build_proc = subprocess.Popen(build_cmd, shell=True, stderr=subprocess.PIPE)
 
         if build_error:
-            assert_matches(build_proc.stderr.read(), build_error)
+            assert_matches(build_proc.stderr.read().decode('utf-8'), build_error)
             assert build_proc.wait() != 0
             return
         else:
@@ -42,10 +42,10 @@ class TestAcceptance(object):
         run_proc = subprocess.Popen(run_cmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
         if runtime_error:
-            assert_matches(run_proc.stderr.read(), runtime_error)
+            assert_matches(run_proc.stderr.read().decode('utf-8'), runtime_error)
             assert run_proc.wait() != 0
         else:
-            assert_matches(run_proc.stdout.read(), result)
+            assert_matches(run_proc.stdout.read().decode('utf-8'), result)
             assert run_proc.wait() == 0
 
     # C++ unit tests
@@ -54,7 +54,7 @@ class TestAcceptance(object):
         result = proc.wait()
         if result != 0:
             for line in proc.stdout:
-                print line,
+                print(line, end='')
             assert result == 0
 
     # Fast tests ( < 100ms)
@@ -416,7 +416,7 @@ class TestAcceptance(object):
             '14': 'Error: testing/methodResolution14.enc:6:5: no method named `nothing` found for type `List<T: Num>`',
         }
 
-        for key, value in bad_tests.iteritems():
+        for key, value in bad_tests.items():
             test_name = 'methodResolution' + key
             self.run(test_name, build_error=value)
 

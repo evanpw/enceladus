@@ -28,7 +28,7 @@ def closeFile(file: File)
 def readChar(file: File) -> Option<Char>
     c := fgetc(file)
 
-    if c == 4294967295 # -1 as a 32-bit integer
+    if c == -1
         return None
     else
         return Some(c as Char)
